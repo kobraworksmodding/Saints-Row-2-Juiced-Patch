@@ -28,7 +28,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 		*(exe + 1) = '\0';
 	}
 	
-	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.0.1 ---\n");
+	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.1.0 ---\n");
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
     Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
 	Logger::TypedLog(CHN_DLL, "--- Based on MonkeyPatch by scanti, additional fixes by Uzis, Tervel, jason098 and Clippy95. ---\n");
@@ -296,7 +296,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	if (GameConfig::GetValue("Multiplayer", "NewLobbyList", 1))
 	{
-        #if _DEBUG
 		char newLobby1[MAX_PATH];
 		char newLobby2[MAX_PATH];
 
@@ -309,7 +308,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DEBUG, "Lobby Map 2 Found: %s\n", newLobby2);
 		lobby_list[0] = newLobby1;
 		lobby_list[1] = newLobby2;
-        #endif
 
 		patchDWord((void*)(0x0073EABA + 3), (int)&lobby_list);
 		patchDWord((void*)(0x0073EA0B + 3), (int)&lobby_list);
