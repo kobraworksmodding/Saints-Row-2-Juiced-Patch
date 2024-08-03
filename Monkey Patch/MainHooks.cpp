@@ -286,9 +286,41 @@ void SetupBetterWindowed()
 	patchDWord((void*)(0x00BFA35A + 4), windowed_style);
 }
 
+char* lobby_list[2] = {
+		const_cast<char*>("sr2_mp_gb_frat01"),
+		const_cast<char*>("sr2_mp_lobby")
+};
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+
+	if (GameConfig::GetValue("Multiplayer", "NewLobbyList", 1))
+	{
+        #if _DEBUG
+		char newLobby1[MAX_PATH];
+		char newLobby2[MAX_PATH];
+
+		Logger::TypedLog(CHN_DEBUG, "Changing Lobby List...\n");
+
+		GameConfig::GetStringValue("Multiplayer", "Lobby1", "sr2_mp_lobby03", newLobby1);
+		GameConfig::GetStringValue("Multiplayer", "Lobby2", "sr2_mp_lobby02", newLobby2);
+
+		Logger::TypedLog(CHN_DEBUG, "Lobby Map 1 Found: %s\n", newLobby1);
+		Logger::TypedLog(CHN_DEBUG, "Lobby Map 2 Found: %s\n", newLobby2);
+		lobby_list[0] = newLobby1;
+		lobby_list[1] = newLobby2;
+        #endif
+
+		patchDWord((void*)(0x0073EABA + 3), (int)&lobby_list);
+		patchDWord((void*)(0x0073EA0B + 3), (int)&lobby_list);
+		patchDWord((void*)(0x007E131A + 3), (int)&lobby_list);
+		patchDWord((void*)(0x007E161E + 3), (int)&lobby_list);
+		patchDWord((void*)(0x007E7670 + 3), (int)&lobby_list);
+		patchDWord((void*)(0x007E774F + 3), (int)&lobby_list);
+		patchDWord((void*)(0x0082F2E9 + 3), (int)&lobby_list);
+		patchDWord((void*)(0x0082F4CC + 3), (int)&lobby_list);
+		patchDWord((void*)(0x00842497 + 3), (int)&lobby_list);
+	}
 
 	if (GameConfig::GetValue("Debug", "FixFrametime", 1))
 	{
@@ -418,6 +450,13 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((BYTE*)0x00E92394, 3); // WalkToStand
 		patchNop((BYTE*)0x00E92388, 3); // StandToWalk
 
+	}
+
+	if (GameConfig::GetValue("Gameplay", "FastDoors", 0)) // removes the anim for kicking or opening doors.
+	{
+		Logger::TypedLog(CHN_DEBUG, "Patching Fast Doors...\n");
+		patchNop((BYTE*)0x00E92268, 3);
+		patchNop((BYTE*)0x00E9225C, 3);
 	}
 
 	if (GameConfig::GetValue("Gameplay", "BetterDriveByCam", 1)) // Fixes Car CAM Axis while doing drive-bys.

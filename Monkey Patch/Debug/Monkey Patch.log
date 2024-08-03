@@ -1,0 +1,42 @@
+﻿cl : command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
+  stdafx.cpp
+  SafeWrite.cpp
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\SafeWrite.cpp(9,21): warning C4244: '=': conversion from 'UInt32' to 'UInt8', possible loss of data
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\SafeWrite.cpp(18,22): warning C4244: '=': conversion from 'UInt32' to 'UInt16', possible loss of data
+  RPCHandler.cpp
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(125,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(125,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(47,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(178,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(178,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+  QueryPerformance Fix.cpp
+  patch.cpp
+  MainHooks.cpp
+  The contents of <format> are available only in c++latest mode with concepts support;
+  see https://github.com/microsoft/STL/issues/1814 for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(22,84): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(65,9): warning C4996: 'GetVersionExA': was declared deprecated
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(131,56): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(496,37): warning C4305: 'argument': truncation from 'double' to 'float'
+  iat_functions.cpp
+  GameConfig.cpp
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\GameConfig.cpp(84,12): warning C4101: 'final_value': unreferenced local variable
+  FileLogger.cpp
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\FileLogger.cpp(36,8): warning C4101: 'logpath': unreferenced local variable
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\FileLogger.cpp(37,8): warning C4101: 'tracepath': unreferenced local variable
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\FileLogger.cpp(161,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  DFEngine.cpp
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\DFEngine.cpp(49,12): warning C4273: 'CreateDFEngine': inconsistent dll linkage
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\DFEngine.h(27,46): message : see previous definition of 'CreateDFEngine'
+  OpenSpy.cpp
+  GOG No FPS limiter.cpp
+  LuaHandler.cpp
+  ErrorManager.cpp
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\ErrorManager.cpp(90,42): warning C4477: 'snprintf' : format string '%08p' requires an argument of type 'void *', but variadic argument 2 has type 'DWORD64'
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\ErrorManager.cpp(90,42): warning C4313: 'snprintf': '%p' in format string conflicts with argument 2 of type 'DWORD64'
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\ErrorManager.cpp(172,47): warning C4477: 'snprintf' : format string '%08p' requires an argument of type 'void *', but variadic argument 3 has type 'ULONG_PTR'
+  Generating Code...
+ErrorManager.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
+     Creating library C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Debug\Reloaded Patch.lib and object C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Debug\Reloaded Patch.exp
+MSVCRTD.lib(initializers.obj) : warning LNK4098: defaultlib 'libcmt.lib' conflicts with use of other libs; use /NODEFAULTLIB:library
+  Monkey Patch.vcxproj -> C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Debug\Reloaded Patch.dll
