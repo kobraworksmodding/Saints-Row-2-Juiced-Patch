@@ -296,6 +296,12 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		fixFrametime = 1;
 	}
 
+	if (GameConfig::GetValue("Debug", "FixAudio", 0))
+	{
+		Logger::TypedLog(CHN_DEBUG, "Patching Stereo Cutscenes (EXPERIMENTAL)...\n");
+		RPCHandler::ShouldFixStereo = true;
+	}
+
 	if (GameConfig::GetValue("Debug", "AddBindToggles", 1))
 	{
 		Logger::TypedLog(CHN_DEBUG, "Adding Custom Key Toggles...\n");

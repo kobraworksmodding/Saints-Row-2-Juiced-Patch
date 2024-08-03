@@ -660,4 +660,5 @@ namespace RPCHandler {
     extern void UpdateDiscordParams();
     extern void UpdateNoDiscParams();
     extern bool IsCoopOrSP;
+    extern bool ShouldFixStereo;
 }

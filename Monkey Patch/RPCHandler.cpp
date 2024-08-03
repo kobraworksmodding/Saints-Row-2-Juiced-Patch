@@ -33,6 +33,7 @@ namespace RPCHandler {
 	}
 
 	bool IsCoopOrSP = false;
+	bool ShouldFixStereo = false;
 
 	void UpdateDiscordParams() { // Updates state info for discord.
 		BYTE CurrentGamemode = *(BYTE*)0x00E8B210; // Parses the current gamemode from EXE
@@ -55,16 +56,21 @@ namespace RPCHandler {
 			{
 				if (IsInCutscene == 1) 
 				{
-					patchNop((BYTE*)0x00482658, 5); // nop mono aud
-					patchNop((BYTE*)0x0046CAC8, 5); // nop ambient aud
-					strcpy_s(pres.details, "Watching a Cutscene | SP / CO-OP");
+					if (ShouldFixStereo == true) {
+						patchNop((BYTE*)0x00482658, 5); // nop mono aud
+						patchNop((BYTE*)0x0046CAC8, 5); // nop ambient aud
+					}
+
+					strcpy_s(pres.details, "Playing SP / CO-OP | Watching a Cutscene");
 					strcpy_s(pres.state, finalUsername);
 					IsCoopOrSP = true;
 				}
 				else 
 				{
-					patchBytesM((BYTE*)0x00482658, (BYTE*)"\xE8\x43\xFD\xFF\xFF", 5); // patch mono aud back in
-					patchBytesM((BYTE*)0x0046CAC8, (BYTE*)"\xE8\x83\xA7\x00\x00", 5); // patch ambient aud back in
+					if (ShouldFixStereo == true) {
+						patchBytesM((BYTE*)0x00482658, (BYTE*)"\xE8\x43\xFD\xFF\xFF", 5); // patch mono aud back in
+						patchBytesM((BYTE*)0x0046CAC8, (BYTE*)"\xE8\x83\xA7\x00\x00", 5); // patch ambient aud back in
+					}
 					strcpy_s(pres.details, "Playing SP / CO-OP");
 					strcpy_s(pres.state, finalUsername);
 					IsCoopOrSP = true;
@@ -157,6 +163,7 @@ namespace RPCHandler {
 		BYTE LobbyCheck = *(BYTE*)0x02528C14; // Checks lobby, technically this is another gamemode check but we'll use it for lobby
 		BYTE MatchType = *(BYTE*)0x00E8B20C; // Checks match type
 		BYTE AbleToStartGame = *(BYTE*)0x02528D90; // Determines whether the gamemode is able to start or not (we'll force this on when we can, nice QOL feature.)
+		BYTE IsInCutscene = *(BYTE*)0x02527D14; // Checks if user is in a cutscene.
 
 
 		static DWORD lastTick = 0;
@@ -186,6 +193,20 @@ namespace RPCHandler {
 			if (!LobbyCheck == 0x0 && CurrentGamemode == 0xFF) // This should be CO-OP / Singleplayer
 			{
 				IsCoopOrSP = true;
+				if (IsInCutscene == 1)
+				{
+					if (ShouldFixStereo == true) {
+						patchNop((BYTE*)0x00482658, 5); // nop mono aud
+						patchNop((BYTE*)0x0046CAC8, 5); // nop ambient aud
+					}
+				}
+				else
+				{
+					if (ShouldFixStereo == true) {
+						patchBytesM((BYTE*)0x00482658, (BYTE*)"\xE8\x43\xFD\xFF\xFF", 5); // patch mono aud back in
+						patchBytesM((BYTE*)0x0046CAC8, (BYTE*)"\xE8\x83\xA7\x00\x00", 5); // patch ambient aud back in
+					}
+				}
 			}
 			else 
 			{
