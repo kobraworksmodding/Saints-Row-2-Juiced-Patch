@@ -320,6 +320,12 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchDWord((void*)(0x00842497 + 3), (int)&lobby_list);
 	}
 
+	if (GameConfig::GetValue("Multiplayer", "FreeMPClothing", 1))
+	{
+		Logger::TypedLog(CHN_DEBUG, "Making MP Clothing Free...\n");
+		patchNop((BYTE*)0x0088DDBD, 5); // nop the float call from xtbl > exe that parses clothing prices.
+	}
+
 	if (GameConfig::GetValue("Debug", "FixFrametime", 1))
 	{
 		Logger::TypedLog(CHN_DEBUG, "Fixing Frametime issues...\n");

@@ -42,6 +42,7 @@ namespace RPCHandler {
 		char* playerName = (CHAR*)0x0212AB48; // parses player name
 		BYTE AbleToStartGame = *(BYTE*)0x02528D90; // Determines whether the gamemode is able to start or not (we'll force this on when we can, nice QOL feature.)
 		BYTE IsInCutscene = *(BYTE*)0x02527D14; // Checks if user is in a cutscene.
+		//BYTE IsHost = *(BYTE*)0x02528C14; // checks a dword if host.
 
 		char finalUsername[2048];
 		sprintf(finalUsername, "Username: %s", playerName);
@@ -49,7 +50,7 @@ namespace RPCHandler {
 		static DWORD lastTick = 0;
 
 		DWORD currentTick = GetTickCount();
-
+		//Logger::TypedLog(CHN_DEBUG, "Are We Host?: %x\n", IsHost);
 		if (currentTick - lastTick >= 600) {
 			lastTick = currentTick;
 			if (!LobbyCheck == 0x0 && CurrentGamemode == 0xFF) // This should be CO-OP / Singleplayer
