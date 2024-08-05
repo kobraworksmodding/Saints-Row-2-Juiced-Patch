@@ -25,7 +25,15 @@ namespace RPCHandler {
 	DiscordActivity pres;
 	uint8_t Enabled;
 
+	typedef int(__cdecl* hostcheckT)(int);
+	hostcheckT hostcheck = (hostcheckT)0x7EE0D0;
 
+	void checkishost() {
+
+		int player_offset = *(int*)0x21703D4;
+		int check = hostcheck(player_offset);
+		Logger::TypedLog(CHN_DEBUG, "Are We Host?: %x\n", check);
+	}
 
 	void DiscordCallbacks()
 	{
@@ -45,7 +53,7 @@ namespace RPCHandler {
 		//BYTE IsHost = *(BYTE*)0x02528C14; // checks a dword if host.
 
 		char finalUsername[2048];
-		sprintf(finalUsername, "Username: %s", playerName);
+	    sprintf(finalUsername, "Username: %s", playerName);
 
 		static DWORD lastTick = 0;
 
@@ -122,6 +130,7 @@ namespace RPCHandler {
 			}
 			if (LobbyCheck == 0x44) // Game Lobby
 			{
+				//checkishost();
 				if (MatchType == (BYTE)2) { // If in ranked
 					if (!CurrentGamemode == 0xD || !CurrentGamemode == 0xC || CurrentGamemode == 0xB) // And gamemode is not TGB or Strong Arm but is Gangsta Brawl
 					{
@@ -220,6 +229,7 @@ namespace RPCHandler {
 
 	void InitRPC()
 	{
+        #if NDEBUG
 		memset(&app, 0, sizeof(Application));
 		memset(&users_events, 0, sizeof(users_events));
 		memset(&activities_events, 0, sizeof(activities_events));
@@ -264,8 +274,52 @@ namespace RPCHandler {
 				// ---------------------------------
 			}
 		}
-		// trash app
+        #else 
+		memset(&app, 0, sizeof(Application));
+		memset(&users_events, 0, sizeof(users_events));
+		memset(&activities_events, 0, sizeof(activities_events));
+		memset(&relationships_events, 0, sizeof(relationships_events));
 
+		DiscordCreateParamsSetDefault(&params);
+		params.client_id = 1257751836375519332;
+		params.flags = DiscordCreateFlags_NoRequireDiscord;
+		params.event_data = &app;
+		params.activity_events = &activities_events;
+		params.relationship_events = &relationships_events;
+		params.user_events = &users_events;
+		//DiscordCreate(DISCORD_VERSION, &params, &app.core);
+		int fail = DiscordCreate(DISCORD_VERSION, &params, &app.core);
+		if (fail)
+		{
+			Logger::TypedLog(CHN_RPC, "Discord RPC Initialization failed !!!!!!!!\n");
+			Logger::TypedLog(CHN_RPC, "Error code: %d\n", fail);
+			Enabled = 0;
+		}
+		else
+		{
+			Enabled = 1;
+			Logger::TypedLog(CHN_RPC, "Discord RPC Initialization Succeeded!\n");
+			if (Enabled)
+			{
+				Logger::TypedLog(CHN_RPC, "Sending Info to Rich Presence.\n");
+				app.users = app.core->get_user_manager(app.core);
+				app.achievements = app.core->get_achievement_manager(app.core);
+				app.activities = app.core->get_activity_manager(app.core);
+				app.application = app.core->get_application_manager(app.core);
+				app.lobbies = app.core->get_lobby_manager(app.core);
+
+				std::time_t CurrentTime = std::time(0);
+				//Initialize a basic Rich Presence.
+				pres.timestamps.start = CurrentTime;
+				//pres.timestamps.end = 0;
+				//strcpy_s(pres.details, "Indev 0.0.0.1");
+				strcpy_s(pres.assets.large_image, "sr2mprr");
+				app.activities->update_activity(app.activities, &pres, 0, 0);
+				//ChangeDetails("test");
+				// ---------------------------------
+			}
+		}
+        #endif
 	}
 
 	void ChangeDetails(const char* newdetails) 

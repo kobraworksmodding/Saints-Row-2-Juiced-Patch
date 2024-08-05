@@ -13,6 +13,7 @@
 #include <format>
 
 char* executableDirectory[MAX_PATH];
+const char mus2xtbl[] = "music2.xtbl";
 
 
 BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
@@ -27,11 +28,17 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	if (exe) {
 		*(exe + 1) = '\0';
 	}
-	
+    #if NDEBUG
 	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.1.0 ---\n");
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
     Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
 	Logger::TypedLog(CHN_DLL, "--- Based on MonkeyPatch by scanti, additional fixes by Uzis, Tervel, jason098 and Clippy95. ---\n");
+    #else
+	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 RELOADED ---\n");
+	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
+	Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
+	Logger::TypedLog(CHN_DLL, "--- DLL Based on MonkeyPatch by scanti, additional work by Uzis, Tervel, jason098 and Clippy95. ---\n");
+    #endif
 	
 	if(GetVersionExAFirstRun)
 	{
@@ -293,7 +300,21 @@ char* lobby_list[2] = {
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    #if !NDEBUG
+	// patch in some stuff at run time, maybe even add exclusive reloaded toggles.
+	if (GameConfig::GetValue("Debug", "ReloadedRuntimeFiles", 1))
+	{
+		patchBytesM((BYTE*)0x00E06CC4, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload.tbl
+		patchBytesM((BYTE*)0x00E06CD0, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload_anims.tbl
+	}
+	// patch music2.xtbl
+	if (GameConfig::GetValue("Audio", "NoMenuMusic", 0))
+	{
+		Logger::TypedLog(CHN_DLL, "Removing Menu Music...\n");
+		patchDWord((void*)0x00DD87FC, (uint32_t)&mus2xtbl);
+	}
 
+    #endif
 	if (GameConfig::GetValue("Multiplayer", "NewLobbyList", 1))
 	{
 		char newLobby1[MAX_PATH];
