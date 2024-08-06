@@ -28,7 +28,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	if (exe) {
 		*(exe + 1) = '\0';
 	}
-    #if NDEBUG
+    #if !RELOADED
 	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.1.0 ---\n");
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
     Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
@@ -300,7 +300,7 @@ char* lobby_list[2] = {
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    #if !NDEBUG
+    #if RELOADED
 	// patch in some stuff at run time, maybe even add exclusive reloaded toggles.
 	if (GameConfig::GetValue("Debug", "ReloadedRuntimeFiles", 1))
 	{

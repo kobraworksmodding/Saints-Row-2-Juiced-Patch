@@ -229,7 +229,7 @@ namespace RPCHandler {
 
 	void InitRPC()
 	{
-        #if NDEBUG
+        #if !RELOADED
 		memset(&app, 0, sizeof(Application));
 		memset(&users_events, 0, sizeof(users_events));
 		memset(&activities_events, 0, sizeof(activities_events));
