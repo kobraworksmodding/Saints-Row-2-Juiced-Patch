@@ -8,6 +8,7 @@
 #include "MainHooks.h"
 #include "iat_functions.h"
 #include "GameConfig.h"
+#include "LAAPatcher.h"
 
 static CDFEngine DFEngine;
 
@@ -23,8 +24,16 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		Logger::Initialize();
 
 		UInt32 winmaindata=*((UInt32*)0x00520ba0);
-		if(winmaindata!=0x83ec8b55)
+		if (winmaindata != 0x83ec8b55) {
 			Logger::TypedLog(CHN_DLL, "WinMain sanity check failed. Probably running the Steam encrypted version.\n");
+			if (MessageBoxA(NULL, "Possible Steam game executable detected.\n\nAs a massive warning, the steam executable for SR2 is really un-stable and will cause more crashes than you should ever need.\n\nIf you want increased stability it is recommended you either find a download for the GOG executable for your game as it's a fixed version of the SR2 executable and is compatible with the steam game files, or you run Steamless on your Steam SR2 Game Executable.\n\nIf you run steamless on your Steam SR2 Executable and run SR2 with Juiced again, Juiced Patch will LAA (Large Address Aware) patch your game executable preventing most crashes.\n\nWould you like to ignore this warning and keep playing?", "Saints Row 2 Juiced Patch", MB_ICONEXCLAMATION | MB_YESNO) == IDNO) {
+				exit(0);
+			}
+		}
+		else 
+		{
+			LAAPatcher::LAACheck();
+		}
 
 /*
 We can't hook WinMain yet as the Steam version is still encrypted at this point, so we need to do some coding gymnastics

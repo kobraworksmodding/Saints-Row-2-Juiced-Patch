@@ -21,6 +21,7 @@
 #define CHN_AUDIO                       "Audio"
 #define CHN_NET                         "Net"
 #define CHN_LUA                         "LUA"
+#define CHN_LAA                         "LAA"
 
 namespace Logger
 {

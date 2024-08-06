@@ -1,50 +1,12 @@
-﻿  ErrorManager.cpp
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\ErrorManager.cpp(90,42): warning C4477: 'snprintf' : format string '%08p' requires an argument of type 'void *', but variadic argument 2 has type 'DWORD64'
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\ErrorManager.cpp(90,42): warning C4313: 'snprintf': '%p' in format string conflicts with argument 2 of type 'DWORD64'
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\ErrorManager.cpp(172,47): warning C4477: 'snprintf' : format string '%08p' requires an argument of type 'void *', but variadic argument 3 has type 'ULONG_PTR'
-  LuaHandler.cpp
-  GOG No FPS limiter.cpp
-  OpenSpy.cpp
-  DFEngine.cpp
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\DFEngine.cpp(49,12): warning C4273: 'CreateDFEngine': inconsistent dll linkage
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\DFEngine.h(27,46): message : see previous definition of 'CreateDFEngine'
-  FileLogger.cpp
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\FileLogger.cpp(36,8): warning C4101: 'logpath': unreferenced local variable
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\FileLogger.cpp(37,8): warning C4101: 'tracepath': unreferenced local variable
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\FileLogger.cpp(161,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  GameConfig.cpp
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\GameConfig.cpp(84,12): warning C4101: 'final_value': unreferenced local variable
-  iat_functions.cpp
-  MainHooks.cpp
-  The contents of <format> are available only in c++latest mode with concepts support;
-  see https://github.com/microsoft/STL/issues/1814 for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(23,84): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(72,9): warning C4996: 'GetVersionExA': was declared deprecated
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(138,56): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(521,37): warning C4305: 'argument': truncation from 'double' to 'float'
-  patch.cpp
-  QueryPerformance Fix.cpp
-  RPCHandler.cpp
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(135,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(135,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(56,6): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(188,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(188,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
-  SafeWrite.cpp
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\SafeWrite.cpp(9,21): warning C4244: '=': conversion from 'UInt32' to 'UInt8', possible loss of data
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\SafeWrite.cpp(18,22): warning C4244: '=': conversion from 'UInt32' to 'UInt16', possible loss of data
-  stdafx.cpp
+﻿  LAAPatcher.cpp
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(1371,5): warning MSB8012: TargetPath(C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll) does not match the Linker's OutputFile property value (C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\DFEngine.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(1373,5): warning MSB8012: TargetName(Reloaded Patch) does not match the Linker's OutputFile property value (DFEngine). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      Creating library C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.lib and object C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.exp
-  Previous IPDB not found, fall back to full compilation.
 MSVCRT.lib(initializers.obj) : warning LNK4098: defaultlib 'libcmt.lib' conflicts with use of other libs; use /NODEFAULTLIB:library
   Generating code
-  All 277 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  1 of 328 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    2 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Monkey Patch.vcxproj -> C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll
-  The system cannot find the path specified.
-          0 file(s) copied.
-  The system cannot find the path specified.
-          0 file(s) copied.
           1 file(s) copied.
