@@ -3,6 +3,7 @@
 #include "FileLogger.h"
 #include "RPCHandler.h"
 #include "Patcher/patch.h"
+#include <codecvt>
 #pragma comment (lib, "../Discord/discord_game_sdk.dll.lib")
 
 
@@ -28,6 +29,12 @@ namespace RPCHandler {
 	typedef int(__cdecl* hostcheckT)(int);
 	hostcheckT hostcheck = (hostcheckT)0x7EE0D0;
 
+	std::string wstring_to_string(const std::wstring& wstr) {
+		// Create a wide-to-narrow converter
+		std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+		return converter.to_bytes(wstr);
+	}
+
 	void checkishost() {
 
 		int player_offset = *(int*)0x21703D4;
@@ -48,12 +55,21 @@ namespace RPCHandler {
 		BYTE LobbyCheck = *(BYTE*)0x02528C14; // Checks lobby, technically this is another gamemode check but we'll use it for lobby
 		BYTE MatchType = *(BYTE*)0x00E8B20C; // Checks match type
 		char* playerName = (CHAR*)0x0212AB48; // parses player name
+		wchar_t* partnerName = (WCHAR*)0x02CD1870; // parses Co-op Partner name, usually
 		BYTE AbleToStartGame = *(BYTE*)0x02528D90; // Determines whether the gamemode is able to start or not (we'll force this on when we can, nice QOL feature.)
 		BYTE IsInCutscene = *(BYTE*)0x02527D14; // Checks if user is in a cutscene.
 		//BYTE IsHost = *(BYTE*)0x02528C14; // checks a dword if host.
 
+		std::wstring wPartnerName = partnerName; // parse co-op partner name to a wstring
+		std::string f_PartnerName = wstring_to_string(wPartnerName); // THEN to a string
+		const char* COOPPartner = f_PartnerName.c_str(); // now to a const char because discord is a picky bitch
 		char finalUsername[2048];
+
 	    sprintf(finalUsername, "Username: %s", playerName);
+		char finalCOOPDescCutsc[2048];
+		sprintf(finalCOOPDescCutsc, "Watching a Cutscene with %s", COOPPartner);
+		char finalCOOPDesc[2048];
+		sprintf(finalCOOPDesc, "Playing CO-OP with %s", COOPPartner);
 
 		static DWORD lastTick = 0;
 
@@ -70,8 +86,14 @@ namespace RPCHandler {
 						patchNop((BYTE*)0x0046CAC8, 5); // nop ambient aud
 					}
 
-					strcpy_s(pres.details, "Playing SP / CO-OP | Watching a Cutscene");
-					strcpy_s(pres.state, finalUsername);
+					if (f_PartnerName == playerName || f_PartnerName.empty()) {
+						strcpy_s(pres.details, "Watching a Cutscene");
+					}
+					else 
+					{
+						strcpy_s(pres.details, sizeof(pres.details) / sizeof(pres.details[0]) , finalCOOPDescCutsc);
+						strcpy_s(pres.state, finalUsername);
+					}
 					IsCoopOrSP = true;
 				}
 				else 
@@ -80,8 +102,15 @@ namespace RPCHandler {
 						patchBytesM((BYTE*)0x00482658, (BYTE*)"\xE8\x43\xFD\xFF\xFF", 5); // patch mono aud back in
 						patchBytesM((BYTE*)0x0046CAC8, (BYTE*)"\xE8\x83\xA7\x00\x00", 5); // patch ambient aud back in
 					}
-					strcpy_s(pres.details, "Playing SP / CO-OP");
-					strcpy_s(pres.state, finalUsername);
+
+					if (f_PartnerName == playerName || f_PartnerName.empty()) {
+						strcpy_s(pres.details, "Playing Story Mode");
+					}
+					else
+					{
+						strcpy_s(pres.details, finalCOOPDesc);
+						strcpy_s(pres.state, finalUsername);
+					}
 					IsCoopOrSP = true;
 				}
 			}
