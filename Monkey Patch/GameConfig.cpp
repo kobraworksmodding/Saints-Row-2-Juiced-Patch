@@ -48,6 +48,13 @@ namespace GameConfig
 		return GetPrivateProfileIntA(appName, keyName, def, inipath);
 	}
 
+	void SetDoubleValue(const char* appName, const char* keyName, double new_value)
+	{
+		char new_string[12];
+
+		sprintf_s(new_string, "%f", new_value);
+		WritePrivateProfileStringA(appName, keyName, new_string, inipath);
+	}
 	//---------------------------------
 	// Set a value from the INI
 	//---------------------------------
@@ -83,6 +90,22 @@ namespace GameConfig
 		{
 			int32_t final_value;
 			int32_t string_value = atoi(returned);
+			return string_value;
+		}
+
+		return def;
+	}
+
+	double GetDoubleValue(const char* appName, const char* keyName, double def)
+	{
+		char returned[32];
+
+		GetStringValue(appName, keyName, "", returned);
+
+		if (strlen(returned))
+		{
+			double final_value;
+			double string_value = atof(returned);
 			return string_value;
 		}
 

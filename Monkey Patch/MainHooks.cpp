@@ -14,6 +14,8 @@
 
 char* executableDirectory[MAX_PATH];
 const char mus2xtbl[] = "music2.xtbl";
+const char ServerNameRL[] = "[SR2 RELOADED]";
+//char ServerNameJUI = "[JUICED]";
 
 
 BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
@@ -83,7 +85,46 @@ slewleftoverT slewleftover = (slewleftoverT)0x00501220;
 
 bool slew = false;
 bool pausetest = false;
+bool ARfov = 0;
+bool ARCutscene = 0;
+double FOVMultiplier = 1;
 
+void AspectRatioFix() {
+	float currentAR = *(float*)0x022FD8EC;
+		const float a169 = 1.777777791;
+		const double defaultFOV = 1.33333337306976;
+		//double currentFOV = *(double*)0x0E5C808;
+		double correctFOV = (defaultFOV * ((double)currentAR / (double)a169));
+		if (currentAR > a169 && ARfov) { // otherwise causes issues for odd ARs like 16:10/5:4 and the common 4:3.
+			patchDouble((BYTE*)0x00E5C808, correctFOV);
+			patchNop((BYTE*)0x00797181, 6); // Crosshair location that is read from FOV, we'll replace with our own logic below.
+			patchFloat((BYTE*)0x00EC2614, correctFOV);
+			Logger::TypedLog(CHN_DEBUG, "Aspect Ratio FOV fixed...\n");
+			//ARfov = 0;// stop this thread 
+
+			if (ARCutscene) {
+				const double currentCFOV = *(double*)0x00e5c3f0;
+				double correctCFOV = currentCFOV * ((double)currentAR / (double)a169);
+				patchDouble((BYTE*)0x00e5c3f0, correctCFOV);
+				Logger::TypedLog(CHN_DEBUG, "Aspect Ratio Cutscenes (might break above 21:9) hack...\n");
+				ARCutscene = 0;
+
+			}
+		}
+		if (FOVMultiplier >= 1.01 || !ARfov) { // Not mixed above due to 16:10 and 4:3
+			double multipliedFOV = (currentAR > a169) ? correctFOV * FOVMultiplier : defaultFOV * FOVMultiplier;
+			patchDouble((BYTE*)0x00E5C808, multipliedFOV);
+			patchNop((BYTE*)0x00797181, 6);
+			patchFloat((BYTE*)0x00EC2614, (float)multipliedFOV);
+			ARfov = 0;
+		}
+		else {
+			ARfov = 0;
+			ARCutscene = 0;
+		}
+		return;
+
+}
 
 float getDeltaTime() {
 	static DWORD lastTime = GetTickCount();
@@ -215,6 +256,21 @@ void cus_FrameToggles() {
 
 	}
 
+	if (GetAsyncKeyState(VK_F9) & 1) { // F9
+		FOVMultiplier += 0.1;
+		AspectRatioFix();
+		Logger::TypedLog(CHN_DEBUG, "+FOV Multiplier: %f,\n", FOVMultiplier);
+		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
+	}
+
+	if (GetAsyncKeyState(VK_F8) & 1) { // F8
+		FOVMultiplier -= 0.1;
+		AspectRatioFix();
+		Logger::TypedLog(CHN_DEBUG, "-FOV Multiplier: %f,\n", FOVMultiplier);
+		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
+
+	}
+
 	if (GetAsyncKeyState(VK_F5) & 1) { // F5
 		FLOAT* hkg_playerPosition = (FLOAT*)0x00FA6DB0;
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
@@ -268,6 +324,9 @@ int RenderLoopStuff_Hacked()
 	    cus_FrameToggles();
 	    slewtest();
 
+	if (ARfov)
+		AspectRatioFix();
+
 
 	// Call original func
 	return UpdateRenderLoopStuff();
@@ -276,6 +335,8 @@ int RenderLoopStuff_Hacked()
 void SetDefaultGameSettings()
 {
 	patchBytesM((BYTE*)0x00774126, (BYTE*)"\xC6\x05\xAC\xA9\xF7\x01\x00", 7); // Force game into windowed on default settings.
+	//patchDWord((void*)(0x00753544 + 4), *(const char*)ServerNameRL);
+	//*(CHAR**)0x0212AA08 = (char*)"[SR2 RELOADED]";
 }
 
 void SetupBorderless()
@@ -300,7 +361,41 @@ char* lobby_list[2] = {
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    #if RELOADED
+	ErrorManager::Initialize();
+
+	char NameBuffer[260];
+	PIMAGE_DOS_HEADER dos_header;
+	PIMAGE_NT_HEADERS nt_header;
+	MEMORYSTATUSEX memory_info;
+	HMODULE main_handle;
+	
+	Logger::TypedLog(CHN_DLL, "Calling Hooked WinMain.\n");
+
+	main_handle=GetModuleHandleA(NULL);
+	GetModuleFileNameA(main_handle,NameBuffer,260);
+	Logger::TypedLog(CHN_DLL, "Module name = %s\n",NameBuffer);
+	dos_header=(PIMAGE_DOS_HEADER)main_handle;
+	nt_header=(PIMAGE_NT_HEADERS)((DWORD)main_handle+dos_header->e_lfanew);
+	
+
+	memory_info.dwLength=sizeof(memory_info);
+	GlobalMemoryStatusEx(&memory_info);
+	Logger::TypedLog(CHN_DLL, "Memory allocated to process at startup = %I64dMB, memory free = %I64dMB.\n",memory_info.ullTotalVirtual/1048576,memory_info.ullAvailVirtual/1048576);
+
+	for (int i = 1; i < *pargc; i++)
+	{
+		if (!strcmp(pargv[0][i], "keepfpslimit"))
+		{
+			Logger::TypedLog(CHN_DLL, "keepfpslimit - Keeping GOG FPS limiter.\n");
+			keepfpslimit = true;
+		}
+	}
+
+	// Probably Add SR2 Reloaded patch routines here, used to be OS and FPS patch from Monkey here.
+	
+	PatchOpenSpy();
+
+#if RELOADED
 	// patch in some stuff at run time, maybe even add exclusive reloaded toggles.
 	if (GameConfig::GetValue("Debug", "ReloadedRuntimeFiles", 1))
 	{
@@ -314,7 +409,28 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchDWord((void*)0x00DD87FC, (uint32_t)&mus2xtbl);
 	}
 
-    #endif
+#endif
+
+	if (GameConfig::GetValue("Gameplay", "FixUltrawideFOV", 1))
+	{
+		ARfov = 1;
+	}
+
+	if (GameConfig::GetValue("Gameplay", "FixUltrawideCutsceneFOV", 1))
+	{
+		ARCutscene = 1;
+	}
+
+	if (GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", 1.0)) // 1.0 isn't go anywhere.
+	{
+		FOVMultiplier = GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
+		if (FOVMultiplier > 1.0) {
+			ARfov = 1;
+			Logger::TypedLog(CHN_DEBUG, "Applying FOV Multiplier.\n");
+		}
+		Logger::TypedLog(CHN_DEBUG, "FOV Multiplier: %f,\n", FOVMultiplier);
+	}
+
 	if (GameConfig::GetValue("Multiplayer", "NewLobbyList", 1))
 	{
 		char newLobby1[MAX_PATH];
@@ -358,7 +474,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DEBUG, "Patching Stereo Cutscenes (EXPERIMENTAL)...\n");
 		RPCHandler::ShouldFixStereo = true;
 	}
-
 	if (GameConfig::GetValue("Debug", "AddBindToggles", 1))
 	{
 		Logger::TypedLog(CHN_DEBUG, "Adding Custom Key Toggles...\n");
@@ -372,7 +487,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x0050134D, (BYTE*)"\xE9\xB9\x02\x00\x00\x00", 6); // ignore collision in slew
 	}
 
-	if (GameConfig::GetValue("Graphics", "VanillaFXPlus", 1))
+	if (GameConfig::GetValue("Graphics", "VanillaFXPlus", 0))
 	{
 		Logger::TypedLog(CHN_DEBUG, "Patching VanillaFXPlus...\n");
 		patchNop((BYTE*)0x00773797, 5); // prevent the game from disabling/enabling the tint.
@@ -408,7 +523,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		SetupBetterWindowed();
 		Logger::TypedLog(CHN_DEBUG, "Fixing Windowed Mode.\n");
 	}
-	else 
+	else
 	{
 		SetupBorderless();
 		Logger::TypedLog(CHN_DEBUG, "Enabling Borderless Windowed.\n");
@@ -422,41 +537,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		RPCHandler::InitRPC();
 		//RPCHandler::DiscordCallbacks(); callbacks needs to be hooked into a game loop
 	}
-
-
-	ErrorManager::Initialize();
-
-	char NameBuffer[260];
-	PIMAGE_DOS_HEADER dos_header;
-	PIMAGE_NT_HEADERS nt_header;
-	MEMORYSTATUSEX memory_info;
-	HMODULE main_handle;
-	
-	Logger::TypedLog(CHN_DLL, "Calling Hooked WinMain.\n");
-
-	main_handle=GetModuleHandleA(NULL);
-	GetModuleFileNameA(main_handle,NameBuffer,260);
-	Logger::TypedLog(CHN_DLL, "Module name = %s\n",NameBuffer);
-	dos_header=(PIMAGE_DOS_HEADER)main_handle;
-	nt_header=(PIMAGE_NT_HEADERS)((DWORD)main_handle+dos_header->e_lfanew);
-	
-
-	memory_info.dwLength=sizeof(memory_info);
-	GlobalMemoryStatusEx(&memory_info);
-	Logger::TypedLog(CHN_DLL, "Memory allocated to process at startup = %I64dMB, memory free = %I64dMB.\n",memory_info.ullTotalVirtual/1048576,memory_info.ullAvailVirtual/1048576);
-
-	for (int i = 1; i < *pargc; i++)
-	{
-		if (!strcmp(pargv[0][i], "keepfpslimit"))
-		{
-			Logger::TypedLog(CHN_DLL, "keepfpslimit - Keeping GOG FPS limiter.\n");
-			keepfpslimit = true;
-		}
-	}
-
-	// Probably Add SR2 Reloaded patch routines here, used to be OS and FPS patch from Monkey here.
-	
-	PatchOpenSpy();
 
 	if (!keepfpslimit)
 		PatchGOGNoFPSLimit();
