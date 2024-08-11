@@ -71,6 +71,7 @@ namespace RPCHandler {
 		if (strcmp(word, "sr2_mp_lobby03") == 0) return 23;
 		if (strcmp(word, "sr2_mp_lobby04") == 0) return 24;
 		if (strcmp(word, "sr2_mp_lobbytut") == 0) return 25;
+		if (strcmp(word, "sr2_mp_gb_court1") == 0) return 26;
 		return 0;
 	}
 
@@ -154,6 +155,9 @@ namespace RPCHandler {
 		case 25:
 			*FancyChunkName = "Tutorial Lobby";
 			break;
+		case 26:
+			*FancyChunkName = "Courthouse";
+			break;
 		default:
 			*FancyChunkName = chunkID;
 			break;
@@ -233,7 +237,7 @@ namespace RPCHandler {
 			{
 				MapDescAPI();
 				if (MatchType == (BYTE)1)
-					strcpy_s(pres.details, "Playing Player MP in Strong Arm");
+					strcpy_s(pres.details, "Playing MP in Strong Arm");
 
 				if (MatchType == (BYTE)2)
 					strcpy_s(pres.details, "Playing Ranked MP in Strong Arm");
@@ -247,7 +251,7 @@ namespace RPCHandler {
 			{
 				MapDescAPI();
 				if (MatchType == (BYTE)1)
-					strcpy_s(pres.details, "Playing Player MP in Gangsta Brawl");
+					strcpy_s(pres.details, "Playing MP in Gangsta Brawl");
 
 				if (MatchType == (BYTE)2)
 					strcpy_s(pres.details, "Playing Ranked MP in Gangsta Brawl");
@@ -261,7 +265,7 @@ namespace RPCHandler {
 			{
 				MapDescAPI();
 				if (MatchType == (BYTE)1)
-					strcpy_s(pres.details, "Playing Player MP in Team Gangsta Brawl");
+					strcpy_s(pres.details, "Playing MP in Team Gangsta Brawl");
 
 				if (MatchType == (BYTE)2)
 					strcpy_s(pres.details, "Playing Ranked MP in Team Gangsta Brawl");
@@ -285,11 +289,18 @@ namespace RPCHandler {
 					AbleToStartGame = 1;
 				}
 
+				// Player MP Lobby shows as default for everyone, Ranked and Party seem to only show in rich presence if host
+				// so we'll keep the conditions because we need it for friendly fire shit anyway.
 				if (MatchType == (BYTE)1) // Player Lobby
-					strcpy_s(pres.details, "Waiting in Player MP Lobby...");
+					strcpy_s(pres.details, "Waiting in MP Lobby...");
 
 				if (MatchType == (BYTE)2) // Ranked Lobby
+				{
 					strcpy_s(pres.details, "Waiting in Ranked MP Lobby...");
+                    #if RELOADED
+					    *(BYTE*)0x02A4D134 = 0x1; // Force Friendly Fire to Full Damage.
+                    #endif
+				}
 
 				if (MatchType == (BYTE)3) // Party Lobby
 				    strcpy_s(pres.details, "Waiting in Party MP Lobby...");
@@ -297,6 +308,9 @@ namespace RPCHandler {
 			if (LobbyCheck == 0x0) // Usually Menus Check
 			{
 				AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
+                #if RELOADED
+				    *(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
+                #endif
 				strcpy_s(pres.details, "In Menus...");
 				strcpy_s(pres.state, "");
 			}
@@ -324,6 +338,9 @@ namespace RPCHandler {
 			if (LobbyCheck == 0x44) // Game Lobby
 			{
 				if (MatchType == (BYTE)2) { // If in ranked
+                    #if RELOADED
+					    *(BYTE*)0x02A4D134 = 0x1; // Force Friendly Fire to Full Damage.
+                    #endif
 					if (!CurrentGamemode == 0xD || !CurrentGamemode == 0xC || CurrentGamemode == 0xB) // And gamemode is not TGB or Strong Arm but is Gangsta Brawl
 					{
 						AbleToStartGame = 1; // Force Able to Start
@@ -337,6 +354,9 @@ namespace RPCHandler {
 			}
 			if (LobbyCheck == 0x0) // Usually Menus Check
 			{
+                #if RELOADED
+				    *(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
+                #endif
 				AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
 			}
 			if (!LobbyCheck == 0x0 && CurrentGamemode == 0xFF) // This should be CO-OP / Singleplayer
