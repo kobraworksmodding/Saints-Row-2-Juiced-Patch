@@ -1,14 +1,29 @@
-﻿  GameConfig.cpp
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\GameConfig.cpp(91,12): warning C4101: 'final_value': unreferenced local variable
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\GameConfig.cpp(107,11): warning C4101: 'final_value': unreferenced local variable
+﻿  MainHooks.cpp
+  The contents of <format> are available only in c++latest mode with concepts support;
+  see https://github.com/microsoft/STL/issues/1814 for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(25,84): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(74,9): warning C4996: 'GetVersionExA': was declared deprecated
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(94,33): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(101,34): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(179,56): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(625,37): warning C4305: 'argument': truncation from 'double' to 'float'
+  RPCHandler.cpp
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(281,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(281,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(185,6): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(186,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(187,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(188,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(344,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(344,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(1371,5): warning MSB8012: TargetPath(C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll) does not match the Linker's OutputFile property value (C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\DFEngine.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(1373,5): warning MSB8012: TargetName(Reloaded Patch) does not match the Linker's OutputFile property value (DFEngine). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      Creating library C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.lib and object C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.exp
 MSVCRT.lib(initializers.obj) : warning LNK4098: defaultlib 'libcmt.lib' conflicts with use of other libs; use /NODEFAULTLIB:library
   Generating code
-  2 of 387 functions ( 0.5%) were compiled, the rest were copied from previous compilation.
+  4 of 387 functions ( 1.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    2 functions had inline decision re-evaluated but remain unchanged
+    1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Monkey Patch.vcxproj -> C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll
           1 file(s) copied.

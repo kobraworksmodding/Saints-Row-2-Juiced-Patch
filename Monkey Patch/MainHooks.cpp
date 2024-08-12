@@ -31,7 +31,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 		*(exe + 1) = '\0';
 	}
     #if !RELOADED
-	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.1.0 ---\n");
+	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.1.1 ---\n");
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
     Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
 	Logger::TypedLog(CHN_DLL, "--- Based on MonkeyPatch by scanti, additional fixes by Uzis, Tervel, jason098 and Clippy95. ---\n");
@@ -276,11 +276,12 @@ void cus_FrameToggles() {
 
 	if (GetAsyncKeyState(VK_F5) & 1) { // F5
 		FLOAT* hkg_playerPosition = (FLOAT*)0x00FA6DB0;
+		FLOAT* hkg_camOrient = (FLOAT*)0x025F5B5C; // ???? maybe
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
-		std::wstring subtitles = (L"Player Position Printed to Console!");
+		std::wstring subtitles = (L"Player Position & Orient Printed to Console!");
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-		Logger::TypedLog(CHN_DEBUG, "Player Position: (%0.6f, %0.6f, %0.6f)\n", hkg_playerPosition[0], hkg_playerPosition[1], hkg_playerPosition[2]);
+		Logger::TypedLog(CHN_DEBUG, "Player Pos + Orient: <%0.6f %0.6f %0.6f> [%0.6f]\n", hkg_playerPosition[0], hkg_playerPosition[1], hkg_playerPosition[2], hkg_camOrient[0]);
 	}
 	if (RPCHandler::IsCoopOrSP == true) 
 	{
@@ -306,7 +307,6 @@ bool addBindToggles = 0;
 
 int RenderLoopStuff_Hacked()
 {
-	//Logger::TypedLog(CHN_DEBUG, "PRESSED THE BUTTONS BRO\n");
 	if (RPCHandler::Enabled) 
 	{
 		RPCHandler::DiscordCallbacks();
@@ -411,8 +411,32 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DLL, "Removing Menu Music...\n");
 		patchDWord((void*)0x00DD87FC, (uint32_t)&mus2xtbl);
 	}
+	// Sidoku tint desat because he keeps crying kek
+	if (GameConfig::GetValue("Graphics", "Tint", 0)) 
+	{
+		// HDR Tint Desat.
+
+		Logger::TypedLog(CHN_DLL, "Removing HDR Tint...\n");
+		patchNop((BYTE*)0x0051756A, 25); // nop normal tint
+
+	}
 
 #endif
+
+	if (GameConfig::GetValue("Debug", "DisableXInput", 0))
+	{
+		patchNop((BYTE*)0x00BF9F40, 7);
+		patchNop((BYTE*)0x00BF9F50, 7);
+		patchNop((BYTE*)0x00BFA090, 2);
+		patchNop((BYTE*)0x00BFA099, 5);
+		patchNop((BYTE*)0x00BFA0C8, 7);
+		patchNop((BYTE*)0x00C13A60, 7);
+		patchNop((BYTE*)0x00C13A70, 7);
+		patchNop((BYTE*)0x00C147D5, 5);
+		patchNop((BYTE*)0x00C147DC, 5);
+		patchNop((BYTE*)0x00C14A06, 5);
+		Logger::TypedLog(CHN_DEBUG, "XInput Disabled.\n");
+	}
 
 	if (GameConfig::GetValue("Gameplay", "FixUltrawideFOV", 1))
 	{
