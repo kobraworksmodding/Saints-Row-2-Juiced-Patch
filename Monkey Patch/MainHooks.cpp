@@ -141,17 +141,33 @@ void slewtest() {
 	float deltaTime = getDeltaTime();
 	float fovSpeed = 15.0f;
 	float& fov = *(float*)0x25F5BA8;
+	float& roll = *(float*)0x33DA350;
+
 
 	if (slew) {
+
 		slewleftover();
 
 		if (GetAsyncKeyState(VK_UP) & 0x8000) {
 			fov -= fovSpeed * deltaTime;
 			fov = max(fov, 10.0f);
 		}
+
 		if (GetAsyncKeyState(VK_DOWN) & 0x8000) {
 			fov += fovSpeed * deltaTime;
 			fov = min(fov, 120.0f);
+		}
+
+		if (GetAsyncKeyState(0x31) & 0x8000) { // number 1 key
+			roll = 1.0f;
+		}
+
+		else if (GetAsyncKeyState(0x33) & 0x8000) { // number 3 key
+			roll = -1.0f;
+		}
+
+		else {
+			roll = 0.0f;
 		}
 	}
 }
@@ -505,6 +521,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	{
 		Logger::TypedLog(CHN_DEBUG, "Adding Custom Key Toggles...\n");
 		addBindToggles = 1;
+		patchNop((BYTE*)0x0051FEB0, 7); // nop to prevent the game from locking the camera roll in slew
+		patchBytesM((BYTE*)0x00C01B52, (BYTE*)"\xD9\x1D\xF8\x2C\x7B\x02", 6); // slew roll patch, makes the game write to a random unallocated float instead to prevent issues
 		patchBytesM((BYTE*)0x0050124B, (BYTE*)"\xD9\x05\xA4\x7D\x52\x02", 6); // slew cam patch 1
 		patchBytesM((BYTE*)0x00501238, (BYTE*)"\xD9\x05\x97\x2C\x7B\x02", 6); // slew camera float patch 2 (needed as this float is broken on PC, it's supposed to change dynamically but it never does)
 		patchBytesM((BYTE*)0x00502A8F, (BYTE*)"\xBF\x02\x00\x00\x00", 5); // change pause type
