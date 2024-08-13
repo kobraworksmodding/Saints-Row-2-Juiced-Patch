@@ -126,8 +126,8 @@ void AspectRatioFix() {
 
 }
 void turningRadiusFix() {
-	patchBytesM((BYTE*)(0x00aa5648), (BYTE*)"\xDC\x0D\x80\x5D\x5F\02", 6); // Turning radius uses 4/3 float for some reason in it's math. we read elsewhere
-	patchDouble((BYTE*)0x025f5d80, defaultFOV);
+	patchBytesM((BYTE*)(0x00aa5648), (BYTE*)"\xDC\x0D\xEA\x05\x33\02", 6); // Turning radius uses 4/3 float for some reason in it's math. we read elsewhere
+	patchDouble((BYTE*)0x023305ea, defaultFOV);
 }
 float getDeltaTime() {
 	static DWORD lastTime = GetTickCount();
