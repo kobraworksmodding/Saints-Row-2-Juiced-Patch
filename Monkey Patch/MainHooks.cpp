@@ -103,8 +103,12 @@ void AspectRatioFix() {
 			//ARfov = 0;// stop this thread 
 
 			if (ARCutscene) {
-				const double currentCFOV = *(double*)0x00e5c3f0;
+				const double currentCFOV = *(double*)0x00e5c3f0; // default 57.2957795131, this is (180 / pi).
 				double correctCFOV = currentCFOV * ((double)currentAR / (double)a169);
+				if (correctCFOV > 125) {
+					correctCFOV = 125; // arbiratry number close to 32:9 CFOV, 
+					//this will stop most scenes from going upside down in 48:9, we need a beter address for cutscenes similiar to world FOV.
+				}
 				patchDouble((BYTE*)0x00e5c3f0, correctCFOV);
 				Logger::TypedLog(CHN_DEBUG, "Aspect Ratio Cutscenes (might break above 21:9) hack...\n");
 				ARCutscene = 0;
