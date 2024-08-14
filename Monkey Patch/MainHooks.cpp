@@ -535,8 +535,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((BYTE*)0x00773797, 5); // prevent the game from disabling/enabling the tint.
 		patchBytesM((BYTE*)0x0051A952, (BYTE*)"\xD9\x05\x7F\x2C\x7B\x02", 6); // new brightness address
 		patchBytesM((BYTE*)0x0051A997, (BYTE*)"\xD9\x05\x83\x2C\x7B\x02", 6); // new sat address patch
-		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // Hopefully make func skip all unneccesary code.
-		patchBytesM((BYTE*)0x005030AB, (BYTE*)"\xBE\x02\x00\x00\x00", 5); // change unpause type
+		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // new contr address patch
 		patchByte((BYTE*)0x00E9787F, 0x00); // force HDR off because it's 1 by default
 		patchNop((BYTE*)0x00773792, 5); // prevent the game from turning HDR on/off
 
