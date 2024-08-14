@@ -268,7 +268,7 @@ void cus_FrameToggles() {
 		subtitles += HUDTogg ? L" ON" : L" OFF";
 		subtitles += L"[/format]";
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-		*(BYTE*)(0x0252737C) = HUDTogg ? 0x1 : 0x0;
+		*(BYTE*)(0x0252737C) = HUDTogg ? 0x0 : 0x1; // why was it 0x1 : 0x0 previously? The game starts off with the HUD on and then you enable something that's already on
 
 	}
 
