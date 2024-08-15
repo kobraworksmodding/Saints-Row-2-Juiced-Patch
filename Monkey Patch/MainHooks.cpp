@@ -732,7 +732,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	{
 		Logger::TypedLog(CHN_DLL, "Skipping intros & legal disclaimers.\n");
 		patchNop((BYTE*)(0x005207B4), 6); // prevent intros from triggering
-		patchBytesM((BYTE*)0x0068C740, (BYTE*)"\x96\xC5\x68\x00", 4); // replace case 0 with case 3 to skip legal disclaimers
+		patchBytesM((BYTE*)0x0068C740, (BYTE*)"\x96\xC5\x68\x00", 4); // replace case 0 with case 4 to skip legal disclaimers
 	}
 
 	// Continue to the program's WinMain.
