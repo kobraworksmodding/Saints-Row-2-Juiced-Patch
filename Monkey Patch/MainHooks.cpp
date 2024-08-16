@@ -83,6 +83,12 @@ unpauseT unpause = (unpauseT)0x00503090;
 typedef int(__cdecl* slewleftoverT)();
 slewleftoverT slewleftover = (slewleftoverT)0x00501220;
 
+typedef bool(*isCoopT)();
+isCoopT isCoop = (isCoopT)0x007F7AD0;
+
+typedef void(__cdecl* CoopRemotePauseT)(char pause);
+CoopRemotePauseT CoopRemotePause = (CoopRemotePauseT)0x008CB140;
+
 bool slew = false;
 bool pausetest = false;
 bool ARfov = 0;
@@ -198,6 +204,43 @@ addsubs_t addsubs = (addsubs_t)0x6D9610;
 int addsubtitles(const wchar_t* subtitles, float delay, float duration, float whateverthefuck) { // Tervel W
 	int result = addsubs((int)subtitles, delay, duration, whateverthefuck);
 	return result;
+}
+
+void coopPauseLoop() {
+	bool CoopCheck = isCoop();
+	static bool PauseRestored = false;
+	BYTE* IsPaused = (BYTE*)(0x027B2CF6);
+	BYTE IsPausedOriginal = *(BYTE*)(0x02527C08);
+	BYTE IsPauseMenuOpen = *(BYTE*)(0x00EBE860);
+
+	float delay = 0.0f;
+	float duration = 1.5f;
+	float whateverthefuck = 0.0f;
+
+	if (GetAsyncKeyState('P') & 1) {
+
+		*(bool*)(0x252740E) = 1;
+
+		PauseRestored = !PauseRestored;
+
+		std::wstring subtitles = L"Pause Restored:[format][color:purple]";
+		subtitles += PauseRestored ? L" ON" : L" OFF";
+		subtitles += L"[/format]";
+		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
+
+		patchBytesM((BYTE*)0x00779C5E, PauseRestored ? (BYTE*)"\xE8\xDD\x14\x15\x00" : (BYTE*)"\x90\x90\x90\x90\x90", 5);
+
+		if (IsPauseMenuOpen == 20) {
+			CoopRemotePause(PauseRestored ? 1 : 0);
+		}
+	}
+
+	if (CoopCheck && !PauseRestored) {
+		*IsPaused = 0;
+	}
+	else if (!CoopCheck || PauseRestored) {
+		*IsPaused = IsPausedOriginal;
+	}
 }
 
 void cus_FrameToggles() {
@@ -321,6 +364,7 @@ RenderLoopStuff_Native* UpdateRenderLoopStuff = (RenderLoopStuff_Native*)(0x00C0
 
 bool fixFrametime = 0;
 bool addBindToggles = 0;
+bool coopPausePatch = 0;
 
 int RenderLoopStuff_Hacked()
 {
@@ -347,6 +391,8 @@ int RenderLoopStuff_Hacked()
 	if (ARfov)
 		AspectRatioFix();
 
+	if (coopPausePatch)
+		coopPauseLoop();
 
 	// Call original func
 	return UpdateRenderLoopStuff();
@@ -733,6 +779,17 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DLL, "Skipping intros & legal disclaimers.\n");
 		patchNop((BYTE*)(0x005207B4), 6); // prevent intros from triggering
 		patchBytesM((BYTE*)0x0068C740, (BYTE*)"\x96\xC5\x68\x00", 4); // replace case 0 with case 4 to skip legal disclaimers
+	}
+
+	if (GameConfig::GetValue("Gameplay", "coopPausePatch", 1)) // Tervel W streak
+	{
+		Logger::TypedLog(CHN_DEBUG, "Disabling CO-OP pause...\n");
+		coopPausePatch = 1;
+		patchNop((BYTE*)0x00779C5E, 5); // Prevent the game from pausing your co-op partner if you open the pause menu.
+		patchBytesM((BYTE*)0x0068CA79, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new pause check address
+		patchBytesM((BYTE*)0x00BF0A1B, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new particle pause check address
+		patchBytesM((BYTE*)0x00BDCFFD, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 2
+		patchBytesM((BYTE*)0x006B793F, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 3
 	}
 
 	// Continue to the program's WinMain.
