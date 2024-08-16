@@ -17,6 +17,24 @@ const char mus2xtbl[] = "music2.xtbl";
 const char ServerNameRL[] = "[SR2 RELOADED]";
 //char ServerNameJUI = "[JUICED]";
 
+bool IsKeyPressed(char key, short type) // USE THIS FROM NOW ON
+{
+
+	HWND curWin = GetForegroundWindow();
+
+	char title[128];
+
+	GetWindowTextA(curWin, title, sizeof(title));
+
+	if (strcmp(title, "Saints Row 2") == 0 || strcmp(title, "SR2 MP") == 0)
+	{
+		if (GetAsyncKeyState(key) & type)
+		{
+			return true;
+		}
+	}
+	return false;
+}
 
 BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 {
@@ -155,21 +173,21 @@ void slewtest() {
 
 		slewleftover();
 
-		if (GetAsyncKeyState(VK_UP) & 0x8000) {
+		if (IsKeyPressed(VK_UP, 0x8000)) {
 			fov -= fovSpeed * deltaTime;
 			fov = max(fov, 10.0f);
 		}
 
-		if (GetAsyncKeyState(VK_DOWN) & 0x8000) {
+		if (IsKeyPressed(VK_DOWN, 0x8000)) {
 			fov += fovSpeed * deltaTime;
 			fov = min(fov, 120.0f);
 		}
 
-		if (GetAsyncKeyState(0x31) & 0x8000) { // number 1 key
+		if (IsKeyPressed(0x31, 0x8000)) {
 			roll = 1.0f;
 		}
 
-		else if (GetAsyncKeyState(0x33) & 0x8000) { // number 3 key
+		else if (IsKeyPressed(0x33, 0x8000)) { // number 3 key
 			roll = -1.0f;
 		}
 
@@ -217,7 +235,7 @@ void coopPauseLoop() {
 	float duration = 1.5f;
 	float whateverthefuck = 0.0f;
 
-	if ((GetAsyncKeyState(VK_OEM_3) & 0x8000) && (GetAsyncKeyState('P') & 1)) {
+	if (IsKeyPressed('P', 1)) {
 
 		*(bool*)(0x252740E) = 1;
 
@@ -254,7 +272,7 @@ void cus_FrameToggles() {
 	static uint8_t ogAA;
 
 
-	if (GetAsyncKeyState(VK_F1) & 1) { // F1
+	if (IsKeyPressed(VK_F1, 1)) { // F1
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -274,7 +292,7 @@ void cus_FrameToggles() {
 		*(float*)(0xE98988) = uglyMode ? 400.0f : 20000.0f;
 	}
 
-	if (GetAsyncKeyState(VK_F4) & 1) { // F4
+	if (IsKeyPressed(VK_F4, 1)) { // F4
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -293,7 +311,7 @@ void cus_FrameToggles() {
 		}
 	}
 
-	if (GetAsyncKeyState(VK_F3) & 1) { // F3
+	if (IsKeyPressed(VK_F3, 1)) { // F3
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -306,7 +324,7 @@ void cus_FrameToggles() {
 
 	}
 
-	if (GetAsyncKeyState(VK_F2) & 1) { // F2
+	if (IsKeyPressed(VK_F2, 1)) { // F2
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -319,14 +337,14 @@ void cus_FrameToggles() {
 
 	}
 
-	if (GetAsyncKeyState(VK_F9) & 1) { // F9
+	if (IsKeyPressed(VK_F9, 1)) { // F9
 		FOVMultiplier += 0.1;
 		AspectRatioFix();
 		Logger::TypedLog(CHN_DEBUG, "+FOV Multiplier: %f,\n", FOVMultiplier);
 		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
 	}
 
-	if (GetAsyncKeyState(VK_F8) & 1) { // F8
+	if (IsKeyPressed(VK_F8, 1)) { // F8
 		FOVMultiplier -= 0.1;
 		AspectRatioFix();
 		Logger::TypedLog(CHN_DEBUG, "-FOV Multiplier: %f,\n", FOVMultiplier);
@@ -334,7 +352,7 @@ void cus_FrameToggles() {
 
 	}
 
-	if (GetAsyncKeyState(VK_F5) & 1) { // F5
+	if (IsKeyPressed(VK_F5, 1)) { // F5
 		FLOAT* hkg_playerPosition = (FLOAT*)0x00FA6DB0;
 		FLOAT* hkg_camOrient = (FLOAT*)0x025F5B5C; // ???? maybe
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
@@ -345,7 +363,7 @@ void cus_FrameToggles() {
 	}
 	if (RPCHandler::IsCoopOrSP == true) 
 	{
-		if (GetAsyncKeyState(VK_F6) & 1) {
+		if (IsKeyPressed(VK_F6, 1)) {
 			pausetest = !pausetest;
 
 			if (pausetest) {
