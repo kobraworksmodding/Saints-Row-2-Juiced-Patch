@@ -217,7 +217,7 @@ void coopPauseLoop() {
 	float duration = 1.5f;
 	float whateverthefuck = 0.0f;
 
-	if (GetAsyncKeyState('P') & 1) {
+	if ((GetAsyncKeyState(VK_OEM_3) & 0x8000) && (GetAsyncKeyState('P') & 1)) {
 
 		*(bool*)(0x252740E) = 1;
 
