@@ -17,6 +17,24 @@ const char mus2xtbl[] = "music2.xtbl";
 const char ServerNameRL[] = "[SR2 RELOADED]";
 //char ServerNameJUI = "[JUICED]";
 
+bool IsKeyPressed(char key, short type) // USE THIS FROM NOW ON
+{
+
+	HWND curWin = GetForegroundWindow();
+
+	char title[128];
+
+	GetWindowTextA(curWin, title, sizeof(title));
+
+	if (strcmp(title, "Saints Row 2") == 0 || strcmp(title, "SR2 MP") == 0)
+	{
+		if (GetAsyncKeyState(key) & type)
+		{
+			return true;
+		}
+	}
+	return false;
+}
 
 BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 {
@@ -83,6 +101,12 @@ unpauseT unpause = (unpauseT)0x00503090;
 typedef int(__cdecl* slewleftoverT)();
 slewleftoverT slewleftover = (slewleftoverT)0x00501220;
 
+typedef bool(*isCoopT)();
+isCoopT isCoop = (isCoopT)0x007F7AD0;
+
+typedef void(__cdecl* CoopRemotePauseT)(char pause);
+CoopRemotePauseT CoopRemotePause = (CoopRemotePauseT)0x008CB140;
+
 bool slew = false;
 bool pausetest = false;
 bool ARfov = 0;
@@ -103,8 +127,12 @@ void AspectRatioFix() {
 			//ARfov = 0;// stop this thread 
 
 			if (ARCutscene) {
-				const double currentCFOV = *(double*)0x00e5c3f0;
+				const double currentCFOV = *(double*)0x00e5c3f0; // default 57.2957795131, this is (180 / pi).
 				double correctCFOV = currentCFOV * ((double)currentAR / (double)a169);
+				if (correctCFOV > 125) {
+					correctCFOV = 125; // arbiratry number close to 32:9 CFOV, 
+					//this will stop most scenes from going upside down in 48:9, we need a beter address for cutscenes similiar to world FOV.
+				}
 				patchDouble((BYTE*)0x00e5c3f0, correctCFOV);
 				Logger::TypedLog(CHN_DEBUG, "Aspect Ratio Cutscenes (might break above 21:9) hack...\n");
 				ARCutscene = 0;
@@ -138,17 +166,33 @@ void slewtest() {
 	float deltaTime = getDeltaTime();
 	float fovSpeed = 15.0f;
 	float& fov = *(float*)0x25F5BA8;
+	float& roll = *(float*)0x33DA350;
+
 
 	if (slew) {
+
 		slewleftover();
 
-		if (GetAsyncKeyState(VK_UP) & 0x8000) {
+		if (IsKeyPressed(VK_UP, 0x8000)) {
 			fov -= fovSpeed * deltaTime;
 			fov = max(fov, 10.0f);
 		}
-		if (GetAsyncKeyState(VK_DOWN) & 0x8000) {
+
+		if (IsKeyPressed(VK_DOWN, 0x8000)) {
 			fov += fovSpeed * deltaTime;
 			fov = min(fov, 120.0f);
+		}
+
+		if (IsKeyPressed(0x31, 0x8000)) {
+			roll = 1.0f;
+		}
+
+		else if (IsKeyPressed(0x33, 0x8000)) { // number 3 key
+			roll = -1.0f;
+		}
+
+		else {
+			roll = 0.0f;
 		}
 	}
 }
@@ -180,6 +224,43 @@ int addsubtitles(const wchar_t* subtitles, float delay, float duration, float wh
 	return result;
 }
 
+void coopPauseLoop() {
+	bool CoopCheck = isCoop();
+	static bool PauseRestored = false;
+	BYTE* IsPaused = (BYTE*)(0x027B2CF6);
+	BYTE IsPausedOriginal = *(BYTE*)(0x02527C08);
+	BYTE IsPauseMenuOpen = *(BYTE*)(0x00EBE860);
+
+	float delay = 0.0f;
+	float duration = 1.5f;
+	float whateverthefuck = 0.0f;
+
+	if (IsKeyPressed('P', 1)) {
+
+		*(bool*)(0x252740E) = 1;
+
+		PauseRestored = !PauseRestored;
+
+		std::wstring subtitles = L"Pause Restored:[format][color:purple]";
+		subtitles += PauseRestored ? L" ON" : L" OFF";
+		subtitles += L"[/format]";
+		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
+
+		patchBytesM((BYTE*)0x00779C5E, PauseRestored ? (BYTE*)"\xE8\xDD\x14\x15\x00" : (BYTE*)"\x90\x90\x90\x90\x90", 5);
+
+		if (IsPauseMenuOpen == 20) {
+			CoopRemotePause(PauseRestored ? 1 : 0);
+		}
+	}
+
+	if (CoopCheck && !PauseRestored) {
+		*IsPaused = 0;
+	}
+	else if (!CoopCheck || PauseRestored) {
+		*IsPaused = IsPausedOriginal;
+	}
+}
+
 void cus_FrameToggles() {
 	float delay = 0.0f;
 	float duration = 1.5f;
@@ -191,7 +272,7 @@ void cus_FrameToggles() {
 	static uint8_t ogAA;
 
 
-	if (GetAsyncKeyState(VK_F1) & 1) { // F1
+	if (IsKeyPressed(VK_F1, 1)) { // F1
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -211,7 +292,7 @@ void cus_FrameToggles() {
 		*(float*)(0xE98988) = uglyMode ? 400.0f : 20000.0f;
 	}
 
-	if (GetAsyncKeyState(VK_F4) & 1) { // F4
+	if (IsKeyPressed(VK_F4, 1)) { // F4
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -230,7 +311,7 @@ void cus_FrameToggles() {
 		}
 	}
 
-	if (GetAsyncKeyState(VK_F3) & 1) { // F3
+	if (IsKeyPressed(VK_F3, 1)) { // F3
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -243,7 +324,7 @@ void cus_FrameToggles() {
 
 	}
 
-	if (GetAsyncKeyState(VK_F2) & 1) { // F2
+	if (IsKeyPressed(VK_F2, 1)) { // F2
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -252,18 +333,18 @@ void cus_FrameToggles() {
 		subtitles += HUDTogg ? L" ON" : L" OFF";
 		subtitles += L"[/format]";
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-		*(BYTE*)(0x0252737C) = HUDTogg ? 0x1 : 0x0;
+		*(BYTE*)(0x0252737C) = HUDTogg ? 0x0 : 0x1; // why was it 0x1 : 0x0 previously? The game starts off with the HUD on and then you enable something that's already on
 
 	}
 
-	if (GetAsyncKeyState(VK_F9) & 1) { // F9
+	if (IsKeyPressed(VK_F9, 1)) { // F9
 		FOVMultiplier += 0.1;
 		AspectRatioFix();
 		Logger::TypedLog(CHN_DEBUG, "+FOV Multiplier: %f,\n", FOVMultiplier);
 		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
 	}
 
-	if (GetAsyncKeyState(VK_F8) & 1) { // F8
+	if (IsKeyPressed(VK_F8, 1)) { // F8
 		FOVMultiplier -= 0.1;
 		AspectRatioFix();
 		Logger::TypedLog(CHN_DEBUG, "-FOV Multiplier: %f,\n", FOVMultiplier);
@@ -271,7 +352,7 @@ void cus_FrameToggles() {
 
 	}
 
-	if (GetAsyncKeyState(VK_F5) & 1) { // F5
+	if (IsKeyPressed(VK_F5, 1)) { // F5
 		FLOAT* hkg_playerPosition = (FLOAT*)0x00FA6DB0;
 		FLOAT* hkg_camOrient = (FLOAT*)0x025F5B5C; // ???? maybe
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
@@ -282,7 +363,7 @@ void cus_FrameToggles() {
 	}
 	if (RPCHandler::IsCoopOrSP == true) 
 	{
-		if (GetAsyncKeyState(VK_F6) & 1) {
+		if (IsKeyPressed(VK_F6, 1)) {
 			pausetest = !pausetest;
 
 			if (pausetest) {
@@ -301,6 +382,7 @@ RenderLoopStuff_Native* UpdateRenderLoopStuff = (RenderLoopStuff_Native*)(0x00C0
 
 bool fixFrametime = 0;
 bool addBindToggles = 0;
+bool coopPausePatch = 0;
 
 int RenderLoopStuff_Hacked()
 {
@@ -327,6 +409,8 @@ int RenderLoopStuff_Hacked()
 	if (ARfov)
 		AspectRatioFix();
 
+	if (coopPausePatch)
+		coopPauseLoop();
 
 	// Call original func
 	return UpdateRenderLoopStuff();
@@ -502,6 +586,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	{
 		Logger::TypedLog(CHN_DEBUG, "Adding Custom Key Toggles...\n");
 		addBindToggles = 1;
+		patchNop((BYTE*)0x0051FEB0, 7); // nop to prevent the game from locking the camera roll in slew
+		patchBytesM((BYTE*)0x00C01B52, (BYTE*)"\xD9\x1D\xF8\x2C\x7B\x02", 6); // slew roll patch, makes the game write to a random unallocated float instead to prevent issues
 		patchBytesM((BYTE*)0x0050124B, (BYTE*)"\xD9\x05\xA4\x7D\x52\x02", 6); // slew cam patch 1
 		patchBytesM((BYTE*)0x00501238, (BYTE*)"\xD9\x05\x97\x2C\x7B\x02", 6); // slew camera float patch 2 (needed as this float is broken on PC, it's supposed to change dynamically but it never does)
 		patchBytesM((BYTE*)0x00502A8F, (BYTE*)"\xBF\x02\x00\x00\x00", 5); // change pause type
@@ -517,8 +603,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((BYTE*)0x00773797, 5); // prevent the game from disabling/enabling the tint.
 		patchBytesM((BYTE*)0x0051A952, (BYTE*)"\xD9\x05\x7F\x2C\x7B\x02", 6); // new brightness address
 		patchBytesM((BYTE*)0x0051A997, (BYTE*)"\xD9\x05\x83\x2C\x7B\x02", 6); // new sat address patch
-		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // Hopefully make func skip all unneccesary code.
-		patchBytesM((BYTE*)0x005030AB, (BYTE*)"\xBE\x02\x00\x00\x00", 5); // change unpause type
+		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // new contr address patch
 		patchByte((BYTE*)0x00E9787F, 0x00); // force HDR off because it's 1 by default
 		patchNop((BYTE*)0x00773792, 5); // prevent the game from turning HDR on/off
 
@@ -705,6 +790,24 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	{
 		Logger::TypedLog(CHN_DLL, "Removing Black Bars.\n");
 		patchNop((BYTE*)(0x0075A265), 5);
+	}
+
+	if (GameConfig::GetValue("Gameplay", "SkipIntros", 0)) // can't stop Tervel won't stop Tervel
+	{
+		Logger::TypedLog(CHN_DLL, "Skipping intros & legal disclaimers.\n");
+		patchNop((BYTE*)(0x005207B4), 6); // prevent intros from triggering
+		patchBytesM((BYTE*)0x0068C740, (BYTE*)"\x96\xC5\x68\x00", 4); // replace case 0 with case 4 to skip legal disclaimers
+	}
+
+	if (GameConfig::GetValue("Gameplay", "coopPausePatch", 1)) // Tervel W streak
+	{
+		Logger::TypedLog(CHN_DEBUG, "Disabling CO-OP pause...\n");
+		coopPausePatch = 1;
+		patchNop((BYTE*)0x00779C5E, 5); // Prevent the game from pausing your co-op partner if you open the pause menu.
+		patchBytesM((BYTE*)0x0068CA79, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new pause check address
+		patchBytesM((BYTE*)0x00BF0A1B, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new particle pause check address
+		patchBytesM((BYTE*)0x00BDCFFD, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 2
+		patchBytesM((BYTE*)0x006B793F, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 3
 	}
 
 	// Continue to the program's WinMain.
