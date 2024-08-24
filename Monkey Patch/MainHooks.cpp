@@ -529,6 +529,12 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		ARCutscene = 1;
 	}
 
+	if (GameConfig::GetValue("Gameplay", "DisableCheatFlag", 0))
+	{
+		patchNop((BYTE*)0x00687e12, 6);
+		patchNop((BYTE*)0x00687e18, 6);
+	}
+
 	if (GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", 1.0)) // 1.0 isn't go anywhere.
 	{
 		FOVMultiplier = GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
