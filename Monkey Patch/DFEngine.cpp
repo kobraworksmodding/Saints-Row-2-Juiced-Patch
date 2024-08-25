@@ -9,8 +9,13 @@
 #include "iat_functions.h"
 #include "GameConfig.h"
 #include "LAAPatcher.h"
+#include <vector>
 
 static CDFEngine DFEngine;
+static CDFObjectInstance fake_CDFObject;
+
+static std::vector<std::wstring> find_billboards_list;
+static int number_of_billboard_files;
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -55,15 +60,15 @@ WinMain entry point.
     return TRUE;
 }
 
-CDFEngine *CreateDFEngine(void)
+CDFEngine* CreateDFEngine(void)
 {
-	// PrintLog->PrintSys("Calling CreateDFEngine.\n");	
 	HMODULE dll_loaded;
 	typedef CDFEngine* (__stdcall* CreateDFEngine_type)();
 	CreateDFEngine_type redirect_CreateDFEngine;
+	Logger::TypedLog(CHN_MOD, "Calling CreateDFEngine.\n");
 
 
-	dll_loaded = LoadLibraryA("pass_DFEngine.dll");
+	/*dll_loaded = LoadLibraryA("pass_DFEngine.dll");
 
 	if (dll_loaded)
 	{
@@ -76,15 +81,108 @@ CDFEngine *CreateDFEngine(void)
 		}
 		else
 			Logger::TypedLog(CHN_DLL, "Passthrough failed. Using fake DFEngine.\n");
-	}
+	}*/
+
+	set_up_billboard_stuff();
 
 	return(&DFEngine);
+}
+
+void set_up_billboard_stuff()
+{
+	HANDLE find_handle;
+	WIN32_FIND_DATAW find_file_data;
+
+	wchar_t game_directory[MAX_PATH];
+	wchar_t search_path[MAX_PATH];
+	int path_size;
+
+	//PrintLog->PrintSys("Setting up billboards.\n");
+
+	GetCurrentDirectoryW(MAX_PATH, game_directory);
+	path_size = wcslen(game_directory);
+
+	wcscpy(search_path, game_directory);
+	wcscpy(&search_path[path_size], L"\\billboards\\*.*");
+
+	memset(&find_file_data, 0, sizeof(find_file_data));
+	find_handle = FindFirstFileW(search_path, &find_file_data);
+
+	if (find_handle == INVALID_HANDLE_VALUE)
+	{
+		number_of_billboard_files = 0;
+	}
+	else
+	{
+		while (FindNextFileW(find_handle, &find_file_data))
+		{
+			if (wcslen(find_file_data.cFileName) > 3)
+			{
+				find_billboards_list.push_back(find_file_data.cFileName);
+			}
+		}
+		number_of_billboard_files = find_billboards_list.size();
+	}
+
+	Logger::TypedLog(CHN_MOD, "Found %i billboard files\n", number_of_billboard_files);
+
+	FindClose(find_handle);
+	return;
+}
+
+int	CDFObjectInstance::GetAbsoluteFilename(void* that, wchar_t* filenamepath_out, int param_3)
+{
+	wchar_t* default_ad_dir = L"\\data\\DFEngine\\cache\\data\\Default\\Default.tga";
+
+	wchar_t game_directory[MAX_PATH];
+	int path_size;
+
+	//PrintLog->PrintSys("CDFObjectInstance::GetAbsoluteFilename\n");
+
+	GetCurrentDirectoryW(MAX_PATH, game_directory);
+	path_size = wcslen(game_directory);
+
+	if (number_of_billboard_files == 0)
+	{
+		wcscpy(filenamepath_out, game_directory);
+		wcscpy(&filenamepath_out[path_size], default_ad_dir);
+		Logger::TypedLog(CHN_DLL, "Billboard directory not found or empty. Using default billboard.\n");
+		//PrintLog->PrintSys("CDFObjectInstance::GetAbsoluteFilename(%S)\n",filenamepath_out);
+	}
+	else
+	{
+		//PrintLog->PrintSys("Number of files: %i",number_of_billboard_files);
+		wcscpy(filenamepath_out, game_directory);
+		wcscpy(&filenamepath_out[path_size], L"\\billboards\\");
+		wcscpy(&filenamepath_out[path_size + 12], find_billboards_list[rand() % number_of_billboard_files].c_str());
+
+		//PrintLog->PrintSys("CDFObjectInstance::GetAbsoluteFilename(%S)\n",filenamepath_out);
+	}
+	return 0;
+}
+
+int	CDFObjectInstance::UpdateOnEvent(void* that, int param_2, float* param_3)
+{
+	//PrintLog->PrintSys("CDFObjectInstance::UpdateOnEvent\n");
+	return 0;
+}
+
+int	CDFObjectInstance::SetLocalBoundingBox(void* that, float* param_2, float* param_3)
+{
+	//PrintLog->PrintSys("CDFObjectInstance::SetLocalBoundingBox\n");
+	return 0;
+}
+
+float* CDFObjectInstance::SetLocalLookAt(void* that, float* param_2)
+{
+	//PrintLog->PrintSys("CDFObjectInstance::SteLocalLookAt\n");
+	return param_2;
 }
 
 int	CDFEngine::Start(void* param_1, int version, wchar_t** data_directory)
 {
 	//PrintLog->PrintSys("DFEngine::Start(%x, %S)\n", version, *data_directory);
-	return -1;
+	return 0;
 }
 
 int CDFEngine::StartZone(void* param_1, char* ZoneName)
@@ -93,9 +191,10 @@ int CDFEngine::StartZone(void* param_1, char* ZoneName)
 	return 0;
 }
 
-int	CDFEngine::CreateDFObject(void* param_1, char* ObjectIdent, void* param_3)
+int	CDFEngine::CreateDFObject(void* param_1, char* ObjectIdent, CDFObjectInstance** param_3)
 {
 	//PrintLog->PrintSys("DFEngine::CreateDFObject(%s, %x)\n", ObjectIdent, param_3);
+	*param_3 = &fake_CDFObject;
 	return 0;
 }
 
