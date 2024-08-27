@@ -112,6 +112,54 @@ bool pausetest = false;
 bool ARfov = 0;
 bool ARCutscene = 0;
 double FOVMultiplier = 1;
+bool betterTags = 0;
+
+
+void RawTags() {
+	float XDelta = *(float*)0x2348534;
+	float yDelta = *(float*)0x2348538;
+	//float mouseSensY = *(float*)0x25F5C9C;
+	//float mouseSensX = *(float*)0x025F5C98;
+	float LeftStickX = *(float*)0x23485F4;
+	float LeftStickY = *(float*)0x23485F8;
+	float RightStickX = *(float*)0x02348534;
+	float RightStickY = *(float*)0x02348538;
+	uint16_t yTag = *(uint16_t*)0x027A3F6C;
+	uint16_t xTag = *(uint16_t*)0x027A3F68;
+
+	int16_t newYTag = yTag;
+	int16_t newXTag = xTag;
+	float divisor;
+	if (RightStickX || RightStickY > 0.f) {
+		divisor = 29.f;
+	}
+	else {
+		divisor = 4.f;
+	}
+	newYTag -= static_cast<int16_t>(((yDelta / divisor) + (LeftStickY / 29.f)) * 128.0f);
+
+	newXTag += static_cast<int16_t>(((XDelta / divisor) + (LeftStickX / 29.f)) * 64.0f);
+
+
+	// Ensure yTag stays within the range otherwise it'll break
+	if (newYTag > 255) {
+		newYTag = 255;
+	}
+	else if (newYTag < 0) {
+		newYTag = 0;
+	}
+
+	// Ensure xTag stays within the range otherwise it'll break
+	if (newXTag > 511) {
+		newXTag = 511;
+	}
+	else if (newXTag < 0) {
+		newXTag = 0;
+	}
+
+	*(uint16_t*)0x027A3F6C = static_cast<uint16_t>(newYTag);
+	*(uint16_t*)0x027A3F68 = static_cast<uint16_t>(newXTag);
+}
 
 void AspectRatioFix() {
 	float currentAR = *(float*)0x022FD8EC;
@@ -411,6 +459,9 @@ int RenderLoopStuff_Hacked()
 
 	if (coopPausePatch)
 		coopPauseLoop();
+
+	if (*(uint8_t*)(0x00E87B4F) == 0 && betterTags)
+		RawTags();
 
 	// Call original func
 	return UpdateRenderLoopStuff();
@@ -814,6 +865,14 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x00BF0A1B, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new particle pause check address
 		patchBytesM((BYTE*)0x00BDCFFD, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 2
 		patchBytesM((BYTE*)0x006B793F, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 3
+	}
+
+	if (GameConfig::GetValue("Gameplay", "TagsHook", 1))
+	{
+		betterTags = 1;
+		patchNop((BYTE*)0x006221AA, 6); // Original stores for Tags, X and Y.
+		patchNop((BYTE*)0x00622189, 6);
+		Logger::TypedLog(CHN_DEBUG, "Replaced Tags controls with BetterTags\n");
 	}
 
 	// Continue to the program's WinMain.
