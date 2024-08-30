@@ -15,6 +15,7 @@
 char* executableDirectory[MAX_PATH];
 const char mus2xtbl[] = "music2.xtbl";
 const char ServerNameRL[] = "[SR2 RELOADED]";
+float AOQuality = 0.05;
 //char ServerNameJUI = "[JUICED]";
 
 bool IsKeyPressed(char key, short type) // USE THIS FROM NOW ON
@@ -49,7 +50,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 		*(exe + 1) = '\0';
 	}
     #if !RELOADED
-	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.1.1 ---\n");
+	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.2.0 ---\n");
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
     Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
 	Logger::TypedLog(CHN_DLL, "--- Based on MonkeyPatch by scanti, additional fixes by Uzis, Tervel, jason098 and Clippy95. ---\n");
@@ -279,7 +280,7 @@ void coopPauseLoop() {
 	BYTE IsPausedOriginal = *(BYTE*)(0x02527C08);
 	BYTE IsPauseMenuOpen = *(BYTE*)(0x00EBE860);
 
-	float delay = 0.0f;
+	/*float delay = 0.0f;
 	float duration = 1.5f;
 	float whateverthefuck = 0.0f;
 
@@ -299,7 +300,7 @@ void coopPauseLoop() {
 		if (IsPauseMenuOpen == 20) {
 			CoopRemotePause(PauseRestored ? 1 : 0);
 		}
-	}
+	}*/
 
 	if (CoopCheck && !PauseRestored) {
 		*IsPaused = 0;
@@ -761,14 +762,12 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((BYTE*)0x00E0C62C, 9); // nop aVignette
 	}
 
-	if (GameConfig::GetValue("Graphics", "BetterAmbientOcclusion", 1)) 
+	if (GameConfig::GetValue("Graphics", "BetterAmbientOcclusion", 0)) 
 	{
 		Logger::TypedLog(CHN_MOD, "Making AO Better...\n");
-		patchFloat((BYTE*)0x00E9898C, 0.05);
-
+		patchFloat((BYTE*)0x00E9898C, (float)AOQuality);
 	}
-
-	if (GameConfig::GetValue("Graphics", "DisableScreenBlur", 1))
+	if (GameConfig::GetValue("Graphics", "DisableScreenBlur", 0))
 	{
 		Logger::TypedLog(CHN_MOD, "Disabling Screen Blur...\n");
 		patchByte((BYTE*)0x02527297, 0x0);
@@ -856,7 +855,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x0068C740, (BYTE*)"\x96\xC5\x68\x00", 4); // replace case 0 with case 4 to skip legal disclaimers
 	}
 
-	if (GameConfig::GetValue("Gameplay", "coopPausePatch", 1)) // Tervel W streak
+	// Disabled by default FOR NOW, too many issues arise when dealing with missions. Otherwise it works beautifully in freeroam.
+	if (GameConfig::GetValue("Gameplay", "coopPausePatch", 0)) // Tervel W streak
 	{
 		Logger::TypedLog(CHN_DEBUG, "Disabling CO-OP pause...\n");
 		coopPausePatch = 1;
