@@ -276,7 +276,7 @@ int addsubtitles(const wchar_t* subtitles, float delay, float duration, float wh
 void coopPauseLoop() {
 	bool CoopCheck = isCoop();
 	static bool PauseRestored = false;
-	BYTE IsPaused = *(BYTE*)(0x027B2CF6);
+	BYTE* IsPaused = (BYTE*)(0x027B2CF6);
 	BYTE IsPausedOriginal = *(BYTE*)(0x02527C08);
 	BYTE IsPauseMenuOpen = *(BYTE*)(0x00EBE860);
 	BYTE ThankYouVolition = *(BYTE*)(0x00E8CF80); // Some UI mode shit, hopefully can be used to check if you passed/failed a mission to restore OG pause
@@ -307,10 +307,10 @@ void coopPauseLoop() {
 	patchBytesM((BYTE*)0x005B8246, CoopCheck ? (BYTE*)"\x90\x90\x90\x90\x90" : (BYTE*)"\xE8\x85\xBE\x19\x00", 5);
 
 	if (CoopCheck && !PauseRestored && ThankYouVolition != 15) {
-		IsPaused = 0;
+		*IsPaused = 0;
 	}
 	else if (!CoopCheck || PauseRestored || ThankYouVolition == 15) {
-		IsPaused = IsPausedOriginal;
+		*IsPaused = IsPausedOriginal;
 	}
 }
 
