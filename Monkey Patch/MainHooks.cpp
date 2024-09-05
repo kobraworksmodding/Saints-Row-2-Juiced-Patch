@@ -306,6 +306,9 @@ void coopPauseLoop() {
 	// Either nop or restore Zombie Uprising pausing based on whether you're in SP or co-op
 	patchBytesM((BYTE*)0x005B8246, CoopCheck ? (BYTE*)"\x90\x90\x90\x90\x90" : (BYTE*)"\xE8\x85\xBE\x19\x00", 5);
 
+	if (CoopCheck) {
+		patchBytesM((BYTE*)0x00520531, IsPausedOriginal ? (BYTE*)"\x90\x90\x90\x90\x90" : (BYTE*)"\xE8\x2A\xE2\xFD\xFF", 5);
+	}
 	if (CoopCheck && !PauseRestored && ThankYouVolition != 15) {
 		*IsPaused = 0;
 	}
@@ -860,7 +863,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 
 	// Disabled by default FOR NOW, too many issues arise when dealing with missions. Otherwise it works beautifully in freeroam.
-	if (GameConfig::GetValue("Gameplay", "coopPausePatch", 0)) // Tervel W streak
+	if (GameConfig::GetValue("Gameplay", "coopPausePatch", 1)) // Tervel W streak
 	{
 		Logger::TypedLog(CHN_DEBUG, "Disabling CO-OP pause...\n");
 		coopPausePatch = 1;
