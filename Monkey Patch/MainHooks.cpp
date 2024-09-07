@@ -108,6 +108,9 @@ isCoopT isCoop = (isCoopT)0x007F7AD0;
 typedef void(__cdecl* CoopRemotePauseT)(char pause);
 CoopRemotePauseT CoopRemotePause = (CoopRemotePauseT)0x008CB140;
 
+typedef char(__cdecl* LoadContinueT)();
+LoadContinueT LoadContinue = (LoadContinueT)0x7790E0;
+
 bool slew = false;
 bool pausetest = false;
 bool ARfov = 0;
@@ -317,6 +320,25 @@ void coopPauseLoop() {
 	}
 }
 
+void SkipMainMenu() {
+	static bool ShouldSkip = true;
+	static DWORD lastTick = 0;
+
+	if (ShouldSkip) {
+		DWORD currentTick = GetTickCount();
+
+		if (lastTick == 0) {
+			lastTick = currentTick; 
+		}
+
+		if (currentTick - lastTick >= 1) { // very small delay, otherwise it black screens the game in juiced?? worked fine in my code w/o that
+			LoadContinue(); // calling the function twice because the game is retarded ??? (doesn't work otherwise)
+			LoadContinue();
+			ShouldSkip = false;
+		}
+	}
+}
+
 void cus_FrameToggles() {
 	float delay = 0.0f;
 	float duration = 1.5f;
@@ -439,6 +461,7 @@ RenderLoopStuff_Native* UpdateRenderLoopStuff = (RenderLoopStuff_Native*)(0x00C0
 bool fixFrametime = 0;
 bool addBindToggles = 0;
 bool coopPausePatch = 0;
+bool LoadLastSave = 0;
 
 int RenderLoopStuff_Hacked()
 {
@@ -467,6 +490,9 @@ int RenderLoopStuff_Hacked()
 
 	if (coopPausePatch)
 		coopPauseLoop();
+
+	if (LoadLastSave)
+		SkipMainMenu();
 
 	if (*(uint8_t*)(0x00E87B4F) == 0 && betterTags)
 		RawTags();
@@ -878,6 +904,12 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x00BF0A1B, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new particle pause check address
 		patchBytesM((BYTE*)0x00BDCFFD, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 2
 		patchBytesM((BYTE*)0x006B793F, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 3
+	}
+
+	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 1)) // great for testing stuff faster and also for an optional feature in gen
+	{
+		LoadLastSave = 1;
+		Logger::TypedLog(CHN_DEBUG, "Skipping main menu...\n");
 	}
 
 	if (GameConfig::GetValue("Gameplay", "TagsHook", 1))
