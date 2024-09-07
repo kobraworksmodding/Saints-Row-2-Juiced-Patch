@@ -50,7 +50,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 		*(exe + 1) = '\0';
 	}
     #if !RELOADED
-	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.2.0 ---\n");
+	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.2.0 BETA ---\n");
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
     Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
 	Logger::TypedLog(CHN_DLL, "--- Based on MonkeyPatch by scanti, additional fixes by Uzis, Tervel, jason098 and Clippy95. ---\n");
@@ -497,11 +497,6 @@ void SetupBetterWindowed()
 	patchDWord((void*)(0x00BFA35A + 4), windowed_style);
 }
 
-char* lobby_list[2] = {
-		const_cast<char*>("sr2_mp_gb_frat01"),
-		const_cast<char*>("sr2_mp_lobby")
-};
-
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	ErrorManager::Initialize();
@@ -561,6 +556,17 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	}
 
+	if (GameConfig::GetValue("Debug", "GangstaBrawlMemoryExtender", 1)) // Replaces GB MemLimits with SA.
+	{
+		Logger::TypedLog(CHN_DEBUG, "Patching GangstaBrawlMemoryExtender...\n");
+		patchBytesM((BYTE*)0x00835879, (BYTE*)"\x6A\x02", 2); // client
+		patchBytesM((BYTE*)0x00833A52, (BYTE*)"\x6A\x02", 2); // host
+		//patchBytesM((BYTE*)0x0082F474, (BYTE*)"\x6A\x02", 2);
+		//patchBytesM((BYTE*)0x0082642E, (BYTE*)"\x6A\x02", 2);
+		//patchBytesM((BYTE*)0x007F76EE, (BYTE*)"\x6A\x02", 2);
+
+	}
+
 #endif
 
 	if (GameConfig::GetValue("Debug", "DisableXInput", 0))
@@ -616,18 +622,18 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 		Logger::TypedLog(CHN_DEBUG, "Lobby Map 1 Found: %s\n", newLobby1);
 		Logger::TypedLog(CHN_DEBUG, "Lobby Map 2 Found: %s\n", newLobby2);
-		lobby_list[0] = newLobby1;
-		lobby_list[1] = newLobby2;
+		RPCHandler::lobby_list[0] = newLobby1;
+		RPCHandler::lobby_list[1] = newLobby2;
 
-		patchDWord((void*)(0x0073EABA + 3), (int)&lobby_list);
-		patchDWord((void*)(0x0073EA0B + 3), (int)&lobby_list);
-		patchDWord((void*)(0x007E131A + 3), (int)&lobby_list);
-		patchDWord((void*)(0x007E161E + 3), (int)&lobby_list);
-		patchDWord((void*)(0x007E7670 + 3), (int)&lobby_list);
-		patchDWord((void*)(0x007E774F + 3), (int)&lobby_list);
-		patchDWord((void*)(0x0082F2E9 + 3), (int)&lobby_list);
-		patchDWord((void*)(0x0082F4CC + 3), (int)&lobby_list);
-		patchDWord((void*)(0x00842497 + 3), (int)&lobby_list);
+		patchDWord((void*)(0x0073EABA + 3), (int)&RPCHandler::lobby_list);
+		patchDWord((void*)(0x0073EA0B + 3), (int)&RPCHandler::lobby_list);
+		patchDWord((void*)(0x007E131A + 3), (int)&RPCHandler::lobby_list);
+		patchDWord((void*)(0x007E161E + 3), (int)&RPCHandler::lobby_list);
+		patchDWord((void*)(0x007E7670 + 3), (int)&RPCHandler::lobby_list);
+		patchDWord((void*)(0x007E774F + 3), (int)&RPCHandler::lobby_list);
+		patchDWord((void*)(0x0082F2E9 + 3), (int)&RPCHandler::lobby_list);
+		patchDWord((void*)(0x0082F4CC + 3), (int)&RPCHandler::lobby_list);
+		patchDWord((void*)(0x00842497 + 3), (int)&RPCHandler::lobby_list);
 	}
 
 	if (GameConfig::GetValue("Multiplayer", "FreeMPClothing", 1))

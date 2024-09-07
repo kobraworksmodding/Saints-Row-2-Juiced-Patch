@@ -661,4 +661,5 @@ namespace RPCHandler {
     extern void UpdateNoDiscParams();
     extern bool IsCoopOrSP;
     extern bool ShouldFixStereo;
+    extern char* lobby_list[2];
 }

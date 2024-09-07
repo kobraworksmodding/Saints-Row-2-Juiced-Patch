@@ -164,6 +164,12 @@ namespace RPCHandler {
 		}
 	}
 
+	char* lobby_list[2] = {
+		const_cast<char*>("sr2_mp_gb_frat01"),
+		const_cast<char*>("sr2_mp_lobby")
+	};
+
+
 	// Updates state info for discord.
 	void UpdateDiscordParams() { 
 		BYTE CurrentGamemode = *(BYTE*)0x00E8B210; // Parses the current gamemode from EXE
@@ -192,6 +198,7 @@ namespace RPCHandler {
 		DWORD currentTick = GetTickCount();
 		if (currentTick - lastTick >= 600) {
 			lastTick = currentTick;
+
 			if (!LobbyCheck == 0x0 && CurrentGamemode == 0xFF) // This should be CO-OP / Singleplayer
 			{
 				if (IsInCutscene == 1) 
