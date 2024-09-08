@@ -332,9 +332,7 @@ void SkipMainMenu() {
 		}
 
 		if (currentTick - lastTick >= 1) { // very small delay, otherwise it black screens the game in juiced?? worked fine in my code w/o that
-			*(BYTE*)0x025283BC = 1;
-			*(BYTE*)0x025283BD = 1;
-			*(BYTE*)0x025283BE = 1;
+			memset((void*)0x025283BC, 1, 3);
 			LoadContinue();
 			ShouldSkip = false;
 		}
