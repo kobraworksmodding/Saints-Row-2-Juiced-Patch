@@ -146,7 +146,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <OutputFile>$(OutDir)DFEngine.dll</OutputFile>
+      <OutputFile>$(OutDir)RLEngine.dll</OutputFile>
       <Version>0.1</Version>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -155,7 +155,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEngine.dll"
+      <Command>copy /Y "$(TargetDir)RLEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\RLEngine.dll"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
