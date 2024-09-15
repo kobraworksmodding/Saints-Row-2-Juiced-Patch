@@ -703,6 +703,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // new contr address patch
 		patchByte((BYTE*)0x00E9787F, 0x00); // force HDR off because it's 1 by default
 		patchNop((BYTE*)0x00773792, 5); // prevent the game from turning HDR on/off
+		patchNop((BYTE*)0x00533C25, 5); // disable sky refl (prevent the absurd blue tint on reflections)
 
 		patchFloat((BYTE*)0x027B2C7F, 1.3f); //Bright
 		patchFloat((BYTE*)0x027B2C83, 0.8f); //Sat
