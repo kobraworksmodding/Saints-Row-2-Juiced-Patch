@@ -22,6 +22,7 @@
 #define CHN_NET                         "Net"
 #define CHN_LUA                         "LUA"
 #define CHN_LAA                         "LAA"
+#define CHN_RL                         "RELOADED"
 
 namespace Logger
 {
