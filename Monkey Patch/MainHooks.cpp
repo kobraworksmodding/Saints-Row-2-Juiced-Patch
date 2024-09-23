@@ -805,6 +805,13 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchFloat((BYTE*)0x00E989A4, 0.0f);
 	}
 
+	if (GameConfig::GetValue("Graphics", "DisableFog", 1)) // Option for the 2 psychopaths that think no fog looks better.
+	{
+		patchBytesM((BYTE*)0x0025273BE, (BYTE*)"\x01", 1); // leftover debug bool for being able to overwrite fog values
+		patchFloat((BYTE*)0x00E989A0, 0.0f);
+		patchFloat((BYTE*)0x00E989A4, 0.0f);
+	}
+
 	if (GameConfig::GetValue("Debug", "LUADebugPrintF", 1)) // Rewrites the DebugPrint LUA function to our own.
 	{
 		Logger::TypedLog(CHN_DEBUG, "Re-writing Debug_Print...\n");
