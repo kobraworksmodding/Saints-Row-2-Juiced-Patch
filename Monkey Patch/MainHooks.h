@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafx.h"
 
+#define CLANTAG_MAX 5
 static int *pargc=(int*)0x00ee07c0;
 static char ***pargv=(char***)0x00ee07c4;
 

@@ -14,9 +14,11 @@
 
 char* executableDirectory[MAX_PATH];
 const char mus2xtbl[] = "music2.xtbl";
-const char ServerNameRL[] = "[SR2 RELOADED]";
+const char ServerNameRL[] = "[SR2 RELOADED SERVER]";
+const char ServerNameSR2[] = "[Saints Row 2]";
 float AOQuality = 0.05;
-//char ServerNameJUI = "[JUICED]";
+int ResolutionX = 1920;
+int ResolutionY = 1080;
 
 bool IsKeyPressed(char key, short type) // USE THIS FROM NOW ON
 {
@@ -50,7 +52,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 		*(exe + 1) = '\0';
 	}
     #if !RELOADED
-	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.2.0 BETA ---\n");
+	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.3.0 BETA ---\n");
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
     Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
 	Logger::TypedLog(CHN_DLL, "--- Based on MonkeyPatch by scanti, additional fixes by Uzis, Tervel, jason098 and Clippy95. ---\n");
@@ -530,8 +532,19 @@ int RenderLoopStuff_Hacked()
 void SetDefaultGameSettings()
 {
 	patchBytesM((BYTE*)0x00774126, (BYTE*)"\xC6\x05\xAC\xA9\xF7\x01\x00", 7); // Force game into windowed on default settings.
-	//patchDWord((void*)(0x00753544 + 4), *(const char*)ServerNameRL);
-	//*(CHAR**)0x0212AA08 = (char*)"[SR2 RELOADED]";
+#if RELOADED
+	char* GameName = reinterpret_cast<char*>(0x0212AA08);
+	strcpy(GameName, (const char*)ServerNameRL);
+#else
+	char* GameName = reinterpret_cast<char*>(0x0212AA08);
+	strcpy(GameName, (const char*)ServerNameSR2);
+#endif
+
+	// -- RAHHHHHHH I HATE RESOLUTION STUFF --
+	/* patchNop((BYTE*)0x00775F24, 7);
+	patchNop((BYTE*)0x00775F2A, 7);
+	patchDWord((void*)(0x007EAEC3 + 2), (uint32_t)ResolutionY);
+	patchDWord((void*)(0x007EAEB4 + 2), (uint32_t)ResolutionX); */
 }
 
 void SetupBorderless()
@@ -586,31 +599,48 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	PatchOpenSpy();
 
 #if RELOADED
+
 	// patch in some stuff at run time, maybe even add exclusive reloaded toggles.
-	if (GameConfig::GetValue("Debug", "ReloadedRuntimeFiles", 1))
-	{
-		patchBytesM((BYTE*)0x00E06CC4, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload.tbl
-		patchBytesM((BYTE*)0x00E06CD0, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload_anims.tbl
-	}
+	patchBytesM((BYTE*)0x00E06CC4, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload.tbl
+	patchBytesM((BYTE*)0x00E06CD0, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload_anims.tbl
+
 	// patch music2.xtbl
 	if (GameConfig::GetValue("Audio", "NoMenuMusic", 0))
 	{
-		Logger::TypedLog(CHN_DLL, "Removing Menu Music...\n");
+		Logger::TypedLog(CHN_RL, "Removing Menu Music...\n");
 		patchDWord((void*)0x00DD87FC, (uint32_t)&mus2xtbl);
 	}
+
+	// Adds Clan tag to name
+	if (GameConfig::GetValue("Multiplayer", "UseClanTag", 1))
+	{
+		char ClanName[MAX_PATH];
+		Logger::TypedLog(CHN_RL, "Adding Clan to Name...\n");
+
+		GameConfig::GetStringValue("Multiplayer", "ClanTag", "SR2RL", ClanName);
+
+		std::string s(ClanName, ClanName + 5);
+		char EndClanName[MAX_PATH];
+		strcpy(EndClanName, s.c_str());
+
+		Logger::TypedLog(CHN_RL, "You Joined Clan: %s\n", EndClanName);
+		RPCHandler::ClanTag[1] = EndClanName;
+		RPCHandler::UsingClanTag = 1;
+	}
+
 	// Sidoku tint desat because he keeps crying kek
 	if (GameConfig::GetValue("Graphics", "Tint", 0)) 
 	{
 		// HDR Tint Desat.
 
-		Logger::TypedLog(CHN_DLL, "Removing HDR Tint...\n");
+		Logger::TypedLog(CHN_RL, "Removing HDR Tint...\n");
 		patchNop((BYTE*)0x0051756A, 25); // nop normal tint
 
 	}
 
 	if (GameConfig::GetValue("Debug", "GangstaBrawlMemoryExtender", 1)) // Replaces GB MemLimits with SA.
 	{
-		Logger::TypedLog(CHN_DEBUG, "Patching GangstaBrawlMemoryExtender...\n");
+		Logger::TypedLog(CHN_RL, "Patching GangstaBrawlMemoryExtender...\n");
 		patchBytesM((BYTE*)0x00835879, (BYTE*)"\x6A\x02", 2); // client
 		patchBytesM((BYTE*)0x00833A52, (BYTE*)"\x6A\x02", 2); // host
 		//patchBytesM((BYTE*)0x0082F474, (BYTE*)"\x6A\x02", 2);
@@ -619,7 +649,39 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	}
 
+	Logger::TypedLog(CHN_RL, "Patching In Better Movement Behavior...\n");
+	patchNop((BYTE*)0x00E9216C, 3); // Jog180
+	patchNop((BYTE*)0x00E9213C, 3); // Stand180
+	patchNop((BYTE*)0x00E92130, 3); // WalkStop
+	patchNop((BYTE*)0x00E9237C, 3); // StandToRun
+	patchNop((BYTE*)0x00E92370, 3); // RunToStop
+	patchNop((BYTE*)0x00E92364, 3); // WalkToStop
+	patchNop((BYTE*)0x00E92394, 3); // WalkToStand
+	patchNop((BYTE*)0x00E92388, 3); // StandToWalk
+
+#else
+
+	if (GameConfig::GetValue("Gameplay", "BetterMovementBehaviour", 0))
+	{
+		// Majority of the SR2 movement sluggishness is due to the fact that certain walking anims add an
+		// increased latency to walking generally and 180 anims tend to play constantly when trying to strafe, 180 anims didnt exist in SR1.
+		Logger::TypedLog(CHN_MOD, "Patching In Better Movement Behavior...\n");
+		patchNop((BYTE*)0x00E9216C, 3); // Jog180
+		patchNop((BYTE*)0x00E9213C, 3); // Stand180
+		patchNop((BYTE*)0x00E92130, 3); // WalkStop
+		patchNop((BYTE*)0x00E9237C, 3); // StandToRun
+		patchNop((BYTE*)0x00E92370, 3); // RunToStop
+		patchNop((BYTE*)0x00E92364, 3); // WalkToStop
+		patchNop((BYTE*)0x00E92394, 3); // WalkToStand
+		patchNop((BYTE*)0x00E92388, 3); // StandToWalk
+	}
+
 #endif
+
+	//Logger::TypedLog(CHN_DEBUG, "Increasing Customization Memory...\n");
+    // Hopefully increase customization_items.xtbl limit from 1050 items to 1150
+    //patchBytesM((BYTE*)0x007BBAC6 + 1, (BYTE*)"\x7E\x04", 2);
+    //patchBytesM((BYTE*)0x007BCC14 + 6, (BYTE*)"\x7E\x04", 2);
 
 	if (GameConfig::GetValue("Debug", "DisableXInput", 0))
 	{
@@ -781,21 +843,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	if (!keepfpslimit)
 		PatchGOGNoFPSLimit();
 
-	if (GameConfig::GetValue("Gameplay", "BetterMovementBehaviour", 0))
-	{
-		// Majority of the SR2 movement sluggishness is due to the fact that certain walking anims add an
-		// increased latency to walking generally and 180 anims tend to play constantly when trying to strafe, 180 anims didnt exist in SR1.
-		Logger::TypedLog(CHN_MOD, "Patching In Better Movement Behavior...\n");
-		patchNop((BYTE*)0x00E9216C, 3); // Jog180
-		patchNop((BYTE*)0x00E9213C, 3); // Stand180
-		patchNop((BYTE*)0x00E92130, 3); // WalkStop
-		patchNop((BYTE*)0x00E9237C, 3); // StandToRun
-		patchNop((BYTE*)0x00E92370, 3); // RunToStop
-		patchNop((BYTE*)0x00E92364, 3); // WalkToStop
-		patchNop((BYTE*)0x00E92394, 3); // WalkToStand
-		patchNop((BYTE*)0x00E92388, 3); // StandToWalk
-
-	}
 
 	if (GameConfig::GetValue("Gameplay", "FastDoors", 0)) // removes the anim for kicking or opening doors.
 	{
@@ -940,7 +987,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x006B793F, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 3
 	}
 
-	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 1)) // great for testing stuff faster and also for an optional feature in gen
+	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 0)) // great for testing stuff faster and also for an optional feature in gen
 	{
 		LoadLastSave = 1;
 		Logger::TypedLog(CHN_DEBUG, "Skipping main menu...\n");

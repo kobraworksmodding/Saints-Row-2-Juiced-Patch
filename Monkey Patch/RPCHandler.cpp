@@ -4,6 +4,7 @@
 #include "RPCHandler.h"
 #include "Patcher/patch.h"
 #include <codecvt>
+#include "GameConfig.h"
 #pragma comment (lib, "../Discord/discord_game_sdk.dll.lib")
 
 
@@ -164,11 +165,19 @@ namespace RPCHandler {
 		}
 	}
 
+	char* ClanTag[3] = {
+		const_cast<char*>("["),
+		const_cast<char*>("TEST"),
+		const_cast<char*>("]")
+	};
+
 	char* lobby_list[2] = {
 		const_cast<char*>("sr2_mp_gb_frat01"),
 		const_cast<char*>("sr2_mp_lobby")
 	};
 
+	bool AlreadyAddedClanTag = 0;
+	int isDefaultSNameChecked = 0;
 
 	// Updates state info for discord.
 	void UpdateDiscordParams() { 
@@ -179,6 +188,7 @@ namespace RPCHandler {
 		wchar_t* partnerName = (WCHAR*)0x02CD1870; // parses Co-op Partner name, usually
 		BYTE AbleToStartGame = *(BYTE*)0x02528D90; // Determines whether the gamemode is able to start or not (we'll force this on when we can, nice QOL feature.)
 		BYTE IsInCutscene = *(BYTE*)0x02527D14; // Checks if user is in a cutscene.
+		BYTE GamespyStatus = *(BYTE*)0x02529334; // Checks the current gamespy status.
 
 		std::wstring wPartnerName = partnerName; // parse co-op partner name to a wstring
 		std::string f_PartnerName = wstring_to_string(wPartnerName); // THEN to a string
@@ -317,6 +327,21 @@ namespace RPCHandler {
 				AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
                 #if RELOADED
 				    *(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
+					if (UsingClanTag == 1)
+					{
+						char* currentPlayerName = playerName;
+						std::string result = ClanTag[0];
+						result = result + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
+						const char* finalstring = result.c_str();
+
+						if (GamespyStatus == 0x4) {
+							if (AlreadyAddedClanTag == 0) {
+								char* newPlayerName = reinterpret_cast<char*>(playerName);
+								strcpy(newPlayerName, (const char*)finalstring);
+								AlreadyAddedClanTag = 1;
+							}
+						}
+					}
                 #endif
 				strcpy_s(pres.details, "In Menus...");
 				strcpy_s(pres.state, "");
@@ -329,12 +354,16 @@ namespace RPCHandler {
 
 	}
 
+	bool UsingClanTag = 0;
+
 	void UpdateNoDiscParams() { // Updates state info for discord.
 		BYTE CurrentGamemode = *(BYTE*)0x00E8B210; // Parses the current gamemode from EXE
 		BYTE LobbyCheck = *(BYTE*)0x02528C14; // Checks lobby, technically this is another gamemode check but we'll use it for lobby
 		BYTE MatchType = *(BYTE*)0x00E8B20C; // Checks match type
 		BYTE AbleToStartGame = *(BYTE*)0x02528D90; // Determines whether the gamemode is able to start or not (we'll force this on when we can, nice QOL feature.)
 		BYTE IsInCutscene = *(BYTE*)0x02527D14; // Checks if user is in a cutscene.
+		char* playerName = (CHAR*)0x0212AB48; // parses player name
+		BYTE GamespyStatus = *(BYTE*)0x02529334; // Checks the current gamespy status.
 
 		static DWORD lastTick = 0;
 
@@ -363,6 +392,21 @@ namespace RPCHandler {
 			{
                 #if RELOADED
 				    *(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
+					if (UsingClanTag == 1)
+					{
+						char* currentPlayerName = playerName;
+						std::string result = ClanTag[0];
+						result = result + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
+						const char* finalstring = result.c_str();
+
+						if (GamespyStatus == 0x4) {
+							if (AlreadyAddedClanTag == 0) {
+								char* newPlayerName = reinterpret_cast<char*>(playerName);
+								strcpy(newPlayerName, (const char*)finalstring);
+								AlreadyAddedClanTag = 1;
+							}
+						}
+					}
                 #endif
 				AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
 			}
