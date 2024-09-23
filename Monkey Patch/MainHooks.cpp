@@ -320,6 +320,27 @@ void coopPauseLoop() {
 	}
 }
 
+void LessRetardedChat() {
+
+	wchar_t* ACDProjektBlackSpecial = reinterpret_cast<wchar_t*>(0x01F76948);
+	wchar_t* FixThatShit = reinterpret_cast<wchar_t*>(0x022092FF);
+
+	size_t Length = 0;
+	for (Length = 0; Length < 127 && ACDProjektBlackSpecial[Length] != L'\0'; ++Length);
+
+	wchar_t temp[130] = { 0 };
+
+	wcsncpy(temp, ACDProjektBlackSpecial, Length < 127 ? Length : 127);
+
+	if (Length > 64) {
+		temp[64] = (ACDProjektBlackSpecial[63] == L' ') ? L'\n' : L'-';
+		if (temp[64] == L'-') temp[65] = L'\n';
+		wcsncpy(temp + (temp[64] == L'-' ? 66 : 65), ACDProjektBlackSpecial + 64, Length - 64);
+	}
+
+	wcscpy(FixThatShit, temp);
+}
+
 void SkipMainMenu() {
 	static bool ShouldSkip = true;
 	static DWORD lastTick = 0;
@@ -462,6 +483,7 @@ bool fixFrametime = 0;
 bool addBindToggles = 0;
 bool coopPausePatch = 0;
 bool LoadLastSave = 0;
+bool BetterChatTest = 0;
 
 int RenderLoopStuff_Hacked()
 {
@@ -497,6 +519,10 @@ int RenderLoopStuff_Hacked()
 	if (*(uint8_t*)(0x00E87B4F) == 0 && betterTags)
 		RawTags();
 
+	if (BetterChatTest) {
+		LessRetardedChat();
+	}
+	
 	// Call original func
 	return UpdateRenderLoopStuff();
 }
@@ -911,6 +937,15 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	{
 		LoadLastSave = 1;
 		Logger::TypedLog(CHN_DEBUG, "Skipping main menu...\n");
+	}
+
+	if (GameConfig::GetValue("Gameplay", "BetterChat", 1)) // changes char limit from 64 to 128 and formats the input after the 64th character
+	{
+		BetterChatTest = 1;
+		patchBytesM((BYTE*)0x0075C91E, (BYTE*)"\xC7\x05\x1C\x69\xF7\x01\x80\x00\00\x00", 10); // change chat char limit from 64 to 128
+		patchBytesM((BYTE*)0x0075CCF7, (BYTE*)"\x6A\x82", 2);  // change chat print limit from 64 to 130 (extra 2 characters to account for formatted input with - and newline)
+		patchBytesM((BYTE*)0x0075CDEA, (BYTE*)"\x68\xFF\x92\x20\x02", 5); // new chat read address for entered message
+		Logger::TypedLog(CHN_DEBUG, "Enabling better chat...\n");
 	}
 
 	if (GameConfig::GetValue("Gameplay", "TagsHook", 1))
