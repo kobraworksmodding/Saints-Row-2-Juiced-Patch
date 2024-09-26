@@ -178,6 +178,7 @@ namespace RPCHandler {
 
 	bool AlreadyAddedClanTag = 0;
 	int isDefaultSNameChecked = 0;
+	bool UsingClanTag = 0;
 
 	// Updates state info for discord.
 	void UpdateDiscordParams() { 
@@ -330,14 +331,14 @@ namespace RPCHandler {
 					if (UsingClanTag == 1)
 					{
 						char* currentPlayerName = playerName;
-						std::string result = ClanTag[0];
-						result = result + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
-						const char* finalstring = result.c_str();
+						std::string Clanresult = ClanTag[0];
+						Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
+						const char* finalClanstring = Clanresult.c_str();
 
 						if (GamespyStatus == 0x4) {
 							if (AlreadyAddedClanTag == 0) {
 								char* newPlayerName = reinterpret_cast<char*>(playerName);
-								strcpy(newPlayerName, (const char*)finalstring);
+								strcpy(newPlayerName, (const char*)finalClanstring);
 								AlreadyAddedClanTag = 1;
 							}
 						}
@@ -354,9 +355,7 @@ namespace RPCHandler {
 
 	}
 
-	bool UsingClanTag = 0;
-
-	void UpdateNoDiscParams() { // Updates state info for discord.
+	void UpdateNoDiscParams() { // Updates state info for non discord users.
 		BYTE CurrentGamemode = *(BYTE*)0x00E8B210; // Parses the current gamemode from EXE
 		BYTE LobbyCheck = *(BYTE*)0x02528C14; // Checks lobby, technically this is another gamemode check but we'll use it for lobby
 		BYTE MatchType = *(BYTE*)0x00E8B20C; // Checks match type
@@ -395,14 +394,14 @@ namespace RPCHandler {
 					if (UsingClanTag == 1)
 					{
 						char* currentPlayerName = playerName;
-						std::string result = ClanTag[0];
-						result = result + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
-						const char* finalstring = result.c_str();
+						std::string Clanresult = ClanTag[0];
+						Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
+						const char* finalClanstring = Clanresult.c_str();
 
 						if (GamespyStatus == 0x4) {
 							if (AlreadyAddedClanTag == 0) {
 								char* newPlayerName = reinterpret_cast<char*>(playerName);
-								strcpy(newPlayerName, (const char*)finalstring);
+								strcpy(newPlayerName, (const char*)finalClanstring);
 								AlreadyAddedClanTag = 1;
 							}
 						}

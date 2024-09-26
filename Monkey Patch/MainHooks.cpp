@@ -6,6 +6,7 @@
 #include "RPCHandler.h"
 #include "ErrorManager.h"
 #include "LuaHandler.h"
+#include "DFEngine.h"
 
 #include "GameConfig.h"
 #include <chrono>
@@ -52,7 +53,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 		*(exe + 1) = '\0';
 	}
     #if !RELOADED
-	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.3.0 BETA ---\n");
+	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.3.0 ---\n");
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
     Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
 	Logger::TypedLog(CHN_DLL, "--- Based on MonkeyPatch by scanti, additional fixes by Uzis, Tervel, jason098 and Clippy95. ---\n");
@@ -67,14 +68,14 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	{
 		GetVersionExAFirstRun=false;
 		Logger::TypedLog(CHN_DLL, "Calling hooked GetVersionExA.\n");
-		UInt32 winmaindata=*((UInt32*)0x00520ba0);
+		UInt32 winmaindata=*((UInt32*)offset_addr(0x00520ba0));
 		if(winmaindata==0x83ec8b55)
 		{
 			// The Steam version of the executable is now unencrypted, so we can start patching.
 
 
 			Logger::TypedLog(CHN_DLL, "Hooking WinMain.\n");
-			WriteRelCall(0x00c9e1c0,(UInt32)&Hook_WinMain);
+			WriteRelCall(offset_addr(0x00c9e1c0),(UInt32)&Hook_WinMain);
 
 			// Add patch routines here for patches that need to be run at crt startup, usually for patching constructors.
 			// Be very careful you can break things easily.
@@ -112,6 +113,12 @@ CoopRemotePauseT CoopRemotePause = (CoopRemotePauseT)0x008CB140;
 
 typedef char(__cdecl* LoadContinueT)();
 LoadContinueT LoadContinue = (LoadContinueT)0x7790E0;
+
+typedef void(*ChunkStrT)();
+ChunkStrT ChunkStr = (ChunkStrT)0xA7B880;
+
+typedef void(*VegStrT)();
+VegStrT VegStr = (VegStrT)0x4E66A0;
 
 bool slew = false;
 bool pausetest = false;
@@ -226,6 +233,17 @@ void slewtest() {
 	if (slew) {
 
 		slewleftover();
+
+		if (*(BYTE*)(0x2527C08) == 1) {
+			ChunkStr();
+			VegStr();
+			*(float*)0x02F9B7F8 = *(float*)0x025F5B1C;
+			*(float*)0x02F9B7F4 = *(float*)0x025F5B18;
+			*(float*)0x02F9B7F0 = *(float*)0x025F5B14;
+			*(float*)0x02F9B7EC = *(float*)0x025F5B1C;
+			*(float*)0x02F9B7E8 = *(float*)0x025F5B18;
+			*(float*)0x02F9B7E4 = *(float*)0x025F5B14;
+		}
 
 		if (IsKeyPressed(VK_UP, 0x8000)) {
 			fov -= fovSpeed * deltaTime;
@@ -614,17 +632,18 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	// Adds Clan tag to name
 	if (GameConfig::GetValue("Multiplayer", "UseClanTag", 1))
 	{
-		char ClanName[MAX_PATH];
+		// we use our own CLANTAG_MAX variable to max out the limit of the string to 5.
+		char ClanName[CLANTAG_MAX];
 		Logger::TypedLog(CHN_RL, "Adding Clan to Name...\n");
 
 		GameConfig::GetStringValue("Multiplayer", "ClanTag", "SR2RL", ClanName);
 
-		std::string s(ClanName, ClanName + 5);
-		char EndClanName[MAX_PATH];
-		strcpy(EndClanName, s.c_str());
+		std::string MyMaxClanTag(ClanName, ClanName + 5);
+		char EndClanName[CLANTAG_MAX];
+		strcpy(EndClanName, MyMaxClanTag.c_str());
 
-		Logger::TypedLog(CHN_RL, "You Joined Clan: %s\n", EndClanName);
 		RPCHandler::ClanTag[1] = EndClanName;
+		Logger::TypedLog(CHN_RL, "You Joined Clan: %s\n", RPCHandler::ClanTag[1]);
 		RPCHandler::UsingClanTag = 1;
 	}
 
@@ -640,7 +659,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	if (GameConfig::GetValue("Debug", "GangstaBrawlMemoryExtender", 1)) // Replaces GB MemLimits with SA.
 	{
-		Logger::TypedLog(CHN_RL, "Patching GangstaBrawlMemoryExtender...\n");
+		Logger::TypedLog(CHN_RL, "Patching GangstaBrawlMemoryExtender to Strong Arm Pools...\n");
 		patchBytesM((BYTE*)0x00835879, (BYTE*)"\x6A\x02", 2); // client
 		patchBytesM((BYTE*)0x00833A52, (BYTE*)"\x6A\x02", 2); // host
 		//patchBytesM((BYTE*)0x0082F474, (BYTE*)"\x6A\x02", 2);
@@ -676,12 +695,26 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((BYTE*)0x00E92388, 3); // StandToWalk
 	}
 
+	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 0)) // great for testing stuff faster and also for an optional feature in gen
+	{
+		LoadLastSave = 1;
+		Logger::TypedLog(CHN_DEBUG, "Skipping main menu...\n");
+	}
+
 #endif
 
 	//Logger::TypedLog(CHN_DEBUG, "Increasing Customization Memory...\n");
     // Hopefully increase customization_items.xtbl limit from 1050 items to 1150
     //patchBytesM((BYTE*)0x007BBAC6 + 1, (BYTE*)"\x7E\x04", 2);
     //patchBytesM((BYTE*)0x007BCC14 + 6, (BYTE*)"\x7E\x04", 2);
+
+	if (GameConfig::GetValue("Debug", "ExpandMemoryPools", 0))
+	{
+		Logger::TypedLog(CHN_DEBUG, "Expanding Memory Pools.\n");
+		patchBytesM((BYTE*)0x0051DED7, (BYTE*)"\x68\x00\x00\x15\x00", 5); // perm mesh cpu
+		patchBytesM((BYTE*)0x0051DF0F, (BYTE*)"\xB8\x00\x00\x15\x00", 5); // perm mesh cpu
+		Logger::TypedLog(CHN_DEBUG, "Expanded perm mesh cpu to 1376256\n");
+	}
 
 	if (GameConfig::GetValue("Debug", "DisableXInput", 0))
 	{
@@ -696,6 +729,17 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((BYTE*)0x00C147DC, 5);
 		patchNop((BYTE*)0x00C14A06, 5);
 		Logger::TypedLog(CHN_DEBUG, "XInput Disabled.\n");
+	}
+
+	if (GameConfig::GetValue("Audio", "UseFixedXACT", 1)) // Scanti the Goat
+	{
+		// Forces the game to use a newer version of XACT which in turn fixes all of the audio issues
+		// in SR2 aside from 3D Panning.
+		GUID xaudio = { 0x4c5e637a, 0x16c7, 0x4de3, 0x9c, 0x46, 0x5e, 0xd2, 0x21, 0x81, 0x96, 0x2d };        // version 2.3
+		GUID ixaudio = { 0x8bcf1f58, 0x9fe7, 0x4583, 0x8a, 0xc6, 0xe2, 0xad, 0xc4, 0x65, 0xc8, 0xbb };
+		SafeWriteBuf((0x00DD8A08), &xaudio, sizeof(xaudio));
+		SafeWriteBuf((0x00DD8A18), &ixaudio, sizeof(ixaudio));
+		Logger::TypedLog(CHN_MOD, "Forcing the use of a fixed XACT version.\n");
 	}
 
 	if (GameConfig::GetValue("Gameplay", "FixUltrawideFOV", 1))
@@ -767,6 +811,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DEBUG, "Patching Stereo Cutscenes (EXPERIMENTAL)...\n");
 		RPCHandler::ShouldFixStereo = true;
 	}
+
 	if (GameConfig::GetValue("Debug", "AddBindToggles", 1))
 	{
 		Logger::TypedLog(CHN_DEBUG, "Adding Custom Key Toggles...\n");
@@ -791,14 +836,18 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // new contr address patch
 		patchByte((BYTE*)0x00E9787F, 0x00); // force HDR off because it's 1 by default
 		patchNop((BYTE*)0x00773792, 5); // prevent the game from turning HDR on/off
-		patchNop((BYTE*)0x00533C25, 5); // disable sky refl (prevent the absurd blue tint on reflections)
+		//patchNop((BYTE*)0x00533C25, 5); // disable sky refl (prevent the absurd blue tint on reflections)
+
+		patchNop((BYTE*)0x00532A4F, 6); // nop for whatever the fuck
+		patchBytesM((BYTE*)0x00532992, (BYTE*)"\xDD\x05\xAA\x2C\x7B\x02", 6); // new opacity address for sky reflections
+		patchDouble((BYTE*)0x027B2CAA, 128.0);
 
 		patchFloat((BYTE*)0x027B2C7F, 1.3f); //Bright
 		patchFloat((BYTE*)0x027B2C83, 0.8f); //Sat
 		patchFloat((BYTE*)0x027B2C87, 1.62f); //Contr
 	}
 
-	if (GameConfig::GetValue("Graphics", "DisableFog", 1)) // Option for the 2 psychopaths that think no fog looks better.
+	if (GameConfig::GetValue("Graphics", "DisableFog", 0)) // Option for the 2 psychopaths that think no fog looks better.
 	{
 		patchBytesM((BYTE*)0x0025273BE, (BYTE*)"\x01", 1); // leftover debug bool for being able to overwrite fog values
 		patchFloat((BYTE*)0x00E989A0, 0.0f);
@@ -987,12 +1036,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x006B793F, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 3
 	}
 
-	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 0)) // great for testing stuff faster and also for an optional feature in gen
-	{
-		LoadLastSave = 1;
-		Logger::TypedLog(CHN_DEBUG, "Skipping main menu...\n");
-	}
-
 	if (GameConfig::GetValue("Gameplay", "BetterChat", 1)) // changes char limit from 64 to 128 and formats the input after the 64th character
 	{
 		BetterChatTest = 1;
@@ -1012,7 +1055,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	// Continue to the program's WinMain.
 
-	WinMain_Type OldWinMain=(WinMain_Type)0x00520ba0;
+	WinMain_Type OldWinMain=(WinMain_Type)offset_addr(0x00520ba0);
 	return (OldWinMain(hInstance, hPrevInstance, lpCmdLine,nShowCmd));
 }
 
