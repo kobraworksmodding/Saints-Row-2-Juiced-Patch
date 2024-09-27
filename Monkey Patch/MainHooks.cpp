@@ -223,6 +223,13 @@ float getDeltaTime() {
 	return elapsedMillis / 1000.0f;
 }
 
+void FogTest() {
+	float ogFogStrength1 = *(float*)(0x00E989A0);
+	float ogFogStrength2 = *(float*)(0x00E989A4);
+	*(float*)(0x027B2CBA) = max(ogFogStrength1 / 1.5, 0.3f);
+	*(float*)(0x027B2CBE) = max(ogFogStrength2 / 1.5, 0.3f);
+}
+
 void slewtest() {
 	float deltaTime = getDeltaTime();
 	float fovSpeed = 15.0f;
@@ -504,6 +511,7 @@ bool addBindToggles = 0;
 bool coopPausePatch = 0;
 bool LoadLastSave = 0;
 bool BetterChatTest = 0;
+bool VFXP_fixFog = 0;
 
 int RenderLoopStuff_Hacked()
 {
@@ -526,6 +534,9 @@ int RenderLoopStuff_Hacked()
 	if (addBindToggles)
 	    cus_FrameToggles();
 	    slewtest();
+
+	if (VFXP_fixFog)
+	   FogTest();
 
 	if (ARfov)
 		AspectRatioFix();
@@ -845,6 +856,13 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchFloat((BYTE*)0x027B2C7F, 1.3f); //Bright
 		patchFloat((BYTE*)0x027B2C83, 0.8f); //Sat
 		patchFloat((BYTE*)0x027B2C87, 1.62f); //Contr
+
+
+		patchBytesM((BYTE*)0x00524BA4, (BYTE*)"\xD9\x05\xBA\x2C\x7B\x02", 6);
+		patchBytesM((BYTE*)0x00D1A333, (BYTE*)"\xD9\x05\xBA\x2C\x7B\x02", 6);
+		patchBytesM((BYTE*)0x00524BB0, (BYTE*)"\xD9\x05\xBE\x2C\x7B\x02", 6);
+		patchBytesM((BYTE*)0x00D1A3A3, (BYTE*)"\xD9\x05\xBE\x2C\x7B\x02", 6);
+		VFXP_fixFog = 1;
 	}
 
 	if (GameConfig::GetValue("Graphics", "DisableFog", 0)) // Option for the 2 psychopaths that think no fog looks better.
