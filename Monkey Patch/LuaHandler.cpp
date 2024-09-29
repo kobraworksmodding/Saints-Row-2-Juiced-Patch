@@ -62,8 +62,14 @@ INT WINAPIV HookedDebugPrint(lua_State* lua)
 			{
 				std::string result = TCHARToString((TCHAR*)msg);
 				const char* endres = result.c_str();
+				std::string endlinecheck = "\n";
 
-				Logger::TypedLog(CHN_LUA, "%s", endres);
+				if (result.find(endlinecheck) != std::string::npos) {
+					Logger::TypedLog(CHN_LUA, "%s", endres);
+				}
+				else {
+					Logger::TypedLog(CHN_LUA, "%s\n", endres);
+				}
 
 			}
 			else
@@ -75,8 +81,14 @@ INT WINAPIV HookedDebugPrint(lua_State* lua)
 
 				std::string result = TCHARToString((TCHAR*)msgW);
 				const char* endres = result.c_str();
+				std::string endlinecheck = "\n";
 
-				Logger::TypedLog(CHN_LUA, "%s", endres);
+				if (result.find(endlinecheck) != std::string::npos) {
+					Logger::TypedLog(CHN_LUA, "%s", endres);
+				}
+				else {
+					Logger::TypedLog(CHN_LUA, "%s\n", endres);
+				}
 
 				free(msgW);
 			}
