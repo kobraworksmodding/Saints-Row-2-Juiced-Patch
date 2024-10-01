@@ -30,7 +30,7 @@ bool IsKeyPressed(char key, short type) // USE THIS FROM NOW ON
 
 	GetWindowTextA(curWin, title, sizeof(title));
 
-	if (strcmp(title, "Saints Row 2") == 0 || strcmp(title, "SR2 MP") == 0)
+	if (strcmp(title, "Saints Row 2") == 0 || strcmp(title, "SR2 RELOADED") == 0)
 	{
 		if (GetAsyncKeyState(key) & type)
 		{
@@ -627,6 +627,19 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	
 	PatchOpenSpy();
 
+	// FUCK THIS SHIT
+
+	/*if (GameConfig::GetValue("Graphics", "CustomResolution", 1))
+	{
+		float ResX[4];
+		float ResY[4];
+		GameConfig::GetScreenResolution(ResX, ResY);
+		patchNop((BYTE*)0x0051D8BA, 2);
+
+		 
+		Logger::TypedLog(CHN_DEBUG, "Resolution Patched: %f x %f\n", ResX, ResY);
+	}*/
+
 #if RELOADED
 
 	// patch in some stuff at run time, maybe even add exclusive reloaded toggles.
@@ -641,7 +654,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 
 	// Adds Clan tag to name
-	if (GameConfig::GetValue("Multiplayer", "UseClanTag", 1))
+	if (GameConfig::GetValue("Multiplayer", "UseClanTag", 0))
 	{
 		// we use our own CLANTAG_MAX variable to max out the limit of the string to 5.
 		char ClanName[CLANTAG_MAX];
