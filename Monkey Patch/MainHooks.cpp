@@ -564,6 +564,10 @@ void SetDefaultGameSettings()
 #if RELOADED
 	char* GameName = reinterpret_cast<char*>(0x0212AA08);
 	strcpy(GameName, (const char*)ServerNameRL);
+
+	// change game version from 201 to 209 
+    // 201 is Vanilla , 209 is Reloaded.
+	//patchBytesM((BYTE*)0x008D01F6, (BYTE*)"\x68\xB1", 2);
 #else
 	char* GameName = reinterpret_cast<char*>(0x0212AA08);
 	strcpy(GameName, (const char*)ServerNameSR2);
@@ -641,6 +645,11 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}*/
 
 #if RELOADED
+	// Experiment to give CO-OP a higher player limit.
+    /* patchByte((BYTE*)0x007F750D + 1, 0x01); // max gb count (we'll use this for modified co-op)
+	patchDWord((void*)(0x0086ACF5 + 6), 1); // overwrite the co-op maxplayerslobby to 12
+	patchNop((BYTE*)0x007F71EC, 12); // nop coop max and max lobby
+	patchBytesM((BYTE*)0x007F7A31, (BYTE*)"\xB8\x02", 2); */
 
 	// patch in some stuff at run time, maybe even add exclusive reloaded toggles.
 	patchBytesM((BYTE*)0x00E06CC4, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload.tbl

@@ -209,7 +209,6 @@ namespace RPCHandler {
 		DWORD currentTick = GetTickCount();
 		if (currentTick - lastTick >= 600) {
 			lastTick = currentTick;
-
 			if (!LobbyCheck == 0x0 && CurrentGamemode == 0xFF) // This should be CO-OP / Singleplayer
 			{
 				if (IsInCutscene == 1) 
