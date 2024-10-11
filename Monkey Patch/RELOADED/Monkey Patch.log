@@ -1,31 +1,24 @@
-﻿  MainHooks.cpp
-  The contents of <format> are available only in c++latest mode with concepts support;
-  see https://github.com/microsoft/STL/issues/1814 for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(20,23): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(47,84): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(96,9): warning C4996: 'GetVersionExA': was declared deprecated
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(179,33): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(186,34): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(229,26): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(230,26): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(255,27): warning C4309: 'argument': truncation of constant value
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(260,29): warning C4309: 'argument': truncation of constant value
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(265,26): warning C4309: 'argument': truncation of constant value
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(269,31): warning C4309: 'argument': truncation of constant value
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(302,56): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(368,2): warning C4996: 'wcscpy': This function or variable may be unsafe. Consider using wcscpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(360,2): warning C4996: 'wcsncpy': This function or variable may be unsafe. Consider using wcsncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(365,3): warning C4996: 'wcsncpy': This function or variable may be unsafe. Consider using wcsncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(566,2): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(676,3): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+﻿  RPCHandler.cpp
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(317,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(324,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(324,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(364,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(211,6): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(212,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(213,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(214,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(411,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(421,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(421,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(445,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(1371,5): warning MSB8012: TargetPath(C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll) does not match the Linker's OutputFile property value (C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\RLEngine.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(1373,5): warning MSB8012: TargetName(Reloaded Patch) does not match the Linker's OutputFile property value (RLEngine). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      Creating library C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.lib and object C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.exp
 MSVCRT.lib(initializers.obj) : warning LNK4098: defaultlib 'libcmt.lib' conflicts with use of other libs; use /NODEFAULTLIB:library
   Generating code
-  2 of 488 functions ( 0.4%) were compiled, the rest were copied from previous compilation.
+  0 of 495 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+    0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Monkey Patch.vcxproj -> C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll
           1 file(s) copied.

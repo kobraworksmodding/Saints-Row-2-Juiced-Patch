@@ -176,6 +176,15 @@ namespace RPCHandler {
 		const_cast<char*>("sr2_mp_lobby")
 	};
 
+	void RemoveWordFromLine(std::string& line, const std::string& word)
+	{
+		auto n = line.find(word);
+		if (n != std::string::npos)
+		{
+			line.erase(n, word.length());
+		}
+	}
+
 	bool AlreadyAddedClanTag = 0;
 	int isDefaultSNameChecked = 0;
 	bool UsingClanTag = 0;
@@ -294,6 +303,23 @@ namespace RPCHandler {
 			}
 			if (LobbyCheck == 0x44) // Game Lobby
 			{
+            #if RELOADED
+				if (UsingClanTag == 1)
+				{
+					char* currentPlayerName = playerName;
+					std::string Clanresult = ClanTag[0];
+					Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
+					const char* finalClanstring = Clanresult.c_str();
+
+					if (GamespyStatus == 0x4) {
+						if (AlreadyAddedClanTag == 0) {
+							char* newPlayerName = reinterpret_cast<char*>(playerName);
+							strcpy(newPlayerName, (const char*)finalClanstring);
+							AlreadyAddedClanTag = 1;
+						}
+					}
+				}
+            #endif
 				if (MatchType == (BYTE)2) { // If in ranked
 					if (!CurrentGamemode == 0xD || !CurrentGamemode == 0xC || CurrentGamemode == 0xB) // And gamemode is not TGB or Strong Arm but is Gangsta Brawl
 					{
@@ -324,25 +350,25 @@ namespace RPCHandler {
 			}
 			if (LobbyCheck == 0x0) // Usually Menus Check
 			{
-				AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
                 #if RELOADED
-				    *(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
-					if (UsingClanTag == 1)
-					{
-						char* currentPlayerName = playerName;
-						std::string Clanresult = ClanTag[0];
-						Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
-						const char* finalClanstring = Clanresult.c_str();
-
-						if (GamespyStatus == 0x4) {
-							if (AlreadyAddedClanTag == 0) {
-								char* newPlayerName = reinterpret_cast<char*>(playerName);
-								strcpy(newPlayerName, (const char*)finalClanstring);
-								AlreadyAddedClanTag = 1;
-							}
+				if (UsingClanTag == 1)
+				{
+					if (GamespyStatus == 0x4) {
+						if (AlreadyAddedClanTag == 1) {
+							std::string NameResult = playerName;
+							std::string ClanTagresult = ClanTag[0];
+							ClanTagresult = ClanTagresult + ClanTag[1] + ClanTag[2] + " ";
+							RemoveWordFromLine(NameResult, ClanTagresult);
+							const char* finalNameString = NameResult.c_str();
+							char* newPlayerName = reinterpret_cast<char*>(playerName);
+							strcpy(newPlayerName, finalNameString);
+							AlreadyAddedClanTag = 0;
 						}
 					}
+				}
+			    	* (BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
                 #endif
+				AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
 				strcpy_s(pres.details, "In Menus...");
 				strcpy_s(pres.state, "");
 			}
@@ -371,6 +397,23 @@ namespace RPCHandler {
 			lastTick = currentTick;
 			if (LobbyCheck == 0x44) // Game Lobby
 			{
+            #if RELOADED
+				if (UsingClanTag == 1)
+				{
+					char* currentPlayerName = playerName;
+					std::string Clanresult = ClanTag[0];
+					Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
+					const char* finalClanstring = Clanresult.c_str();
+
+					if (GamespyStatus == 0x4) {
+						if (AlreadyAddedClanTag == 0) {
+							char* newPlayerName = reinterpret_cast<char*>(playerName);
+							strcpy(newPlayerName, (const char*)finalClanstring);
+							AlreadyAddedClanTag = 1;
+						}
+					}
+				}
+            #endif
 				if (MatchType == (BYTE)2) { // If in ranked
                     #if RELOADED
 					    *(BYTE*)0x02A4D134 = 0x1; // Force Friendly Fire to Full Damage.
@@ -389,22 +432,22 @@ namespace RPCHandler {
 			if (LobbyCheck == 0x0) // Usually Menus Check
 			{
                 #if RELOADED
-				    *(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
-					if (UsingClanTag == 1)
-					{
-						char* currentPlayerName = playerName;
-						std::string Clanresult = ClanTag[0];
-						Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
-						const char* finalClanstring = Clanresult.c_str();
-
-						if (GamespyStatus == 0x4) {
-							if (AlreadyAddedClanTag == 0) {
-								char* newPlayerName = reinterpret_cast<char*>(playerName);
-								strcpy(newPlayerName, (const char*)finalClanstring);
-								AlreadyAddedClanTag = 1;
-							}
+				if (UsingClanTag == 1)
+				{
+					if (GamespyStatus == 0x4) {
+						if (AlreadyAddedClanTag == 1) {
+							std::string NameResult = playerName;
+							std::string ClanTagresult = ClanTag[0];
+							ClanTagresult = ClanTagresult + ClanTag[1] + ClanTag[2] + " ";
+							RemoveWordFromLine(NameResult, ClanTagresult);
+							const char* finalNameString = NameResult.c_str();
+							char* newPlayerName = reinterpret_cast<char*>(playerName);
+							strcpy(newPlayerName, finalNameString);
+							AlreadyAddedClanTag = 0;
 						}
 					}
+				}
+				    *(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
                 #endif
 				AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
 			}
