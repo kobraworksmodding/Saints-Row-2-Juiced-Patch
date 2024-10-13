@@ -73,6 +73,18 @@ namespace RPCHandler {
 		if (strcmp(word, "sr2_mp_lobby04") == 0) return 24;
 		if (strcmp(word, "sr2_mp_lobbytut") == 0) return 25;
 		if (strcmp(word, "sr2_mp_gb_court1") == 0) return 26;
+		if (strcmp(word, "sr2_mp_ptp_pris") == 0) return 27;
+		if (strcmp(word, "sr2_mp_gb_reclob") == 0) return 28;
+		if (strcmp(word, "sr2_mp_gb_prIL01") == 0) return 29;
+		if (strcmp(word, "sr2_mp_gb_traprk") == 0) return 30;
+		if (strcmp(word, "sr2_codeblue") == 0) return 31;
+		if (strcmp(word, "sr2_mp_gb_hotwrd") == 0) return 32;
+		if (strcmp(word, "sr2_mp_gb_hosp01") == 0) return 33;
+		if (strcmp(word, "sr2_mp_gb_prisis") == 0) return 34;
+		if (strcmp(word, "sr2_mp_gb_prison") == 0) return 35;
+		if (strcmp(word, "sr2_mp_gb_pornpl") == 0) return 36;
+		if (strcmp(word, "sr2_mp_gb_broth1") == 0) return 37;
+		if (strcmp(word, "sr2_mp_lobby05") == 0) return 38;
 		return 0;
 	}
 
@@ -158,6 +170,42 @@ namespace RPCHandler {
 			break;
 		case 26:
 			*FancyChunkName = "Courthouse";
+			break;
+		case 27:
+			*FancyChunkName = "Prison Island (PTP Blitz)";
+			break;
+		case 28:
+			*FancyChunkName = "Rec Center";
+			break;
+		case 29:
+			*FancyChunkName = "Prison Island";
+			break;
+		case 30:
+			*FancyChunkName = "Trailer Park";
+			break;
+		case 31:
+			*FancyChunkName = "Code Blue 1v1";
+			break;
+		case 32:
+			*FancyChunkName = "Hotwired";
+			break;
+		case 33:
+			*FancyChunkName = "Hospital";
+			break;
+		case 34:
+			*FancyChunkName = "Prison Island";
+			break;
+		case 35:
+			*FancyChunkName = "Cellblock";
+			break;
+		case 36:
+			*FancyChunkName = "Porno Palace";
+			break;
+		case 37:
+			*FancyChunkName = "Brotherhood HQ";
+			break;
+		case 38:
+			*FancyChunkName = "Warehouse Lobby";
 			break;
 		default:
 			*FancyChunkName = chunkID;
@@ -290,14 +338,26 @@ namespace RPCHandler {
 			if (CurrentGamemode == 0xC) // Team Gangsta Brawl
 			{
 				MapDescAPI();
-				if (MatchType == (BYTE)1)
-					strcpy_s(pres.details, "Playing MP in Team Gangsta Brawl");
+				if (*FancyChunkName == "Prison Island (PTP Blitz)") {
+					if (MatchType == (BYTE)1)
+						strcpy_s(pres.details, "Playing MP in PTP Blitz");
 
-				if (MatchType == (BYTE)2)
-					strcpy_s(pres.details, "Playing Ranked MP in Team Gangsta Brawl");
+					if (MatchType == (BYTE)2)
+						strcpy_s(pres.details, "Playing Ranked MP in PTP Blitz");
 
-				if (MatchType == (BYTE)3)
-					strcpy_s(pres.details, "Playing Party MP in Team Gangsta Brawl");
+					if (MatchType == (BYTE)3)
+						strcpy_s(pres.details, "Playing Party MP in PTP Blitz");
+				}
+				else {
+					if (MatchType == (BYTE)1)
+						strcpy_s(pres.details, "Playing MP in Team Gangsta Brawl");
+
+					if (MatchType == (BYTE)2)
+						strcpy_s(pres.details, "Playing Ranked MP in Team Gangsta Brawl");
+
+					if (MatchType == (BYTE)3)
+						strcpy_s(pres.details, "Playing Party MP in Team Gangsta Brawl");
+				}
 
 				strcpy_s(pres.state, finalMPDesc);
 			}

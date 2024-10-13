@@ -565,6 +565,8 @@ void SetDefaultGameSettings()
 	char* GameName = reinterpret_cast<char*>(0x0212AA08);
 	strcpy(GameName, (const char*)ServerNameRL);
 
+	patchNop((BYTE*)0x0083FA3D, 22); // Removes the Unlim Score/Time check for MP.
+
 	// change game version from 201 to 209 
     // 201 is Vanilla , 209 is Reloaded.
 	//patchBytesM((BYTE*)0x008D01F6, (BYTE*)"\x68\xB1", 2);

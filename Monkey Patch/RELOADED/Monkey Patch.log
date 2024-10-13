@@ -1,24 +1,23 @@
 ﻿  RPCHandler.cpp
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(317,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(324,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(324,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(364,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(211,6): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(212,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(213,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(214,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(411,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(421,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(421,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
-C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(445,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(377,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(384,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(384,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(424,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(259,6): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(260,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(261,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(262,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(471,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(481,30): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(481,57): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'int' can equal the given constant
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\RPCHandler.cpp(505,8): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(1371,5): warning MSB8012: TargetPath(C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll) does not match the Linker's OutputFile property value (C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\RLEngine.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(1373,5): warning MSB8012: TargetName(Reloaded Patch) does not match the Linker's OutputFile property value (RLEngine). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
      Creating library C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.lib and object C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.exp
 MSVCRT.lib(initializers.obj) : warning LNK4098: defaultlib 'libcmt.lib' conflicts with use of other libs; use /NODEFAULTLIB:library
   Generating code
-  0 of 495 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+  Previous IPDB and IOBJ mismatch, fall back to full compilation.
+  All 495 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
   Monkey Patch.vcxproj -> C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll
           1 file(s) copied.
