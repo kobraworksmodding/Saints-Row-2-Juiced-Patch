@@ -12,6 +12,7 @@
 #include <chrono>
 
 #include <format>
+#include <WinSock2.h>
 
 char* executableDirectory[MAX_PATH];
 const char mus2xtbl[] = "music2.xtbl";
@@ -558,6 +559,29 @@ int RenderLoopStuff_Hacked()
 	return UpdateRenderLoopStuff();
 }
 
+int(__stdcall* theirbind)(SOCKET, const struct sockaddr_in*, int) = nullptr;
+
+int __stdcall bindWrapper(SOCKET socket, struct sockaddr_in* address, int namelen) {
+	address->sin_addr.S_un.S_addr = INADDR_ANY; // bind to all interfaces instead of just one
+
+	int result = theirbind(socket, address, namelen);
+
+	//Logger::TypedLog(CHN_NET, "Redirecting network bind to %i\n", result);
+
+	return result;
+}
+
+void patchNetworkBind() { // Binds local ip to any instead of 127.0.0.1 which fucks up if you have more than 1 network adapter.
+	uint32_t* bindaddr = reinterpret_cast<uint32_t*>(0x00C1BC76 + 1);
+
+	theirbind = reinterpret_cast<int(_stdcall*)(SOCKET, const struct sockaddr_in*, int)>(reinterpret_cast<intptr_t>(bindaddr) + 4 + *bindaddr);
+
+	patchCall((BYTE*)0x00C1BC76, bindWrapper); // join
+	patchCall((BYTE*)0x00D2526F, bindWrapper); // host
+	//patchCall((BYTE*)0x0090A779, bindWrapper);
+	//patchCall((BYTE*)0x008E7681, bindWrapper);
+}
+
 void SetDefaultGameSettings()
 {
 	patchBytesM((BYTE*)0x00774126, (BYTE*)"\xC6\x05\xAC\xA9\xF7\x01\x00", 7); // Force game into windowed on default settings.
@@ -600,7 +624,6 @@ void SetupBetterWindowed()
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	ErrorManager::Initialize();
-
 	char NameBuffer[260];
 	PIMAGE_DOS_HEADER dos_header;
 	PIMAGE_NT_HEADERS nt_header;
@@ -631,6 +654,13 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	// Probably Add SR2 Reloaded patch routines here, used to be OS and FPS patch from Monkey here.
 	
+	// Adds Clan tag to name
+	if (GameConfig::GetValue("Multiplayer", "FixNetworkBinding", 1))
+	{
+		Logger::TypedLog(CHN_NET, "Fixing Network Adapter Binding...\n");
+		patchNetworkBind();
+	}
+
 	PatchOpenSpy();
 
 	// FUCK THIS SHIT

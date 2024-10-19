@@ -45,7 +45,7 @@ namespace RPCHandler {
 	bool IsCoopOrSP = false;
 	bool ShouldFixStereo = false;
 	const char *FancyChunkName[2048];
-
+	//sr2_mp_custBG
 	int mapListAPI(const char* word) {
 		if (strcmp(word, "sr2_mp_lobby") == 0) return 1;
 		if (strcmp(word, "sr2_mp_gb_frat01") == 0) return 2;
@@ -266,6 +266,7 @@ namespace RPCHandler {
 		DWORD currentTick = GetTickCount();
 		if (currentTick - lastTick >= 600) {
 			lastTick = currentTick;
+
 			if (!LobbyCheck == 0x0 && CurrentGamemode == 0xFF) // This should be CO-OP / Singleplayer
 			{
 				if (IsInCutscene == 1) 
@@ -363,27 +364,30 @@ namespace RPCHandler {
 			}
 			if (LobbyCheck == 0x44) // Game Lobby
 			{
-            #if RELOADED
-				if (UsingClanTag == 1)
-				{
-					char* currentPlayerName = playerName;
-					std::string Clanresult = ClanTag[0];
-					Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
-					const char* finalClanstring = Clanresult.c_str();
+#if RELOADED
+					if (UsingClanTag == 1)
+					{
+						char* currentPlayerName = playerName;
+							std::string Clanresult = ClanTag[0];
+							Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
+							const char* finalClanstring = Clanresult.c_str();
 
-					if (GamespyStatus == 0x4) {
-						if (AlreadyAddedClanTag == 0) {
-							char* newPlayerName = reinterpret_cast<char*>(playerName);
-							strcpy(newPlayerName, (const char*)finalClanstring);
-							AlreadyAddedClanTag = 1;
-						}
+							if (GamespyStatus == 0x4) {
+								if (AlreadyAddedClanTag == 0) {
+									char* newPlayerName = reinterpret_cast<char*>(playerName);
+										strcpy(newPlayerName, (const char*)finalClanstring);
+									AlreadyAddedClanTag = 1;
+								}
+							}
 					}
-				}
             #endif
 				if (MatchType == (BYTE)2) { // If in ranked
 					if (!CurrentGamemode == 0xD || !CurrentGamemode == 0xC || CurrentGamemode == 0xB) // And gamemode is not TGB or Strong Arm but is Gangsta Brawl
 					{
 						AbleToStartGame = 1; // Force Able to Start
+					}
+					else {
+						AbleToStartGame = 0; // Uhh dumb ass fix?
 					}
 
 				}
