@@ -25,7 +25,7 @@ MSVCRT.lib(initializers.obj) : warning LNK4098: defaultlib 'libcmt.lib' conflict
   Generating code
   1 of 497 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    2 functions had inline decision re-evaluated but remain unchanged
+    1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   Monkey Patch.vcxproj -> C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll
           1 file(s) copied.

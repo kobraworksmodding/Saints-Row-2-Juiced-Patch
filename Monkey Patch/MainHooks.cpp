@@ -727,9 +727,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_RL, "Patching GangstaBrawlMemoryExtender to Strong Arm Pools...\n");
 		patchBytesM((BYTE*)0x00835879, (BYTE*)"\x6A\x02", 2); // client
 		patchBytesM((BYTE*)0x00833A52, (BYTE*)"\x6A\x02", 2); // host
-		//patchBytesM((BYTE*)0x0082F474, (BYTE*)"\x6A\x02", 2);
-		//patchBytesM((BYTE*)0x0082642E, (BYTE*)"\x6A\x02", 2);
-		//patchBytesM((BYTE*)0x007F76EE, (BYTE*)"\x6A\x02", 2);
+		patchBytesM((BYTE*)0x0082FD84, (BYTE*)"\x83\xC3\x08", 3); // Limit Gangsta Brawl/TGB player cap to 8 from 12.
 
 	}
 
