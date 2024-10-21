@@ -19,6 +19,8 @@ const char mus2xtbl[] = "music2.xtbl";
 const char ServerNameRL[] = "[SR2 RELOADED SERVER]";
 const char ServerNameSR2[] = "[Saints Row 2]";
 float AOQuality = 0.05;
+float AOSmoothness = 12.5;
+float AOStrength = 1.65;
 int ResolutionX = 1920;
 int ResolutionY = 1080;
 
@@ -687,6 +689,14 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchBytesM((BYTE*)0x00E06CC4, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload.tbl
 	patchBytesM((BYTE*)0x00E06CD0, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload_anims.tbl
 
+
+	// patch music2.xtbl
+	if (GameConfig::GetValue("Multiplayer", "BetterKillfeed", 1))
+	{
+		Logger::TypedLog(CHN_RL, "Making Killfeed Better...\n");
+		patchBytesM((BYTE*)0x0087F096, (BYTE*)"\x8B\x3D\x10\xD2\xEA\x00", 6);
+	}
+
 	// patch music2.xtbl
 	if (GameConfig::GetValue("Audio", "NoMenuMusic", 0))
 	{
@@ -1004,6 +1014,14 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	if (GameConfig::GetValue("Graphics", "BetterAmbientOcclusion", 0)) 
 	{
 		Logger::TypedLog(CHN_MOD, "Making AO Better...\n");
+		// ~ TODO: Fix issue with commented code and random unsmoothing.
+
+		/*patchNop((BYTE*)0x0052AA90, 6);
+		patchNop((BYTE*)0x0052AA9D, 6);
+		*(float*)0x00E98D74 = (float)AOStrength;
+		patchFloat((BYTE*)0x00518B00 + 2, (float)AOSmoothness);
+		patchFloat((BYTE*)0x00518AEE + 2, (float)AOSmoothness);*/
+
 		patchFloat((BYTE*)0x00E9898C, (float)AOQuality);
 	}
 	if (GameConfig::GetValue("Graphics", "DisableScreenBlur", 0))
