@@ -1141,6 +1141,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DEBUG, "Replaced Tags controls with BetterTags\n");
 	}
 
+	patchNop((BYTE*)0x004D6795, 5); // Fix for the sun flare disappearing upon reloading a save. Prevents the game from deallocating the flare.
+
 	// Continue to the program's WinMain.
 
 	WinMain_Type OldWinMain=(WinMain_Type)offset_addr(0x00520ba0);
