@@ -623,8 +623,24 @@ void SetupBetterWindowed()
 	patchDWord((void*)(0x00BFA35A + 4), windowed_style);
 }
 
+void __declspec(naked) MSAA()
+{
+	static int jmp_continue = 0x007737E4;
+	__asm {
+		mov ds:dword ptr[0x252A2DC], 0
+		sub eax, 1
+		jz MSAA8
+		jmp jmp_continue
+
+		MSAA8:
+		mov ds:dword ptr[0x252A2DC], 8
+		jmp jmp_continue
+	}
+}
+
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
 	ErrorManager::Initialize();
 	char NameBuffer[260];
 	PIMAGE_DOS_HEADER dos_header;
