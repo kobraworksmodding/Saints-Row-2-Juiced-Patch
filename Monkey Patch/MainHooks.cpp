@@ -854,6 +854,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 			ARfov = 1;
 			Logger::TypedLog(CHN_DEBUG, "Applying FOV Multiplier.\n");
 		}
+		patchBytesM((BYTE*)0x00AA5648, (BYTE*)"\xDC\x0D\x9B\x2C\x7B\x02", 6); // patch vehicle turning radius, this read from the FOV and the radius gets smaller if FOV is lower than 4/3
+		*(double*)(0x027B2C9B) = 1.333333373069763; // code / data cave for wheel radius to read from.
 		Logger::TypedLog(CHN_DEBUG, "FOV Multiplier: %f,\n", FOVMultiplier);
 	}
 
