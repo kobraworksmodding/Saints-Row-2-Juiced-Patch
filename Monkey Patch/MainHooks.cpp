@@ -638,6 +638,78 @@ void __declspec(naked) MSAA()
 	}
 }
 
+struct FILE_INFO
+{
+	int access_method;
+	int access_flag;
+	char filename[256];
+	int size;
+	void* file_data;
+};
+
+// **********************************************************************************************************
+// loose files - added by scanti
+// **********************************************************************************************************
+
+char amend_filename[256]; // The game crashes if I make this local?
+
+// This should be a declspec(naked) function but I couldn't get it to work properly.
+bool _cdecl hook_raw_get_file_info_by_name(char* filename, BOOL override_check)
+{
+	FILE_INFO* file_info;
+	FILE* file_stream;
+	_int64 file_size;
+
+	__asm mov file_info, edi
+
+	if (override_check)
+		return(false);
+	file_stream = fopen(filename, "rb");
+	if (!file_stream)
+	{
+		sprintf(amend_filename, "%s//%s", "loose", filename);
+		filename = amend_filename;
+		file_stream = fopen(filename, "rb");
+		if (!file_stream)
+			return(false);
+	}
+	strncpy(file_info->filename, filename, 255u);
+	file_info->filename[255] = 0;
+	file_info->access_method = 0;
+	file_info->access_flag = 0;
+	if (fseek(file_stream, 0, SEEK_END))
+		return(false);
+	file_size = _ftelli64(file_stream);
+	if (file_size >= 0xFFFFFFFF)
+		return(false);
+
+	file_info->size = file_size;
+	fclose(file_stream);
+	return(true);
+}
+
+_declspec(naked) void hook_loose_files()
+{
+	__asm {
+		mov cl, 1
+		mov edi, 1
+		xor esi, esi
+		mov eax, 0x00BFDB50
+		call eax
+		mov cl, 1
+		xor edi, edi
+		mov esi, 0
+		mov eax, 0x00BFDB50
+		call eax
+		mov eax, 0x0051DAC9
+		jmp eax
+	}
+}
+
+// *********************************************************************************
+// end of loose files
+// *********************************************************************************
+
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
@@ -1160,6 +1232,9 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 
 	patchNop((BYTE*)0x004D6795, 5); // Fix for the sun flare disappearing upon reloading a save. Prevents the game from deallocating the flare.
+
+	patchJmp((void*)0x0051DAC0, (void*)hook_loose_files);						// Allow the loading of loose files
+	patchCall((void*)0x00BFD8F5, (void*)hook_raw_get_file_info_by_name);		// Add optional search in the ./loose directory
 
 	// Continue to the program's WinMain.
 
