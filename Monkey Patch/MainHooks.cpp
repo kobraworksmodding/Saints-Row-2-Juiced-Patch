@@ -506,6 +506,73 @@ void cus_FrameToggles() {
 
 }
 
+typedef int(__cdecl* chatWindowT)();
+chatWindowT chatWindow = (chatWindowT)0x75C8F0;
+
+int __declspec(naked) LuaExecute(const char* command)
+{
+	_asm {
+		push ebp
+		mov ebp, esp
+		sub esp, __LOCAL_SIZE
+
+
+		mov esi, ds:0x0252983C // Lua State
+		mov eax, command
+		mov edx, 0xCDA000
+		call edx
+
+		mov esi, ds : 0x0252A1B8 // Vint State
+		mov eax, command
+		mov edx, 0xCDA000
+		call edx
+
+
+		mov esp, ebp
+		pop ebp
+		ret
+	}
+}
+
+void LuaExecutor() {
+	static bool IsWaiting = false;
+	static bool OpenedByExecutor = false;
+	BOOL* IsOpen = (BOOL*)(0x0252A5B3);
+	wchar_t* ChatInput = reinterpret_cast<wchar_t*>(0x01F76948);
+
+	if (IsKeyPressed(VK_INSERT, 1)) {
+		if (*IsOpen && OpenedByExecutor) {
+			*(BYTE*)(0x2349849) = 1;
+			OpenedByExecutor = false;
+			IsWaiting = false;
+		}
+		else if (!*IsOpen && !IsWaiting) {
+			IsWaiting = true;
+			*(BYTE*)(0x1F76944) = 3;
+			chatWindow();
+			OpenedByExecutor = true;
+		}
+	}
+
+	if (IsKeyPressed(VK_ESCAPE, 1)) {
+		IsWaiting = false;
+		OpenedByExecutor = false;
+	}
+
+	if (IsWaiting && IsKeyPressed(VK_RETURN, 1)) {
+		IsWaiting = false;
+
+		std::wstring wstr(ChatInput);
+		std::string Converted(wstr.begin(), wstr.end());
+		LuaExecute(Converted.c_str());
+	}
+
+	if (!*IsOpen) {
+		OpenedByExecutor = false;
+		IsWaiting = false;
+	}
+}
+
 typedef int __cdecl RenderLoopStuff_Native();
 RenderLoopStuff_Native* UpdateRenderLoopStuff = (RenderLoopStuff_Native*)(0x00C063D0); //0x00BD4A80
 
@@ -537,6 +604,7 @@ int RenderLoopStuff_Hacked()
 	if (addBindToggles)
 	    cus_FrameToggles();
 	    slewtest();
+		LuaExecutor();
 
 	if (VFXP_fixFog)
 	   FogTest();
