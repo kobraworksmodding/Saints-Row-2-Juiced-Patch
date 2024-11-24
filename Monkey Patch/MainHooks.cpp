@@ -7,6 +7,7 @@
 #include "ErrorManager.h"
 #include "LuaHandler.h"
 #include "DFEngine.h"
+#include "Clothing.h"
 
 #include "GameConfig.h"
 #include <chrono>
@@ -16,6 +17,7 @@
 
 char* executableDirectory[MAX_PATH];
 const char mus2xtbl[] = "music2.xtbl";
+const char FPSCam[] = "camera_fpss.xtbl";
 const char ServerNameRL[] = "[SR2 RELOADED SERVER]";
 const char ServerNameSR2[] = "[Saints Row 2]";
 float AOQuality = 0.05;
@@ -129,7 +131,24 @@ bool ARfov = 0;
 bool ARCutscene = 0;
 double FOVMultiplier = 1;
 bool betterTags = 0;
+bool useFPSCam = 0;
 
+
+void FPSCamHack() {
+	BYTE PlayerStatus = *(BYTE*)0x00E9A5BC; // Status Byte for the Players Actions.
+	FLOAT* WalkCamZoom = (FLOAT*)0x025F6334;
+	BYTE ActorFade = *(BYTE*)0x00E8825F;
+    
+	if (*(FLOAT*)WalkCamZoom > -0.5) {
+		*(FLOAT*)0x025F6334 = -0.4; // Force camera zoom to chest/in front of player.
+	}
+	if (ActorFade == 0x01) {
+		*(BYTE*)0x00E8825F = 0x00; // Force ActorFade to off.
+	}
+	if (PlayerStatus == 0x01 || PlayerStatus == 0x10 || PlayerStatus == 0x02 || PlayerStatus == 0x17) {
+		*(BYTE*)0x00E9A5BC = 0x00; // Force the cam(?) state to 0x00 -- (Walking Outside) if got Running Outside, Running Inside or Walking Inside.
+	}
+}
 
 void RawTags() {
 	float XDelta = *(float*)0x2348534;
@@ -624,6 +643,10 @@ int RenderLoopStuff_Hacked()
 	if (BetterChatTest) {
 		LessRetardedChat();
 	}
+
+	if (useFPSCam) {
+		FPSCamHack();
+	}
 	
 	// Call original func
 	return UpdateRenderLoopStuff();
@@ -820,6 +843,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 
 	PatchOpenSpy();
+	//Clothing::PatchHomies();
+	Clothing::PatchLimit();
 
 	// FUCK THIS SHIT
 
@@ -844,8 +869,19 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	// patch in some stuff at run time, maybe even add exclusive reloaded toggles.
 	patchBytesM((BYTE*)0x00E06CC4, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload.tbl
 	patchBytesM((BYTE*)0x00E06CD0, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload_anims.tbl
-
-
+	
+	if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1)
+	{
+	    Logger::TypedLog(CHN_RL, "Turning SR2 into an FPS...\n");
+		patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
+	}
+	if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
+	{
+		Logger::TypedLog(CHN_RL, "Turning SR2 into an FPS with Viewmodel...\n");
+		patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
+		useFPSCam = 1;
+	}
+	
 	// patch music2.xtbl
 	if (GameConfig::GetValue("Multiplayer", "BetterKillfeed", 1))
 	{

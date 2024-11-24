@@ -185,6 +185,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Clothing.cpp" />
     <ClCompile Include="ErrorManager.cpp" />
     <ClCompile Include="LAAPatcher.cpp" />
     <ClCompile Include="LuaHandler.cpp" />
@@ -202,6 +203,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Clothing.h" />
     <ClInclude Include="ext\inc\lua\lauxlib.h" />
     <ClInclude Include="ext\inc\lua\lua.h" />
     <ClInclude Include="ext\inc\lua\lualib.h" />

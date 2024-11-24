@@ -65,6 +65,9 @@
     <ClCompile Include="LAAPatcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Clothing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DFEngine.h">
@@ -125,6 +128,9 @@
       <Filter>Ext</Filter>
     </ClInclude>
     <ClInclude Include="LAAPatcher.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Clothing.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
