@@ -558,6 +558,8 @@ void LuaExecutor() {
 	static bool OpenedByExecutor = false;
 	BOOL* IsOpen = (BOOL*)(0x0252A5B3);
 	wchar_t* ChatInput = reinterpret_cast<wchar_t*>(0x01F76948);
+	static std::wstring cmdLog[10]; // feel free to increase or decrease this but make sure to edit all the code below to not break it
+	static int cmdN = 0, cmdIndex = -1;
 
 	if (IsKeyPressed(VK_INSERT, 1)) {
 		if (*IsOpen && OpenedByExecutor) {
@@ -582,8 +584,72 @@ void LuaExecutor() {
 		IsWaiting = false;
 
 		std::wstring wstr(ChatInput);
+		if (!wstr.empty()) { // no need to add empty strings to the log/history
+
+			if (cmdN < 10) {
+				cmdLog[cmdN++] = wstr;
+			}
+			else {
+				for (int i = 1; i < 10; i++) {
+					cmdLog[i - 1] = cmdLog[i];
+				}
+				cmdLog[9] = wstr;
+			}
+		}
+
+		cmdIndex = -1;
 		std::string Converted(wstr.begin(), wstr.end());
 		LuaExecute(Converted.c_str());
+	}
+
+	if (IsWaiting) {
+
+		if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && IsKeyPressed(VK_SHIFT, 1)) { // using ctrl + shift for now because either the game or windows = stupid??
+			// also using both getasynckeystate & my wrapper to properly check if ctrl is being held while
+			// only triggering if the game is in focus
+			if (OpenClipboard(nullptr)) {
+				HANDLE hData = GetClipboardData(CF_UNICODETEXT);
+				if (hData) {
+					wchar_t* clipboardInput = static_cast<wchar_t*>(GlobalLock(hData));
+
+					if (clipboardInput) {
+						size_t curLength = wcsnlen(ChatInput, 128);
+						size_t remSpace = 128 - curLength - 1;
+
+						if (remSpace > 0) {
+							wmemset(ChatInput, L'\0', 128);
+							wcsncat_s(ChatInput, 128, clipboardInput, remSpace);
+						}
+
+						GlobalUnlock(hData);
+					}
+				}
+				CloseClipboard();
+			}
+		}
+
+		else if (IsKeyPressed(VK_UP, 1) && (cmdIndex + 1 < cmdN)) {
+
+			cmdIndex++;
+			wmemset(ChatInput, L'\0', 128);
+			wcsncpy_s(ChatInput, 128, cmdLog[cmdN - 1 - cmdIndex].c_str(), 127);
+
+		}
+
+		else if (IsKeyPressed(VK_DOWN, 1)) {
+
+			if (cmdIndex > 0) {
+				cmdIndex--;
+				wmemset(ChatInput, L'\0', 128);
+				wcsncpy_s(ChatInput, 128, cmdLog[cmdN - 1 - cmdIndex].c_str(), 127);
+			}
+
+			else if (cmdIndex == 0) { // this is needed, otherwise you can have infinite negative indexes (unless you limit indexes somewhere)
+
+				cmdIndex--;
+				wmemset(ChatInput, L'\0', 128);
+			}
+		}
 	}
 
 	if (!*IsOpen) {
