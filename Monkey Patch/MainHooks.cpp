@@ -604,7 +604,7 @@ void LuaExecutor() {
 
 	if (IsWaiting) {
 
-		if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && IsKeyPressed(VK_SHIFT, 1)) { // using ctrl + shift for now because either the game or windows = stupid??
+		if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && IsKeyPressed('V', 1)) { // using ctrl + shift for now because either the game or windows = stupid??
 			// also using both getasynckeystate & my wrapper to properly check if ctrl is being held while
 			// only triggering if the game is in focus
 			if (OpenClipboard(nullptr)) {
@@ -795,6 +795,22 @@ void __declspec(naked) MSAA()
 	}
 }
 
+BOOL __declspec(naked) ValidCharFix()
+{
+	static int jmp_continue = 0x0075C8D5;
+	static int jmp_xor = 0x0075C8E7;
+
+	__asm {
+		mov ax, [esp + 4]
+		cmp ax, 0x20
+		jb short skip
+		jmp jmp_continue
+
+		skip:
+		jmp jmp_xor
+	}
+}
+
 struct FILE_INFO
 {
 	int access_method;
@@ -870,6 +886,7 @@ _declspec(naked) void hook_loose_files()
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
+	WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
 	ErrorManager::Initialize();
 	char NameBuffer[260];
 	PIMAGE_DOS_HEADER dos_header;
