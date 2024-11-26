@@ -58,7 +58,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 		*(exe + 1) = '\0';
 	}
     #if !RELOADED
-	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 5.3.2 ---\n");
+	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 6.0.0 ---\n");
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
     Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
 	Logger::TypedLog(CHN_DLL, "--- Based on MonkeyPatch by scanti, additional fixes by Uzis, Tervel, jason098 and Clippy95. ---\n");
@@ -554,107 +554,115 @@ int __declspec(naked) LuaExecute(const char* command)
 }
 
 void LuaExecutor() {
+	BYTE CurrentGamemode = *(BYTE*)0x00E8B210; 
+	BYTE LobbyCheck = *(BYTE*)0x02528C14; // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.
+	BYTE AreWeLoaded = *(BYTE*)0x00E94D3E;
 	static bool IsWaiting = false;
 	static bool OpenedByExecutor = false;
 	BOOL* IsOpen = (BOOL*)(0x0252A5B3);
 	wchar_t* ChatInput = reinterpret_cast<wchar_t*>(0x01F76948);
+	wchar_t* NameFormat = reinterpret_cast<wchar_t*>(0x027B303A);
 	static std::wstring cmdLog[10]; // feel free to increase or decrease this but make sure to edit all the code below to not break it
 	static int cmdN = 0, cmdIndex = -1;
 
-	if (IsKeyPressed(VK_INSERT, 1)) {
-		if (*IsOpen && OpenedByExecutor) {
-			*(BYTE*)(0x2349849) = 1;
+	wcsncpy_s(NameFormat, 16, OpenedByExecutor ? L"%sConsole> %s" : L"%s> %s", 16);
+
+	if (AreWeLoaded == 0x1 && !LobbyCheck == 0x0 && CurrentGamemode == 0xFF) { // If SP/CO-OP allow executor... hopefully.
+		if (IsKeyPressed(VK_INSERT, 1)) {
+			if (*IsOpen && OpenedByExecutor) {
+				*(BYTE*)(0x2349849) = 1;
+				OpenedByExecutor = false;
+				IsWaiting = false;
+			}
+			else if (!*IsOpen && !IsWaiting) {
+				IsWaiting = true;
+				*(BYTE*)(0x1F76944) = 3;
+				chatWindow();
+				OpenedByExecutor = true;
+			}
+		}
+
+		if (IsKeyPressed(VK_ESCAPE, 1)) {
+			IsWaiting = false;
+			OpenedByExecutor = false;
+		}
+
+		if (IsWaiting && IsKeyPressed(VK_RETURN, 1)) {
+			IsWaiting = false;
+
+			std::wstring wstr(ChatInput);
+			if (!wstr.empty()) { // no need to add empty strings to the log/history
+
+				if (cmdN < 10) {
+					cmdLog[cmdN++] = wstr;
+				}
+				else {
+					for (int i = 1; i < 10; i++) {
+						cmdLog[i - 1] = cmdLog[i];
+					}
+					cmdLog[9] = wstr;
+				}
+			}
+
+			cmdIndex = -1;
+			std::string Converted(wstr.begin(), wstr.end());
+			LuaExecute(Converted.c_str());
+		}
+
+		if (IsWaiting) {
+
+			if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && IsKeyPressed('V', 1)) { // using ctrl + shift for now because either the game or windows = stupid??
+				// also using both getasynckeystate & my wrapper to properly check if ctrl is being held while
+				// only triggering if the game is in focus
+				if (OpenClipboard(nullptr)) {
+					HANDLE hData = GetClipboardData(CF_UNICODETEXT);
+					if (hData) {
+						wchar_t* clipboardInput = static_cast<wchar_t*>(GlobalLock(hData));
+
+						if (clipboardInput) {
+							size_t curLength = wcsnlen(ChatInput, 128);
+							size_t remSpace = 128 - curLength - 1;
+
+							if (remSpace > 0) {
+								wmemset(ChatInput, L'\0', 128);
+								wcsncat_s(ChatInput, 128, clipboardInput, remSpace);
+							}
+
+							GlobalUnlock(hData);
+						}
+					}
+					CloseClipboard();
+				}
+			}
+
+			else if (IsKeyPressed(VK_UP, 1) && (cmdIndex + 1 < cmdN)) {
+
+				cmdIndex++;
+				wmemset(ChatInput, L'\0', 128);
+				wcsncpy_s(ChatInput, 128, cmdLog[cmdN - 1 - cmdIndex].c_str(), 127);
+
+			}
+
+			else if (IsKeyPressed(VK_DOWN, 1)) {
+
+				if (cmdIndex > 0) {
+					cmdIndex--;
+					wmemset(ChatInput, L'\0', 128);
+					wcsncpy_s(ChatInput, 128, cmdLog[cmdN - 1 - cmdIndex].c_str(), 127);
+				}
+
+				else if (cmdIndex == 0) { // this is needed, otherwise you can have infinite negative indexes (unless you limit indexes somewhere)
+
+					cmdIndex--;
+					wmemset(ChatInput, L'\0', 128);
+				}
+			}
+		}
+
+		if (!*IsOpen) {
 			OpenedByExecutor = false;
 			IsWaiting = false;
 		}
-		else if (!*IsOpen && !IsWaiting) {
-			IsWaiting = true;
-			*(BYTE*)(0x1F76944) = 3;
-			chatWindow();
-			OpenedByExecutor = true;
-		}
-	}
-
-	if (IsKeyPressed(VK_ESCAPE, 1)) {
-		IsWaiting = false;
-		OpenedByExecutor = false;
-	}
-
-	if (IsWaiting && IsKeyPressed(VK_RETURN, 1)) {
-		IsWaiting = false;
-
-		std::wstring wstr(ChatInput);
-		if (!wstr.empty()) { // no need to add empty strings to the log/history
-
-			if (cmdN < 10) {
-				cmdLog[cmdN++] = wstr;
-			}
-			else {
-				for (int i = 1; i < 10; i++) {
-					cmdLog[i - 1] = cmdLog[i];
-				}
-				cmdLog[9] = wstr;
-			}
-		}
-
-		cmdIndex = -1;
-		std::string Converted(wstr.begin(), wstr.end());
-		LuaExecute(Converted.c_str());
-	}
-
-	if (IsWaiting) {
-
-		if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && IsKeyPressed('V', 1)) { // using ctrl + shift for now because either the game or windows = stupid??
-			// also using both getasynckeystate & my wrapper to properly check if ctrl is being held while
-			// only triggering if the game is in focus
-			if (OpenClipboard(nullptr)) {
-				HANDLE hData = GetClipboardData(CF_UNICODETEXT);
-				if (hData) {
-					wchar_t* clipboardInput = static_cast<wchar_t*>(GlobalLock(hData));
-
-					if (clipboardInput) {
-						size_t curLength = wcsnlen(ChatInput, 128);
-						size_t remSpace = 128 - curLength - 1;
-
-						if (remSpace > 0) {
-							wmemset(ChatInput, L'\0', 128);
-							wcsncat_s(ChatInput, 128, clipboardInput, remSpace);
-						}
-
-						GlobalUnlock(hData);
-					}
-				}
-				CloseClipboard();
-			}
-		}
-
-		else if (IsKeyPressed(VK_UP, 1) && (cmdIndex + 1 < cmdN)) {
-
-			cmdIndex++;
-			wmemset(ChatInput, L'\0', 128);
-			wcsncpy_s(ChatInput, 128, cmdLog[cmdN - 1 - cmdIndex].c_str(), 127);
-
-		}
-
-		else if (IsKeyPressed(VK_DOWN, 1)) {
-
-			if (cmdIndex > 0) {
-				cmdIndex--;
-				wmemset(ChatInput, L'\0', 128);
-				wcsncpy_s(ChatInput, 128, cmdLog[cmdN - 1 - cmdIndex].c_str(), 127);
-			}
-
-			else if (cmdIndex == 0) { // this is needed, otherwise you can have infinite negative indexes (unless you limit indexes somewhere)
-
-				cmdIndex--;
-				wmemset(ChatInput, L'\0', 128);
-			}
-		}
-	}
-
-	if (!*IsOpen) {
-		OpenedByExecutor = false;
-		IsWaiting = false;
 	}
 }
 
@@ -918,6 +926,10 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	// Probably Add SR2 Reloaded patch routines here, used to be OS and FPS patch from Monkey here.
 	
+	// LUA EXECUTE
+	patchBytesM((BYTE*)0x0075D5D6, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
+	patchBytesM((BYTE*)0x0075D5B5, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
+
 	// Adds Clan tag to name
 	if (GameConfig::GetValue("Multiplayer", "FixNetworkBinding", 1))
 	{
@@ -927,7 +939,10 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	PatchOpenSpy();
 	//Clothing::PatchHomies();
-	Clothing::PatchLimit();
+	if (GameConfig::GetValue("Debug", "ExpandClothingLimit", 1))
+	{
+		Clothing::PatchLimit();
+	}
 
 	// FUCK THIS SHIT
 
@@ -953,17 +968,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchBytesM((BYTE*)0x00E06CC4, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload.tbl
 	patchBytesM((BYTE*)0x00E06CD0, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload_anims.tbl
 	
-	if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1)
-	{
-	    Logger::TypedLog(CHN_RL, "Turning SR2 into an FPS...\n");
-		patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
-	}
-	if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
-	{
-		Logger::TypedLog(CHN_RL, "Turning SR2 into an FPS with Viewmodel...\n");
-		patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
-		useFPSCam = 1;
-	}
 	
 	// patch music2.xtbl
 	if (GameConfig::GetValue("Multiplayer", "BetterKillfeed", 1))
@@ -1028,6 +1032,18 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 #else
 
+	if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1)
+	{
+		Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS...\n");
+		patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
+	}
+	if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
+	{
+		Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS with Viewmodel...\n");
+		patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
+		useFPSCam = 1;
+	}
+
 	if (GameConfig::GetValue("Gameplay", "BetterMovementBehaviour", 0))
 	{
 		// Majority of the SR2 movement sluggishness is due to the fact that certain walking anims add an
@@ -1078,6 +1094,13 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((BYTE*)0x00C14A06, 5);
 		Logger::TypedLog(CHN_DEBUG, "XInput Disabled.\n");
 	}
+
+	if (GameConfig::GetValue("Debug", "ForceDisableVibration", 0)) // Fixes load/new save insta-crash due to broken / shitty joystick drivers.
+	{
+		patchBytesM((BYTE*)0x00C14930, (BYTE*)"\xC3\x00", 2);
+		Logger::TypedLog(CHN_DEBUG, "Vibration Forced to OFF.\n");
+	}
+
 
 	if (GameConfig::GetValue("Audio", "UseFixedXACT", 1)) // Scanti the Goat
 	{
