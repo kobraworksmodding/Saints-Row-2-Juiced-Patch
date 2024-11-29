@@ -409,6 +409,103 @@ void SkipMainMenu() {
 	}
 }
 
+typedef int(__cdecl* VehicleSpawnT)(int a1);
+VehicleSpawnT VehicleSpawn = (VehicleSpawnT)0x00AE4AE0;
+
+typedef int(__thiscall* GetVehIndexT)(const char* Vehicle);
+GetVehIndexT GetVehIndex = (GetVehIndexT)0x00AE4090;
+
+typedef int(__fastcall* GetPointerT)(int VehiclePointer);
+GetPointerT GetPointer = (GetPointerT)0x00AE28F0;
+
+typedef int(*TeleportPlayerT)();
+TeleportPlayerT TeleportPlayer = (TeleportPlayerT)0x9D3C50;
+
+void tpCoords(float x, float y, float z) {
+	float* xyz = reinterpret_cast<float*>(0x027B305A);
+	xyz[0] = x;
+	xyz[1] = y;
+	xyz[2] = z;
+	TeleportPlayer();
+}
+
+void __declspec(naked) FadeIn(int Veh, int Duration) {
+	__asm {
+
+		mov eax, [esp + 4]
+		mov edx, [esp + 8]
+		mov esi, 0xAABC80
+		call esi
+		ret
+	}
+}
+
+void __declspec(naked) EnterVeh(int VehPointer, int PlayerPointer, int SeatIndex) {
+	__asm {
+
+		push ebp
+		mov ebp, esp
+		sub esp, __LOCAL_SIZE
+
+		push    SeatIndex
+		mov     esi, PlayerPointer
+		mov     edi, VehPointer
+		mov		ebx, 0x597C40
+		call    ebx
+
+		mov esp, ebp
+		pop ebp
+		ret
+	}
+}
+
+int __declspec(naked) GetVarIndex(int VehData, const char* VariantName) {
+	__asm {
+
+		push ebp
+		mov ebp, esp
+		sub esp, __LOCAL_SIZE
+
+		push	esi
+		mov		esi, VehData
+		mov     eax, esi
+		imul    eax, 2000
+		mov		ebx, 0x2FAD1F8
+		add     eax, ebx
+		mov	    edi, VariantName
+		mov     ecx, edi
+		mov		ebx, 0xAC7420
+		call    ebx
+
+		mov esp, ebp
+		pop ebp
+		ret
+	}
+}
+
+int VehP;
+
+void VehicleSpawner(const char* Name, const char* Var) {
+	int Car = GetVehIndex(Name);
+	_asm pushad
+	int VarIndex = GetVarIndex(Car, Var);
+	_asm popad
+
+	DWORD old;
+	VirtualProtect((LPVOID)0x00AE4BE8, sizeof(int), PAGE_READWRITE, &old);
+	*(unsigned char*)(0x00AE4BE8) = VarIndex;
+	VirtualProtect((LPVOID)0x00AE4BE8, sizeof(int), old, &old);
+
+	if (Car != -1) {
+		VehicleSpawn(Car);
+		VehP = GetPointer(*(int*)0x252A0E0);
+		FadeIn(VehP, 500);
+		_asm pushad
+		EnterVeh(VehP, *(int*)0x21703D4, 0);
+		_asm popad
+	}
+}
+
 void cus_FrameToggles() {
 	float delay = 0.0f;
 	float duration = 1.5f;
@@ -509,6 +606,17 @@ void cus_FrameToggles() {
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
 		Logger::TypedLog(CHN_DEBUG, "Player Pos + Orient: <%0.6f %0.6f %0.6f> [%0.6f]\n", hkg_playerPosition[0], hkg_playerPosition[1], hkg_playerPosition[2], hkg_camOrient[0]);
 	}
+
+	if (IsKeyPressed(VK_F7, 1)) {
+
+		if ((*(int*)(0x1F7A418) != 0)) { // check if there's a waypoint
+			*(bool*)(0x252740E) = 1; // Ins Fraud Sound
+			std::wstring subtitles = (L"Teleported to waypoint!");
+			addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
+			tpCoords(*(float*)0x29B9CD0, *(float*)0x29B9CD4, *(float*)0x29B9CD8);
+		}
+	}
+
 	if (RPCHandler::IsCoopOrSP == true) 
 	{
 		if (IsKeyPressed(VK_F6, 1)) {
@@ -589,6 +697,8 @@ void LuaExecutor() {
 
 		if (IsWaiting && IsKeyPressed(VK_RETURN, 1)) {
 			IsWaiting = false;
+			char VehName[128], VehVar[128];
+			float x, y, z;
 
 			std::wstring wstr(ChatInput);
 			if (!wstr.empty()) { // no need to add empty strings to the log/history
@@ -606,7 +716,18 @@ void LuaExecutor() {
 
 			cmdIndex = -1;
 			std::string Converted(wstr.begin(), wstr.end());
-			LuaExecute(Converted.c_str());
+
+			if (sscanf(Converted.c_str(), "spawn_car %s %[^\n]", VehName, VehVar) >= 1) {
+				VehicleSpawner(VehName, sscanf(Converted.c_str(), "spawn_car %s %[^\n]", VehName, VehVar) == 1 ? "-1" : VehVar);
+			}
+
+			else if (sscanf_s(Converted.c_str(), "tp_player %f %f %f", &x, &y, &z) == 3) {
+				tpCoords(x, y, z);
+			}
+
+			else {
+				LuaExecute(Converted.c_str());
+			}
 		}
 
 		if (IsWaiting) {
@@ -624,7 +745,6 @@ void LuaExecutor() {
 							size_t remSpace = 128 - curLength - 1;
 
 							if (remSpace > 0) {
-								wmemset(ChatInput, L'\0', 128);
 								wcsncat_s(ChatInput, 128, clipboardInput, remSpace);
 							}
 
@@ -1447,6 +1567,12 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchCall((void*)0x00BFD8F5, (void*)hook_raw_get_file_info_by_name);		// Add optional search in the ./loose directory
 
 	// Continue to the program's WinMain.
+
+	patchBytesM((BYTE*)0x009D3C70, (BYTE*)"\xD9\x05\x5A\x30\x7B\x02", 6); // TP X
+	patchBytesM((BYTE*)0x009D3C83, (BYTE*)"\xD9\x05\x5E\x30\x7B\x02", 6); // TP Y
+	patchBytesM((BYTE*)0x009D3CAE, (BYTE*)"\xD9\x05\x62\x30\x7B\x02", 6); // TP Z
+	patchBytesM((BYTE*)0x00BE1B50, (BYTE*)"\xC3", 1); // return - avoid crashing from the unused broken debug console variable checker
+	patchNop((BYTE*)0x009D3C65, 2); // nop out the command check so TP works without it
 
 	WinMain_Type OldWinMain=(WinMain_Type)offset_addr(0x00520ba0);
 	return (OldWinMain(hInstance, hPrevInstance, lpCmdLine,nShowCmd));
