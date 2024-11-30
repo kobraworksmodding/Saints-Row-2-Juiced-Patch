@@ -62,6 +62,36 @@ bool IsKeyPressed(char Key, bool Hold) // USE THIS FROM NOW ON
 	return false;
 }
 
+const char* Path = "Software\\SR2Juiced";
+const char* Name = "FirstBoot";
+HKEY hKey;
+
+bool FirstBootCheck() {
+
+	if (RegOpenKeyExA(HKEY_CURRENT_USER, Path, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+	{
+		DWORD value = 0, size = sizeof(value);
+		if (RegQueryValueExA(hKey, Name, nullptr, nullptr, (LPBYTE)&value, &size) == ERROR_SUCCESS && value == 1)
+		{
+			RegCloseKey(hKey);
+			return false;
+		}
+		RegCloseKey(hKey);
+	}
+	return true;
+}
+
+void FirstBootFlag() {
+
+	if (RegCreateKeyExA(HKEY_CURRENT_USER, Path, 0, nullptr, 0, KEY_WRITE, nullptr, &hKey, nullptr) == ERROR_SUCCESS)
+	{
+		DWORD value = 1;
+		RegSetValueExA(hKey, Name, 0, REG_DWORD, (const BYTE*)&value, sizeof(value));
+		RegCloseKey(hKey);
+	}
+}
+
+
 BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 {
     char timeString[200];
@@ -522,16 +552,15 @@ void VehicleSpawner(const char* Name, const char* Var) {
 	int& VehFromSpawner = *(int*)(0x0252A0E0);
 	int& PlayerOffset = *(int*)0x21703D4;
 
+	if (CurrentVeh > 0 && CurrentVeh != VehFromSpawner) {
+		CurVehPointer = GetPointer(CurrentVeh);
+		DeleteVeh(CurVehPointer, 0);
+	}
 
 	int VehIndex = GetVehIndex(Name);
 	_asm pushad
 	int VarIndex = GetVarIndex(VehIndex, Var);
 	_asm popad
-
-	if (CurrentVeh > 0 && CurrentVeh != VehFromSpawner) {
-		CurVehPointer = GetPointer(CurrentVeh);
-		DeleteVeh(CurVehPointer, 0);
-	}
 
 	DWORD old;
 	VirtualProtect((LPVOID)0x00AE4BE8, sizeof(int), PAGE_READWRITE, &old);
@@ -905,6 +934,19 @@ int RenderLoopStuff_Hacked()
 
 	if (useFPSCam) {
 		FPSCamHack();
+	}
+
+	if (FirstBootCheck()) {
+		const wchar_t* JuicedWelcome =
+			L"Welcome to [format][color:#B200FF]Juiced[/format]! Thank you for installing the patch.\n"
+			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format]:\n\n"
+			L"[format][color:#4F9EFF]discord.com/invite/TkurdZJQ[/format]\n\n"
+			L"- [format][color:#B200FF]Juiced Team[/format]"
+			L"[format][scale:1.0][image:ui_hud_inv_d_ginjuice][/format]";
+		__asm pushad
+		AddMessage(L"Juiced", JuicedWelcome);
+		__asm popad
+		FirstBootFlag();
 	}
 	
 	// Call original func
