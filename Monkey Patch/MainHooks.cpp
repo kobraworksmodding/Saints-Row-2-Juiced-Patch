@@ -168,21 +168,28 @@ void FPSCamHack() {
 }
 
 void RawTags() {
+	// CLIPPY TODO: Figure out what's wrong with X axis sensitivty at low speed, maybe use mouse struct instead of reading from overall ingame delta?
+	BYTE menuStatus = *(BYTE*)(0x00EBE860);
+	if (menuStatus != 2) return;
+	/*
+	mouse mouseread;
+	int32_t x = mouseread.getXdelta();
+	int32_t y = mouseread.getYdelta();*/
 	float XDelta = *(float*)0x2348534;
 	float yDelta = *(float*)0x2348538;
-	//float mouseSensY = *(float*)0x25F5C9C;
-	//float mouseSensX = *(float*)0x025F5C98;
 	float LeftStickX = *(float*)0x23485F4;
 	float LeftStickY = *(float*)0x23485F8;
-	float RightStickX = *(float*)0x02348534;
-	float RightStickY = *(float*)0x02348538;
+	float RightStickX = *(float*)0x023485B4;
+	float RightStickY = *(float*)0x023485B8;
 	uint16_t yTag = *(uint16_t*)0x027A3F6C;
 	uint16_t xTag = *(uint16_t*)0x027A3F68;
 
 	int16_t newYTag = yTag;
 	int16_t newXTag = xTag;
 	float divisor;
-	if (RightStickX || RightStickY > 0.f) {
+	if (!XDelta && !yDelta && !LeftStickX && !LeftStickY)
+		return;
+	if (RightStickX != 0 && RightStickY != 0) {
 		divisor = 29.f;
 	}
 	else {
@@ -190,7 +197,7 @@ void RawTags() {
 	}
 	newYTag -= static_cast<int16_t>(((yDelta / divisor) + (LeftStickY / 29.f)) * 128.0f);
 
-	newXTag += static_cast<int16_t>(((XDelta / divisor) + (LeftStickX / 29.f)) * 64.0f);
+	newXTag += static_cast<int16_t>(((XDelta / divisor) + (LeftStickX / 29.f)) * 76.8f);
 
 
 	// Ensure yTag stays within the range otherwise it'll break
