@@ -26,20 +26,37 @@ float AOStrength = 1.65;
 int ResolutionX = 1920;
 int ResolutionY = 1080;
 
-bool IsKeyPressed(char key, short type) // USE THIS FROM NOW ON
+bool lastFrameStates[256];
+bool wasPressedThisFrame[256];
+
+void UpdateKeys()
 {
-
-	HWND curWin = GetForegroundWindow();
-
-	char title[128];
-
-	GetWindowTextA(curWin, title, sizeof(title));
-
-	if (strcmp(title, "Saints Row 2") == 0 || strcmp(title, "SR2 RELOADED") == 0)
+	for (int i = 0; i < 256; i++)
 	{
-		if (GetAsyncKeyState(key) & type)
+		bool thisFrameState = GetKeyState(i) < 0;
+		wasPressedThisFrame[i] = thisFrameState && !lastFrameStates[i];
+		lastFrameStates[i] = thisFrameState;
+	}
+}
+
+bool IsSRFocused()
+{
+	DWORD pid;
+	GetWindowThreadProcessId(GetForegroundWindow(), &pid);
+	return pid == GetCurrentProcessId();
+}
+
+bool IsKeyPressed(char Key, bool Hold) // USE THIS FROM NOW ON
+{
+	if (IsSRFocused())
+	{
+		if (Hold)
 		{
-			return true;
+			return lastFrameStates[Key];
+		}
+		else
+		{
+			return wasPressedThisFrame[Key];
 		}
 	}
 	return false;
@@ -274,21 +291,21 @@ void slewtest() {
 			*(float*)0x02F9B7E4 = *(float*)0x025F5B14;
 		}
 
-		if (IsKeyPressed(VK_UP, 0x8000)) {
+		if (IsKeyPressed(VK_UP, true)) {
 			fov -= fovSpeed * deltaTime;
 			fov = max(fov, 10.0f);
 		}
 
-		if (IsKeyPressed(VK_DOWN, 0x8000)) {
+		if (IsKeyPressed(VK_DOWN, true)) {
 			fov += fovSpeed * deltaTime;
 			fov = min(fov, 120.0f);
 		}
 
-		if (IsKeyPressed(0x31, 0x8000)) {
+		if (IsKeyPressed(0x31, true)) {
 			roll = 1.0f;
 		}
 
-		else if (IsKeyPressed(0x33, 0x8000)) { // number 3 key
+		else if (IsKeyPressed(0x33, true)) { // number 3 key
 			roll = -1.0f;
 		}
 
@@ -421,6 +438,12 @@ GetPointerT GetPointer = (GetPointerT)0x00AE28F0;
 typedef int(*TeleportPlayerT)();
 TeleportPlayerT TeleportPlayer = (TeleportPlayerT)0x9D3C50;
 
+typedef int(__thiscall* DeleteVehT)(int a1, int a2);
+DeleteVehT DeleteVeh = (DeleteVehT)0xAA4490;
+
+typedef char(__cdecl* ForceStandT)(int a1, int a2);
+ForceStandT ForceStand = (ForceStandT)0x9ACB10;
+
 void tpCoords(float x, float y, float z) {
 	float* xyz = reinterpret_cast<float*>(0x027B305A);
 	xyz[0] = x;
@@ -483,26 +506,60 @@ int __declspec(naked) GetVarIndex(int VehData, const char* VariantName) {
 	}
 }
 
-int VehP;
-
 void VehicleSpawner(const char* Name, const char* Var) {
-	int Car = GetVehIndex(Name);
+
+	static int VehPointer;
+	static int CurVehPointer;
+
+	int CurrentVeh = *(int*)(0x00EA01F8);
+	int& VehFromSpawner = *(int*)(0x0252A0E0);
+	int& PlayerOffset = *(int*)0x21703D4;
+
+
+	int VehIndex = GetVehIndex(Name);
 	_asm pushad
-	int VarIndex = GetVarIndex(Car, Var);
+	int VarIndex = GetVarIndex(VehIndex, Var);
 	_asm popad
+
+	if (CurrentVeh > 0 && CurrentVeh != VehFromSpawner) {
+		CurVehPointer = GetPointer(CurrentVeh);
+		DeleteVeh(CurVehPointer, 0);
+	}
 
 	DWORD old;
 	VirtualProtect((LPVOID)0x00AE4BE8, sizeof(int), PAGE_READWRITE, &old);
 	*(unsigned char*)(0x00AE4BE8) = VarIndex;
 	VirtualProtect((LPVOID)0x00AE4BE8, sizeof(int), old, &old);
 
-	if (Car != -1) {
-		VehicleSpawn(Car);
-		VehP = GetPointer(*(int*)0x252A0E0);
-		FadeIn(VehP, 500);
+	if (VehIndex != -1) {
+		VehicleSpawn(VehIndex);
+		VehPointer = GetPointer(VehFromSpawner);
+		FadeIn(VehPointer, 500);
+		ForceStand(PlayerOffset, 0);
 		_asm pushad
-		EnterVeh(VehP, *(int*)0x21703D4, 0);
+		EnterVeh(VehPointer, PlayerOffset, 0);
 		_asm popad
+	}
+}
+
+int __declspec(naked) AddMessage(const wchar_t* Title, const wchar_t* Desc) { // we can use this for juiced-related info prompts
+	__asm {
+		push ebp
+		mov ebp, esp
+		sub esp, __LOCAL_SIZE
+
+
+		mov edx, Desc
+		push edx
+		mov esi, Title
+		push esi
+
+		mov eax, 0x7E6250
+		call eax
+
+		mov esp, ebp
+		pop ebp
+		ret
 	}
 }
 
@@ -517,7 +574,7 @@ void cus_FrameToggles() {
 	static uint8_t ogAA;
 
 
-	if (IsKeyPressed(VK_F1, 1)) { // F1
+	if (IsKeyPressed(VK_F1, false)) { // F1
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -537,7 +594,7 @@ void cus_FrameToggles() {
 		*(float*)(0xE98988) = uglyMode ? 400.0f : 20000.0f;
 	}
 
-	if (IsKeyPressed(VK_F4, 1)) { // F4
+	if (IsKeyPressed(VK_F4, false)) { // F4
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -556,7 +613,7 @@ void cus_FrameToggles() {
 		}
 	}
 
-	if (IsKeyPressed(VK_F3, 1)) { // F3
+	if (IsKeyPressed(VK_F3, false)) { // F3
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -569,7 +626,7 @@ void cus_FrameToggles() {
 
 	}
 
-	if (IsKeyPressed(VK_F2, 1)) { // F2
+	if (IsKeyPressed(VK_F2, false)) { // F2
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
@@ -582,14 +639,14 @@ void cus_FrameToggles() {
 
 	}
 
-	if (IsKeyPressed(VK_F9, 1)) { // F9
+	if (IsKeyPressed(VK_F9, false)) { // F9
 		FOVMultiplier += 0.1;
 		AspectRatioFix();
 		Logger::TypedLog(CHN_DEBUG, "+FOV Multiplier: %f,\n", FOVMultiplier);
 		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
 	}
 
-	if (IsKeyPressed(VK_F8, 1)) { // F8
+	if (IsKeyPressed(VK_F8, false)) { // F8
 		FOVMultiplier -= 0.1;
 		AspectRatioFix();
 		Logger::TypedLog(CHN_DEBUG, "-FOV Multiplier: %f,\n", FOVMultiplier);
@@ -597,7 +654,7 @@ void cus_FrameToggles() {
 
 	}
 
-	if (IsKeyPressed(VK_F5, 1)) { // F5
+	if (IsKeyPressed(VK_F5, false)) { // F5
 		FLOAT* hkg_playerPosition = (FLOAT*)0x00FA6DB0;
 		FLOAT* hkg_camOrient = (FLOAT*)0x025F5B5C; // ???? maybe
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
@@ -607,7 +664,7 @@ void cus_FrameToggles() {
 		Logger::TypedLog(CHN_DEBUG, "Player Pos + Orient: <%0.6f %0.6f %0.6f> [%0.6f]\n", hkg_playerPosition[0], hkg_playerPosition[1], hkg_playerPosition[2], hkg_camOrient[0]);
 	}
 
-	if (IsKeyPressed(VK_F7, 1)) {
+	if (IsKeyPressed(VK_F7, false)) {
 
 		if ((*(int*)(0x1F7A418) != 0)) { // check if there's a waypoint
 			*(bool*)(0x252740E) = 1; // Ins Fraud Sound
@@ -619,7 +676,7 @@ void cus_FrameToggles() {
 
 	if (RPCHandler::IsCoopOrSP == true) 
 	{
-		if (IsKeyPressed(VK_F6, 1)) {
+		if (IsKeyPressed(VK_F6, false)) {
 			pausetest = !pausetest;
 
 			if (pausetest) {
@@ -676,7 +733,7 @@ void LuaExecutor() {
 	wcsncpy_s(NameFormat, 16, OpenedByExecutor ? L"%sConsole> %s" : L"%s> %s", 16);
 
 	if (AreWeLoaded == 0x1 && !LobbyCheck == 0x0 && CurrentGamemode == 0xFF) { // If SP/CO-OP allow executor... hopefully.
-		if (IsKeyPressed(VK_INSERT, 1)) {
+		if (IsKeyPressed(VK_INSERT, false)) {
 			if (*IsOpen && OpenedByExecutor) {
 				*(BYTE*)(0x2349849) = 1;
 				OpenedByExecutor = false;
@@ -690,12 +747,12 @@ void LuaExecutor() {
 			}
 		}
 
-		if (IsKeyPressed(VK_ESCAPE, 1)) {
+		if (IsKeyPressed(VK_ESCAPE, false)) {
 			IsWaiting = false;
 			OpenedByExecutor = false;
 		}
 
-		if (IsWaiting && IsKeyPressed(VK_RETURN, 1)) {
+		if (IsWaiting && IsKeyPressed(VK_RETURN, false)) {
 			IsWaiting = false;
 			char VehName[128], VehVar[128];
 			float x, y, z;
@@ -732,7 +789,7 @@ void LuaExecutor() {
 
 		if (IsWaiting) {
 
-			if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && IsKeyPressed('V', 1)) { // using ctrl + shift for now because either the game or windows = stupid??
+			if (IsKeyPressed(VK_CONTROL, true) && IsKeyPressed('V', false)) { // using ctrl + shift for now because either the game or windows = stupid??
 				// also using both getasynckeystate & my wrapper to properly check if ctrl is being held while
 				// only triggering if the game is in focus
 				if (OpenClipboard(nullptr)) {
@@ -755,7 +812,7 @@ void LuaExecutor() {
 				}
 			}
 
-			else if (IsKeyPressed(VK_UP, 1) && (cmdIndex + 1 < cmdN)) {
+			else if (IsKeyPressed(VK_UP, false) && (cmdIndex + 1 < cmdN)) {
 
 				cmdIndex++;
 				wmemset(ChatInput, L'\0', 128);
@@ -763,7 +820,7 @@ void LuaExecutor() {
 
 			}
 
-			else if (IsKeyPressed(VK_DOWN, 1)) {
+			else if (IsKeyPressed(VK_DOWN, false)) {
 
 				if (cmdIndex > 0) {
 					cmdIndex--;
@@ -815,6 +872,7 @@ int RenderLoopStuff_Hacked()
 	    havokFrameTicker();
 
 	if (addBindToggles)
+		UpdateKeys();
 	    cus_FrameToggles();
 	    slewtest();
 		LuaExecutor();
