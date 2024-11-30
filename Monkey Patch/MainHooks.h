@@ -14,4 +14,22 @@ static bool GetVersionExAFirstRun=true;
 BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation);
 int UpdateByteStuff_Hacked();
 
+struct mouse {
+    static constexpr uintptr_t x_delta_address = 0x234F45C;
+    static constexpr uintptr_t y_delta_address = 0x234F458;
+    static constexpr uintptr_t scroll_delta_address = 0x234EA34;
+    // Returns Mouse X delta in signed int32.
+    inline int32_t getXdelta() const {
+        return *reinterpret_cast<const int32_t*>(x_delta_address);
+    }
+    // Returns Mouse Y delta in signed int32.
+    inline int32_t getYdelta() const {
+        return *reinterpret_cast<const int32_t*>(y_delta_address);
+    }
+    // Returns Mouse Scroll Wheel delta, 120 = one scroll up -120 one scroll down.
+    inline int32_t getWheeldelta() const {
+        return *reinterpret_cast<const int32_t*>(scroll_delta_address);
+    }
+};
+
 
