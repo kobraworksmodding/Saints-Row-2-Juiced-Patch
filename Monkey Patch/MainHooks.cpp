@@ -25,6 +25,7 @@ float AOSmoothness = 12.5;
 float AOStrength = 1.65;
 int ResolutionX = 1920;
 int ResolutionY = 1080;
+bool CheatFlagDisabled = 0;
 
 bool lastFrameStates[256];
 bool wasPressedThisFrame[256];
@@ -599,6 +600,8 @@ int __declspec(naked) AddMessage(const wchar_t* Title, const wchar_t* Desc) { //
 	}
 }
 
+bool hasCheatMessageBeenSeen = 0;
+
 void cus_FrameToggles() {
 	float delay = 0.0f;
 	float duration = 1.5f;
@@ -702,11 +705,30 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_F7, false)) {
 
+		if (CheatFlagDisabled != 1) {
+			if (hasCheatMessageBeenSeen == 0) {
+				const wchar_t* JuicedF7Cheat =
+					L"The F7 key hosts a command that allows you to teleport to your waypoint on your map.\n"
+					L"Using this option will render your save game cheat flagged if you have teleported to a waypoint.\n\n"
+					L"Do not save your game past this point if the teleport has succeeded if you do not want the cheat flag enabled.";
+				__asm pushad
+				AddMessage(L"Juiced", JuicedF7Cheat);
+				__asm popad
+
+				hasCheatMessageBeenSeen = 1;
+			}
+		}
+
 		if ((*(int*)(0x1F7A418) != 0)) { // check if there's a waypoint
+			if (CheatFlagDisabled != 1) {
+				*(BYTE*)0x02527B5A = 0x1;
+				*(BYTE*)0x02527BE6 = 0x1;
+			}
 			*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 			std::wstring subtitles = (L"Teleported to waypoint!");
 			addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
 			tpCoords(*(float*)0x29B9CD0, *(float*)0x29B9CD4, *(float*)0x29B9CD8);
+
 		}
 	}
 
@@ -754,6 +776,8 @@ int __declspec(naked) LuaExecute(const char* command)
 	}
 }
 
+bool hasCheatMessageBeenSeen2 = 0;
+
 void LuaExecutor() {
 	BYTE CurrentGamemode = *(BYTE*)0x00E8B210; 
 	BYTE LobbyCheck = *(BYTE*)0x02528C14; // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.
@@ -769,7 +793,22 @@ void LuaExecutor() {
 	wcsncpy_s(NameFormat, 16, OpenedByExecutor ? L"%sConsole> %s" : L"%s> %s", 16);
 
 	if (AreWeLoaded == 0x1 && !LobbyCheck == 0x0 && CurrentGamemode == 0xFF) { // If SP/CO-OP allow executor... hopefully.
+
 		if (IsKeyPressed(VK_INSERT, false)) {
+			if (CheatFlagDisabled != 1) {
+				if (hasCheatMessageBeenSeen2 == 0) {
+					const wchar_t* LUAExeCheat =
+						L"The LUA Executor console allows you to do a LOT of things not possible in the vanilla game.\n"
+						L"Therefore executing any command will immediately flag your save game as a cheated save.\n\n"
+						L"Press Escape if you would like to exit the LUA Executor Console.";
+					__asm pushad
+					AddMessage(L"Juiced", LUAExeCheat);
+					__asm popad
+
+					hasCheatMessageBeenSeen2 = 1;
+				}
+			}
+
 			if (*IsOpen && OpenedByExecutor) {
 				*(BYTE*)(0x2349849) = 1;
 				OpenedByExecutor = false;
@@ -792,6 +831,7 @@ void LuaExecutor() {
 			IsWaiting = false;
 			char VehName[128], VehVar[128];
 			float x, y, z;
+
 
 			std::wstring wstr(ChatInput);
 			if (!wstr.empty()) { // no need to add empty strings to the log/history
@@ -820,6 +860,10 @@ void LuaExecutor() {
 
 			else {
 				LuaExecute(Converted.c_str());
+			}
+			if (CheatFlagDisabled != 1) {
+				*(BYTE*)0x02527B5A = 0x1;
+				*(BYTE*)0x02527BE6 = 0x1;
 			}
 		}
 
@@ -951,6 +995,53 @@ int RenderLoopStuff_Hacked()
 	
 	// Call original func
 	return UpdateRenderLoopStuff();
+}
+
+typedef float(__cdecl* ChangeTextColorT)(int R, int G, int B, int Alpha);
+ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
+
+void __declspec(naked) InGamePrint(const char* Text, int idk1, int idk2, int idk3) {
+	__asm {
+		push ebp
+		mov ebp, esp
+		sub esp, __LOCAL_SIZE
+
+		push edi
+		push esi
+		push eax
+
+		mov edi, idk3
+		mov esi, Text
+		push idk1
+		push idk2
+
+		mov eax, 0xD15DC0
+		call eax
+
+		pop eax
+		pop esi
+		pop edi
+
+		mov esp, ebp
+		pop ebp
+		ret
+	}
+}
+
+typedef void SomeMMFunc_Native();
+SomeMMFunc_Native* UpdateSomeMMFunc = (SomeMMFunc_Native*)(0x0075B270);
+
+void SomeMMFunc_Hacked()
+{
+	if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
+	    ChangeTextColor(160, 160, 160, 128);
+		__asm pushad
+		InGamePrint("JUICED 6.0", 680, 1120, 2);
+		__asm popad
+	}
+
+	// Call original func
+	return UpdateSomeMMFunc();
 }
 
 int(__stdcall* theirbind)(SOCKET, const struct sockaddr_in*, int) = nullptr;
@@ -1259,6 +1350,13 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 #else
 
+	if (GameConfig::GetValue("Debug", "MenuVersionNumber", 1))
+	{
+		Logger::TypedLog(CHN_MOD, "Patching MenuVersionNumber...\n");
+		//patchCall((void*)0x0052050C, (void*)SomeMMFunc_Hacked);
+		patchCall((void*)0x0073CE0D, (void*)SomeMMFunc_Hacked);
+	}
+
 	if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1)
 	{
 		Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS...\n");
@@ -1354,6 +1452,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	{
 		patchNop((BYTE*)0x00687e12, 6);
 		patchNop((BYTE*)0x00687e18, 6);
+		CheatFlagDisabled = 1;
 	}
 
 	if (GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", 1.0)) // 1.0 isn't go anywhere.
@@ -1472,7 +1571,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DEBUG, "Patching GameRenderLoop...\n");
 		patchCall((void*)0x0052050C, (void*)RenderLoopStuff_Hacked); // Patch stuff into Render loop, we could do game loop but this was easier to find, and works i guess.
 	}
-
 
 	SetDefaultGameSettings(); // Set SR2 Reloaded Modernized Default Settings
 
