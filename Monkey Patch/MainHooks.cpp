@@ -706,30 +706,31 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_F7, false)) {
 
+		if (hasCheatMessageBeenSeen == 1) {
+			if ((*(int*)(0x1F7A418) != 0)) { // check if there's a waypoint
+				if (CheatFlagDisabled != 1) {
+					*(BYTE*)0x02527B5A = 0x1;
+					*(BYTE*)0x02527BE6 = 0x1;
+				}
+				*(bool*)(0x252740E) = 1; // Ins Fraud Sound
+				std::wstring subtitles = (L"Teleported to waypoint!");
+				addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
+				tpCoords(*(float*)0x29B9CD0, *(float*)0x29B9CD4, *(float*)0x29B9CD8);
+
+			}
+		}
+
 		if (CheatFlagDisabled != 1) {
 			if (hasCheatMessageBeenSeen == 0) {
 				const wchar_t* JuicedF7Cheat =
 					L"The F7 key hosts a command that allows you to teleport to your waypoint on your map.\n"
-					L"Using this option will render your save game cheat flagged if you have teleported to a waypoint.\n\n"
-					L"Do not save your game past this point if the teleport has succeeded if you do not want the cheat flag enabled.";
+					L"Pressing F7 again will teleport you to your Waypoint destination and flag your save as cheated.";
 				__asm pushad
 				AddMessage(L"Juiced", JuicedF7Cheat);
 				__asm popad
 
 				hasCheatMessageBeenSeen = 1;
 			}
-		}
-
-		if ((*(int*)(0x1F7A418) != 0)) { // check if there's a waypoint
-			if (CheatFlagDisabled != 1) {
-				*(BYTE*)0x02527B5A = 0x1;
-				*(BYTE*)0x02527BE6 = 0x1;
-			}
-			*(bool*)(0x252740E) = 1; // Ins Fraud Sound
-			std::wstring subtitles = (L"Teleported to waypoint!");
-			addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-			tpCoords(*(float*)0x29B9CD0, *(float*)0x29B9CD4, *(float*)0x29B9CD8);
-
 		}
 	}
 
@@ -796,30 +797,31 @@ void LuaExecutor() {
 	if (AreWeLoaded == 0x1 && !LobbyCheck == 0x0 && CurrentGamemode == 0xFF) { // If SP/CO-OP allow executor... hopefully.
 
 		if (IsKeyPressed(VK_INSERT, false)) {
+			if (hasCheatMessageBeenSeen2 == 1) {
+				if (*IsOpen && OpenedByExecutor) {
+					*(BYTE*)(0x2349849) = 1;
+					OpenedByExecutor = false;
+					IsWaiting = false;
+				}
+				else if (!*IsOpen && !IsWaiting) {
+					IsWaiting = true;
+					*(BYTE*)(0x1F76944) = 3;
+					chatWindow();
+					OpenedByExecutor = true;
+				}
+			}
 			if (CheatFlagDisabled != 1) {
 				if (hasCheatMessageBeenSeen2 == 0) {
 					const wchar_t* LUAExeCheat =
 						L"The LUA Executor console allows you to do a LOT of things not possible in the vanilla game.\n"
 						L"Therefore executing any command will immediately flag your save game as a cheated save.\n\n"
-						L"Press Escape if you would like to exit the LUA Executor Console.";
+						L"Press Insert again to launch the LUA Executor console.";
 					__asm pushad
 					AddMessage(L"Juiced", LUAExeCheat);
 					__asm popad
 
 					hasCheatMessageBeenSeen2 = 1;
 				}
-			}
-
-			if (*IsOpen && OpenedByExecutor) {
-				*(BYTE*)(0x2349849) = 1;
-				OpenedByExecutor = false;
-				IsWaiting = false;
-			}
-			else if (!*IsOpen && !IsWaiting) {
-				IsWaiting = true;
-				*(BYTE*)(0x1F76944) = 3;
-				chatWindow();
-				OpenedByExecutor = true;
 			}
 		}
 
@@ -1047,7 +1049,7 @@ void SomeMMFunc_Hacked()
 	// Call original func
 	return UpdateSomeMMFunc();
 }
-
+/*
 void SomePMFunc_Hacked()
 {
 
@@ -1061,6 +1063,7 @@ void SomePMFunc_Hacked()
 	// Call original func
 	return UpdateSomePMFunc();
 }
+*/
 
 int(__stdcall* theirbind)(SOCKET, const struct sockaddr_in*, int) = nullptr;
 
