@@ -14,6 +14,7 @@
 
 #include <format>
 #include <WinSock2.h>
+const char* juicedversion = "6.0.0";
 
 char* executableDirectory[MAX_PATH];
 const char mus2xtbl[] = "music2.xtbl";
@@ -106,7 +107,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 		*(exe + 1) = '\0';
 	}
     #if !RELOADED
-	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 JUICED Version: 6.0.0 ---\n");
+	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED Version: " + std::string(juicedversion) + " ---\n").c_str());
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
     Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
 	Logger::TypedLog(CHN_DLL, "--- Based on MonkeyPatch by scanti, additional fixes by Uzis, Tervel, jason098 and Clippy95. ---\n");
@@ -1000,7 +1001,7 @@ int RenderLoopStuff_Hacked()
 typedef float(__cdecl* ChangeTextColorT)(int R, int G, int B, int Alpha);
 ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
 
-void __declspec(naked) InGamePrint(const char* Text, int idk1, int idk2, int idk3) {
+void __declspec(naked) InGamePrint(const char* Text, int x, int y, int font) {
 	__asm {
 		push ebp
 		mov ebp, esp
@@ -1010,10 +1011,10 @@ void __declspec(naked) InGamePrint(const char* Text, int idk1, int idk2, int idk
 		push esi
 		push eax
 
-		mov edi, idk3
+		mov edi, font
 		mov esi, Text
-		push idk1
-		push idk2
+		push x
+		push y
 
 		mov eax, 0xD15DC0
 		call eax
@@ -1031,17 +1032,34 @@ void __declspec(naked) InGamePrint(const char* Text, int idk1, int idk2, int idk
 typedef void SomeMMFunc_Native();
 SomeMMFunc_Native* UpdateSomeMMFunc = (SomeMMFunc_Native*)(0x0075B270);
 
+typedef void SomePMFunc_Native();
+SomePMFunc_Native* UpdateSomePMFunc = (SomePMFunc_Native*)(0x00B99DB0);
+
 void SomeMMFunc_Hacked()
 {
 	if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
-	    ChangeTextColor(160, 160, 160, 128);
+		ChangeTextColor(160, 160, 160, 128);
 		__asm pushad
-		InGamePrint("JUICED 6.0", 680, 1120, 2);
+		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 680, 1120, 2);
 		__asm popad
 	}
 
 	// Call original func
 	return UpdateSomeMMFunc();
+}
+
+void SomePMFunc_Hacked()
+{
+
+	if (menustatus(menustatus::pausemenu) || menustatus(menustatus::pausemenuphone) || menustatus(menustatus::pausemenuscroll2) || menustatus(menustatus::pausemenescroll1) || menustatus(menustatus::pausemenuphonebook)) {
+		ChangeTextColor(160, 160, 160, 128);
+		__asm pushad
+		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 680, 160, 6);
+		__asm popad
+	}
+
+	// Call original func
+	return UpdateSomePMFunc();
 }
 
 int(__stdcall* theirbind)(SOCKET, const struct sockaddr_in*, int) = nullptr;
@@ -1355,6 +1373,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_MOD, "Patching MenuVersionNumber...\n");
 		//patchCall((void*)0x0052050C, (void*)SomeMMFunc_Hacked);
 		patchCall((void*)0x0073CE0D, (void*)SomeMMFunc_Hacked);
+		//patchCall((void*)0x00B995D5, (void*)SomePMFunc_Hacked);
 	}
 
 	if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1)

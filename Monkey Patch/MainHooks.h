@@ -30,6 +30,26 @@ struct mouse {
     inline int32_t getWheeldelta() const {
         return *reinterpret_cast<const int32_t*>(scroll_delta_address);
     }
-};
 
+};
+inline bool menustatus(int status) {
+    BYTE currentmenustatus = *(BYTE*)(0x00EBE860);
+    if (currentmenustatus == status)
+        return true;
+    else return false;
+}
+enum menustatus {
+    gameplay = 3,
+    busy1 = 2,
+    loading = 13,
+    buying = 15,
+    pausemenu = 20,
+    // Occurs while scrolling.
+    pausemenescroll1 = 21,
+    // Occurs while scrolling.
+    pausemenuscroll2 = 22,
+    // Might also occur while scrolling.
+    pausemenuphone = 23,
+    pausemenuphonebook= 24,
+};
 
