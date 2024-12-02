@@ -1785,6 +1785,12 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DEBUG, "Replaced Tags controls with BetterTags\n");
 	}
 
+	if (GameConfig::GetValue("Gameplay", "SwapScrollWheel", 0))
+	{
+		// TODO: maybe have optional options for when to swap scroll? like map only or weapon wheel only, mouse function is done at 0x00C1F320.
+
+		patchBytesM((BYTE*)0x00C1F0F7, (BYTE*)"\x29", 1); // opcode for sub, add previously.
+	}
 	patchNop((BYTE*)0x004D6795, 5); // Fix for the sun flare disappearing upon reloading a save. Prevents the game from deallocating the flare.
 
 	patchJmp((void*)0x0051DAC0, (void*)hook_loose_files);						// Allow the loading of loose files
