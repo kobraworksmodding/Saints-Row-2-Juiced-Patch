@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+#include <corecrt_math_defines.h>
 
 #define CLANTAG_MAX 5 // do we need a max name define?.
 static int *pargc=(int*)0x00ee07c0;
@@ -38,6 +39,27 @@ inline bool menustatus(int status) {
         return true;
     else return false;
 }
+
+inline int getplayer() {
+    return *(int*)(0x21703D4);
+
+}
+
+inline float DegreetoRadians(float degree) {
+    return (float)(degree * (M_PI / 180));
+}
+
+inline float RadianstoDegree(float degree) {
+    return (float)(degree * (180 / M_PI));
+}
+
+template <typename T>
+T clamp(T value, T min, T max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}
+
 enum menustatus {
     gameplay = 3,
     busy1 = 2,
