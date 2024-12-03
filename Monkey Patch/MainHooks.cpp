@@ -14,7 +14,7 @@
 
 #include <format>
 #include <WinSock2.h>
-const char* juicedversion = "6.0.0";
+const char* juicedversion = "6.0.1";
 
 char* executableDirectory[MAX_PATH];
 const char mus2xtbl[] = "music2.xtbl";
@@ -706,7 +706,7 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_F7, false)) {
 
-		if (hasCheatMessageBeenSeen == 1) {
+		if (hasCheatMessageBeenSeen == 1 || CheatFlagDisabled == 1) {
 			if ((*(int*)(0x1F7A418) != 0)) { // check if there's a waypoint
 				if (CheatFlagDisabled != 1) {
 					*(BYTE*)0x02527B5A = 0x1;
@@ -797,7 +797,7 @@ void LuaExecutor() {
 	if (AreWeLoaded == 0x1 && !LobbyCheck == 0x0 && CurrentGamemode == 0xFF) { // If SP/CO-OP allow executor... hopefully.
 
 		if (IsKeyPressed(VK_INSERT, false)) {
-			if (hasCheatMessageBeenSeen2 == 1) {
+			if (hasCheatMessageBeenSeen2 == 1 || CheatFlagDisabled == 1) {
 				if (*IsOpen && OpenedByExecutor) {
 					*(BYTE*)(0x2349849) = 1;
 					OpenedByExecutor = false;
