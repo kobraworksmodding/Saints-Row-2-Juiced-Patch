@@ -186,10 +186,10 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Clothing.cpp" />
     <ClCompile Include="ErrorManager.cpp" />
     <ClCompile Include="LAAPatcher.cpp" />
     <ClCompile Include="LuaHandler.cpp" />
+    <ClCompile Include="Mem\Memory.cpp" />
     <ClCompile Include="Patches\GOG No FPS limiter.cpp" />
     <ClCompile Include="Patches\OpenSpy.cpp" />
     <ClCompile Include="DFEngine.cpp" />
@@ -199,18 +199,20 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="MainHooks.cpp" />
     <ClCompile Include="Patcher\patch.cpp" />
     <ClCompile Include="Patches\QueryPerformance Fix.cpp" />
+    <ClCompile Include="Player\Behavior.cpp" />
     <ClCompile Include="RPCHandler.cpp" />
     <ClCompile Include="SafeWrite.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="UGC\Reloaded.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Clothing.h" />
     <ClInclude Include="ext\inc\lua\lauxlib.h" />
     <ClInclude Include="ext\inc\lua\lua.h" />
     <ClInclude Include="ext\inc\lua\lualib.h" />
     <ClInclude Include="ErrorManager.h" />
     <ClInclude Include="LAAPatcher.h" />
     <ClInclude Include="LuaHandler.h" />
+    <ClInclude Include="Mem\Memory.h" />
     <ClInclude Include="Patches\GOG No FPS limiter.h" />
     <ClInclude Include="Patches\OpenSpy.h" />
     <ClInclude Include="DFEngine.h" />
@@ -221,10 +223,12 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="Patcher\patch.h" />
     <ClInclude Include="Patches\All Patches.h" />
     <ClInclude Include="Patches\QueryPerformance Fix.h" />
+    <ClInclude Include="Player\Behavior.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="RPCHandler.h" />
     <ClInclude Include="SafeWrite.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="UGC\Reloaded.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Properties.rc" />

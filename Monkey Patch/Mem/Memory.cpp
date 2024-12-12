@@ -1,8 +1,58 @@
-#include "GameConfig.h"
-#include "Patcher/patch.h"
-#include "FileLogger.h"
+// Memory.cpp (uzis)
+// --------------------
+// Created: 13/12/2024
 
-namespace Clothing {
+#include "../FileLogger.h"
+#include "../Patcher/patch.h"
+
+namespace Memory
+{
+
+	int NewTreeDist = 500000;
+	int NewShadowDist = 255;
+
+	void GangstaBrawlMemoryExt()
+	{
+		Logger::TypedLog(CHN_RL, "Patching GangstaBrawlMemoryExtender to Strong Arm Pools...\n");
+		patchBytesM((BYTE*)0x00835879, (BYTE*)"\x6A\x02", 2); // client
+		patchBytesM((BYTE*)0x00833A52, (BYTE*)"\x6A\x02", 2); // host
+		patchBytesM((BYTE*)0x0082FD84, (BYTE*)"\x83\xC3\x08", 3); // Limit Gangsta Brawl/TGB player cap to 8 from 12.
+	}
+
+	void ExpandGeneralPools()
+	{
+		Logger::TypedLog(CHN_DEBUG, "Expanding Memory Pools.\n");
+		patchBytesM((BYTE*)0x0051DED7, (BYTE*)"\x68\x00\x00\x15\x00", 5); // perm mesh cpu
+		patchBytesM((BYTE*)0x0051DF0F, (BYTE*)"\xB8\x00\x00\x15\x00", 5); // perm mesh cpu
+		Logger::TypedLog(CHN_DEBUG, "Expanded perm mesh cpu to 1376256\n");
+	}
+
+	void ExpandRenderDist()
+	{
+		// Increases the Render Distance by x1.85
+		// Might be glitchy, would've loved to increase this to x3.00 or x4.00 but the LOD starts bugging out
+		Logger::TypedLog(CHN_MEMORY, "Increasing LOD Distance by x1.85. (Only a slight increase.)\n");
+		patchBytesM((BYTE*)0x00E996B4, (BYTE*)"\x00\x00\xEC\x3F", 4);
+	}
+
+	void ExpandTreeDist()
+	{
+		// Increases the Tree Fade Distance from 250000 to 500000
+		Logger::TypedLog(CHN_MEMORY, "Increasing Tree Fade Distance to 500000.\n");
+		patchFloat((BYTE*)0x0252A058, NewTreeDist);
+	}
+
+	void ExpandShadowRenderDist()
+	{
+		// Increases the Shadow Render Distance from 125 to 255, Actually a considerable difference.
+		Logger::TypedLog(CHN_MEMORY, "Increasing Shadow Render Distance to 255.\n");
+		patchDWord((void*)0x0279778C, NewShadowDist); // Day_ShadowRenderDist > 255
+		patchDWord((void*)0x02797790, NewShadowDist); // Night_ShadowRenderDist > 255
+		// im a bit scared about these nops but it works?... ~ NOPs calls that set these values from xtbl
+		patchNop((BYTE*)0x0054DFEE, 15);
+		patchNop((BYTE*)0x0054DFDE, 15);
+	}
+
 	struct myItem
 	{
 		char bytes[120];
@@ -17,7 +67,8 @@ namespace Clothing {
 #define MAX_CUSTOM_HOMIES    24
 	myHomie NEW_HOMIES[MAX_CUSTOM_HOMIES];
 
-	void PatchLimit() {
+	void ExpandCustItemsPool()
+	{
 		//Patch Clothing limit from 1050 to 3000 BITCHES.
 
 		Logger::TypedLog(CHN_DEBUG, "Increasing Customization Memory from 1050 to 3000...\n");
@@ -79,10 +130,9 @@ namespace Clothing {
 		patchDWord((BYTE*)0x0081E102, (int)&NEW_ITEMS);
 		patchDWord((BYTE*)0x0088DE77, (int)&NEW_ITEMS);
 		patchDWord((BYTE*)0x009A02FE, (int)&NEW_ITEMS);
-
 	}
 
-	void PatchHomies() {
+	/*void PatchHomies() {
 		patchDWord((BYTE*)0x0069205D, (int)&NEW_HOMIES);
 		patchDWord((BYTE*)0x00693CD0, (int)&NEW_HOMIES);
 		patchDWord((BYTE*)0x00783182, (int)&NEW_HOMIES);
@@ -117,5 +167,6 @@ namespace Clothing {
 		patchDWord((BYTE*)0x00789409, (int)&NEW_HOMIES);
 		patchDWord((BYTE*)0x007899FF, (int)&NEW_HOMIES);
 
-	}
+	}*/
+
 }

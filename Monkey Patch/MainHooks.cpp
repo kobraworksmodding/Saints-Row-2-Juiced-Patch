@@ -7,17 +7,18 @@
 #include "ErrorManager.h"
 #include "LuaHandler.h"
 #include "DFEngine.h"
-#include "Clothing.h"
+#include "Mem/Memory.h"
+#include "UGC/Reloaded.h"
+#include "Player/Behavior.h"
 
 #include "GameConfig.h"
 #include <chrono>
 
 #include <format>
 #include <WinSock2.h>
-const char* juicedversion = "6.0.1";
+const char* juicedversion = "6.1.0";
 
 char* executableDirectory[MAX_PATH];
-const char mus2xtbl[] = "music2.xtbl";
 const char FPSCam[] = "camera_fpss.xtbl";
 const char ServerNameRL[] = "[SR2 RELOADED SERVER]";
 const char ServerNameSR2[] = "[Saints Row 2]";
@@ -1326,10 +1327,9 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 
 	PatchOpenSpy();
-	//Clothing::PatchHomies();
 	if (GameConfig::GetValue("Debug", "ExpandClothingLimit", 1))
 	{
-		Clothing::PatchLimit();
+		Memory::ExpandCustItemsPool();
 	}
 
 	// FUCK THIS SHIT
@@ -1352,71 +1352,37 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchNop((BYTE*)0x007F71EC, 12); // nop coop max and max lobby
 	patchBytesM((BYTE*)0x007F7A31, (BYTE*)"\xB8\x02", 2); */
 
-	// patch in some stuff at run time, maybe even add exclusive reloaded toggles.
-	patchBytesM((BYTE*)0x00E06CC4, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload.tbl
-	patchBytesM((BYTE*)0x00E06CD0, (BYTE*)"\x72\x65\x65\x6C", 4); // reeload_anims.tbl
-	
 	
 	// patch music2.xtbl
 	if (GameConfig::GetValue("Multiplayer", "BetterKillfeed", 1))
 	{
-		Logger::TypedLog(CHN_RL, "Making Killfeed Better...\n");
-		patchBytesM((BYTE*)0x0087F096, (BYTE*)"\x8B\x3D\x10\xD2\xEA\x00", 6);
+		Reloaded::PatchKillfeed();
 	}
 
 	// patch music2.xtbl
 	if (GameConfig::GetValue("Audio", "NoMenuMusic", 0))
 	{
-		Logger::TypedLog(CHN_RL, "Removing Menu Music...\n");
-		patchDWord((void*)0x00DD87FC, (uint32_t)&mus2xtbl);
+		Reloaded::PatchMenuMusic();
 	}
 
 	// Adds Clan tag to name
 	if (GameConfig::GetValue("Multiplayer", "UseClanTag", 0))
 	{
-		// we use our own CLANTAG_MAX variable to max out the limit of the string to 5.
-		char ClanName[CLANTAG_MAX];
-		Logger::TypedLog(CHN_RL, "Adding Clan to Name...\n");
-
-		GameConfig::GetStringValue("Multiplayer", "ClanTag", "SR2RL", ClanName);
-
-		std::string MyMaxClanTag(ClanName, ClanName + 5);
-		char EndClanName[CLANTAG_MAX];
-		strcpy(EndClanName, MyMaxClanTag.c_str());
-
-		RPCHandler::ClanTag[1] = EndClanName;
-		Logger::TypedLog(CHN_RL, "You Joined Clan: %s\n", RPCHandler::ClanTag[1]);
-		RPCHandler::UsingClanTag = 1;
+		Reloaded::PatchClanTag();
 	}
 
 	// Sidoku tint desat because he keeps crying kek
 	if (GameConfig::GetValue("Graphics", "Tint", 0)) 
 	{
-		// HDR Tint Desat.
-
-		Logger::TypedLog(CHN_RL, "Removing HDR Tint...\n");
-		patchNop((BYTE*)0x0051756A, 25); // nop normal tint
-
+		Reloaded::PatchSidokuDesat();
 	}
 
 	if (GameConfig::GetValue("Debug", "GangstaBrawlMemoryExtender", 1)) // Replaces GB MemLimits with SA.
 	{
-		Logger::TypedLog(CHN_RL, "Patching GangstaBrawlMemoryExtender to Strong Arm Pools...\n");
-		patchBytesM((BYTE*)0x00835879, (BYTE*)"\x6A\x02", 2); // client
-		patchBytesM((BYTE*)0x00833A52, (BYTE*)"\x6A\x02", 2); // host
-		patchBytesM((BYTE*)0x0082FD84, (BYTE*)"\x83\xC3\x08", 3); // Limit Gangsta Brawl/TGB player cap to 8 from 12.
-
+		Memory::GangstaBrawlMemoryExt();
 	}
 
-	Logger::TypedLog(CHN_RL, "Patching In Better Movement Behavior...\n");
-	patchNop((BYTE*)0x00E9216C, 3); // Jog180
-	patchNop((BYTE*)0x00E9213C, 3); // Stand180
-	patchNop((BYTE*)0x00E92130, 3); // WalkStop
-	patchNop((BYTE*)0x00E9237C, 3); // StandToRun
-	patchNop((BYTE*)0x00E92370, 3); // RunToStop
-	patchNop((BYTE*)0x00E92364, 3); // WalkToStop
-	patchNop((BYTE*)0x00E92394, 3); // WalkToStand
-	patchNop((BYTE*)0x00E92388, 3); // StandToWalk
+	Behavior::BetterMovement();
 
 #else
 
@@ -1442,17 +1408,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	if (GameConfig::GetValue("Gameplay", "BetterMovementBehaviour", 0))
 	{
-		// Majority of the SR2 movement sluggishness is due to the fact that certain walking anims add an
-		// increased latency to walking generally and 180 anims tend to play constantly when trying to strafe, 180 anims didnt exist in SR1.
-		Logger::TypedLog(CHN_MOD, "Patching In Better Movement Behavior...\n");
-		patchNop((BYTE*)0x00E9216C, 3); // Jog180
-		patchNop((BYTE*)0x00E9213C, 3); // Stand180
-		patchNop((BYTE*)0x00E92130, 3); // WalkStop
-		patchNop((BYTE*)0x00E9237C, 3); // StandToRun
-		patchNop((BYTE*)0x00E92370, 3); // RunToStop
-		patchNop((BYTE*)0x00E92364, 3); // WalkToStop
-		patchNop((BYTE*)0x00E92394, 3); // WalkToStand
-		patchNop((BYTE*)0x00E92388, 3); // StandToWalk
+		Behavior::BetterMovement();
 	}
 
 	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 0)) // great for testing stuff faster and also for an optional feature in gen
@@ -1470,10 +1426,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	if (GameConfig::GetValue("Debug", "ExpandMemoryPools", 0))
 	{
-		Logger::TypedLog(CHN_DEBUG, "Expanding Memory Pools.\n");
-		patchBytesM((BYTE*)0x0051DED7, (BYTE*)"\x68\x00\x00\x15\x00", 5); // perm mesh cpu
-		patchBytesM((BYTE*)0x0051DF0F, (BYTE*)"\xB8\x00\x00\x15\x00", 5); // perm mesh cpu
-		Logger::TypedLog(CHN_DEBUG, "Expanded perm mesh cpu to 1376256\n");
+		Memory::ExpandGeneralPools();
 	}
 
 	if (GameConfig::GetValue("Debug", "DisableXInput", 0))
@@ -1550,18 +1503,18 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 		Logger::TypedLog(CHN_DEBUG, "Lobby Map 1 Found: %s\n", newLobby1);
 		Logger::TypedLog(CHN_DEBUG, "Lobby Map 2 Found: %s\n", newLobby2);
-		RPCHandler::lobby_list[0] = newLobby1;
-		RPCHandler::lobby_list[1] = newLobby2;
+		Reloaded::lobby_list[0] = newLobby1;
+		Reloaded::lobby_list[1] = newLobby2;
 
-		patchDWord((void*)(0x0073EABA + 3), (int)&RPCHandler::lobby_list);
-		patchDWord((void*)(0x0073EA0B + 3), (int)&RPCHandler::lobby_list);
-		patchDWord((void*)(0x007E131A + 3), (int)&RPCHandler::lobby_list);
-		patchDWord((void*)(0x007E161E + 3), (int)&RPCHandler::lobby_list);
-		patchDWord((void*)(0x007E7670 + 3), (int)&RPCHandler::lobby_list);
-		patchDWord((void*)(0x007E774F + 3), (int)&RPCHandler::lobby_list);
-		patchDWord((void*)(0x0082F2E9 + 3), (int)&RPCHandler::lobby_list);
-		patchDWord((void*)(0x0082F4CC + 3), (int)&RPCHandler::lobby_list);
-		patchDWord((void*)(0x00842497 + 3), (int)&RPCHandler::lobby_list);
+		patchDWord((void*)(0x0073EABA + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x0073EA0B + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x007E131A + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x007E161E + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x007E7670 + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x007E774F + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x0082F2E9 + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x0082F4CC + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x00842497 + 3), (int)&Reloaded::lobby_list);
 	}
 
 	if (GameConfig::GetValue("Multiplayer", "FreeMPClothing", 1))
@@ -1595,7 +1548,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x005030AB, (BYTE*)"\xBE\x02\x00\x00\x00", 5); // change unpause type
 		patchBytesM((BYTE*)0x00C01AC8, (BYTE*)"\xDC\x64\x24\x20", 4); // invert Y axis in slew 
 		patchBytesM((BYTE*)0x0050134D, (BYTE*)"\xE9\xB9\x02\x00\x00\x00", 6); // ignore collision in slew
-	}
+	} 
 
 	if (GameConfig::GetValue("Graphics", "VanillaFXPlus", 0))
 	{
@@ -1768,31 +1721,43 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((BYTE*)0x005285A2, 4); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
 		patchNop((BYTE*)0x0052847C, 8); //make the shadow pool less sleepy
 	}
-	
+	if (GameConfig::GetValue("Debug", "SleepHack", 0) == 3) // HIGH patch, because why not i guess.
+	{
+		Logger::TypedLog(CHN_DLL, "Removing a Safe Amount of Sleep Calls...\n");
+		patchNop((BYTE*)0x0052108C, 3); // patch win main sleep call
+		patchNop((BYTE*)0x00521FC0, 4); // wait call in a threaded function, i think
+		patchNop((BYTE*)0x00521FE5, 4); // same with this one
+		patchNop((BYTE*)0x005285A2, 4); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
+		patchNop((BYTE*)0x0052847C, 8); //make the shadow pool less sleepy
+		patchBytesM((BYTE*)0x00D2004A, (BYTE*)"\x68\x00\x00\x00\x00", 5); // patches function that deals with window rect, seems to increase fps about +30-40 with little cpu overhead.
+		patchBytesM((BYTE*)0x0068C714, (BYTE*)"\x6A\x0F", 2); // this is a sleep call for first load/legal disclaimers, its set to 30 by default, halfing increases fps to 60 and makes loading faster.
+		//patchBytesM((BYTE*)0x00D20E5A, (BYTE*)"\x6A\x00", 2);
+		patchNop((BYTE*)0x00D20E3E, 7);
+		//patchNop((BYTE*)0x00BFA4D0, 8);
+		
+
+	}
+
+	if (GameConfig::GetValue("Audio", "FixAudioDeviceAssign", 1))
+	{
+		Logger::TypedLog(CHN_MOD, "Fixing Audio Device Assignment.\n");
+		// fixes, or attempts to fix the incorrect GUID assigning for BINK related stuff in SR2.
+		patchBytesM((BYTE*)0x00DBA69C, (BYTE*)"\x00\x00\x00\x00", 4);
+	}
+
 	if (GameConfig::GetValue("Graphics", "ExtendedRenderDistance", 0))
 	{
-		// Increases the Render Distance by x1.85
-		// Might be glitchy, would've loved to increase this to x3.00 or x4.00 but the LOD starts bugging out
-		Logger::TypedLog(CHN_MEMORY, "Increasing LOD Distance by x1.85. (Only a slight increase.)\n");
-		patchBytesM((BYTE*)0x00E996B4, (BYTE*)"\x00\x00\xEC\x3F", 4);
+		Memory::ExpandRenderDist();
 	}
 
 	if (GameConfig::GetValue("Graphics", "ExtendedTreeFadeDistance", 0))
 	{
-		// Increases the Tree Fade Distance from 250000 to 500000
-		Logger::TypedLog(CHN_MEMORY, "Increasing Tree Fade Distance to 500000.\n");
-		patchFloat((BYTE*)0x0252A058, 500000);
+		Memory::ExpandTreeDist();
 	}
 
 	if (GameConfig::GetValue("Graphics", "ExtendedShadowRenderDistance", 0))
 	{
-		// Increases the Shadow Render Distance from 125 to 255, Actually a considerable difference.
-		Logger::TypedLog(CHN_MEMORY, "Increasing Shadow Render Distance to 255.\n");
-		patchDWord((void*)0x0279778C, 255); // Day_ShadowRenderDist > 255
-		patchDWord((void*)0x02797790, 255); // Night_ShadowRenderDist > 255
-		// im a bit scared about these nops but it works?... ~ NOPs calls that set these values from xtbl
-		patchNop((BYTE*)0x0054DFEE, 15);
-		patchNop((BYTE*)0x0054DFDE, 15);
+		Memory::ExpandShadowRenderDist();
 	}
 
 	if (GameConfig::GetValue("Graphics", "RemoveBlackBars", 0)) // Another Tervel moment
@@ -1829,7 +1794,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DEBUG, "Enabling better chat...\n");
 	}
 
-	if (GameConfig::GetValue("Gameplay", "TagsHook", 0))
+	if (GameConfig::GetValue("Gameplay", "TagsHook", 1))
 	{
 		betterTags = 1;
 		patchNop((BYTE*)0x006221AA, 6); // Original stores for Tags, X and Y.

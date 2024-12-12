@@ -3,6 +3,7 @@
 #include "FileLogger.h"
 #include "RPCHandler.h"
 #include "Patcher/patch.h"
+#include "UGC/Reloaded.h"
 #include <codecvt>
 #include "GameConfig.h"
 #pragma comment (lib, "../Discord/discord_game_sdk.dll.lib")
@@ -213,17 +214,6 @@ namespace RPCHandler {
 		}
 	}
 
-	char* ClanTag[3] = {
-		const_cast<char*>("["),
-		const_cast<char*>("TEST"),
-		const_cast<char*>("]")
-	};
-
-	char* lobby_list[2] = {
-		const_cast<char*>("sr2_mp_gb_frat01"),
-		const_cast<char*>("sr2_mp_lobby")
-	};
-
 	void RemoveWordFromLine(std::string& line, const std::string& word)
 	{
 		auto n = line.find(word);
@@ -235,7 +225,6 @@ namespace RPCHandler {
 
 	bool AlreadyAddedClanTag = 0;
 	int isDefaultSNameChecked = 0;
-	bool UsingClanTag = 0;
 
 	// Updates state info for discord.
 	void UpdateDiscordParams() { 
@@ -365,11 +354,11 @@ namespace RPCHandler {
 			if (LobbyCheck == 0x44) // Game Lobby
 			{
 #if RELOADED
-					if (UsingClanTag == 1)
+					if (Reloaded::UsingClanTag == 1)
 					{
 						char* currentPlayerName = playerName;
-							std::string Clanresult = ClanTag[0];
-							Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
+							std::string Clanresult = Reloaded::ClanTag[0];
+							Clanresult = Clanresult + Reloaded::ClanTag[1] + Reloaded::ClanTag[2] + " " + currentPlayerName;
 							const char* finalClanstring = Clanresult.c_str();
 
 							if (GamespyStatus == 0x4) {
@@ -415,13 +404,13 @@ namespace RPCHandler {
 			if (LobbyCheck == 0x0) // Usually Menus Check
 			{
                 #if RELOADED
-				if (UsingClanTag == 1)
+				if (Reloaded::UsingClanTag == 1)
 				{
 					if (GamespyStatus == 0x4) {
 						if (AlreadyAddedClanTag == 1) {
 							std::string NameResult = playerName;
-							std::string ClanTagresult = ClanTag[0];
-							ClanTagresult = ClanTagresult + ClanTag[1] + ClanTag[2] + " ";
+							std::string ClanTagresult = Reloaded::ClanTag[0];
+							ClanTagresult = ClanTagresult + Reloaded::ClanTag[1] + Reloaded::ClanTag[2] + " ";
 							RemoveWordFromLine(NameResult, ClanTagresult);
 							const char* finalNameString = NameResult.c_str();
 							char* newPlayerName = reinterpret_cast<char*>(playerName);
@@ -462,11 +451,11 @@ namespace RPCHandler {
 			if (LobbyCheck == 0x44) // Game Lobby
 			{
             #if RELOADED
-				if (UsingClanTag == 1)
+				if (Reloaded::UsingClanTag == 1)
 				{
 					char* currentPlayerName = playerName;
-					std::string Clanresult = ClanTag[0];
-					Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
+					std::string Clanresult = Reloaded::ClanTag[0];
+					Clanresult = Clanresult + Reloaded::ClanTag[1] + Reloaded::ClanTag[2] + " " + currentPlayerName;
 					const char* finalClanstring = Clanresult.c_str();
 
 					if (GamespyStatus == 0x4) {
@@ -496,13 +485,13 @@ namespace RPCHandler {
 			if (LobbyCheck == 0x0) // Usually Menus Check
 			{
                 #if RELOADED
-				if (UsingClanTag == 1)
+				if (Reloaded::UsingClanTag == 1)
 				{
 					if (GamespyStatus == 0x4) {
 						if (AlreadyAddedClanTag == 1) {
 							std::string NameResult = playerName;
-							std::string ClanTagresult = ClanTag[0];
-							ClanTagresult = ClanTagresult + ClanTag[1] + ClanTag[2] + " ";
+							std::string ClanTagresult = Reloaded::ClanTag[0];
+							ClanTagresult = ClanTagresult + Reloaded::ClanTag[1] + Reloaded::ClanTag[2] + " ";
 							RemoveWordFromLine(NameResult, ClanTagresult);
 							const char* finalNameString = NameResult.c_str();
 							char* newPlayerName = reinterpret_cast<char*>(playerName);

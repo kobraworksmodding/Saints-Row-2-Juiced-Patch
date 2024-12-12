@@ -18,6 +18,15 @@
     <Filter Include="Ext">
       <UniqueIdentifier>{8c8ecee8-da82-4a5d-9e2e-2361e7539a78}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Player">
+      <UniqueIdentifier>{da19ed40-d773-4be3-8fa8-442d99b40775}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mem">
+      <UniqueIdentifier>{55e17dfc-2649-4e9d-91b0-fe14fc538fd5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UGC">
+      <UniqueIdentifier>{f70d8519-889c-4acb-9e6a-786423e952b5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DFEngine.cpp">
@@ -65,8 +74,14 @@
     <ClCompile Include="LAAPatcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Clothing.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Player\Behavior.cpp">
+      <Filter>Source Files\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Mem\Memory.cpp">
+      <Filter>Source Files\Mem</Filter>
+    </ClCompile>
+    <ClCompile Include="UGC\Reloaded.cpp">
+      <Filter>Source Files\UGC</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -130,8 +145,14 @@
     <ClInclude Include="LAAPatcher.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Clothing.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Player\Behavior.h">
+      <Filter>Source Files\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Mem\Memory.h">
+      <Filter>Source Files\Mem</Filter>
+    </ClInclude>
+    <ClInclude Include="UGC\Reloaded.h">
+      <Filter>Source Files\UGC</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
