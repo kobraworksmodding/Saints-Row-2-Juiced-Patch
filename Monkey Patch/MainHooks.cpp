@@ -1225,7 +1225,6 @@ int userResY = GetSystemMetrics(SM_CYSCREEN);
 std::string patchedRes;
 
 bool resFound = false;
-bool menuPatched = false;
 
 typedef int __cdecl luaLoadBufferOrig_T(void* L, const char* buff, size_t sz, const char* name);
 luaLoadBufferOrig_T* luaLoadBufferOrig = (luaLoadBufferOrig_T*)(0xCDCFB0);
@@ -1258,19 +1257,14 @@ int luaLoadBuff(void* L, const char* buff, size_t sz, const char* name) {
 			resY[13] = userResY;
 		}
 
+		replace_all(convertedBuff, searchAA, newAA);
+		replace_all(convertedBuff, "Fullscreen_Antialiasing", "MSAA                   "); // extra spaces for padding otherwise it'll break the buffer
+		replace_all(convertedBuff, "2048x1536", patchedRes); // easier to do it this way than to only patch if the user's res isn't found
 
-		if (convertedBuff.find(searchAA) != std::string::npos && convertedBuff.find("2048x1536") != std::string::npos) { // somewhat stupid but it is needed
-			replace_all(convertedBuff, searchAA, newAA);
-			replace_all(convertedBuff, "Fullscreen_Antialiasing", "MSAA                   "); // extra spaces for padding otherwise it'll break the buffer
-			replace_all(convertedBuff, "2048x1536", patchedRes); // easier to do it this way than to only patch if the user's res isn't found
-			patchCall((void*)0x00CD9FE8, (void*)0x00CDCFB0); // unhooking here since it won't be needed anymore
+		sz = convertedBuff.length();
 
-
-			sz = convertedBuff.length();
-
-			strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
-			const_cast<char*>(buff)[sz] = '\0';
-		}
+		strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
+		const_cast<char*>(buff)[sz] = '\0';
 
 		__asm popad
 
