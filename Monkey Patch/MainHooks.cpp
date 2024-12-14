@@ -1195,6 +1195,89 @@ void SetupBetterWindowed()
 	patchDWord((void*)(0x00BFA35A + 4), windowed_style);
 }
 
+void replace_all( // taken from https://stackoverflow.com/questions/5878775/how-to-find-and-replace-string - we could code our own if there's a problem
+	std::string& s,
+	std::string const& toReplace,
+	std::string const& replaceWith
+) {
+	std::string buf;
+	std::size_t pos = 0;
+	std::size_t prevPos;
+
+	buf.reserve(s.size());
+
+	while (true) {
+		prevPos = pos;
+		pos = s.find(toReplace, pos);
+		if (pos == std::string::npos)
+			break;
+		buf.append(s, prevPos, pos - prevPos);
+		buf += replaceWith;
+		pos += toReplace.size();
+	}
+
+	buf.append(s, prevPos, s.size() - prevPos);
+	s.swap(buf);
+}
+
+int userResX = GetSystemMetrics(SM_CXSCREEN);
+int userResY = GetSystemMetrics(SM_CYSCREEN);
+std::string patchedRes;
+
+bool resFound = false;
+bool menuPatched = false;
+
+typedef int __cdecl luaLoadBufferOrig_T(void* L, const char* buff, size_t sz, const char* name);
+luaLoadBufferOrig_T* luaLoadBufferOrig = (luaLoadBufferOrig_T*)(0xCDCFB0);
+
+int luaLoadBuff(void* L, const char* buff, size_t sz, const char* name) {
+
+	__asm pushad
+
+	std::string convertedBuff(buff);
+
+	int* resX = (int*)(0xE8DF14);
+	int* resY = (int*)(0xE8DF4C);
+
+	patchedRes = std::to_string(resX[13]) + "x" + std::to_string(resY[13]);
+	std::string searchAA = "adv_antiali_slider_values \t\t\t= { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"2x\" },\t\t\t\t[2] = { label = \"4x\" },\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tnum_values = 3, cur_value = 0 }";
+	std::string newAA = "adv_antiali_slider_values = { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"2x\" }, [2] = { label = \"4x\" }, [3] = { label = \"8x\" }, num_values = 4, cur_value = 0 }";
+	// removed unnecessary tabs and spaces to make the extra label fit in without breaking the buffer
+
+
+	if (buff) {
+		for (int i = 0; i < 14; ++i) { // parses the hardcoded array to check if your current resolution exists in it
+			if (userResX == resX[i] && userResY == resY[i]) {
+				resFound = true;
+				break;
+			}
+		}
+
+		if (!resFound) {
+			resX[13] = userResX;
+			resY[13] = userResY;
+		}
+
+
+		if (convertedBuff.find(searchAA) != std::string::npos && convertedBuff.find("2048x1536") != std::string::npos) { // somewhat stupid but it is needed
+			replace_all(convertedBuff, searchAA, newAA);
+			replace_all(convertedBuff, "Fullscreen_Antialiasing", "MSAA                   "); // extra spaces for padding otherwise it'll break the buffer
+			replace_all(convertedBuff, "2048x1536", patchedRes); // easier to do it this way than to only patch if the user's res isn't found
+			patchCall((void*)0x00CD9FE8, (void*)0x00CDCFB0); // unhooking here since it won't be needed anymore
+
+
+			sz = convertedBuff.length();
+
+			strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
+			const_cast<char*>(buff)[sz] = '\0';
+		}
+
+		__asm popad
+
+		return luaLoadBufferOrig(L, buff, sz, name);
+	}
+}
+
 void __declspec(naked) MSAA()
 {
 	static int jmp_continue = 0x007737E4;
@@ -1300,6 +1383,8 @@ _declspec(naked) void hook_loose_files()
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	
+	patchCall((void*)0x00CD9FE8, (void*)luaLoadBuff); // used to intercept the pause menu lua before compiled, needed for full 8x MSAA support + custom res
 	WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
 	WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
 	ErrorManager::Initialize();
