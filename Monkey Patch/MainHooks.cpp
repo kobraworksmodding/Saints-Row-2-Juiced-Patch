@@ -10,6 +10,7 @@
 #include "Mem/Memory.h"
 #include "UGC/Reloaded.h"
 #include "Player/Behavior.h"
+#include "Render/Render3D.h"
 
 #include "GameConfig.h"
 #include <chrono>
@@ -1416,6 +1417,13 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchBytesM((BYTE*)0x0075D5D6, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
 	patchBytesM((BYTE*)0x0075D5B5, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
 
+	// Beefs up Tree Shadows considerably
+	if (GameConfig::GetValue("Graphics", "UHQTreeShadows", 0))
+	{
+		Logger::TypedLog(CHN_NET, "Juicing up Tree Shadow Resolutions...\n");
+		Render3D::PatchHQTreeShadows();
+	}
+
 	// Adds Clan tag to name
 	if (GameConfig::GetValue("Multiplayer", "FixNetworkBinding", 1))
 	{
@@ -1449,7 +1457,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchNop((BYTE*)0x007F71EC, 12); // nop coop max and max lobby
 	patchBytesM((BYTE*)0x007F7A31, (BYTE*)"\xB8\x02", 2); */
 
-	
+	Reloaded::PatchTables();
+
 	// patch music2.xtbl
 	if (GameConfig::GetValue("Multiplayer", "BetterKillfeed", 1))
 	{
@@ -1465,7 +1474,19 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	// Adds Clan tag to name
 	if (GameConfig::GetValue("Multiplayer", "UseClanTag", 0))
 	{
-		Reloaded::PatchClanTag();
+		// we use our own CLANTAG_MAX variable to max out the limit of the string to 5.
+		char ClanName[CLANTAG_MAX];
+		Logger::TypedLog(CHN_RL, "Adding Clan to Name...\n");
+
+		GameConfig::GetStringValue("Multiplayer", "ClanTag", "SR2RL", ClanName);
+
+		std::string MyMaxClanTag(ClanName, ClanName + 5);
+		char EndClanName[CLANTAG_MAX];
+		strcpy(EndClanName, MyMaxClanTag.c_str());
+
+		RPCHandler::ClanTag[1] = EndClanName;
+		Logger::TypedLog(CHN_RL, "You Joined Clan: %s\n", RPCHandler::ClanTag[1]);
+		RPCHandler::UsingClanTag = 1;
 	}
 
 	// Sidoku tint desat because he keeps crying kek
@@ -1918,8 +1939,10 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 	patchNop((BYTE*)0x004D6795, 5); // Fix for the sun flare disappearing upon reloading a save. Prevents the game from deallocating the flare.
 
+#if !RELOADED
 	patchJmp((void*)0x0051DAC0, (void*)hook_loose_files);						// Allow the loading of loose files
 	patchCall((void*)0x00BFD8F5, (void*)hook_raw_get_file_info_by_name);		// Add optional search in the ./loose directory
+#endif
 
 	// Continue to the program's WinMain.
 

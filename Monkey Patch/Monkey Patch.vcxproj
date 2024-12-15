@@ -200,6 +200,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="Patcher\patch.cpp" />
     <ClCompile Include="Patches\QueryPerformance Fix.cpp" />
     <ClCompile Include="Player\Behavior.cpp" />
+    <ClCompile Include="Render\Render3D.cpp" />
     <ClCompile Include="RPCHandler.cpp" />
     <ClCompile Include="SafeWrite.cpp" />
     <ClCompile Include="stdafx.cpp" />
@@ -224,6 +225,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="Patches\All Patches.h" />
     <ClInclude Include="Patches\QueryPerformance Fix.h" />
     <ClInclude Include="Player\Behavior.h" />
+    <ClInclude Include="Render\Render3D.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="RPCHandler.h" />
     <ClInclude Include="SafeWrite.h" />
