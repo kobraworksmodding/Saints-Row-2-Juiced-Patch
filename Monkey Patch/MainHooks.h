@@ -40,8 +40,10 @@ inline bool menustatus(int status) {
     else return false;
 }
 
-inline int getplayer() {
-    return *(int*)(0x21703D4);
+inline uintptr_t getplayer(bool provideaddress = false) {
+    if (!provideaddress)
+        return *(uintptr_t*)(0x21703D4);
+    else return 0x21703D4;
 
 }
 
@@ -59,6 +61,7 @@ T clamp(T value, T min, T max) {
     if (value > max) return max;
     return value;
 }
+
 
 enum menustatus {
     gameplay = 3,

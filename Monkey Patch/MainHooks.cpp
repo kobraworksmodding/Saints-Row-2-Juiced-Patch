@@ -49,6 +49,24 @@ bool IsSRFocused()
 	return pid == GetCurrentProcessId();
 }
 
+uintptr_t ReadPointer(uintptr_t baseAddress, const std::vector<uintptr_t>& offsets) {
+	uintptr_t address = baseAddress;
+
+	if (address == 0) {
+		return 0;
+	}
+
+	for (size_t i = 0; i < offsets.size(); ++i) {
+		uintptr_t* nextAddress = reinterpret_cast<uintptr_t*>(address);
+		if (!nextAddress) {
+			return 0;
+		}
+		address = *nextAddress + offsets[i];
+	}
+
+	return address;
+}
+
 bool IsKeyPressed(char Key, bool Hold) // USE THIS FROM NOW ON
 {
 	if (IsSRFocused())
