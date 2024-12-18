@@ -853,6 +853,16 @@ int __declspec(naked) LuaExecute(const char* command)
 
 bool hasCheatMessageBeenSeen2 = 0;
 
+
+typedef int* (__thiscall* GetCharacterIDT)(const char* Name);
+GetCharacterIDT GetCharacterID = (GetCharacterIDT)0x4A5A90;
+
+typedef int(__cdecl* ChangeCharacterT)(int** a1); // IDA believes it's int* on PC however that didn't work so I copied ** from 360, it can also take a second arg that isn't needed and I've no idea what it'd do
+ChangeCharacterT ChangeCharacter = (ChangeCharacterT)0x6856A0;
+
+typedef void(__cdecl* ResetCharacterT)(int a1); // no idea what it expects as the first arg, on 360 I can call it without one and it works but here it dies
+ResetCharacterT ResetCharacter = (ResetCharacterT)0x685D50;
+
 void LuaExecutor() {
 	BYTE CurrentGamemode = *(BYTE*)0x00E8B210; 
 	BYTE LobbyCheck = *(BYTE*)0x02528C14; // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.
@@ -905,7 +915,7 @@ void LuaExecutor() {
 
 		if (IsWaiting && IsKeyPressed(VK_RETURN, false)) {
 			IsWaiting = false;
-			char VehName[128], VehVar[128];
+			char Arg1[128], Arg2[128];
 			float x, y, z;
 
 
@@ -926,12 +936,21 @@ void LuaExecutor() {
 			cmdIndex = -1;
 			std::string Converted(wstr.begin(), wstr.end());
 
-			if (sscanf(Converted.c_str(), "spawn_car %s %[^\n]", VehName, VehVar) >= 1) {
-				VehicleSpawner(VehName, sscanf(Converted.c_str(), "spawn_car %s %[^\n]", VehName, VehVar) == 1 ? "-1" : VehVar);
+			if (sscanf(Converted.c_str(), "spawn_car %s %[^\n]", Arg1, Arg2) >= 1) {
+				VehicleSpawner(Arg1, sscanf(Converted.c_str(), "spawn_car %s %[^\n]", Arg1, Arg2) == 1 ? "-1" : Arg2);
 			}
 
 			else if (sscanf_s(Converted.c_str(), "tp_player %f %f %f", &x, &y, &z) == 3) {
 				tpCoords(x, y, z);
+			}
+
+			else if (sscanf_s(Converted.c_str(), "play_as %s", Arg1) == 1) {
+				int* Character = GetCharacterID(Arg1);
+				ChangeCharacter(&Character); // pointer to pointer because of **
+			}
+
+			else if (Converted == "reset_player") {
+				ResetCharacter(0); // passing 0 to the unknown arg to avoid crashing
 			}
 
 			else {
@@ -1247,7 +1266,14 @@ int luaLoadBuff(void* L, const char* buff, size_t sz, const char* name) {
 	std::string searchAA = "adv_antiali_slider_values \t\t\t= { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"2x\" },\t\t\t\t[2] = { label = \"4x\" },\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tnum_values = 3, cur_value = 0 }";
 	std::string newAA = "adv_antiali_slider_values = { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"2x\" }, [2] = { label = \"4x\" }, [3] = { label = \"8x\" }, num_values = 4, cur_value = 0 }";
 	// removed unnecessary tabs and spaces to make the extra label fit in without breaking the buffer
+	std::string sLibSuperUI =
+		"audio_play(\"SYS_RACE_FAIL\")\n\t"
+		"local error_message = \"attempted to read undefined global variable '\"..k..\"'\"\n\t"
+		"debug_print(error_message..\"\\n\")\n\t"
+		"mission_help_table(\"[format][color:red]\"..tostring(error_message)..\"[/format]\")\n\t"
+		"error(error_message)";
 
+	std::string blankLib(sLibSuperUI.length(), ' ');
 
 	if (buff) {
 		for (int i = 0; i < 14; ++i) { // parses the hardcoded array to check if your current resolution exists in it
@@ -1265,6 +1291,7 @@ int luaLoadBuff(void* L, const char* buff, size_t sz, const char* name) {
 		replace_all(convertedBuff, searchAA, newAA);
 		replace_all(convertedBuff, "Fullscreen_Antialiasing", "MSAA                   "); // extra spaces for padding otherwise it'll break the buffer
 		replace_all(convertedBuff, "2048x1536", patchedRes); // easier to do it this way than to only patch if the user's res isn't found
+		replace_all(convertedBuff, sLibSuperUI, blankLib); // fixes the error logger from SuperUI in system_lib.lua from crashing our executor, if nclok fixes it we'll get rid of this
 
 		sz = convertedBuff.length();
 
@@ -1955,6 +1982,17 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchBytesM((BYTE*)0x009D3CAE, (BYTE*)"\xD9\x05\x62\x30\x7B\x02", 6); // TP Z
 	patchBytesM((BYTE*)0x00BE1B50, (BYTE*)"\xC3", 1); // return - avoid crashing from the unused broken debug console variable checker
 	patchNop((BYTE*)0x009D3C65, 2); // nop out the command check so TP works without it
+
+
+	patchBytesM((BYTE*)0x0068579B, (BYTE*)"\x6A\x05", 2);
+	patchBytesM((BYTE*)0x006857CB, (BYTE*)"\x6A\x05", 2);
+	patchBytesM((BYTE*)0x0068571F, (BYTE*)"\x6A\x05", 2);
+	patchBytesM((BYTE*)0x0068574F, (BYTE*)"\x6A\x05", 2);
+	patchBytesM((BYTE*)0x00685E12, (BYTE*)"\x6A\x05", 2);
+	patchBytesM((BYTE*)0x00685E1E, (BYTE*)"\x6A\x05", 2);
+	patchBytesM((BYTE*)0x00685DC7, (BYTE*)"\x6A\x05", 2);
+	// this should increase the stream priority for the character swap cheat - on 360, the loading times are much bigger so there are no issues there but here this might be needed
+	patchNop((BYTE*)0x00684C84, 5); // get rid of the loading screen with the cheat, remove the nop if there are any issues but it should be fine?
 
 	WinMain_Type OldWinMain=(WinMain_Type)offset_addr(0x00520ba0);
 	return (OldWinMain(hInstance, hPrevInstance, lpCmdLine,nShowCmd));
