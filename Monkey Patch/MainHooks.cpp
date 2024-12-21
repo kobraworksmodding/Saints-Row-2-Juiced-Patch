@@ -1736,6 +1736,17 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x0050134D, (BYTE*)"\xE9\xB9\x02\x00\x00\x00", 6); // ignore collision in slew
 	} 
 
+	if (GameConfig::GetValue("Graphics", "ConsolelikeGamma", 0))
+	{
+		Logger::TypedLog(CHN_DEBUG, "Patching Console-like Gamma...\n");
+		patchBytesM((BYTE*)0x0051A952, (BYTE*)"\xD9\x05\x7F\x2C\x7B\x02", 6); // new brightness address
+		patchFloat((BYTE*)0x027B2C7F, 1.05f); //Bright
+		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // new contr address patch
+		patchFloat((BYTE*)0x027B2C87, 1.40f); //Contr
+		patchBytesM((BYTE*)0x0051A997, (BYTE*)"\xD9\x05\x83\x2C\x7B\x02", 6); // new sat address patch
+		patchFloat((BYTE*)0x027B2C83, 0.55f); //Sat
+	}
+
 	if (GameConfig::GetValue("Graphics", "VanillaFXPlus", 0))
 	{
 		Logger::TypedLog(CHN_DEBUG, "Patching VanillaFXPlus...\n");
