@@ -1319,6 +1319,16 @@ void __declspec(naked) MSAA()
 	}
 }
 
+void __declspec(naked) MouseFix()
+{
+	static int jmp_continue = 0x00C1F4F2;
+	__asm {
+		mov ds : dword ptr[0x234F460], eax
+		mov ds : dword ptr[0x0347B2F4], eax // reset the missing old delta to fix ghost scrolling when tabbing in and out of the game
+		jmp jmp_continue
+	}
+}
+
 BOOL __declspec(naked) ValidCharFix()
 {
 	static int jmp_continue = 0x0075C8D5;
@@ -1333,6 +1343,29 @@ BOOL __declspec(naked) ValidCharFix()
 		skip:
 		jmp jmp_xor
 	}
+}
+
+
+typedef void __cdecl HudControlT(bool Hide);
+HudControlT* HudControl = (HudControlT*)(0x793D60);
+
+void IdleFix(bool Hide) {
+
+	patchByte((BYTE*)0x004F81EE, Hide ? 0x00 : 0x32);
+	patchByte((BYTE*)0x004F81CE, Hide ? 0x00 : 0x33);
+
+	return HudControl(Hide);
+}
+
+typedef int __cdecl TextureTestT(int idk1, int idk2);
+TextureTestT* TextureTest = (TextureTestT*)(0xC080C0);
+
+int TextureCrashFix(int idk1, int idk2) {
+
+	__asm pushad
+	idk1 = *(int*)(idk2); // making the first arg be the same as the second seems to not break the game and could maybe fix the crash
+	__asm popad
+	return TextureTest(idk1, idk2);
 }
 
 struct FILE_INFO
@@ -1409,10 +1442,14 @@ _declspec(naked) void hook_loose_files()
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-	
+	patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
+	patchCall((void*)0x009A3D8E, (void*)IdleFix);
+	patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
+	patchCall((void*)0x00C08493, (void*)TextureCrashFix);
 	patchCall((void*)0x00CD9FE8, (void*)luaLoadBuff); // used to intercept the pause menu lua before compiled, needed for full 8x MSAA support + custom res
 	WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
 	WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
+	WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out
 	ErrorManager::Initialize();
 	char NameBuffer[260];
 	PIMAGE_DOS_HEADER dos_header;
@@ -1706,18 +1743,19 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x0051A952, (BYTE*)"\xD9\x05\x7F\x2C\x7B\x02", 6); // new brightness address
 		patchBytesM((BYTE*)0x0051A997, (BYTE*)"\xD9\x05\x83\x2C\x7B\x02", 6); // new sat address patch
 		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // new contr address patch
-		patchByte((BYTE*)0x00E9787F, 0x00); // force HDR off because it's 1 by default
+		patchByte((BYTE*)0x00E9787F, 0x01); // force HDR on
 		patchNop((BYTE*)0x00773792, 5); // prevent the game from turning HDR on/off
+		patchBytesM((BYTE*)0x005170EF, (BYTE*)"\x75", 1); // prevent bloom from appearing without breaking glow
+		patchBytesM((BYTE*)0x00517051, (BYTE*)"\x8B", 1); // flip the logic for the HDR strength (or radius?) float check
 		//patchNop((BYTE*)0x00533C25, 5); // disable sky refl (prevent the absurd blue tint on reflections)
 
 		patchNop((BYTE*)0x00532A4F, 6); // nop for whatever the fuck
 		patchBytesM((BYTE*)0x00532992, (BYTE*)"\xDD\x05\xAA\x2C\x7B\x02", 6); // new opacity address for sky reflections
 		patchDouble((BYTE*)0x027B2CAA, 128.0);
 
-		patchFloat((BYTE*)0x027B2C7F, 1.3f); //Bright
+		patchFloat((BYTE*)0x027B2C7F, 1.26f); //Bright
 		patchFloat((BYTE*)0x027B2C83, 0.8f); //Sat
 		patchFloat((BYTE*)0x027B2C87, 1.62f); //Contr
-
 
 		patchBytesM((BYTE*)0x00524BA4, (BYTE*)"\xD9\x05\xBA\x2C\x7B\x02", 6);
 		patchBytesM((BYTE*)0x00D1A333, (BYTE*)"\xD9\x05\xBA\x2C\x7B\x02", 6);
@@ -1790,12 +1828,13 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x004992a2 + 2, (BYTE*)"\x71\x5D", 2);
 	}
 
-	if (GameConfig::GetValue("Graphics", "RemoveBloom", 0)) // Removes a shader call to create bloom on bright objects.
+	// VFX+ already disables bloom + this does it incorrectly which breaks the item glow
+	/*if (GameConfig::GetValue("Graphics", "RemoveBloom", 0)) // Removes a shader call to create bloom on bright objects.
 	{
 		Logger::TypedLog(CHN_MOD, "Removing Bloom...\n");
 		patchNop((BYTE*)0x005174FA, 30);
 		patchNop((BYTE*)0x005178F6, 25); // hopefully this new entry works on shitty nvidia gpus
-	}
+	}*/
 
 	if (GameConfig::GetValue("Gameplay", "DisableAimAssist", 0))
 	{
