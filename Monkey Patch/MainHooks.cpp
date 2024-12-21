@@ -49,7 +49,11 @@ bool IsSRFocused()
 	GetWindowThreadProcessId(GetForegroundWindow(), &pid);
 	return pid == GetCurrentProcessId();
 }
-
+// Returns the address last in the chain, for example if value of ADDRESS (0x1)
+// 0x1 + 0x2 = 0x4,
+// and value of ADDRESS (0x4)
+// 0x4 + 0x1 = 0x9, 
+// then ReadPointer(0x1,{0x2,0x1}); will return 0x9.
 uintptr_t ReadPointer(uintptr_t baseAddress, const std::vector<uintptr_t>& offsets) {
 	uintptr_t address = baseAddress;
 
@@ -59,7 +63,7 @@ uintptr_t ReadPointer(uintptr_t baseAddress, const std::vector<uintptr_t>& offse
 
 	for (size_t i = 0; i < offsets.size(); ++i) {
 		uintptr_t* nextAddress = reinterpret_cast<uintptr_t*>(address);
-		if (!nextAddress) {
+		if (nextAddress == nullptr || *nextAddress == 0) {
 			return 0;
 		}
 		address = *nextAddress + offsets[i];
