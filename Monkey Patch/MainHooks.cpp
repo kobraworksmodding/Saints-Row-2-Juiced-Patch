@@ -2023,13 +2023,16 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchNop((BYTE*)0x009D3C65, 2); // nop out the command check so TP works without it
 
 
-	patchBytesM((BYTE*)0x0068579B, (BYTE*)"\x6A\x05", 2);
-	patchBytesM((BYTE*)0x006857CB, (BYTE*)"\x6A\x05", 2);
-	patchBytesM((BYTE*)0x0068571F, (BYTE*)"\x6A\x05", 2);
-	patchBytesM((BYTE*)0x0068574F, (BYTE*)"\x6A\x05", 2);
-	patchBytesM((BYTE*)0x00685E12, (BYTE*)"\x6A\x05", 2);
-	patchBytesM((BYTE*)0x00685E1E, (BYTE*)"\x6A\x05", 2);
-	patchBytesM((BYTE*)0x00685DC7, (BYTE*)"\x6A\x05", 2);
+	patchBytesM((BYTE*)0x0068579B, (BYTE*)"\x6A\x06", 2);
+	patchBytesM((BYTE*)0x006857CB, (BYTE*)"\x6A\x06", 2);
+	patchBytesM((BYTE*)0x0068571F, (BYTE*)"\x6A\x06", 2);
+	patchBytesM((BYTE*)0x0068574F, (BYTE*)"\x6A\x06", 2);
+	patchBytesM((BYTE*)0x00685E12, (BYTE*)"\x6A\x06", 2);
+	patchBytesM((BYTE*)0x00685E1E, (BYTE*)"\x6A\x06", 2);
+	patchBytesM((BYTE*)0x00685DC7, (BYTE*)"\x6A\x06", 2);
+	patchBytesM((BYTE*)0x00687C32, (BYTE*)"\x6A\x06", 2);
+	patchBytesM((BYTE*)0x00687BC2, (BYTE*)"\x6A\x06", 2);
+	patchBytesM((BYTE*)0x00687CAB, (BYTE*)"\x6A\x06", 2);
 	// this should increase the stream priority for the character swap cheat - on 360, the loading times are much bigger so there are no issues there but here this might be needed
 	patchNop((BYTE*)0x00684C84, 5); // get rid of the loading screen with the cheat, remove the nop if there are any issues but it should be fine?
 
