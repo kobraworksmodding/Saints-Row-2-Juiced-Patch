@@ -17,7 +17,7 @@
 
 #include <format>
 #include <WinSock2.h>
-const char* juicedversion = "6.1.0";
+const char* juicedversion = "7.0.0";
 
 char* executableDirectory[MAX_PATH];
 const char FPSCam[] = "camera_fpss.xtbl";
@@ -116,7 +116,6 @@ void FirstBootFlag() {
 		RegCloseKey(hKey);
 	}
 }
-
 
 BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 {
@@ -1905,36 +1904,35 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		// This is the lower spec version of the patch, the things that will cause the LEAST cpu usage.
 
 		Logger::TypedLog(CHN_DLL, "Removing a Very Safe Amount of Sleep Calls...\n");
-		patchNop((BYTE*)0x0052108C, 3); // patch win main sleep call
-		patchNop((BYTE*)0x00521FC0, 4); // wait call in a threaded function, i think
-		patchNop((BYTE*)0x00521FE5, 4); // same with this one
-		patchNop((BYTE*)0x005285A2, 4); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
+		//patchNop((BYTE*)0x0052108C, 3); // patch win main sleep call
+		patchBytesM((BYTE*)0x00521FC0, (BYTE*)"\x6A\x00", 2); // wait call in a threaded function, i think
+		patchBytesM((BYTE*)0x00521FE5, (BYTE*)"\x6A\x00", 2); // same with this one
+		patchBytesM((BYTE*)0x005285A2, (BYTE*)"\x6A\x00", 2); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
 
 	}
+
 	if (GameConfig::GetValue("Debug", "SleepHack", 0) == 2) // MEDIUM patch
 	{
 		Logger::TypedLog(CHN_DLL, "Removing a Safe Amount of Sleep Calls...\n");
-		patchNop((BYTE*)0x0052108C, 3); // patch win main sleep call
-		patchNop((BYTE*)0x00521FC0, 4); // wait call in a threaded function, i think
-		patchNop((BYTE*)0x00521FE5, 4); // same with this one
-		patchNop((BYTE*)0x005285A2, 4); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
-		patchNop((BYTE*)0x0052847C, 8); //make the shadow pool less sleepy
+		patchBytesM((BYTE*)0x00521FC0, (BYTE*)"\x6A\x00", 2); // wait call in a threaded function, i think
+		patchBytesM((BYTE*)0x00521FE5, (BYTE*)"\x6A\x00", 2); // same with this one
+		patchBytesM((BYTE*)0x005285A2, (BYTE*)"\x6A\x00", 2); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
+		patchBytesM((BYTE*)0x0052847C, (BYTE*)"\x6A\x00", 2); //make the shadow pool less sleepy
 	}
-	if (GameConfig::GetValue("Debug", "SleepHack", 0) == 3) // HIGH patch, because why not i guess.
+	/*if (GameConfig::GetValue("Debug", "SleepHack", 0) == 3) // HIGH patch, because why not i guess.
 	{
 		Logger::TypedLog(CHN_DLL, "Removing a Safe Amount of Sleep Calls...\n");
-		patchNop((BYTE*)0x0052108C, 3); // patch win main sleep call
-		patchNop((BYTE*)0x00521FC0, 4); // wait call in a threaded function, i think
-		patchNop((BYTE*)0x00521FE5, 4); // same with this one
-		patchNop((BYTE*)0x005285A2, 4); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
-		patchNop((BYTE*)0x0052847C, 8); //make the shadow pool less sleepy
+		patchBytesM((BYTE*)0x00521FC0, (BYTE*)"\x6A\x00", 2); // wait call in a threaded function, i think
+		patchBytesM((BYTE*)0x00521FE5, (BYTE*)"\x6A\x00", 2); // same with this one
+		patchBytesM((BYTE*)0x005285A2, (BYTE*)"\x6A\x00", 2); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
+		patchBytesM((BYTE*)0x0052847C, (BYTE*)"\x6A\x00", 2); //make the shadow pool less sleepy
 		patchBytesM((BYTE*)0x00D2004A, (BYTE*)"\x68\x00\x00\x00\x00", 5); // patches function that deals with window rect, seems to increase fps about +30-40 with little cpu overhead.
-		patchBytesM((BYTE*)0x0068C714, (BYTE*)"\x6A\x0F", 2); // this is a sleep call for first load/legal disclaimers, its set to 30 by default, halfing increases fps to 60 and makes loading faster.
-		//patchBytesM((BYTE*)0x00D20E5A, (BYTE*)"\x6A\x00", 2);
-		patchNop((BYTE*)0x00D20E3E, 7);
-		//patchNop((BYTE*)0x00BFA4D0, 8);
-		
+	}*/
 
+	if (GameConfig::GetValue("Debug", "FasterLoadingScreens", 1))
+	{
+		Logger::TypedLog(CHN_MOD, "Makiug loading screens slightly faster.\n");
+		patchBytesM((BYTE*)0x0068C714, (BYTE*)"\x6A\x0F", 2); // this is a sleep call for first load/legal disclaimers, its set to 30 by default, halfing increases fps to 60 and makes loading faster.
 	}
 
 	if (GameConfig::GetValue("Audio", "FixAudioDeviceAssign", 1))
