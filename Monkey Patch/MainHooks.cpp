@@ -15,7 +15,6 @@
 #include "GameConfig.h"
 #include "iat_functions.h"
 #include <chrono>
-#include <thread>
 
 #include <format>
 #include <WinSock2.h>
@@ -1455,29 +1454,6 @@ _declspec(naked) void hook_loose_files()
 // end of loose files
 // *********************************************************************************
 
-typedef void (WINAPI* SleepFn)(DWORD dwMilliseconds);
-SleepFn OriginalSleep = nullptr;
-
-void WINAPI SleepDetour(DWORD dwMilliseconds) {
-	if (dwMilliseconds == 0) {
-		std::this_thread::yield(); // not sure if this helps at all? can be yeeted if its useless
-		return;
-	}
-	else {
-		OriginalSleep(dwMilliseconds / 1.5);
-	}
-}
-
-void HookSleep() {
-	HMODULE main_handle = GetModuleHandleA(NULL);
-
-	void* old_proc;
-
-	if (PatchIat(main_handle, "Kernel32.dll", "Sleep", (void*)SleepDetour, &old_proc) == S_OK) {
-		OriginalSleep = (SleepFn)old_proc;
-	}
-}
-
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
@@ -1916,50 +1892,33 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	if (GameConfig::GetValue("Debug", "AltTabFPS", 1)) // Removes a sleep call in main render loop, this one seems to slow the game to below 25 fps when the game is alt-tabbed.
 	{
-		Logger::TypedLog(CHN_DLL, "Making ALT-TAB smoother...\n");
-		patchNop((BYTE*)0x005226F3, 8); // Bye bye sleep call.
+		Render3D::AltTabFPS();
 	}
 
 	if (GameConfig::GetValue("Debug", "UncapFPS", 0)) // Removes a sleep call in main render loop, this one seems to slow the game to below 25 fps when the game is alt-tabbed.
 	{  // Uncapping frames can lead to broken doors among other issues not yet noted.
-		Logger::TypedLog(CHN_DLL, "Uncapping FPS...\n");
-		patchNop((BYTE*)0x00D20E3E, 7);
+		Render3D::UncapFPS();
 	}
 
 	// Removes all necessary sleep calls in the game, doubles fps and mitigates stutter, tanks CPU usage.
 	if (GameConfig::GetValue("Debug", "SleepHack", 0) == 1) // LOW patch
 	{
-		// Woohoo, this is a dirty patch, but we'll include it for people who want it and CAN actually run it.
-		// This will destroy older and weaker pcs, but we'll make sure to let the people who are on that, know that.
-
-		// This is the lower spec version of the patch, the things that will cause the LEAST cpu usage.
-
-		Logger::TypedLog(CHN_DLL, "Removing a Very Safe Amount of Sleep Calls...\n");
-		//patchNop((BYTE*)0x0052108C, 3); // patch win main sleep call
-		patchBytesM((BYTE*)0x00521FC0, (BYTE*)"\x6A\x00", 2); // wait call in a threaded function, i think
-		patchBytesM((BYTE*)0x00521FE5, (BYTE*)"\x6A\x00", 2); // same with this one
-		patchBytesM((BYTE*)0x005285A2, (BYTE*)"\x6A\x00", 2); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
-
+		Render3D::PatchLowSleepHack();
 	}
 
 	if (GameConfig::GetValue("Debug", "SleepHack", 0) == 2) // MEDIUM patch
 	{
-		Logger::TypedLog(CHN_DLL, "Removing a Safe Amount of Sleep Calls...\n");
-		patchBytesM((BYTE*)0x00521FC0, (BYTE*)"\x6A\x00", 2); // wait call in a threaded function, i think
-		patchBytesM((BYTE*)0x00521FE5, (BYTE*)"\x6A\x00", 2); // same with this one
-		patchBytesM((BYTE*)0x005285A2, (BYTE*)"\x6A\x00", 2); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
-		patchBytesM((BYTE*)0x0052847C, (BYTE*)"\x6A\x00", 2); //make the shadow pool less sleepy
+		Render3D::PatchMediumSleepHack();
 	}
 	if (GameConfig::GetValue("Debug", "SleepHack", 0) == 3) // HIGH patch, because why not i guess.
 	{
 		Logger::TypedLog(CHN_DLL, "Hooking sleep...\n");
-		HookSleep();
+		Render3D::HookSleep();
 	}
 
 	if (GameConfig::GetValue("Debug", "FasterLoadingScreens", 1))
 	{
-		Logger::TypedLog(CHN_MOD, "Makiug loading screens slightly faster.\n");
-		patchBytesM((BYTE*)0x0068C714, (BYTE*)"\x6A\x0F", 2); // this is a sleep call for first load/legal disclaimers, its set to 30 by default, halfing increases fps to 60 and makes loading faster.
+		Render3D::FasterLoadingScreens();
 	}
 
 	if (GameConfig::GetValue("Audio", "FixAudioDeviceAssign", 1))
