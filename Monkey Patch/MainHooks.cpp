@@ -434,7 +434,13 @@ void havokFrameTicker() { // Proper Frametime ticker by Terval
 
 	DWORD currentTick = GetTickCount();
 
-	float newFrametime = 1.0f / (currentFps * 2);
+	// Game does calcuate frametime internally we can use that instead of calculating it here.
+
+	float newFrametime;
+	if (currentFps > 30.f)
+		newFrametime = 1.0f / (currentFps * 2);
+	else
+		newFrametime = 0.01666666666f;
 	float newFrametime2 = 1.0f / currentFps;
 
 	if (currentTick - lastTick >= 100) {
