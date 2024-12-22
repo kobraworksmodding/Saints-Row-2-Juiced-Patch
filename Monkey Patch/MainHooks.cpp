@@ -1774,7 +1774,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // new contr address patch
 		patchFloat((BYTE*)0x027B2C87, 1.40f); //Contr
 		patchBytesM((BYTE*)0x0051A997, (BYTE*)"\xD9\x05\x83\x2C\x7B\x02", 6); // new sat address patch
-		patchFloat((BYTE*)0x027B2C83, 0.55f); //Sat
+		patchFloat((BYTE*)0x027B2C83, 0.65f); //Sat
 	}
 
 	if (GameConfig::GetValue("Graphics", "VanillaFXPlus", 0))
