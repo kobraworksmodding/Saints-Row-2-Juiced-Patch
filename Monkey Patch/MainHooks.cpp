@@ -13,7 +13,9 @@
 #include "Render/Render3D.h"
 
 #include "GameConfig.h"
+#include "iat_functions.h"
 #include <chrono>
+#include <thread>
 
 #include <format>
 #include <WinSock2.h>
@@ -1292,6 +1294,14 @@ int luaLoadBuff(void* L, const char* buff, size_t sz, const char* name) {
 		replace_all(convertedBuff, "2048x1536", patchedRes); // easier to do it this way than to only patch if the user's res isn't found
 		replace_all(convertedBuff, sLibSuperUI, blankLib); // fixes the error logger from SuperUI in system_lib.lua from crashing our executor, if nclok fixes it we'll get rid of this
 
+		if (*(BYTE*)(0xE8C470) == 0) { // only patch these if the game's running in English
+			replace_all(convertedBuff, "MENU_BLUR", "Pause Blur");
+			replace_all(convertedBuff, "MENU_DEPTH_OF_FIELD", "Depth of Field     ");
+			replace_all(convertedBuff, "ANISOTROPY_FILTERING", "Anisotropic Filtering");
+			replace_all(convertedBuff, "CONTROLS_MINIMAP_VIEW", "Minimap View         ");
+			replace_all(convertedBuff, "MENU_VSYNC\",\t\t\t\t\t\t", "Fullscreen VSync\",");
+		}
+
 		sz = convertedBuff.length();
 
 		strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
@@ -1438,6 +1448,30 @@ _declspec(naked) void hook_loose_files()
 // *********************************************************************************
 // end of loose files
 // *********************************************************************************
+
+typedef void (WINAPI* SleepFn)(DWORD dwMilliseconds);
+SleepFn OriginalSleep = nullptr;
+
+void WINAPI SleepDetour(DWORD dwMilliseconds) {
+	if (dwMilliseconds == 0) {
+		std::this_thread::yield(); // not sure if this helps at all? can be yeeted if its useless
+		return;
+	}
+	else {
+		OriginalSleep(dwMilliseconds / 1.5);
+	}
+}
+
+void HookSleep() {
+	HMODULE main_handle = GetModuleHandleA(NULL);
+	FARPROC SleepAddr = GetProcAddress(main_handle, "Sleep");
+
+	void* old_proc;
+
+	if (PatchIat(main_handle, "Kernel32.dll", "Sleep", (void*)SleepDetour, &old_proc) == S_OK) {
+		OriginalSleep = (SleepFn)old_proc;
+	}
+}
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -1616,16 +1650,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	if (GameConfig::GetValue("Debug", "DisableXInput", 0))
 	{
-		patchNop((BYTE*)0x00BF9F40, 7);
-		patchNop((BYTE*)0x00BF9F50, 7);
-		patchNop((BYTE*)0x00BFA090, 2);
-		patchNop((BYTE*)0x00BFA099, 5);
-		patchNop((BYTE*)0x00BFA0C8, 7);
-		patchNop((BYTE*)0x00C13A60, 7);
-		patchNop((BYTE*)0x00C13A70, 7);
-		patchNop((BYTE*)0x00C147D5, 5);
-		patchNop((BYTE*)0x00C147DC, 5);
-		patchNop((BYTE*)0x00C14A06, 5);
+		patchBytesM((BYTE*)0x00BFA090, (BYTE*)"\x6A\x00", 2);
+		patchBytesM((BYTE*)0x00BFA0C8, (BYTE*)"\x6A\x00", 2);
 		Logger::TypedLog(CHN_DEBUG, "XInput Disabled.\n");
 	}
 
@@ -1919,15 +1945,11 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x005285A2, (BYTE*)"\x6A\x00", 2); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
 		patchBytesM((BYTE*)0x0052847C, (BYTE*)"\x6A\x00", 2); //make the shadow pool less sleepy
 	}
-	/*if (GameConfig::GetValue("Debug", "SleepHack", 0) == 3) // HIGH patch, because why not i guess.
+	if (GameConfig::GetValue("Debug", "SleepHack", 0) == 3) // HIGH patch, because why not i guess.
 	{
-		Logger::TypedLog(CHN_DLL, "Removing a Safe Amount of Sleep Calls...\n");
-		patchBytesM((BYTE*)0x00521FC0, (BYTE*)"\x6A\x00", 2); // wait call in a threaded function, i think
-		patchBytesM((BYTE*)0x00521FE5, (BYTE*)"\x6A\x00", 2); // same with this one
-		patchBytesM((BYTE*)0x005285A2, (BYTE*)"\x6A\x00", 2); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
-		patchBytesM((BYTE*)0x0052847C, (BYTE*)"\x6A\x00", 2); //make the shadow pool less sleepy
-		patchBytesM((BYTE*)0x00D2004A, (BYTE*)"\x68\x00\x00\x00\x00", 5); // patches function that deals with window rect, seems to increase fps about +30-40 with little cpu overhead.
-	}*/
+		Logger::TypedLog(CHN_DLL, "Hooking sleep...\n");
+		HookSleep();
+	}
 
 	if (GameConfig::GetValue("Debug", "FasterLoadingScreens", 1))
 	{
