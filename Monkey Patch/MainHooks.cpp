@@ -1464,7 +1464,6 @@ void WINAPI SleepDetour(DWORD dwMilliseconds) {
 
 void HookSleep() {
 	HMODULE main_handle = GetModuleHandleA(NULL);
-	FARPROC SleepAddr = GetProcAddress(main_handle, "Sleep");
 
 	void* old_proc;
 
