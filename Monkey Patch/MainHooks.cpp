@@ -24,11 +24,13 @@ char* executableDirectory[MAX_PATH];
 const char FPSCam[] = "camera_fpss.xtbl";
 const char ServerNameRL[] = "[SR2 RELOADED SERVER]";
 const char ServerNameSR2[] = "[Saints Row 2]";
+// - UNUSED
 float AOQuality = 0.05;
-float AOSmoothness = 12.5;
-float AOStrength = 1.65;
+float AOSmoothness = -4.0;
 int ResolutionX = 1920;
 int ResolutionY = 1080;
+// --------
+float AOStrength = 14.55;
 bool CheatFlagDisabled = 0;
 
 bool lastFrameStates[256];
@@ -1868,15 +1870,14 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	if (GameConfig::GetValue("Graphics", "BetterAmbientOcclusion", 0)) 
 	{
 		Logger::TypedLog(CHN_MOD, "Making AO Better...\n");
-		// ~ TODO: Fix issue with commented code and random unsmoothing.
-
-		/*patchNop((BYTE*)0x0052AA90, 6);
+		patchNop((BYTE*)0x0052AA90, 6);
 		patchNop((BYTE*)0x0052AA9D, 6);
 		*(float*)0x00E98D74 = (float)AOStrength;
-		patchFloat((BYTE*)0x00518B00 + 2, (float)AOSmoothness);
-		patchFloat((BYTE*)0x00518AEE + 2, (float)AOSmoothness);*/
 
-		patchFloat((BYTE*)0x00E9898C, (float)AOQuality);
+		//patchFloat((BYTE*)0x00518B00 + 2, AOSmoothness);
+		//patchFloat((BYTE*)0x00518AEE + 2, AOSmoothness);
+
+		//patchFloat((BYTE*)0x00E9898C, (float)AOQuality);
 	}
 	if (GameConfig::GetValue("Graphics", "DisableScreenBlur", 0))
 	{
@@ -1966,6 +1967,25 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x00BF0A1B, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new particle pause check address
 		patchBytesM((BYTE*)0x00BDCFFD, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 2
 		patchBytesM((BYTE*)0x006B793F, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 3
+	}
+
+	if (GameConfig::GetValue("Audio", "51Surround", 0) == 1)
+	{
+		Logger::TypedLog(CHN_AUDIO, "Using 5.1 Surround Sound...\n");
+	}
+	else {
+		Logger::TypedLog(CHN_AUDIO, "Fixing Stereo Audio...\n");
+		UINT32 number_of_speakers = 2;
+		UINT32 frequency = 48000;
+
+		//SafeWrite8(0x004818E3, number_of_speakers);         // Causes major audio glitches
+		SafeWrite8(0x00482B08, number_of_speakers);
+		SafeWrite8(0x00482B41, number_of_speakers);
+		SafeWrite8(0x00482B96, number_of_speakers);
+
+		SafeWrite32(0x00482B03, frequency);
+		SafeWrite32(0x00482B3C, frequency);
+		SafeWrite32(0x00482B91, frequency);
 	}
 
 	if (GameConfig::GetValue("Gameplay", "BetterChat", 1)) // changes char limit from 64 to 128 and formats the input after the 64th character
