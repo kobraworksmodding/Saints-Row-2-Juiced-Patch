@@ -18,6 +18,9 @@
 
 #include <format>
 #include <WinSock2.h>
+#include "Xinput.h"
+#pragma comment(lib, "Xinput.lib")
+
 const char* juicedversion = "7.0.0";
 
 char* executableDirectory[MAX_PATH];
@@ -1456,6 +1459,64 @@ _declspec(naked) void hook_loose_files()
 // end of loose files
 // *********************************************************************************
 
+bool IsControllerConnected(int controllerIndex)
+{
+	XINPUT_CAPABILITIES capabilities;
+	return XInputGetCapabilities(controllerIndex, 0, &capabilities); // perhaps a little more lightweight than GetState?
+}
+
+typedef int(__stdcall* XInputEnableT)(bool Enable); // this is a deprecated feature and I couldn't get it to register through the XInput lib
+XInputEnableT XInputEnable = (XInputEnableT)0x00CCD4F8;
+
+int controllerConnected[4] = { 1, 1, 1, 1 };
+bool NoControllers = false;
+bool XInputEnabled = true;
+
+DWORD WINAPI XInputCheck(LPVOID lpParameter)
+{
+	while (true) {
+		for (int i = 0; i < 4; ++i)
+		{
+			controllerConnected[i] = IsControllerConnected(i);
+		}
+
+		for (int i = 0; i < 4; ++i) {
+			if (controllerConnected[i] == 0) {
+				NoControllers = false;
+				break;
+			}
+			else {
+				NoControllers = true;
+			}
+		}
+
+		bool inFocus = IsSRFocused(); // calling it less = better for performance; local variable
+
+		static bool focusedLast = true;
+
+
+		if (inFocus && NoControllers && XInputEnabled) {
+			XInputEnable(false);
+			XInputEnabled = false;
+		}
+
+		else if (inFocus && !NoControllers && !XInputEnabled) {
+			XInputEnable(true);
+			XInputEnabled = true;
+		}
+
+		else if (focusedLast && !inFocus) {
+			XInputEnabled = false;
+			// we set to false so it knows to re-enable but we do nothing else as we let the game flush for us out of focus (which disables XInput)
+		}
+
+		focusedLast = inFocus;
+
+		SleepEx(500, 0); // feel free to decrease or increase; using SleepEx to make it independent from our third sleep hack
+	}
+	return 0;
+}
+
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
@@ -1636,6 +1697,14 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x00BFA090, (BYTE*)"\x6A\x00", 2);
 		patchBytesM((BYTE*)0x00BFA0C8, (BYTE*)"\x6A\x00", 2);
 		Logger::TypedLog(CHN_DEBUG, "XInput Disabled.\n");
+	}
+
+	else { // if XInput is not disabled completely, we just force our fix
+		patchNop((BYTE*)0x00BFA090, 2);
+		patchNop((BYTE*)0x00BFA099, 5);
+		patchNop((BYTE*)0x00BFA0C8, 2);
+		patchNop((BYTE*)0x00BFA0CA, 5);
+		CreateThread(0, 0, XInputCheck, 0, 0, 0);
 	}
 
 	if (GameConfig::GetValue("Debug", "ForceDisableVibration", 0)) // Fixes load/new save insta-crash due to broken / shitty joystick drivers.
