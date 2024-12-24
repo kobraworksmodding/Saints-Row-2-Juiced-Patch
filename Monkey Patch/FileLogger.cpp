@@ -18,6 +18,8 @@ HANDLE consoleHandle;
 
 char dump_name[] = "dump";
 
+HWND ConsoleWindow = nullptr;
+
 namespace Logger
 {
 	bool ConsoleAllowed() { return l_UseConsole; }
@@ -52,6 +54,7 @@ namespace Logger
 			freopen_s(&CON, "CONIN$", "r", stdin);
 			freopen_s(&CON, "CONOUT$", "w", stdout);
 			freopen_s(&CON, "CONOUT$", "w", stderr);
+			ConsoleWindow = GetConsoleWindow();
 			std::cout.clear();
 			std::cerr.clear();
 

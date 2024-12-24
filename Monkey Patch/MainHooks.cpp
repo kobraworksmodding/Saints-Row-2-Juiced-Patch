@@ -52,9 +52,14 @@ void UpdateKeys()
 bool IsSRFocused()
 {
 	DWORD pid;
+	HWND Window = GetForegroundWindow();
 	GetWindowThreadProcessId(GetForegroundWindow(), &pid);
-	return pid == GetCurrentProcessId();
+	if (Window != ConsoleWindow) {
+		return pid == GetCurrentProcessId();
+	}
+	return false;
 }
+
 // Returns the address last in the chain, for example if value of ADDRESS (0x1)
 // 0x1 + 0x2 = 0x4,
 // and value of ADDRESS (0x4)

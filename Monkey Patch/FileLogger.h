@@ -24,6 +24,8 @@
 #define CHN_LAA                         "LAA"
 #define CHN_RL                         "RELOADED"
 
+extern HWND ConsoleWindow;
+
 namespace Logger
 {
 	void Log(const char* Format, ...);
