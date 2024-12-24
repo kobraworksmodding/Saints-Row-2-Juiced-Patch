@@ -1310,9 +1310,9 @@ int luaLoadBuff(void* L, const char* buff, size_t sz, const char* name) {
 		replace_all(convertedBuff, sLibSuperUI, blankLib); // fixes the error logger from SuperUI in system_lib.lua from crashing our executor, if nclok fixes it we'll get rid of this
 
 		if (*(BYTE*)(0xE8C470) == 0) { // only patch these if the game's running in English
-			replace_all(convertedBuff, "MENU_BLUR", "Pause Blur");
+			replace_all(convertedBuff, "MENU_BLUR\",\t\t", "Pause Blur\",\t");
 			replace_all(convertedBuff, "MENU_DEPTH_OF_FIELD", "Depth of Field     ");
-			replace_all(convertedBuff, "ANISOTROPY_FILTERING", "Anisotropic Filtering");
+			replace_all(convertedBuff, "ANISOTROPY_FILTERING\",\t\t", "Anisotropic Filtering\",\t");
 			replace_all(convertedBuff, "CONTROLS_MINIMAP_VIEW", "Minimap View         ");
 			replace_all(convertedBuff, "MENU_VSYNC\",\t\t\t\t\t\t", "Fullscreen VSync\",");
 		}
