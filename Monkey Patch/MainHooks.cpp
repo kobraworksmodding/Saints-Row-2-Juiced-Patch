@@ -21,7 +21,7 @@
 #include "Xinput.h"
 #pragma comment(lib, "Xinput.lib")
 
-const char* juicedversion = "7.0.0";
+const char* juicedversion = "7.1.0";
 
 char* executableDirectory[MAX_PATH];
 const char FPSCam[] = "camera_fpss.xtbl";
@@ -1510,30 +1510,34 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 
 	PatchOpenSpy();
-	if (GameConfig::GetValue("Debug", "ExpandClothingLimit", 1))
+
+	if (GameConfig::GetValue("Gameplay", "SR1Reloading", 1))
 	{
-		Memory::ExpandCustItemsPool();
+		Behavior::SR1Reloading();
 	}
 
-	// FUCK THIS SHIT
-
-	/*if (GameConfig::GetValue("Graphics", "CustomResolution", 1))
+	if (GameConfig::GetValue("Gameplay", "SR1QuickSwitch", 1))
 	{
-		float ResX[4];
-		float ResY[4];
-		GameConfig::GetScreenResolution(ResX, ResY);
-		patchNop((BYTE*)0x0051D8BA, 2);
+		Behavior::SR1QuickSwitch();
+	}
 
-		 
-		Logger::TypedLog(CHN_DEBUG, "Resolution Patched: %f x %f\n", ResX, ResY);
-	}*/
+	if (GameConfig::GetValue("Gameplay", "TauntCancelling", 1))
+	{
+		Behavior::TauntCancelling();
+	}
 
-#if RELOADED
+	if (GameConfig::GetValue("Gameplay", "UseWeaponAfterEmpty", 1))
+	{
+		Behavior::WeaponJam();
+	}
 	// Experiment to give CO-OP a higher player limit.
-    /* patchByte((BYTE*)0x007F750D + 1, 0x01); // max gb count (we'll use this for modified co-op)
+	/*patchByte((BYTE*)0x007F750D + 1, 0x01); // max gb count (we'll use this for modified co-op)
 	patchDWord((void*)(0x0086ACF5 + 6), 1); // overwrite the co-op maxplayerslobby to 12
 	patchNop((BYTE*)0x007F71EC, 12); // nop coop max and max lobby
-	patchBytesM((BYTE*)0x007F7A31, (BYTE*)"\xB8\x02", 2); */
+	patchBytesM((BYTE*)0x007F7A31, (BYTE*)"\xB8\x02", 2);*/
+
+#if RELOADED
+
 
 	Reloaded::PatchTables();
 
