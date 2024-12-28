@@ -89,6 +89,9 @@
     <ClCompile Include="Render\Render3D.cpp">
       <Filter>Source Files\Render</Filter>
     </ClCompile>
+    <ClCompile Include="loose files.cpp">
+      <Filter>Patches</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DFEngine.h">
@@ -162,6 +165,9 @@
     </ClInclude>
     <ClInclude Include="Render\Render3D.h">
       <Filter>Source Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="loose files.h">
+      <Filter>Patches</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

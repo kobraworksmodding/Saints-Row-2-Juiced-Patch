@@ -188,6 +188,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
   <ItemGroup>
     <ClCompile Include="ErrorManager.cpp" />
     <ClCompile Include="LAAPatcher.cpp" />
+    <ClCompile Include="loose files.cpp" />
     <ClCompile Include="LuaHandler.cpp" />
     <ClCompile Include="Mem\Memory.cpp" />
     <ClCompile Include="Patches\GOG No FPS limiter.cpp" />
@@ -212,6 +213,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="ext\inc\lua\lualib.h" />
     <ClInclude Include="ErrorManager.h" />
     <ClInclude Include="LAAPatcher.h" />
+    <ClInclude Include="loose files.h" />
     <ClInclude Include="LuaHandler.h" />
     <ClInclude Include="Mem\Memory.h" />
     <ClInclude Include="Patches\GOG No FPS limiter.h" />
