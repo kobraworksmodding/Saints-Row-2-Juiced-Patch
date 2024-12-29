@@ -1466,19 +1466,19 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	PIMAGE_NT_HEADERS nt_header;
 	MEMORYSTATUSEX memory_info;
 	HMODULE main_handle;
-	
+
 	Logger::TypedLog(CHN_DLL, "Calling Hooked WinMain.\n");
 
-	main_handle=GetModuleHandleA(NULL);
-	GetModuleFileNameA(main_handle,NameBuffer,260);
-	Logger::TypedLog(CHN_DLL, "Module name = %s\n",NameBuffer);
-	dos_header=(PIMAGE_DOS_HEADER)main_handle;
-	nt_header=(PIMAGE_NT_HEADERS)((DWORD)main_handle+dos_header->e_lfanew);
-	
+	main_handle = GetModuleHandleA(NULL);
+	GetModuleFileNameA(main_handle, NameBuffer, 260);
+	Logger::TypedLog(CHN_DLL, "Module name = %s\n", NameBuffer);
+	dos_header = (PIMAGE_DOS_HEADER)main_handle;
+	nt_header = (PIMAGE_NT_HEADERS)((DWORD)main_handle + dos_header->e_lfanew);
 
-	memory_info.dwLength=sizeof(memory_info);
+
+	memory_info.dwLength = sizeof(memory_info);
 	GlobalMemoryStatusEx(&memory_info);
-	Logger::TypedLog(CHN_DLL, "Memory allocated to process at startup = %I64dMB, memory free = %I64dMB.\n",memory_info.ullTotalVirtual/1048576,memory_info.ullAvailVirtual/1048576);
+	Logger::TypedLog(CHN_DLL, "Memory allocated to process at startup = %I64dMB, memory free = %I64dMB.\n", memory_info.ullTotalVirtual / 1048576, memory_info.ullAvailVirtual / 1048576);
 
 	for (int i = 1; i < *pargc; i++)
 	{
@@ -1490,7 +1490,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 
 	// Probably Add SR2 Reloaded patch routines here, used to be OS and FPS patch from Monkey here.
-	
+
 	// LUA EXECUTE
 	patchBytesM((BYTE*)0x0075D5D6, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
 	patchBytesM((BYTE*)0x0075D5B5, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
@@ -1511,6 +1511,10 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	PatchOpenSpy();
 
+	if (GameConfig::GetValue("Debug", "ExpandClothingLimit", 1))
+	{
+		Memory::ExpandCustItemsPool();
+    }
 	if (GameConfig::GetValue("Gameplay", "SR1Reloading", 1))
 	{
 		Behavior::SR1Reloading();
@@ -1556,7 +1560,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	// Adds Clan tag to name
 	if (GameConfig::GetValue("Multiplayer", "UseClanTag", 0))
 	{
-		// we use our own CLANTAG_MAX variable to max out the limit of the string to 5.
+		/*// we use our own CLANTAG_MAX variable to max out the limit of the string to 5.
 		char ClanName[CLANTAG_MAX];
 		Logger::TypedLog(CHN_RL, "Adding Clan to Name...\n");
 
@@ -1568,7 +1572,9 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 		RPCHandler::ClanTag[1] = EndClanName;
 		Logger::TypedLog(CHN_RL, "You Joined Clan: %s\n", RPCHandler::ClanTag[1]);
-		RPCHandler::UsingClanTag = 1;
+		RPCHandler::UsingClanTag = 1;*/
+		Logger::TypedLog(CHN_MOD, "Clantags Temporarily disabled.\n");
+
 	}
 
 	// Sidoku tint desat because he keeps crying kek

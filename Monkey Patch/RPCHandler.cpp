@@ -215,7 +215,7 @@ namespace RPCHandler {
 
 	char* ClanTag[3] = {
 		const_cast<char*>("["),
-		const_cast<char*>("TEST"),
+		const_cast<char*>(""),
 		const_cast<char*>("]")
 	};
 
