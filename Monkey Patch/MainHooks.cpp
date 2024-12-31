@@ -24,7 +24,6 @@
 const char* juicedversion = "7.1.0";
 
 char* executableDirectory[MAX_PATH];
-const char FPSCam[] = "camera_fpss.xtbl";
 const char ServerNameRL[] = "[SR2 RELOADED SERVER]";
 const char ServerNameSR2[] = "[Saints Row 2]";
 // - UNUSED
@@ -214,24 +213,6 @@ bool ARfov = 0;
 bool ARCutscene = 0;
 double FOVMultiplier = 1;
 bool betterTags = 0;
-bool useFPSCam = 0;
-
-
-void FPSCamHack() {
-	BYTE PlayerStatus = *(BYTE*)0x00E9A5BC; // Status Byte for the Players Actions.
-	FLOAT* WalkCamZoom = (FLOAT*)0x025F6334;
-	BYTE ActorFade = *(BYTE*)0x00E8825F;
-    
-	if (*(FLOAT*)WalkCamZoom > -0.5) {
-		*(FLOAT*)0x025F6334 = -0.4; // Force camera zoom to chest/in front of player.
-	}
-	if (ActorFade == 0x01) {
-		*(BYTE*)0x00E8825F = 0x00; // Force ActorFade to off.
-	}
-	if (PlayerStatus == 0x01 || PlayerStatus == 0x10 || PlayerStatus == 0x02 || PlayerStatus == 0x17) {
-		*(BYTE*)0x00E9A5BC = 0x00; // Force the cam(?) state to 0x00 -- (Walking Outside) if got Running Outside, Running Inside or Walking Inside.
-	}
-}
 
 typedef int __cdecl PlayerSpin(float a1);
 PlayerSpin* UpdatePlayerSpin = (PlayerSpin*)(0x0073FB20); //0x00BD4A80
@@ -1087,8 +1068,8 @@ int RenderLoopStuff_Hacked()
 		LessRetardedChat();
 	}
 
-	if (useFPSCam) {
-		FPSCamHack();
+	if (Render3D::useFPSCam) {
+		Render3D::FPSCamHack();
 	}
 
 	if (FirstBootCheck()) {
@@ -1495,13 +1476,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchBytesM((BYTE*)0x0075D5D6, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
 	patchBytesM((BYTE*)0x0075D5B5, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
 
-	// Beefs up Tree Shadows considerably
-	if (GameConfig::GetValue("Graphics", "UHQTreeShadows", 0))
-	{
-		Logger::TypedLog(CHN_NET, "Juicing up Tree Shadow Resolutions...\n");
-		Render3D::PatchHQTreeShadows();
-	}
-
 	// Adds Clan tag to name
 	if (GameConfig::GetValue("Multiplayer", "FixNetworkBinding", 1))
 	{
@@ -1511,83 +1485,27 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	PatchOpenSpy();
 
-	if (GameConfig::GetValue("Debug", "ExpandClothingLimit", 1))
-	{
-		Memory::ExpandCustItemsPool();
-    }
-	if (GameConfig::GetValue("Gameplay", "SR1Reloading", 1))
-	{
-		Behavior::SR1Reloading();
-	}
+	Behavior::Init();
+	Memory::Init();
+	Render3D::Init();
 
-	if (GameConfig::GetValue("Gameplay", "SR1QuickSwitch", 1))
-	{
-		Behavior::SR1QuickSwitch();
-	}
-
-	if (GameConfig::GetValue("Gameplay", "TauntCancelling", 1))
-	{
-		Behavior::TauntCancelling();
-	}
-
-	if (GameConfig::GetValue("Gameplay", "UseWeaponAfterEmpty", 1))
-	{
-		Behavior::WeaponJam();
-	}
 	// Experiment to give CO-OP a higher player limit.
-	/*patchByte((BYTE*)0x007F750D + 1, 0x01); // max gb count (we'll use this for modified co-op)
-	patchDWord((void*)(0x0086ACF5 + 6), 1); // overwrite the co-op maxplayerslobby to 12
-	patchNop((BYTE*)0x007F71EC, 12); // nop coop max and max lobby
-	patchBytesM((BYTE*)0x007F7A31, (BYTE*)"\xB8\x02", 2);*/
+	//patchByte((BYTE*)0x007F750D + 1, 0x01); // max gb count (we'll use this for modified co-op)
+	//patchDWord((void*)(0x0086ACF5 + 6), 12); // overwrite the co-op maxplayerslobby to 12
+	//patchBytesM((BYTE*)0x007F7095, (BYTE*)"\xBD\xC", 2);
+	//patchNop((BYTE*)0x007F71EC, 12); // nop coop max and max lobby
+	//patchBytesM((BYTE*)0x007F7A31, (BYTE*)"\xB8\x02", 2);
+	//patchBytesM((BYTE*)0x0051E502, (BYTE*)"\x68\x00\x60\x77\x01", 5);
+	//patchBytesM((BYTE*)0x00826B8B, (BYTE*)"\xB8\xC", 2);
+	//patchBytesM((BYTE*)0x0051E535, (BYTE*)"\x68\xB0\xEB\x92\x00", 5);
+	//patchBytesM((BYTE*)0x0051E8A7, (BYTE*)"\x68\00\x70\x24\x0B", 5);
+
+	//0051E502
 
 #if RELOADED
 
-
 	Reloaded::PatchTables();
-
-	// patch music2.xtbl
-	if (GameConfig::GetValue("Multiplayer", "BetterKillfeed", 1))
-	{
-		Reloaded::PatchKillfeed();
-	}
-
-	// patch music2.xtbl
-	if (GameConfig::GetValue("Audio", "NoMenuMusic", 0))
-	{
-		Reloaded::PatchMenuMusic();
-	}
-
-	// Adds Clan tag to name
-	if (GameConfig::GetValue("Multiplayer", "UseClanTag", 0))
-	{
-		/*// we use our own CLANTAG_MAX variable to max out the limit of the string to 5.
-		char ClanName[CLANTAG_MAX];
-		Logger::TypedLog(CHN_RL, "Adding Clan to Name...\n");
-
-		GameConfig::GetStringValue("Multiplayer", "ClanTag", "SR2RL", ClanName);
-
-		std::string MyMaxClanTag(ClanName, ClanName + 5);
-		char EndClanName[CLANTAG_MAX];
-		strcpy(EndClanName, MyMaxClanTag.c_str());
-
-		RPCHandler::ClanTag[1] = EndClanName;
-		Logger::TypedLog(CHN_RL, "You Joined Clan: %s\n", RPCHandler::ClanTag[1]);
-		RPCHandler::UsingClanTag = 1;*/
-		Logger::TypedLog(CHN_MOD, "Clantags Temporarily disabled.\n");
-
-	}
-
-	// Sidoku tint desat because he keeps crying kek
-	if (GameConfig::GetValue("Graphics", "Tint", 0)) 
-	{
-		Reloaded::PatchSidokuDesat();
-	}
-
-	if (GameConfig::GetValue("Debug", "GangstaBrawlMemoryExtender", 1)) // Replaces GB MemLimits with SA.
-	{
-		Memory::GangstaBrawlMemoryExt();
-	}
-
+	Reloaded::Init();
 	Behavior::BetterMovement();
 
 #else
@@ -1598,23 +1516,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		//patchCall((void*)0x0052050C, (void*)SomeMMFunc_Hacked);
 		patchCall((void*)0x0073CE0D, (void*)SomeMMFunc_Hacked);
 		//patchCall((void*)0x00B995D5, (void*)SomePMFunc_Hacked);
-	}
-
-	if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1)
-	{
-		Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS...\n");
-		patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
-	}
-	if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
-	{
-		Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS with Viewmodel...\n");
-		patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
-		useFPSCam = 1;
-	}
-
-	if (GameConfig::GetValue("Gameplay", "BetterMovementBehaviour", 0))
-	{
-		Behavior::BetterMovement();
 	}
 
 	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 0)) // great for testing stuff faster and also for an optional feature in gen
@@ -1630,10 +1531,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
     //patchBytesM((BYTE*)0x007BBAC6 + 1, (BYTE*)"\x7E\x04", 2);
     //patchBytesM((BYTE*)0x007BCC14 + 6, (BYTE*)"\x7E\x04", 2);
 
-	if (GameConfig::GetValue("Debug", "ExpandMemoryPools", 0))
-	{
-		Memory::ExpandGeneralPools();
-	}
 
 	if (GameConfig::GetValue("Debug", "DisableXInput", 0))
 	{
@@ -1903,57 +1800,11 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	}
 
-	if (GameConfig::GetValue("Debug", "AltTabFPS", 1)) // Removes a sleep call in main render loop, this one seems to slow the game to below 25 fps when the game is alt-tabbed.
-	{
-		Render3D::AltTabFPS();
-	}
-
-	if (GameConfig::GetValue("Debug", "UncapFPS", 0)) // Removes a sleep call in main render loop, this one seems to slow the game to below 25 fps when the game is alt-tabbed.
-	{  // Uncapping frames can lead to broken doors among other issues not yet noted.
-		Render3D::UncapFPS();
-	}
-
-	// Removes all necessary sleep calls in the game, doubles fps and mitigates stutter, tanks CPU usage.
-	if (GameConfig::GetValue("Debug", "SleepHack", 0) == 1) // LOW patch
-	{
-		Render3D::PatchLowSleepHack();
-	}
-
-	if (GameConfig::GetValue("Debug", "SleepHack", 0) == 2) // MEDIUM patch
-	{
-		Render3D::PatchMediumSleepHack();
-	}
-	if (GameConfig::GetValue("Debug", "SleepHack", 0) == 3) // HIGH patch, because why not i guess.
-	{
-		Logger::TypedLog(CHN_DLL, "Hooking sleep...\n");
-		Render3D::HookSleep();
-	}
-
-	if (GameConfig::GetValue("Debug", "FasterLoadingScreens", 1))
-	{
-		Render3D::FasterLoadingScreens();
-	}
-
 	if (GameConfig::GetValue("Audio", "FixAudioDeviceAssign", 1))
 	{
 		Logger::TypedLog(CHN_MOD, "Fixing Audio Device Assignment.\n");
 		// fixes, or attempts to fix the incorrect GUID assigning for BINK related stuff in SR2.
 		patchBytesM((BYTE*)0x00DBA69C, (BYTE*)"\x00\x00\x00\x00", 4);
-	}
-
-	if (GameConfig::GetValue("Graphics", "ExtendedRenderDistance", 0))
-	{
-		Memory::ExpandRenderDist();
-	}
-
-	if (GameConfig::GetValue("Graphics", "ExtendedTreeFadeDistance", 0))
-	{
-		Memory::ExpandTreeDist();
-	}
-
-	if (GameConfig::GetValue("Graphics", "ExtendedShadowRenderDistance", 0))
-	{
-		Memory::ExpandShadowRenderDist();
 	}
 
 	if (GameConfig::GetValue("Graphics", "RemoveBlackBars", 0)) // Another Tervel moment

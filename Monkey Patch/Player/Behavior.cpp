@@ -5,9 +5,11 @@
 #include "../FileLogger.h"
 #include "../Patcher/patch.h"
 #include "../SafeWrite.h"
+#include "../GameConfig.h"
 
 namespace Behavior
 {
+
 	void BetterMovement() 
 	{
 		// Majority of the SR2 movement sluggishness is due to the fact that certain walking anims add an
@@ -88,5 +90,32 @@ namespace Behavior
 		Logger::TypedLog(CHN_MOD, "Patching In UseWeaponAfterEmpty...\n");
 		patchByte((BYTE*)0x9D95F0, 0xC3);
 		patchNop((BYTE*)0x0055B496, 2);
+	}
+
+	void Init()
+	{
+		if (GameConfig::GetValue("Gameplay", "SR1Reloading", 1))
+		{
+			SR1Reloading();
+		}
+
+		if (GameConfig::GetValue("Gameplay", "SR1QuickSwitch", 1))
+		{
+			SR1QuickSwitch();
+		}
+
+		if (GameConfig::GetValue("Gameplay", "TauntCancelling", 1))
+		{
+			TauntCancelling();
+		}
+
+		if (GameConfig::GetValue("Gameplay", "UseWeaponAfterEmpty", 1))
+		{
+			WeaponJam();
+		}
+		if (GameConfig::GetValue("Gameplay", "BetterMovementBehaviour", 0))
+		{
+			BetterMovement();
+		}
 	}
 }

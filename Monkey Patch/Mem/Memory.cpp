@@ -4,6 +4,7 @@
 
 #include "../FileLogger.h"
 #include "../Patcher/patch.h"
+#include "../GameConfig.h"
 
 namespace Memory
 {
@@ -168,5 +169,36 @@ namespace Memory
 		patchDWord((BYTE*)0x007899FF, (int)&NEW_HOMIES);
 
 	}*/
+	void Init()
+	{
+		if (GameConfig::GetValue("Debug", "ExpandClothingLimit", 1))
+		{
+			ExpandCustItemsPool();
+		}
+#if RELOADED
+		if (GameConfig::GetValue("Debug", "GangstaBrawlMemoryExtender", 1)) // Replaces GB MemLimits with SA.
+		{
+			GangstaBrawlMemoryExt();
+		}
+#endif
+		if (GameConfig::GetValue("Debug", "ExpandMemoryPools", 0))
+		{
+			ExpandGeneralPools();
+		}
 
+		if (GameConfig::GetValue("Graphics", "ExtendedRenderDistance", 0))
+		{
+			ExpandRenderDist();
+		}
+
+		if (GameConfig::GetValue("Graphics", "ExtendedTreeFadeDistance", 0))
+		{
+			ExpandTreeDist();
+		}
+
+		if (GameConfig::GetValue("Graphics", "ExtendedShadowRenderDistance", 0))
+		{
+			ExpandShadowRenderDist();
+		}
+	}
 }
