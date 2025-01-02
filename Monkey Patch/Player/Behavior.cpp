@@ -92,8 +92,42 @@ namespace Behavior
 		patchNop((BYTE*)0x0055B496, 2);
 	}
 
+	void FasterDoors()
+	{
+		Logger::TypedLog(CHN_DEBUG, "Patching Fast Doors...\n");
+		patchNop((BYTE*)0x00E92268, 3);
+		patchNop((BYTE*)0x00E9225C, 3);
+	}
+
+	void BetterDBC()
+	{
+		Logger::TypedLog(CHN_DEBUG, "Patching Better Drive-by Cam...\n");
+		patchBytesM((BYTE*)0x00498689 + 2, (BYTE*)"\x71\x5D", 2);
+	}
+
+	void BetterHBC()
+	{
+		Logger::TypedLog(CHN_DEBUG, "Patching Better Handbrake Cam...\n");
+		patchBytesM((BYTE*)0x004992a2 + 2, (BYTE*)"\x71\x5D", 2);
+	}
+
 	void Init()
 	{
+		if (GameConfig::GetValue("Gameplay", "BetterHandbrakeCam", 0)) // Fixes Car CAM Axis while doing handbrakes.
+		{
+			BetterHBC();
+		}
+
+		if (GameConfig::GetValue("Gameplay", "BetterDriveByCam", 1)) // Fixes Car CAM Axis while doing drive-bys.
+		{
+			BetterDBC();
+		}
+
+		if (GameConfig::GetValue("Gameplay", "FastDoors", 0)) // removes the anim for kicking or opening doors.
+		{
+			FasterDoors();
+		}
+
 		if (GameConfig::GetValue("Gameplay", "SR1Reloading", 1))
 		{
 			SR1Reloading();

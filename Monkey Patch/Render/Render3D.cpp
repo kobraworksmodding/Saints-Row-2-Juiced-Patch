@@ -12,7 +12,8 @@ namespace Render3D
 {
 	const char FPSCam[] = "camera_fpss.xtbl";
 	bool useFPSCam = 0;
-
+	bool VFXP_fixFog = 0;
+	float AOStrength = 14.55;
 
 	void PatchHQTreeShadows() 
 	{
@@ -106,8 +107,110 @@ namespace Render3D
 		patchBytesM((BYTE*)0x0068C714, (BYTE*)"\x6A\x0F", 2); // this is a sleep call for first load/legal disclaimers, its set to 30 by default, halfing increases fps to 60 and makes loading faster.
 	}
 
+	void VFXPlus()
+	{
+		Logger::TypedLog(CHN_DEBUG, "Patching VanillaFXPlus...\n");
+		patchNop((BYTE*)0x00773797, 5); // prevent the game from disabling/enabling the tint.
+		patchBytesM((BYTE*)0x0051A952, (BYTE*)"\xD9\x05\x7F\x2C\x7B\x02", 6); // new brightness address
+		patchBytesM((BYTE*)0x0051A997, (BYTE*)"\xD9\x05\x83\x2C\x7B\x02", 6); // new sat address patch
+		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // new contr address patch
+		patchByte((BYTE*)0x00E9787F, 0x01); // force HDR on
+		patchNop((BYTE*)0x00773792, 5); // prevent the game from turning HDR on/off
+		patchBytesM((BYTE*)0x005170EF, (BYTE*)"\x75", 1); // prevent bloom from appearing without breaking glow
+		patchBytesM((BYTE*)0x00517051, (BYTE*)"\x8B", 1); // flip the logic for the HDR strength (or radius?) float check
+		//patchNop((BYTE*)0x00533C25, 5); // disable sky refl (prevent the absurd blue tint on reflections)
+
+		patchNop((BYTE*)0x00532A4F, 6); // nop for whatever the fuck
+		patchBytesM((BYTE*)0x00532992, (BYTE*)"\xDD\x05\xAA\x2C\x7B\x02", 6); // new opacity address for sky reflections
+		patchDouble((BYTE*)0x027B2CAA, 128.0);
+
+		patchFloat((BYTE*)0x027B2C7F, 1.26f); //Bright
+		patchFloat((BYTE*)0x027B2C83, 0.8f); //Sat
+		patchFloat((BYTE*)0x027B2C87, 1.62f); //Contr
+
+		patchBytesM((BYTE*)0x00524BA4, (BYTE*)"\xD9\x05\xBA\x2C\x7B\x02", 6);
+		patchBytesM((BYTE*)0x00D1A333, (BYTE*)"\xD9\x05\xBA\x2C\x7B\x02", 6);
+		patchBytesM((BYTE*)0x00524BB0, (BYTE*)"\xD9\x05\xBE\x2C\x7B\x02", 6);
+		patchBytesM((BYTE*)0x00D1A3A3, (BYTE*)"\xD9\x05\xBE\x2C\x7B\x02", 6);
+		VFXP_fixFog = 1;
+	}
+
+	void DisableFog()
+	{
+		patchBytesM((BYTE*)0x0025273BE, (BYTE*)"\x01", 1); // leftover debug bool for being able to overwrite fog values
+		patchFloat((BYTE*)0x00E989A0, 0.0f);
+		patchFloat((BYTE*)0x00E989A4, 0.0f);
+	}
+
+	void ConsoleLikeBrightness()
+	{
+		Logger::TypedLog(CHN_DEBUG, "Patching Console-like Brightness...\n");
+		patchBytesM((BYTE*)0x0051A952, (BYTE*)"\xD9\x05\x7F\x2C\x7B\x02", 6); // new brightness address
+		patchFloat((BYTE*)0x027B2C7F, 1.05f); //Bright
+		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // new contr address patch
+		patchFloat((BYTE*)0x027B2C87, 1.40f); //Contr
+		patchBytesM((BYTE*)0x0051A997, (BYTE*)"\xD9\x05\x83\x2C\x7B\x02", 6); // new sat address patch
+		patchFloat((BYTE*)0x027B2C83, 0.65f); //Sat
+	}
+
+	void RemoveVignette()
+	{
+		Logger::TypedLog(CHN_MOD, "Disabling Vignette...\n");
+		patchNop((BYTE*)0x00E0C62C, 9); // nop aVignette
+	}
+
+	void BetterAO()
+	{
+		Logger::TypedLog(CHN_MOD, "Making AO Better...\n");
+		patchNop((BYTE*)0x0052AA90, 6);
+		patchNop((BYTE*)0x0052AA9D, 6);
+		*(float*)0x00E98D74 = (float)AOStrength;
+
+		//patchFloat((BYTE*)0x00518B00 + 2, AOSmoothness);
+		//patchFloat((BYTE*)0x00518AEE + 2, AOSmoothness);
+
+		//patchFloat((BYTE*)0x00E9898C, (float)AOQuality);
+	}
+
 	void Init()
 	{
+
+		if (GameConfig::GetValue("Graphics", "RemoveVignette", 0))
+		{
+			Render3D::RemoveVignette();
+		}
+
+		if (GameConfig::GetValue("Graphics", "BetterAmbientOcclusion", 0))
+		{
+			BetterAO();
+		}
+		if (GameConfig::GetValue("Graphics", "DisableScreenBlur", 0))
+		{
+			Logger::TypedLog(CHN_MOD, "Disabling Screen Blur...\n");
+			patchByte((BYTE*)0x02527297, 0x0);
+		}
+		else
+		{
+			Logger::TypedLog(CHN_MOD, "Enabling Screen Blur...\n");
+			patchByte((BYTE*)0x02527297, 0x1);
+
+		}
+
+		if (GameConfig::GetValue("Graphics", "ConsoleBrightness", 0))
+		{
+			Render3D::ConsoleLikeBrightness();
+		}
+
+		if (GameConfig::GetValue("Graphics", "VanillaFXPlus", 0))
+		{
+			Render3D::VFXPlus();
+		}
+
+		if (GameConfig::GetValue("Graphics", "DisableFog", 0)) // Option for the 2 psychopaths that think no fog looks better.
+		{
+			Render3D::DisableFog();
+		}
+
 		if (GameConfig::GetValue("Debug", "AltTabFPS", 1)) // Removes a sleep call in main render loop, this one seems to slow the game to below 25 fps when the game is alt-tabbed.
 		{
 			Render3D::AltTabFPS();
