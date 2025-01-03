@@ -182,14 +182,38 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	return(GetVersionExA(lpVersionInformation));
 }
 
-typedef int(__fastcall* pauseT)();
-pauseT pause = (pauseT)0x00502A70;
+void __declspec(naked) pauseGame() {
+	__asm {
 
-typedef void(__cdecl* unpauseT)();
-unpauseT unpause = (unpauseT)0x00503090;
+		push ebp
+		mov ebp, esp
+		sub esp, __LOCAL_SIZE
 
-typedef int(__cdecl* slewleftoverT)();
-slewleftoverT slewleftover = (slewleftoverT)0x00501220;
+		push 1
+		mov  edi, 5
+		mov  esi, 0x699840
+		call esi
+
+		mov esp, ebp
+		pop ebp
+		ret
+	}
+}
+
+void __declspec(naked) unpauseGame() {
+	__asm {
+		mov  esi, 2
+		mov  edi, 0x699910
+		call edi
+		ret
+	}
+}
+
+typedef void(__cdecl* SlewCameraT)(float* Pos, float* Orient, float Frametime, int idk1, bool idk2);
+SlewCameraT SlewCamera = (SlewCameraT)0xC01650;
+
+typedef void(__cdecl* UpdateCameraT)();
+UpdateCameraT UpdateCamera = (UpdateCameraT)0x4932F0;
 
 typedef bool(*isCoopT)();
 isCoopT isCoop = (isCoopT)0x007F7AD0;
@@ -206,8 +230,8 @@ ChunkStrT ChunkStr = (ChunkStrT)0xA7B880;
 typedef void(*VegStrT)();
 VegStrT VegStr = (VegStrT)0x4E66A0;
 
-bool slew = false;
-bool pausetest = false;
+bool slewMode = false;
+bool isPaused = false;
 bool ARfov = 0;
 bool ARCutscene = 0;
 double FOVMultiplier = 1;
@@ -357,11 +381,16 @@ void AspectRatioFix() {
 }
 
 float getDeltaTime() {
-	static DWORD lastTime = GetTickCount();
-	DWORD currentTime = GetTickCount();
-	DWORD elapsedMillis = currentTime - lastTime;
-	lastTime = currentTime;
-	return elapsedMillis / 1000.0f;
+	static LARGE_INTEGER tpsFreq;
+	static LARGE_INTEGER lastTickCount;
+	LARGE_INTEGER currentTickCount;
+
+	QueryPerformanceFrequency(&tpsFreq);
+	QueryPerformanceCounter(&currentTickCount);
+	float delta = (float)(currentTickCount.QuadPart - lastTickCount.QuadPart) / tpsFreq.QuadPart;
+	lastTickCount = currentTickCount;
+	// do not kill me if this is wrong thanks, couldn't find too many examples for doing it
+	return delta;
 }
 
 void FogTest() {
@@ -371,18 +400,21 @@ void FogTest() {
 	*(float*)(0x027B2CBE) = max(ogFogStrength2 / 1.5, 0.3f);
 }
 
-void slewtest() {
+void Slew() {
 	float deltaTime = getDeltaTime();
 	float fovSpeed = 15.0f;
+	float* camPos = (float*)(0x25F5B20);
+	float* camOrient = (float*)(0x25F5B5C);
 	float& fov = *(float*)0x25F5BA8;
 	float& roll = *(float*)0x33DA350;
 
 
-	if (slew) {
+	if (slewMode) {
 
-		slewleftover();
+		SlewCamera(camPos, camOrient, deltaTime, 0, false);
 
-		if (*(BYTE*)(0x2527C08) == 1) {
+		if (isPaused) {
+			UpdateCamera();
 			ChunkStr();
 			VegStr();
 			*(float*)0x02F9B7F8 = *(float*)0x025F5B1C;
@@ -707,18 +739,18 @@ void cus_FrameToggles() {
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
-		slew = !slew;
+		slewMode = !slewMode;
 
 		std::wstring subtitles = L"Slew Mode:[format][color:purple]";
-		subtitles += slew ? L" ON" : L" OFF";
+		subtitles += slewMode ? L" ON" : L" OFF";
 		subtitles += L"[/format]";
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
 
 		if (*(uint8_t*)(0x2527D14) == 1) {
-			*(int*)(0x25F5AE8) = (slew ? 2 : 5);
+			*(int*)(0x25F5AE8) = (slewMode ? 2 : 5);
 		}
 		else {
-			*(int*)(0x25F5AE8) = (slew ? 2 : 0);
+			*(int*)(0x25F5AE8) = (slewMode ? 2 : 0);
 		}
 	}
 
@@ -806,17 +838,10 @@ void cus_FrameToggles() {
 	if (RPCHandler::IsCoopOrSP == true) 
 	{
 		if (IsKeyPressed(VK_F6, false)) {
-			pausetest = !pausetest;
-
-			if (pausetest) {
-				pause();
-			}
-			else {
-				unpause();
-			}
+			isPaused = !isPaused;
+			isPaused ? pauseGame() : unpauseGame();
 		}
 	}
-
 }
 
 typedef int(__cdecl* chatWindowT)();
@@ -1044,7 +1069,7 @@ int RenderLoopStuff_Hacked()
 	if (addBindToggles)
 		UpdateKeys();
 	    cus_FrameToggles();
-	    slewtest();
+	    Slew();
 		LuaExecutor();
 
 	if (Render3D::VFXP_fixFog)
@@ -1642,13 +1667,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		addBindToggles = 1;
 		patchNop((BYTE*)0x0051FEB0, 7); // nop to prevent the game from locking the camera roll in slew
 		patchBytesM((BYTE*)0x00C01B52, (BYTE*)"\xD9\x1D\xF8\x2C\x7B\x02", 6); // slew roll patch, makes the game write to a random unallocated float instead to prevent issues
-		patchBytesM((BYTE*)0x0050124B, (BYTE*)"\xD9\x05\xA4\x7D\x52\x02", 6); // slew cam patch 1
-		patchBytesM((BYTE*)0x00501238, (BYTE*)"\xD9\x05\x97\x2C\x7B\x02", 6); // slew camera float patch 2 (needed as this float is broken on PC, it's supposed to change dynamically but it never does)
-		patchBytesM((BYTE*)0x00502A8F, (BYTE*)"\xBF\x02\x00\x00\x00", 5); // change pause type
-		patchBytesM((BYTE*)0x00502A9C, (BYTE*)"\xE9\x3C\x00\x00\x00", 5); // Hopefully make func skip all unneccesary code.
-		patchBytesM((BYTE*)0x005030AB, (BYTE*)"\xBE\x02\x00\x00\x00", 5); // change unpause type
 		patchBytesM((BYTE*)0x00C01AC8, (BYTE*)"\xDC\x64\x24\x20", 4); // invert Y axis in slew 
-		patchBytesM((BYTE*)0x0050134D, (BYTE*)"\xE9\xB9\x02\x00\x00\x00", 6); // ignore collision in slew
 	} 
 
 	if (GameConfig::GetValue("Debug", "LUADebugPrintF", 1)) // Rewrites the DebugPrint LUA function to our own.
