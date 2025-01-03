@@ -1790,8 +1790,15 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchNop((BYTE*)0x004D6795, 5); // Fix for the sun flare disappearing upon reloading a save. Prevents the game from deallocating the flare.
 
 #if !RELOADED
-	patchJmp((void*)0x0051DAC0, (void*)hook_loose_files);						// Allow the loading of loose files
-	patchCall((void*)0x00BFD8F5, (void*)hook_raw_get_file_info_by_name);		// Add optional search in the ./loose directory
+	if (CreateCache("loose.txt"))
+	{
+		CacheConflicts();
+		patchJmp((void*)0x0051DAC0, (void*)hook_loose_files);						// Allow the loading of loose files
+		patchCall((void*)0x00BFD8F5, (void*)hook_raw_get_file_info_by_name);		// Add optional search in the ./loose directory
+	}
+	else
+		Logger::TypedLog(CHN_DLL, "Create loose file cache failed.\n");
+
 #endif
 
 	// Continue to the program's WinMain.
