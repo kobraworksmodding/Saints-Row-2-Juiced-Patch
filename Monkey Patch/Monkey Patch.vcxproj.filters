@@ -92,6 +92,9 @@
     <ClCompile Include="loose files.cpp">
       <Filter>Patches</Filter>
     </ClCompile>
+    <ClCompile Include="metrics dump.cpp">
+      <Filter>Patches</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DFEngine.h">
@@ -167,6 +170,9 @@
       <Filter>Source Files\Render</Filter>
     </ClInclude>
     <ClInclude Include="loose files.h">
+      <Filter>Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="metrics dump.h">
       <Filter>Patches</Filter>
     </ClInclude>
   </ItemGroup>

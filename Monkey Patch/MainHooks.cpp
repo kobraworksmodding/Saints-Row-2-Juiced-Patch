@@ -1508,6 +1508,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	PatchOpenSpy();
 
+	patch_metrics();
+
 	Behavior::Init();
 	Memory::Init();
 	Render3D::Init();
