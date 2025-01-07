@@ -884,6 +884,83 @@ ChangeCharacterT ChangeCharacter = (ChangeCharacterT)0x6856A0;
 typedef void(__cdecl* ResetCharacterT)(int a1); // no idea what it expects as the first arg, on 360 I can call it without one and it works but here it dies
 ResetCharacterT ResetCharacter = (ResetCharacterT)0x685D50;
 
+typedef int(__thiscall* DeleteNPCT)(int a1, int a2);
+DeleteNPCT DeleteNPC = (DeleteNPCT)0x960240;
+
+bool IsSpawning = false;
+int CurrentNPC = 0;
+int SpawnedNPCs[10] = { 0 }; // we could make this a vector maybe, i don't mind it being like this though
+
+char __declspec(naked) SpawnNPC(int NPCPointer) {
+	__asm {
+		push ebp
+		mov ebp, esp
+		sub esp, __LOCAL_SIZE
+
+		mov     eax, NPCPointer
+		push	eax
+		mov     eax, ds: 0x21703D4
+		mov     ecx, 0x98E400
+		call    ecx
+
+		mov esp, ebp
+		pop ebp
+		ret
+	}
+}
+
+void NPCSpawner(const char* Name) {
+	static int Index = 0;
+	int CharID = (int)GetCharacterID(Name);
+	if (CharID != NULL) {
+		IsSpawning = true;
+		if (SpawnedNPCs[Index] != 0) {
+			DeleteNPC(SpawnedNPCs[Index], 0); // deletes the oldest npc once you go past 10 (feel free to change the max amount)
+		}
+		SpawnNPC(CharID);
+		SpawnedNPCs[Index] = CurrentNPC;
+		Index = (Index + 1) % 10;
+		IsSpawning = false;
+	}
+}
+
+void YeetAllNPCs() {
+	for (int i = 0; i < 10; i++) {
+		if (SpawnedNPCs[i] != 0) {
+			DeleteNPC(SpawnedNPCs[i], 0);
+			SpawnedNPCs[i] = 0;
+		}
+	}
+}
+
+void __declspec(naked) SpawningCheck()
+{
+	static int jmp_skip = 0x0098EE3D;
+	static int jmp_continue = 0x0098EE11;
+
+	__asm {
+		cmp		IsSpawning, 0
+		jnz		skip
+		mov		eax, [esi + 3132]
+		jmp		jmp_continue
+
+		skip :
+		mov		edx, [esi + 68]
+		jmp		jmp_skip
+	}
+}
+
+void __declspec(naked) StoreNPCPointer()
+{
+	static int jmp_continue = 0x0098E498;
+	__asm {
+		mov		ecx, 0x9CFCE0
+		call	ecx
+		mov		CurrentNPC, eax
+		jmp		jmp_continue
+	}
+}
+
 void LuaExecutor() {
 	BYTE CurrentGamemode = *(BYTE*)0x00E8B210; 
 	BYTE LobbyCheck = *(BYTE*)0x02528C14; // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.
@@ -972,6 +1049,14 @@ void LuaExecutor() {
 
 			else if (Converted == "reset_player") {
 				ResetCharacter(0); // passing 0 to the unknown arg to avoid crashing
+			}
+
+			else if (sscanf_s(Converted.c_str(), "spawn_npc %s", Arg1) == 1) {
+				NPCSpawner(Arg1);
+			}
+
+			else if (Converted == "delete_npcs") {
+				YeetAllNPCs();
 			}
 
 			else {
@@ -1464,6 +1549,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
 	WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
 	WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out
+	WriteRelJump(0x0098E493, (UInt32)&StoreNPCPointer);
+	WriteRelJump(0x0098EE0B, (UInt32)&SpawningCheck);
 	ErrorManager::Initialize();
 	char NameBuffer[260];
 	PIMAGE_DOS_HEADER dos_header;
