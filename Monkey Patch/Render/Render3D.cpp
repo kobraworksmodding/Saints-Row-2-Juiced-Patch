@@ -103,7 +103,7 @@ namespace Render3D
 
 	void FasterLoadingScreens()
 	{
-		Logger::TypedLog(CHN_MOD, "Makiug loading screens slightly faster.\n");
+		Logger::TypedLog(CHN_MOD, "Making loading screens slightly faster.\n");
 		patchBytesM((BYTE*)0x0068C714, (BYTE*)"\x6A\x0F", 2); // this is a sleep call for first load/legal disclaimers, its set to 30 by default, halfing increases fps to 60 and makes loading faster.
 	}
 

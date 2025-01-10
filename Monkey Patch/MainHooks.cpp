@@ -11,6 +11,7 @@
 #include "UGC/Reloaded.h"
 #include "Player/Behavior.h"
 #include "Render/Render3D.h"
+#include "InternalPrint.h"
 
 #include "GameConfig.h"
 #include "iat_functions.h"
@@ -1541,6 +1542,7 @@ DWORD WINAPI XInputCheck(LPVOID lpParameter)
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+
 	patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
 	patchCall((void*)0x009A3D8E, (void*)IdleFix);
 	patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
@@ -1597,6 +1599,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	patch_metrics();
 
+	InternalPrint::Init();
 	Behavior::Init();
 	Memory::Init();
 	Render3D::Init();

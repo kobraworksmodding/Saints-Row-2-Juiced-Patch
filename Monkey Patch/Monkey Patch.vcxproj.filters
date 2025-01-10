@@ -95,6 +95,9 @@
     <ClCompile Include="metrics dump.cpp">
       <Filter>Patches</Filter>
     </ClCompile>
+    <ClCompile Include="InternalPrint.cpp">
+      <Filter>Source Files\UGC</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DFEngine.h">
@@ -174,6 +177,9 @@
     </ClInclude>
     <ClInclude Include="metrics dump.h">
       <Filter>Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="InternalPrint.h">
+      <Filter>Source Files\UGC</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

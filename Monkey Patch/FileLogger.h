@@ -23,7 +23,14 @@
 #define CHN_LUA                         "LUA"
 #define CHN_LAA                         "LAA"
 #define CHN_RL                         "RELOADED"
-
+#define CHN_INTPR                      "INTERNAL"
+#define CHN_SHADER                     "SHADER"
+#define CHN_STARTUP                     "STARTUP"
+#define CHN_XACT                      "XACT"
+#define CHN_CHUNK                     "CHUNK"
+#define CHN_ANIM                    "ANIM"
+#define CHN_ASSET                    "ASSET"
+ 
 extern HWND ConsoleWindow;
 
 namespace Logger
