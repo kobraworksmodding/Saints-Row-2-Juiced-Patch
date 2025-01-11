@@ -22,6 +22,8 @@
 #include "Xinput.h"
 #pragma comment(lib, "Xinput.lib")
 
+float deltaTime;
+
 const char* juicedversion = "7.1.0";
 
 char* executableDirectory[MAX_PATH];
@@ -381,7 +383,7 @@ void AspectRatioFix() {
 
 }
 
-float getDeltaTime() {
+void getDeltaTime() {
 	static LARGE_INTEGER tpsFreq;
 	static LARGE_INTEGER lastTickCount;
 	LARGE_INTEGER currentTickCount;
@@ -391,7 +393,7 @@ float getDeltaTime() {
 	float delta = (float)(currentTickCount.QuadPart - lastTickCount.QuadPart) / tpsFreq.QuadPart;
 	lastTickCount = currentTickCount;
 	// do not kill me if this is wrong thanks, couldn't find too many examples for doing it
-	return delta;
+	deltaTime = delta;
 }
 
 void FogTest() {
@@ -402,7 +404,6 @@ void FogTest() {
 }
 
 void Slew() {
-	float deltaTime = getDeltaTime();
 	float fovSpeed = 15.0f;
 	float* camPos = (float*)(0x25F5B20);
 	float* camOrient = (float*)(0x25F5B5C);
@@ -582,8 +583,26 @@ TeleportPlayerT TeleportPlayer = (TeleportPlayerT)0x9D3C50;
 typedef int(__thiscall* DeleteVehT)(int a1, int a2);
 DeleteVehT DeleteVeh = (DeleteVehT)0xAA4490;
 
-typedef char(__cdecl* ForceStandT)(int a1, int a2);
-ForceStandT ForceStand = (ForceStandT)0x9ACB10;
+typedef char(__cdecl* StopRagdollT)(int a1, int a2);
+StopRagdollT StopRagdoll = (StopRagdollT)0x9ACB10;
+
+typedef void(__stdcall* DisableRagdollT)(int Pointer, bool Enable);
+DisableRagdollT DisableRagdoll = (DisableRagdollT)0x965B50;
+
+typedef char(*ExitVehicleT)();
+ExitVehicleT ExitVehicle = (ExitVehicleT)0x5E8140;
+
+typedef char(__cdecl* ExitFineAimT)(int PlayerPointer);
+ExitFineAimT ExitFineAim = (ExitFineAimT)0x9D9FD0;
+
+typedef int(__cdecl* GetAnimStateT)(const char* Name);
+GetAnimStateT GetAnimState = (GetAnimStateT)0x6EF510;
+
+typedef void(__thiscall* SetAnimStateT)(int Pointer, int* Anim);
+SetAnimStateT SetAnimState = (SetAnimStateT)0x9695F0;
+
+typedef void(__thiscall* CollisionTestT)(int Pointer, char Idk1, int Idk2);
+CollisionTestT CollisionTest = (CollisionTestT)0x960800; // npc_enable_human_collision lead me to this, it's needed to fix an issue w the noclip
 
 void tpCoords(float x, float y, float z) {
 	float* xyz = reinterpret_cast<float*>(0x027B305A);
@@ -675,7 +694,7 @@ void VehicleSpawner(const char* Name, const char* Var) {
 		VehicleSpawn(VehIndex);
 		VehPointer = GetPointer(VehFromSpawner);
 		FadeIn(VehPointer, 500);
-		ForceStand(PlayerOffset, 0);
+		StopRagdoll(PlayerOffset, 0);
 		_asm pushad
 		EnterVeh(VehPointer, PlayerOffset, 0);
 		_asm popad
@@ -962,11 +981,116 @@ void __declspec(naked) StoreNPCPointer()
 	}
 }
 
+bool NoclipEnabled = false;
+
+typedef void(__stdcall* PlayerHolsterT)(int Player, bool Holster);
+PlayerHolsterT PlayerHolster = (PlayerHolsterT)0x9661E0;
+
+
+void ResetYVel() {
+	uintptr_t YVelBase = ReadPointer(getplayer(true), { 0x570 });
+	float* YVelPositive = (float*)(*(int*)YVelBase + 0x164);
+	float* YVelNegative = (float*)(*(int*)YVelBase + 0x144);
+	*YVelPositive = 0.0f;
+	*YVelNegative = 0.0f;
+}
+
+void ToggleNoclip() {
+	NoclipEnabled = !NoclipEnabled;
+	CollisionTest(getplayer(), 1, 0);
+	ResetYVel();
+	patchByte((BYTE*)0x4FAA90, NoclipEnabled ? 0xC3 : 0x55);
+
+	if (NoclipEnabled) {
+		patchNop((BYTE*)0x00C1370F, 5);
+		patchNop((BYTE*)0x00C13745, 5);
+		patchNop((BYTE*)0x00C1375B, 5);
+		patchNop((BYTE*)0x00C13776, 5);
+	}
+	else {
+		patchBytesM((BYTE*)0x00C1370F, (BYTE*)"\xA1\x78\xE7\x34\x02", 5);
+		patchBytesM((BYTE*)0x00C13745, (BYTE*)"\xA1\x80\xE7\x34\x02", 5);
+		patchBytesM((BYTE*)0x00C1375B, (BYTE*)"\xA1\x90\xE7\x34\x02", 5);
+		patchBytesM((BYTE*)0x00C13776, (BYTE*)"\xA1\x88\xE7\x34\x02", 5);
+	}
+
+	int AnimState = NoclipEnabled ? GetAnimState("streaking stand") : -1;
+	SetAnimState(getplayer(), &AnimState);
+	ExitFineAim(getplayer());
+	ExitVehicle();
+
+	DWORD old;
+	VirtualProtect((LPVOID)0xDD04F4, sizeof(float), PAGE_READWRITE, &old);
+	*(float*)0xDD04F4 = NoclipEnabled ? 0.0f : 1.5f;
+	VirtualProtect((LPVOID)0xDD04F4, sizeof(float), old, &old);
+
+	StopRagdoll(getplayer(), 0);
+	DisableRagdoll(getplayer(), NoclipEnabled ? true : false);
+	PlayerHolster(getplayer(), NoclipEnabled ? true : false);
+
+	*(bool*)(0x252740E) = 1; // Ins Fraud Sound
+	std::wstring subtitles = L"Noclip:[format][color:purple]";
+	subtitles += NoclipEnabled ? L" ON" : L" OFF";
+	subtitles += L"[/format]";
+	addsubtitles(subtitles.c_str(), 0.0f, 1.5f, 0.0f);
+}
+
+bool IsWaiting = false;
+
+void Noclip() {
+	int PlayerBase = *(int*)0x21703D4;
+	float MovementSpeed = (IsKeyPressed(VK_SHIFT, true) ? 80.0f : 40.0f);
+	float xAngle = *(float*)0x025F5B50;
+	float yAngle = *(float*)0x025F5B54;
+	float zAngle = *(float*)0x025F5B58;
+	float* PlayerSin = (float*)(PlayerBase + 0x38);
+	float* PlayerCos = (float*)(PlayerBase + 0x40);
+
+	if (NoclipEnabled && !slewMode && !IsWaiting) {
+		uintptr_t CoordsPointer = ReadPointer(getplayer(true), { 0x570,0x8,0x40,0x18 });
+		float* x = (float*)(*(int*)CoordsPointer + 0x30);
+		float* y = (float*)(*(int*)CoordsPointer + 0x34);
+		float* z = (float*)(*(int*)CoordsPointer + 0x38);
+		*PlayerSin = xAngle;
+		*PlayerCos = zAngle;
+
+		if (IsKeyPressed('W', true)) {
+			*x += MovementSpeed * xAngle * deltaTime;
+			*y += MovementSpeed * yAngle * deltaTime;
+			*z += MovementSpeed * zAngle * deltaTime;
+		}
+
+		if (IsKeyPressed('S', true)) {
+			*x -= MovementSpeed * xAngle * deltaTime;
+			*y -= MovementSpeed * yAngle * deltaTime;
+			*z -= MovementSpeed * zAngle * deltaTime;
+		}
+
+		if (IsKeyPressed('A', true)) {
+			*x -= MovementSpeed * zAngle * deltaTime;
+			*z += MovementSpeed * xAngle * deltaTime;
+		}
+
+		if (IsKeyPressed('D', true)) {
+			*x += MovementSpeed * zAngle * deltaTime;
+			*z -= MovementSpeed * xAngle * deltaTime;
+		}
+
+		if (IsKeyPressed(VK_SPACE, true)) {
+			*y += MovementSpeed * deltaTime;
+		}
+
+		if (IsKeyPressed('E', true)) {
+			*y -= MovementSpeed * deltaTime;
+		}
+	}
+
+}
+
 void LuaExecutor() {
 	BYTE CurrentGamemode = *(BYTE*)0x00E8B210; 
 	BYTE LobbyCheck = *(BYTE*)0x02528C14; // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.
 	BYTE AreWeLoaded = *(BYTE*)0x00E94D3E;
-	static bool IsWaiting = false;
 	static bool OpenedByExecutor = false;
 	BOOL* IsOpen = (BOOL*)(0x0252A5B3);
 	wchar_t* ChatInput = reinterpret_cast<wchar_t*>(0x01F76948);
@@ -1058,6 +1182,10 @@ void LuaExecutor() {
 
 			else if (Converted == "delete_npcs") {
 				YeetAllNPCs();
+			}
+
+			else if (Converted == "noclip") {
+				ToggleNoclip();
 			}
 
 			else {
@@ -1157,6 +1285,7 @@ int RenderLoopStuff_Hacked()
 	    cus_FrameToggles();
 	    Slew();
 		LuaExecutor();
+		Noclip();
 
 	if (Render3D::VFXP_fixFog)
 	   FogTest();
@@ -1194,6 +1323,8 @@ int RenderLoopStuff_Hacked()
 		FirstBootFlag();
 	}
 	
+	getDeltaTime();
+
 	// Call original func
 	return UpdateRenderLoopStuff();
 }
