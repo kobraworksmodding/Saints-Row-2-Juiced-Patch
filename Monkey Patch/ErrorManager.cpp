@@ -105,7 +105,7 @@ namespace ErrorManager
             Logger::TypedLog(CHN_DLL, "ExceptionInfo missing.\n");
             return EHR_CONTINUE;
         }
-
+        uint32_t crashAddr = ExceptionInfo->ContextRecord->Eip;
         PEXCEPTION_RECORD record = ExceptionInfo->ExceptionRecord;
 
         uint32_t exceptionCode = record->ExceptionCode;
@@ -161,7 +161,7 @@ namespace ErrorManager
 
         char errorBuffer[ERR_LENGTH];
 
-        snprintf(errorBuffer, ERR_LENGTH, "!! -- FATAL ERROR AT 0x%08x -- !!\n\n%s", ExceptionInfo->ContextRecord->Eip, exceptionString);
+        snprintf(errorBuffer, ERR_LENGTH, "!- RAN INTO A FATAL ERROR AT 0x%08x -!\n\n%s", ExceptionInfo->ContextRecord->Eip, exceptionString);
 
         // ------------------
 
@@ -172,13 +172,29 @@ namespace ErrorManager
             snprintf(errorBuffer, ERR_LENGTH, "%s (%s of 0x%08p)", errorBuffer, rwMode, record->ExceptionInformation[1]);
         }
 
+        switch (crashAddr) {
+        case 0x00ce59ac:
+            strcat_s(errorBuffer, ERR_LENGTH, "\n\nSomething has gone wrong with your preload (.tbl) files!\nPlease check to see if they exist, have invalid items or have gone over the preload limit.");
+            break;
+
+        case 0x00ca0c1f:
+            strcat_s(errorBuffer, ERR_LENGTH, "\n\nSaints Row 2 has run out of memory.\nLAA Patch your sr2_pc.exe to prevent this crash.");
+            break;
+
+        case 0x00C080EC:
+            strcat_s(errorBuffer, ERR_LENGTH, "\n\nInvalid Bitmap Error\nA texture failed to load properly and caused the game to crash.");
+            break;
+
+        }
+
         // ------------------
-
-        FormatExceptionRecords(ExceptionInfo->ContextRecord, errorBuffer);
-
+       // if (!crashAddr == 0x00ce59ac) {
+            FormatExceptionRecords(ExceptionInfo->ContextRecord, errorBuffer);
+       // }
         // ------------------
 
         strcat_s(errorBuffer, ERR_LENGTH, "\n\nShow this error message to someone who understands disassemblers/debuggers!");
+
 
         Logger::TypedLog(CHN_DLL, "  Wanting to show error...\n");
 
