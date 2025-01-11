@@ -1087,6 +1087,9 @@ void Noclip() {
 
 }
 
+typedef void(*LoadLevelT)();
+LoadLevelT LoadLevel = (LoadLevelT)0x73C000;
+
 void LuaExecutor() {
 	BYTE CurrentGamemode = *(BYTE*)0x00E8B210; 
 	BYTE LobbyCheck = *(BYTE*)0x02528C14; // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.
@@ -1178,6 +1181,13 @@ void LuaExecutor() {
 
 			else if (sscanf_s(Converted.c_str(), "spawn_npc %s", Arg1) == 1) {
 				NPCSpawner(Arg1);
+			}
+
+			else if (sscanf_s(Converted.c_str(), "level %s", Arg1) == 1) {
+				char* ConsoleString = (char*)0x02345A60;
+				strcpy_s(ConsoleString, 128, Arg1);
+				LoadLevel();
+				ConsoleString = NULL;
 			}
 
 			else if (Converted == "delete_npcs") {
@@ -1673,7 +1683,7 @@ DWORD WINAPI XInputCheck(LPVOID lpParameter)
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-
+	patchNop((BYTE*)0x0073C01B, 6);
 	patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
 	patchCall((void*)0x009A3D8E, (void*)IdleFix);
 	patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
