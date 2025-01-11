@@ -1,7 +1,10 @@
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\vc143.pdb
+c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\reloaded.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\stdafx.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\safewrite.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\rpchandler.obj
+c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\render3d.obj
+c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\behavior.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\queryperformance fix.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\patch.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\mainhooks.obj
@@ -11,13 +14,13 @@ c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\filelogger.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\dfengine.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\openspy.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\gog no fps limiter.obj
+c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\memory.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\luahandler.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\laapatcher.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\errormanager.obj
-c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\memory.obj
-c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\reloaded.obj
-c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\behavior.obj
-c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\render3d.obj
+c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\loose files.obj
+c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\metrics dump.obj
+c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\internalprint.obj
 c:\users\uzis\desktop\saints-row-2-juiced\reloaded\rlengine.dll
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\reloaded patch.ipdb
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\reloaded patch.iobj
@@ -25,7 +28,6 @@ c:\users\uzis\desktop\saints-row-2-juiced\reloaded\reloaded patch.pdb
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\properties.res
 c:\users\uzis\desktop\saints-row-2-juiced\reloaded\reloaded patch.lib
 c:\users\uzis\desktop\saints-row-2-juiced\reloaded\reloaded patch.exp
-c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\clothing.obj
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\reloaded patch.tlog\cl.command.1.tlog
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\reloaded patch.tlog\cl.read.1.tlog
 c:\users\uzis\desktop\saints-row-2-juiced\monkey patch\reloaded\reloaded patch.tlog\cl.write.1.tlog

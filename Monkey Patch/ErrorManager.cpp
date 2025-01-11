@@ -185,6 +185,10 @@ namespace ErrorManager
             strcat_s(errorBuffer, ERR_LENGTH, "\n\nInvalid Bitmap Error\nA texture failed to load properly and caused the game to crash.");
             break;
 
+        case 0x00c14a8d:
+            strcat_s(errorBuffer, ERR_LENGTH, "\n\nCorrupted Input Driver.\n\nA corrupted input driver has tried to access vibration and caused the game to crash.\n\nTo fix this, turn \"ForceDisableVibration\" in reloaded.ini to 1.\n\nIf that doesn't work, vjoy is a device driver known to be problematic to SR2. If you have that installed it is recommended that you uninstall it.");
+            break;
+
         }
 
         // ------------------

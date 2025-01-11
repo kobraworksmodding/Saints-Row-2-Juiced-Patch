@@ -27,7 +27,7 @@ float deltaTime;
 const char* juicedversion = "7.1.0";
 
 char* executableDirectory[MAX_PATH];
-const char ServerNameRL[] = "[SR2 RELOADED SERVER]";
+const char ServerNameRL[] = "[RELOADED Mod 1.0.0b4]";
 const char ServerNameSR2[] = "[Saints Row 2]";
 // - UNUSED
 float AOQuality = 0.05;

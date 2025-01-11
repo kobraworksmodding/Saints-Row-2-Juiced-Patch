@@ -1,4 +1,80 @@
-﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(1371,5): warning MSB8012: TargetPath(C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll) does not match the Linker's OutputFile property value (C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\RLEngine.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+﻿  ErrorManager.cpp
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\ErrorManager.cpp(90,42): warning C4477: 'snprintf' : format string '%08p' requires an argument of type 'void *', but variadic argument 2 has type 'DWORD64'
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\ErrorManager.cpp(90,42): warning C4313: 'snprintf': '%p' in format string conflicts with argument 2 of type 'DWORD64'
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\ErrorManager.cpp(172,47): warning C4477: 'snprintf' : format string '%08p' requires an argument of type 'void *', but variadic argument 3 has type 'ULONG_PTR'
+  MainHooks.cpp
+  The contents of <format> are available only in c++latest mode with concepts support;
+  see https://github.com/microsoft/STL/issues/1814 for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(33,23): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(136,84): warning C4996: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(185,9): warning C4996: 'GetVersionExA': was declared deprecated
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(347,33): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(354,34): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(402,26): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(403,26): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(483,56): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(549,2): warning C4996: 'wcscpy': This function or variable may be unsafe. Consider using wcscpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(541,2): warning C4996: 'wcsncpy': This function or variable may be unsafe. Consider using wcsncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(546,3): warning C4996: 'wcsncpy': This function or variable may be unsafe. Consider using wcsncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1170,41): warning C4473: 'sscanf_s' : not enough arguments passed for format string
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1170,41): message : placeholders and their parameters expect 2 variadic arguments, but 1 were provided
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1170,41): message : the missing variadic argument 2 is required by format string '%s'
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1170,41): message : this argument is used as a buffer size
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1179,41): warning C4473: 'sscanf_s' : not enough arguments passed for format string
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1179,41): message : placeholders and their parameters expect 2 variadic arguments, but 1 were provided
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1179,41): message : the missing variadic argument 2 is required by format string '%s'
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1179,41): message : this argument is used as a buffer size
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1162,8): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1163,26): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1425,2): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1543,3): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\xstring(2584,23): warning C4244: 'argument': conversion from 'wchar_t' to 'const _Elem', possible loss of data
+          with
+          [
+              _Elem=char
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\xstring(2595): message : see reference to function template instantiation 'void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct<wchar_t*>(_Iter,const _Iter,std::input_iterator_tag)' being compiled
+          with
+          [
+              _Iter=wchar_t *
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\xstring(2595): message : see reference to function template instantiation 'void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct<wchar_t*>(_Iter,const _Iter,std::input_iterator_tag)' being compiled
+          with
+          [
+              _Iter=wchar_t *
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\xstring(2575): message : see reference to function template instantiation 'void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct<wchar_t*>(const _Iter,const _Iter,std::forward_iterator_tag)' being compiled
+          with
+          [
+              _Iter=wchar_t *
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\xstring(2575): message : see reference to function template instantiation 'void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct<wchar_t*>(const _Iter,const _Iter,std::forward_iterator_tag)' being compiled
+          with
+          [
+              _Iter=wchar_t *
+          ]
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1160): message : see reference to function template instantiation 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)' being compiled
+          with
+          [
+              _Elem=wchar_t,
+              _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
+              _Alloc=std::allocator<char>
+          ]
+C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\Monkey Patch\MainHooks.cpp(1160): message : see reference to function template instantiation 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)' being compiled
+          with
+          [
+              _Elem=wchar_t,
+              _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
+              _Alloc=std::allocator<char>
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(1371,5): warning MSB8012: TargetPath(C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll) does not match the Linker's OutputFile property value (C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\RLEngine.dll). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
 C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(1373,5): warning MSB8012: TargetName(Reloaded Patch) does not match the Linker's OutputFile property value (RLEngine). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+     Creating library C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.lib and object C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.exp
+MSVCRT.lib(initializers.obj) : warning LNK4098: defaultlib 'libcmt.lib' conflicts with use of other libs; use /NODEFAULTLIB:library
+  Generating code
+  7 of 722 functions ( 1.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    4 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
   Monkey Patch.vcxproj -> C:\Users\Uzis\Desktop\Saints-Row-2-Juiced\RELOADED\Reloaded Patch.dll
           1 file(s) copied.
