@@ -671,9 +671,9 @@ void VehicleSpawner(const char* Name, const char* Var) {
 	static int VehPointer;
 	static int CurVehPointer;
 
-	int& CurrentVeh = *(int*)(0x00EA01F8);
 	int& VehFromSpawner = *(int*)(0x0252A0E0);
 	int& PlayerOffset = *(int*)0x21703D4;
+	int& CurrentVeh = *(int*)(PlayerOffset + 0xD74);
 
 	if (CurrentVeh > 0 && CurrentVeh != VehFromSpawner) {
 		CurVehPointer = GetPointer(CurrentVeh);
