@@ -1546,6 +1546,7 @@ int luaLoadBuff(void* L, const char* buff, size_t sz, const char* name) {
 			replace_all(convertedBuff, "ANISOTROPY_FILTERING\",\t\t", "Anisotropic Filtering\",\t");
 			replace_all(convertedBuff, "CONTROLS_MINIMAP_VIEW", "Minimap View         ");
 			replace_all(convertedBuff, "MENU_VSYNC\",\t\t\t\t\t\t", "Fullscreen VSync\",");
+			replace_all(convertedBuff, "Shadow_Maps", "Shadows    ");
 		}
 
 		sz = convertedBuff.length();
@@ -1683,6 +1684,9 @@ DWORD WINAPI XInputCheck(LPVOID lpParameter)
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	patchBytesM((BYTE*)0x0053818F, (BYTE*)"\xA1\x94\x89\xE9\x00", 5); // make shadow maps check shadows instead of shadow map type
+	patchBytesM((BYTE*)0x00538194, (BYTE*)"\x83\xE8\x02", 3); // make it check if full shadows are enabled (so none = no shadows, simple = stencil and full = stencil & s. maps)
+	patchNop((BYTE*)0x006C5FE0, 10); // fix cutscenes resetting shadows
 	patchNop((BYTE*)0x0073C01B, 6);
 	patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
 	patchCall((void*)0x009A3D8E, (void*)IdleFix);
