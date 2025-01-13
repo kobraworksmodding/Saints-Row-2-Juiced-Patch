@@ -1638,6 +1638,18 @@ int controllerConnected[4] = { 1, 1, 1, 1 };
 bool NoControllers = false;
 bool XInputEnabled = true;
 
+void __declspec(naked) RestoreFiltering()
+{
+	static int jmp_continue = 0x00515974;
+	__asm {
+		fstp st(1)
+		push esp
+		add dword ptr[esp], 8
+		fstp st
+		jmp jmp_continue
+	}
+}
+
 DWORD WINAPI XInputCheck(LPVOID lpParameter)
 {
 	while (true) {
@@ -1700,6 +1712,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out
 	WriteRelJump(0x0098E493, (UInt32)&StoreNPCPointer);
 	WriteRelJump(0x0098EE0B, (UInt32)&SpawningCheck);
+	WriteRelJump(0x0051596E, (UInt32)&RestoreFiltering);
 	ErrorManager::Initialize();
 	char NameBuffer[260];
 	PIMAGE_DOS_HEADER dos_header;
