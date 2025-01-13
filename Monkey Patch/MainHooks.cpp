@@ -1105,7 +1105,7 @@ void LuaExecutor() {
 
 	if (AreWeLoaded == 0x1 && !LobbyCheck == 0x0 && CurrentGamemode == 0xFF) { // If SP/CO-OP allow executor... hopefully.
 
-		if (IsKeyPressed(VK_INSERT, false)) {
+		if (IsKeyPressed(GameConfig::GetValue("Debug", "ExecutorBind", VK_INSERT), false)) {
 			if (hasCheatMessageBeenSeen2 == 1 || CheatFlagDisabled == 1) {
 				if (*IsOpen && OpenedByExecutor) {
 					*(BYTE*)(0x2349849) = 1;
@@ -1116,6 +1116,7 @@ void LuaExecutor() {
 					IsWaiting = true;
 					*(BYTE*)(0x1F76944) = 3;
 					chatWindow();
+					//*(wchar_t*)(0x1F76948) = 0; // idea was to flush the textbox to allow other keys to be used other than VK_INSERT, seems useless as the game already does this. - Clippy95
 					OpenedByExecutor = true;
 				}
 			}
