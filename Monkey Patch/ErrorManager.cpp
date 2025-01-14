@@ -18,6 +18,7 @@ namespace ErrorManager
     bool b_HandlerAssigned = false;
     bool b_HasErrored = false;
     bool b_IgnoreVectoredExceptions = false;
+    int  gameHasBrokeCounter = 0;
 
     PVOID curVectorHandler;
 
@@ -145,9 +146,16 @@ namespace ErrorManager
 
         if (exceptionResult == EHR_CONTINUE)
         {
-            if (!b_IgnoreVectoredExceptions)
-                Logger::TypedLog(CHN_DEBUG, "Non-fatal exception %s occurred at 0x%08x. Continuing.\n", exceptionString, ExceptionInfo->ContextRecord->Eip);
-
+            if (gameHasBrokeCounter <= 20000) { //Check for an absurbly high number to rule out this error EVER happening during regular gameplay. incase someone gets breakpoint spam.
+                if (!b_IgnoreVectoredExceptions)
+                    gameHasBrokeCounter++; // Tick once every time EHR_CONTINUE has been checked.
+                    Logger::TypedLog(CHN_DEBUG, "Non-fatal exception %s occurred at 0x%08x. Continuing.\n", exceptionString, ExceptionInfo->ContextRecord->Eip);
+            }
+            else { // Throw message telling user game will restart without ExceptionHandler.
+                GameConfig::SetValue("Logger", "ExceptionHandler", 0); // Turn off ExceptionHandler, Sadly.
+                MessageBoxA(NULL, "ExceptionHandler ran into a problem.\n\nSaints Row 2 will now exit when you press ENTER, when you restart the game this will NOT happen again.", "Saints Row 2 Juiced Patch", MB_ICONERROR | MB_OK);
+                exit(0); // Exit Game.
+            }
             return EHR_CONTINUE;
         }
 
