@@ -1777,10 +1777,13 @@ DWORD WINAPI XInputCheck(LPVOID lpParameter)
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	patchBytesM((BYTE*)0x004CBFEE, (BYTE*)"\xD9\x05\x00\x5C\x5F\x02", 6); // change the motion blur to directly read the current frametime (fix strength above 30 fps)
+	patchBytesM((BYTE*)0x004CBFF4, (BYTE*)"\xEB\x13", 2); // jump over the stupid checks
 	patchBytesM((BYTE*)0x0053818F, (BYTE*)"\xA1\x94\x89\xE9\x00", 5); // make shadow maps check shadows instead of shadow map type
 	patchBytesM((BYTE*)0x00538194, (BYTE*)"\x83\xE8\x02", 3); // make it check if full shadows are enabled (so none = no shadows, simple = stencil and full = stencil & s. maps)
+	patchNop((BYTE*)0x0077376D, 3); // force full stencil shadows with the simple setting, removes the == 2 check
 	patchNop((BYTE*)0x006C5FE0, 10); // fix cutscenes resetting shadows
-	patchNop((BYTE*)0x0073C01B, 6);
+	patchNop((BYTE*)0x0073C01B, 6); // remove the command check from the level function
 	patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
 	patchCall((void*)0x009A3D8E, (void*)IdleFix);
 	patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
