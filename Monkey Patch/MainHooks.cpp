@@ -532,29 +532,10 @@ void __declspec(naked) SlewScrollWheelSmoothingASMHelp() {
 	WriteRelJump(0x00C013E3, (UInt32)&SlewScrollWheelSmoothingASMHelp);
 }
 
-void havokFrameTicker() { // Proper Frametime ticker by Terval
-	float currentFps = *(float*)0x00E84388;
-	static DWORD lastTick = 0;
+void havokFrameTicker() { // Proper Frametime ticker by Tervel
 
-	DWORD currentTick = GetTickCount();
+	*(float*)(0x02527DA4) = *(float*)0xE84380 / 2;
 
-	// Game does calcuate frametime internally we can use that instead of calculating it here.
-
-	float newFrametime;
-	if (currentFps > 30.f)
-		newFrametime = 1.0f / (currentFps * 2);
-	else
-		newFrametime = 0.01666666666f;
-	float newFrametime2 = 1.0f / currentFps;
-
-	if (currentTick - lastTick >= 100) {
-		lastTick = currentTick;
-
-		*(float*)(0x02527DA4) = newFrametime;
-		*(float*)(0x027B2C97) = newFrametime2;
-
-		//Logger::TypedLog(CHN_DEBUG, "CurrentFPS: %f, Frametime: %f\n", currentFps, newFrametime);
-	}
 }
 
 typedef int(__cdecl* addsubs_t)(int a1, float a2, float a3, int a4);
@@ -1778,7 +1759,7 @@ DWORD WINAPI XInputCheck(LPVOID lpParameter)
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-	patchBytesM((BYTE*)0x004CBFEE, (BYTE*)"\xD9\x05\x00\x5C\x5F\x02", 6); // change the motion blur to directly read the current frametime (fix strength above 30 fps)
+	SafeWrite32(0x004CBFEE + 2, (UInt32)0xE84380); // change the motion blur to directly read the current frametime (fix strength above 30 fps)
 	patchBytesM((BYTE*)0x004CBFF4, (BYTE*)"\xEB\x13", 2); // jump over the stupid checks
 	patchBytesM((BYTE*)0x0053818F, (BYTE*)"\xA1\x94\x89\xE9\x00", 5); // make shadow maps check shadows instead of shadow map type
 	patchBytesM((BYTE*)0x00538194, (BYTE*)"\x83\xE8\x02", 3); // make it check if full shadows are enabled (so none = no shadows, simple = stencil and full = stencil & s. maps)
