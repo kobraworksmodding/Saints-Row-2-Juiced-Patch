@@ -21,6 +21,7 @@
 #include <WinSock2.h>
 #include "Xinput.h"
 #pragma comment(lib, "Xinput.lib")
+const double fourbythreeAR = 1.333333373069763;
 
 float deltaTime;
 
@@ -1951,8 +1952,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 			ARfov = 1;
 			Logger::TypedLog(CHN_DEBUG, "Applying FOV Multiplier.\n");
 		}
-		patchBytesM((BYTE*)0x00AA5648, (BYTE*)"\xDC\x0D\x9B\x2C\x7B\x02", 6); // patch vehicle turning radius, this read from the FOV and the radius gets smaller if FOV is lower than 4/3
-		*(double*)(0x027B2C9B) = 1.333333373069763; // code / data cave for wheel radius to read from.
+		SafeWrite32(0x00AA5648 + 0x2, (UInt32)&fourbythreeAR); // patch vehicle turning radius, this read from the FOV and the radius gets smaller if FOV is lower than 4/3
 		Logger::TypedLog(CHN_DEBUG, "FOV Multiplier: %f,\n", FOVMultiplier);
 	}
 
