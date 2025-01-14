@@ -451,6 +451,43 @@ void Slew() {
 	}
 }
 
+void SlewScrollWheelSmoothing() {
+	mouse mouse;
+	int wheel_delta = mouse.getWheeldelta();
+		if (wheel_delta) {
+			float* smoothing = (float*)(0x00E83E1C);
+			*smoothing = clamp(*smoothing + ( (float)wheel_delta / 2850.f), 0.f, 1.3f);
+			//Logger::TypedLog(CHN_DEBUG, "Mouse slew smoothing: %f,\n", *smoothing);
+		}
+}
+
+void __declspec(naked) SlewScrollWheelSmoothingASMHelp() {
+	static int jmp_continue = 0x00C013E8;
+	__asm {
+		pushad
+		pushfd
+	}
+	__asm {
+		call SlewScrollWheelSmoothing
+	}
+	__asm {
+		popfd
+		popad
+		mov eax,edi
+		cdq
+		mov ecx,eax
+
+		jmp jmp_continue
+	}
+
+}
+
+ void FixandImproveSlewMouseRuntimePatch() {
+	patchNop((BYTE*)0x0051FEA4, 6); // Allow mouse mode to be toggled by default.
+	patchFloat((BYTE*)0x00E83E1C, 0.3f); // Increase smoothing a bit by default for mouse.
+	WriteRelJump(0x00C013E3, (UInt32)&SlewScrollWheelSmoothingASMHelp);
+}
+
 void havokFrameTicker() { // Proper Frametime ticker by Terval
 	float currentFps = *(float*)0x00E84388;
 	static DWORD lastTick = 0;
@@ -1710,6 +1747,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
 	WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
 	WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out
+	FixandImproveSlewMouseRuntimePatch();
 	WriteRelJump(0x0098E493, (UInt32)&StoreNPCPointer);
 	WriteRelJump(0x0098EE0B, (UInt32)&SpawningCheck);
 	WriteRelJump(0x0051596E, (UInt32)&RestoreFiltering);
