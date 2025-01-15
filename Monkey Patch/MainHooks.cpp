@@ -1768,6 +1768,8 @@ DWORD WINAPI XInputCheck(LPVOID lpParameter)
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	patchNop((BYTE*)0x0052598D, 6); // fix for black water in the distance with AA disabled
+	patchNop((BYTE*)0x005267F0, 6); // fix for black water in the distance with AA enabled
 	//patchDWord((void*)(0x007ECA66 + 1), (int)"PS3"); // patch get_platform to return ps3. Not ideal.
 	//patchDWord((void*)(0x0051F62F + 1), (int)"PS3bitmap_sheets"); // patch get_platform to return ps3. Not ideal.
 	SafeWrite32(0x004CBFEE + 2, (UInt32)0xE84380); // change the motion blur to directly read the current frametime (fix strength above 30 fps)
