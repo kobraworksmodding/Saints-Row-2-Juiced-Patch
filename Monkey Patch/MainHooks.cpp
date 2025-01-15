@@ -1651,6 +1651,8 @@ void __declspec(naked) MouseFix()
 	__asm {
 		mov ds : dword ptr[0x234F460], eax
 		mov ds : dword ptr[0x0347B2F4], eax // reset the missing old delta to fix ghost scrolling when tabbing in and out of the game
+		mov ds : dword ptr[0x0234F473], eax // reset left mouse button
+		mov ds : dword ptr[0x0234F483], eax // reset right mouse button
 		jmp jmp_continue
 	}
 }
