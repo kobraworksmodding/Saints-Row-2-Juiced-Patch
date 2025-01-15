@@ -30,6 +30,9 @@
     <Filter Include="Source Files\Render">
       <UniqueIdentifier>{1db8fbec-b793-42cf-8eb4-30fa4534eca0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Network">
+      <UniqueIdentifier>{b83cb043-6055-419b-bd10-3bb44452f49e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DFEngine.cpp">
@@ -95,8 +98,11 @@
     <ClCompile Include="metrics dump.cpp">
       <Filter>Patches</Filter>
     </ClCompile>
-    <ClCompile Include="InternalPrint.cpp">
+    <ClCompile Include="UGC\InternalPrint.cpp">
       <Filter>Source Files\UGC</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetPlayer.cpp">
+      <Filter>Source Files\Network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -178,8 +184,11 @@
     <ClInclude Include="metrics dump.h">
       <Filter>Patches</Filter>
     </ClInclude>
-    <ClInclude Include="InternalPrint.h">
+    <ClInclude Include="UGC\InternalPrint.h">
       <Filter>Source Files\UGC</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetPlayer.h">
+      <Filter>Source Files\Network</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

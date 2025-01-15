@@ -3,10 +3,10 @@
 // Created: 11/01/2025
 
 #include <stdio.h>
-#include "FileLogger.h"
+#include "../FileLogger.h"
 #include <intrin.h>
-#include "Patcher/patch.h"
-#include "GameConfig.h"
+#include "../Patcher/patch.h"
+#include "../GameConfig.h"
 
 namespace InternalPrint
 {

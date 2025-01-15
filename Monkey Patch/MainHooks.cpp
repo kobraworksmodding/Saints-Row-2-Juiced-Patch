@@ -9,9 +9,9 @@
 #include "DFEngine.h"
 #include "Mem/Memory.h"
 #include "UGC/Reloaded.h"
+#include "UGC/InternalPrint.h"
 #include "Player/Behavior.h"
 #include "Render/Render3D.h"
-#include "InternalPrint.h"
 
 #include "GameConfig.h"
 #include "iat_functions.h"
@@ -1770,13 +1770,15 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchCall((void*)0x009A3D8E, (void*)IdleFix);
 	patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
 	patchCall((void*)0x00C08493, (void*)TextureCrashFix);
-	if (GameConfig::GetValue("Debug", "PatchPauseMenuLua", 1))
-	patchCall((void*)0x00CD9FE8, (void*)luaLoadBuff); // used to intercept the pause menu lua before compiled, needed for full 8x MSAA support + custom res
+	if (GameConfig::GetValue("Debug", "PatchPauseMenuLua", 1)) {
+		patchCall((void*)0x00CD9FE8, (void*)luaLoadBuff); // used to intercept the pause menu lua before compiled, needed for full 8x MSAA support + custom res
+	}
 	WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
 	WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
 	WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out
-	if (GameConfig::GetValue("Gameplay", "FixHorizontalMouseSensitivity", 1))
-	WriteRelJump(0x00C1371A, (UInt32)&WorkAroundHorizontalMouseSensitivityASMHelper); // attempt to fix Horizontal sens being 3x faster compared to vertical while on foot
+	if (GameConfig::GetValue("Gameplay", "FixHorizontalMouseSensitivity", 1)) {
+		WriteRelJump(0x00C1371A, (UInt32)&WorkAroundHorizontalMouseSensitivityASMHelper); // attempt to fix Horizontal sens being 3x faster compared to vertical while on foot
+	}
 	FixandImproveSlewMouseRuntimePatch();
 	WriteRelJump(0x0098E493, (UInt32)&StoreNPCPointer);
 	WriteRelJump(0x0098EE0B, (UInt32)&SpawningCheck);
@@ -1832,19 +1834,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	Memory::Init();
 	Render3D::Init();
 
-	// Experiment to give CO-OP a higher player limit.
-	//patchByte((BYTE*)0x007F750D + 1, 0x01); // max gb count (we'll use this for modified co-op)
-	//patchDWord((void*)(0x0086ACF5 + 6), 12); // overwrite the co-op maxplayerslobby to 12
-	//patchBytesM((BYTE*)0x007F7095, (BYTE*)"\xBD\xC", 2);
-	//patchNop((BYTE*)0x007F71EC, 12); // nop coop max and max lobby
-	//patchBytesM((BYTE*)0x007F7A31, (BYTE*)"\xB8\x02", 2);
-	//patchBytesM((BYTE*)0x0051E502, (BYTE*)"\x68\x00\x60\x77\x01", 5);
-	//patchBytesM((BYTE*)0x00826B8B, (BYTE*)"\xB8\xC", 2);
-	//patchBytesM((BYTE*)0x0051E535, (BYTE*)"\x68\xB0\xEB\x92\x00", 5);
-	//patchBytesM((BYTE*)0x0051E8A7, (BYTE*)"\x68\00\x70\x24\x0B", 5);
-
-	//0051E502
-
 #if RELOADED
 
 	Reloaded::PatchTables();
@@ -1869,12 +1858,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 
 #endif
-
-	//Logger::TypedLog(CHN_DEBUG, "Increasing Customization Memory...\n");
-    // Hopefully increase customization_items.xtbl limit from 1050 items to 1150
-    //patchBytesM((BYTE*)0x007BBAC6 + 1, (BYTE*)"\x7E\x04", 2);
-    //patchBytesM((BYTE*)0x007BCC14 + 6, (BYTE*)"\x7E\x04", 2);
-
 
 	if (GameConfig::GetValue("Debug", "DisableXInput", 0))
 	{
