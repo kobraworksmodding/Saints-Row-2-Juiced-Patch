@@ -58,22 +58,22 @@ namespace Memory
 	{
 		char bytes[120];
 	};
-	struct myHomie
+	struct myLogoItem
 	{
-		char bytes[940];
+		char bytes[24];
 	};
 #define MAX_CUSTOM_ITEMS    3000
 	myItem NEW_ITEMS[MAX_CUSTOM_ITEMS];
 
-#define MAX_CUSTOM_HOMIES    24
-	myHomie NEW_HOMIES[MAX_CUSTOM_HOMIES];
+#define MAX_CUSTOM_LOGOS   24
+	myLogoItem NEW_LOGOS[MAX_CUSTOM_LOGOS];
 
 	void ExpandCustItemsPool()
 	{
 		//Patch Clothing limit from 1050 to 3000 BITCHES.
 
 		Logger::TypedLog(CHN_DEBUG, "Increasing Customization Memory from 1050 to 3000...\n");
-
+		//02A0A7F0
 		patchBytesM((BYTE*)0x007BBAC6 + 1, (BYTE*)"\x08\xBB", 2);
 		patchBytesM((BYTE*)0x007BCC14 + 6, (BYTE*)"\x08\xBB", 2);
 		patchDWord((BYTE*)0x0053FD41, (int)&NEW_ITEMS);
@@ -133,44 +133,47 @@ namespace Memory
 		patchDWord((BYTE*)0x009A02FE, (int)&NEW_ITEMS);
 	}
 
-	/*void PatchHomies() {
-		patchDWord((BYTE*)0x0069205D, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00693CD0, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00783182, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00783D16, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00786091, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x007861EA, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x0078627A, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x007862F6, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x0078644E, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00786D77, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00786F13, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x007870A3, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x007870C3, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00787103, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00787137, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x0078718C, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00787207, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x007872CC, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x0078739C, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x007875C1, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00787738, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x0078776B, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00787791, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x007877D0, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x007878DC, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00787B0F, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00787B55, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00787BEF, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00788482, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00788C26, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00789105, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x00789409, (int)&NEW_HOMIES);
-		patchDWord((BYTE*)0x007899FF, (int)&NEW_HOMIES);
+	void PatchLogos() {
+		patchDWord((BYTE*)0x007BD198, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007BDF4A, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007BE426, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007BF99E, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C029D, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C02AE, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C02B9, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C10E9, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C10FA, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C1105, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C2BFB, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C3665, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C38B4, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C40E9, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C40F4, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C40FF, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C410A, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C4C97, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C52A5, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C58D4, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C58E5, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C58F0, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C5919, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C592A, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C5935, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C5972, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C9FE0, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C9FF1, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007C9FFC, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007CB03C, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007CB04D, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007CB05A, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007CC022, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007CC063, (int)&NEW_LOGOS);
+		patchDWord((BYTE*)0x007CCE6F, (int)&NEW_LOGOS);
 
-	}*/
+	}
 	void Init()
 	{
+		// ~ PatchLogos();
 		if (GameConfig::GetValue("Debug", "ExpandClothingLimit", 1))
 		{
 			ExpandCustItemsPool();
