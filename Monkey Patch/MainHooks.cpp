@@ -1333,6 +1333,14 @@ void LuaExecutor() {
 		}
 	}
 }
+#if !RELOADED
+inline void ModpackWarning(const wchar_t* Warning) {
+	__asm pushad
+	AddMessage(L"Juiced", Warning);
+	__asm popad
+
+}
+#endif
 
 typedef int __cdecl RenderLoopStuff_Native();
 RenderLoopStuff_Native* UpdateRenderLoopStuff = (RenderLoopStuff_Native*)(0x00C063D0); //0x00BD4A80
@@ -1343,6 +1351,9 @@ bool coopPausePatch = 0;
 bool LoadLastSave = 0;
 bool BetterChatTest = 0;
 
+#if !RELOADED
+static bool modpackread = 0;
+#endif
 int RenderLoopStuff_Hacked()
 {
 	if (RPCHandler::Enabled) 
@@ -1403,7 +1414,17 @@ int RenderLoopStuff_Hacked()
 		__asm popad
 		FirstBootFlag();
 	}
-	
+#if !RELOADED
+	if (!modpackread && GOTR()) {
+		ModpackWarning(L"Create a [format][color:#B200FF]gotr.txt[/format] file in the Saints Row 2 directory to stop receiving this message.");
+		ModpackWarning(L"[format][color:#B200FF]Juiced[/format] has detected Gentlemen of the Row, while there are no incompatibilities between the 2\n"
+			L"it should be noted that Gentlemen of the Row is a mod compilation that overhauls the game and does not improve game stability.\n"
+			L"Or fix game [format][color:#FF0000]crashes[/format] on modern operating systems!"
+			L"");
+
+			modpackread = true;
+	}
+#endif
 	getDeltaTime();
 
 	// Call original func
@@ -1767,8 +1788,22 @@ DWORD WINAPI XInputCheck(LPVOID lpParameter)
 	return 0;
 }
 
+bool FileExists(const char* fileName) {
+	WIN32_FIND_DATAA findFileData;
+	HANDLE handle = FindFirstFileA(fileName, &findFileData);
+	bool found = (handle != INVALID_HANDLE_VALUE);
+	if (found) {
+		FindClose(handle);
+	}
+	return found;
+}
+
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+#if !RELOADED
+	if (FileExists("gotr.txt"))
+		modpackread = 1;
+#endif
 	patchNop((BYTE*)0x0052598D, 6); // fix for black water in the distance with AA disabled
 	patchNop((BYTE*)0x005267F0, 6); // fix for black water in the distance with AA enabled
 	//patchDWord((void*)(0x007ECA66 + 1), (int)"PS3"); // patch get_platform to return ps3. Not ideal.

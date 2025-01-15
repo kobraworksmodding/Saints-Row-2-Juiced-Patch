@@ -85,6 +85,12 @@ INT WINAPIV HookedDebugPrint(lua_State* lua)
 
 				if (result.find(endlinecheck) != std::string::npos) {
 					Logger::TypedLog(CHN_LUA, "%s", endres);
+#if !RELOADED
+					if (!isGOTR && std::strstr(endres, "Gentlemen of the Row") != nullptr) {
+						isGOTR = true;
+					}
+					//printf("isGOTR %s\n", isGOTR ? "true" : "false");
+#endif
 				}
 				else {
 					Logger::TypedLog(CHN_LUA, "%s\n", endres);
@@ -98,3 +104,9 @@ INT WINAPIV HookedDebugPrint(lua_State* lua)
 
 	return 0;
 }
+#if !RELOADED
+bool GOTR() {
+	return isGOTR;
+
+}
+#endif

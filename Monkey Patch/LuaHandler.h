@@ -73,3 +73,7 @@ struct lua_State {
 	void* errorJmp;  /* current error recover point */
 	void* errfunc;  /* current error handling function (stack index) */
 };
+#if !RELOADED
+static bool isGOTR = false;
+extern bool GOTR();
+#endif
