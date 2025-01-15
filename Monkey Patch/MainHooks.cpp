@@ -636,6 +636,9 @@ VehicleSpawnT VehicleSpawn = (VehicleSpawnT)0x00AE4AE0;
 typedef int(__thiscall* GetVehIndexT)(const char* Vehicle);
 GetVehIndexT GetVehIndex = (GetVehIndexT)0x00AE4090;
 
+typedef bool(__thiscall* isMissionCompletedT)(const char* mission_name);
+isMissionCompletedT IsMissionCompleted = (isMissionCompletedT)0x6A6E50;
+
 typedef int(__fastcall* GetPointerT)(int VehiclePointer);
 GetPointerT GetPointer = (GetPointerT)0x00AE28F0;
 
