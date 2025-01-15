@@ -11,6 +11,7 @@
 #include "UGC/Reloaded.h"
 #include "UGC/InternalPrint.h"
 #include "Player/Behavior.h"
+#include "Math/Math.h"
 #include "Render/Render3D.h"
 
 #include "GameConfig.h"

@@ -33,6 +33,9 @@
     <Filter Include="Source Files\Network">
       <UniqueIdentifier>{b83cb043-6055-419b-bd10-3bb44452f49e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Math">
+      <UniqueIdentifier>{a786af15-dedf-4030-9d0f-45c55817223e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DFEngine.cpp">
@@ -103,6 +106,9 @@
     </ClCompile>
     <ClCompile Include="Network\NetPlayer.cpp">
       <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Math.cpp">
+      <Filter>Source Files\Math</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -189,6 +195,9 @@
     </ClInclude>
     <ClInclude Include="Network\NetPlayer.h">
       <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Math.h">
+      <Filter>Source Files\Math</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
