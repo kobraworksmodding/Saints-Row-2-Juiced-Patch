@@ -533,8 +533,12 @@ void __declspec(naked) SlewScrollWheelSmoothingASMHelp() {
 }
 
 void havokFrameTicker() { // Proper Frametime ticker by Tervel
+	float currentFps = *(float*)0x00E84388;
 
-	*(float*)(0x02527DA4) = *(float*)0xE84380 / 2;
+	if (currentFps > 30.f)
+		*(float*)(0x02527DA4) = *(float*)0xE84380 / 2;
+	else
+		*(float*)(0x02527DA4) = 0.01666666666f;
 
 }
 
