@@ -1832,7 +1832,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	if (GameConfig::GetValue("Gameplay", "FixHorizontalMouseSensitivity", 1)) {
 		WriteRelJump(0x00C1371A, (UInt32)&WorkAroundHorizontalMouseSensitivityASMHelper); // attempt to fix Horizontal sens being 3x faster compared to vertical while on foot
 	}
-	FixandImproveSlewMouseRuntimePatch();
+	//FixandImproveSlewMouseRuntimePatch();
 	WriteRelJump(0x0098E493, (UInt32)&StoreNPCPointer);
 	WriteRelJump(0x0098EE0B, (UInt32)&SpawningCheck);
 	WriteRelJump(0x0051596E, (UInt32)&RestoreFiltering);
