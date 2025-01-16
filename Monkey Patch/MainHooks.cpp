@@ -1056,6 +1056,9 @@ bool NoclipEnabled = false;
 typedef void(__stdcall* PlayerHolsterT)(int Player, bool Holster);
 PlayerHolsterT PlayerHolster = (PlayerHolsterT)0x9661E0;
 
+typedef void(__stdcall* SetInvulnerableT)(int Pointer, bool Enable);
+SetInvulnerableT SetInvulnerable = (SetInvulnerableT)0x965F40;
+
 
 void ResetYVel() {
 	uintptr_t YVelBase = ReadPointer(getplayer(true), { 0x570 });
@@ -1097,6 +1100,7 @@ void ToggleNoclip() {
 	StopRagdoll(getplayer(), 0);
 	DisableRagdoll(getplayer(), NoclipEnabled ? true : false);
 	PlayerHolster(getplayer(), NoclipEnabled ? true : false);
+	SetInvulnerable(getplayer(), NoclipEnabled ? true : false);
 
 	*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 	std::wstring subtitles = L"Noclip:[format][color:purple]";
