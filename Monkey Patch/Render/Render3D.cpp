@@ -162,9 +162,10 @@ namespace Render3D
 	void BetterAO()
 	{
 		Logger::TypedLog(CHN_MOD, "Making AO Better...\n");
-		patchNop((BYTE*)0x0052AA90, 6);
+		/*patchNop((BYTE*)0x0052AA90, 6);
 		patchNop((BYTE*)0x0052AA9D, 6);
-		*(float*)0x00E98D74 = (float)AOStrength;
+		*(float*)0x00E98D74 = (float)AOStrength;*/
+		patchBytesM((BYTE*)0x00518AFE, (BYTE*)"\xEB\x0A", 2);
 
 		//patchFloat((BYTE*)0x00518B00 + 2, AOSmoothness);
 		//patchFloat((BYTE*)0x00518AEE + 2, AOSmoothness);
