@@ -1809,8 +1809,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	if (FileExists("gotr.txt"))
 		modpackread = 1;
 #endif
-	patchBytesM((BYTE*)0x00C080EC, (BYTE*)"\x90\x66\x85\xED", 4); // change the cmp instruction to test
-	patchByte((BYTE*)0x00C080F0, 0x75); // change the check to jne
 	patchNop((BYTE*)0x0052598D, 6); // fix for black water in the distance with AA disabled
 	patchNop((BYTE*)0x005267F0, 6); // fix for black water in the distance with AA enabled
 	//patchDWord((void*)(0x007ECA66 + 1), (int)"PS3"); // patch get_platform to return ps3. Not ideal.
