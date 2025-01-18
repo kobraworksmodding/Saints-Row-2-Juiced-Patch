@@ -21,6 +21,7 @@
 #include <format>
 #include <WinSock2.h>
 #include "Xinput.h"
+#include <windows.h>
 #pragma comment(lib, "Xinput.lib")
 const double fourbythreeAR = 1.333333373069763;
 
@@ -534,9 +535,8 @@ void __declspec(naked) SlewScrollWheelSmoothingASMHelp() {
 }
 
 void havokFrameTicker() { // Proper Frametime ticker by Tervel
-	float currentFps = *(float*)0x00E84388;
 
-	if (currentFps > 30.f)
+	if (*(float*)0xE84380 <= 0.03333333333f)
 		*(float*)(0x02527DA4) = *(float*)0xE84380 / 2;
 	else
 		*(float*)(0x02527DA4) = 0.01666666666f;
@@ -1804,6 +1804,7 @@ bool FileExists(const char* fileName) {
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
 	if (FileExists("gotr.txt"))
 		modpackread = 1;
@@ -1823,8 +1824,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchNop((BYTE*)0x0073C01B, 6); // remove the command check from the level function
 	patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
 	patchCall((void*)0x009A3D8E, (void*)IdleFix);
-	/*patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
-	patchCall((void*)0x00C08493, (void*)TextureCrashFix);*/
+	patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
+	patchCall((void*)0x00C08493, (void*)TextureCrashFix);
 	if (GameConfig::GetValue("Debug", "PatchPauseMenuLua", 1)) {
 		patchCall((void*)0x00CD9FE8, (void*)luaLoadBuff); // used to intercept the pause menu lua before compiled, needed for full 8x MSAA support + custom res
 	}

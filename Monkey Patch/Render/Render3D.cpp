@@ -13,7 +13,7 @@ namespace Render3D
 	const char FPSCam[] = "camera_fpss.xtbl";
 	bool useFPSCam = 0;
 	bool VFXP_fixFog = 0;
-	float AOStrength = 14.55;
+	float AOStrength = 1.5;
 
 	void PatchHQTreeShadows() 
 	{
@@ -162,10 +162,11 @@ namespace Render3D
 	void BetterAO()
 	{
 		Logger::TypedLog(CHN_MOD, "Making AO Better...\n");
-		/*patchNop((BYTE*)0x0052AA90, 6);
-		patchNop((BYTE*)0x0052AA9D, 6);
-		*(float*)0x00E98D74 = (float)AOStrength;*/
+		//patchNop((BYTE*)0x0052AA90, 6);
+		patchNop((BYTE*)0x005183C8, 6);
+		*(float*)0x348FFDC = (float)AOStrength;
 		patchBytesM((BYTE*)0x00518AFE, (BYTE*)"\xEB\x0A", 2);
+		//patchFloat((BYTE*)0x00518375 + 2, AOStrength);
 
 		//patchFloat((BYTE*)0x00518B00 + 2, AOSmoothness);
 		//patchFloat((BYTE*)0x00518AEE + 2, AOSmoothness);
