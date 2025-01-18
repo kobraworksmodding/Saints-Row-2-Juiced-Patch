@@ -21,6 +21,7 @@
 #include <format>
 #include <WinSock2.h>
 #include "Xinput.h"
+#include <windows.h>
 #pragma comment(lib, "Xinput.lib")
 const double fourbythreeAR = 1.333333373069763;
 
@@ -1803,6 +1804,7 @@ bool FileExists(const char* fileName) {
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
 	if (FileExists("gotr.txt"))
 		modpackread = 1;
