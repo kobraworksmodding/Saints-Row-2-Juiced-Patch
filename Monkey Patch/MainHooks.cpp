@@ -2094,13 +2094,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	if (!keepfpslimit)
 		PatchGOGNoFPSLimit();
 
-    if (GameConfig::GetValue("Graphics", "RemoveBloom", 0)) // Removes a shader call to create bloom on bright objects.
-	{
-		Logger::TypedLog(CHN_MOD, "Removing Bloom...\n");
-		patchNop((BYTE*)0x005174FA, 30);
-		patchNop((BYTE*)0x005178F6, 25); // hopefully this new entry works on shitty nvidia gpus
-	}
-
 	if (GameConfig::GetValue("Gameplay", "DisableAimAssist", 0))
 	{
 		Logger::TypedLog(CHN_MOD, "Disabling Aim Assist...\n");
