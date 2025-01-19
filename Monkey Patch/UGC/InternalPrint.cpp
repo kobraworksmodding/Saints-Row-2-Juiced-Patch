@@ -62,7 +62,7 @@ namespace InternalPrint
 	}
 
 	void Init() {
-		if (GameConfig::GetValue("Debug", "AssetLoadPrint", 0))
+		if (GameConfig::GetValue("Logger", "AssetLoadPrint", 0))
 		{
 			Logger::TypedLog(CHN_INTPR, "Printing Asset Loads...\n");
 			patchNop((BYTE*)0x00C0ADEF, 5); // asset load
