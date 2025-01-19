@@ -1424,7 +1424,7 @@ int RenderLoopStuff_Hacked()
 		FirstBootFlag();
 	}
 #if !RELOADED
-	if (!modpackread && GOTR()) {
+	/*if (!modpackread && GOTR()) {
 		ModpackWarning(L"Create a [format][color:#B200FF]gotr.txt[/format] file in the Saints Row 2 directory to stop receiving this message.");
 		ModpackWarning(L"[format][color:#B200FF]Juiced[/format] has detected Gentlemen of the Row, while there are no incompatibilities between the 2\n"
 			L"it should be noted that Gentlemen of the Row is a mod compilation that overhauls the game and does not improve game stability.\n"
@@ -1432,7 +1432,7 @@ int RenderLoopStuff_Hacked()
 			L"");
 
 			modpackread = true;
-	}
+	}*/
 #endif
 	getDeltaTime();
 
@@ -1811,8 +1811,9 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 {
 	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
-	if (FileExists("gotr.txt"))
+	/*if (FileExists("gotr.txt"))
 		modpackread = 1;
+		*/
 #endif
 	patchNop((BYTE*)0x0052598D, 6); // fix for black water in the distance with AA disabled
 	patchNop((BYTE*)0x005267F0, 6); // fix for black water in the distance with AA enabled
