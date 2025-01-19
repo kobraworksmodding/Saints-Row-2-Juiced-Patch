@@ -163,8 +163,8 @@ namespace Render3D
 	{
 		Logger::TypedLog(CHN_MOD, "Making AO Better...\n");
 		//patchNop((BYTE*)0x0052AA90, 6);
-		patchNop((BYTE*)0x005183C8, 6);
-		*(float*)0x348FFDC = (float)AOStrength;
+		//patchNop((BYTE*)0x005183C8, 6);
+		//*(float*)0x348FFDC = (float)AOStrength;
 		patchBytesM((BYTE*)0x00518AFE, (BYTE*)"\xEB\x0A", 2);
 		//patchFloat((BYTE*)0x00518375 + 2, AOStrength);
 
@@ -182,7 +182,7 @@ namespace Render3D
 			Render3D::RemoveVignette();
 		}
 
-		if (GameConfig::GetValue("Graphics", "BetterAmbientOcclusion", 0))
+		if (GameConfig::GetValue("Graphics", "BetterAmbientOcclusion", 1))
 		{
 			BetterAO();
 		}
