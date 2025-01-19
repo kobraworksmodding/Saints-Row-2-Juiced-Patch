@@ -146,7 +146,7 @@ namespace ErrorManager
 
         if (exceptionResult == EHR_CONTINUE)
         {
-            if (gameHasBrokeCounter <= 20000) { //Check for an absurbly high number to rule out this error EVER happening during regular gameplay. incase someone gets breakpoint spam.
+            if (gameHasBrokeCounter <= 65000) { //Check for an absurbly high number to rule out this error EVER happening during regular gameplay. incase someone gets breakpoint spam.
                 if (!b_IgnoreVectoredExceptions)
                     gameHasBrokeCounter++; // Tick once every time EHR_CONTINUE has been checked.
                     Logger::TypedLog(CHN_DEBUG, "Non-fatal exception %s occurred at 0x%08x. Continuing.\n", exceptionString, ExceptionInfo->ContextRecord->Eip);
