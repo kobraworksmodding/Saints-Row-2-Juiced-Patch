@@ -1113,6 +1113,8 @@ bool IsWaiting = false;
 
 void Noclip() {
 	int PlayerBase = *(int*)0x21703D4;
+	if (!PlayerBase)
+		return; // Noclip will still be enabled if this passes.. - Clippy95.
 	float MovementSpeed = (IsKeyPressed(VK_SHIFT, true) ? 80.0f : 40.0f);
 	float xAngle = *(float*)0x025F5B50;
 	float yAngle = *(float*)0x025F5B54;
@@ -1122,6 +1124,9 @@ void Noclip() {
 
 	if (NoclipEnabled && !slewMode && !IsWaiting) {
 		uintptr_t CoordsPointer = ReadPointer(getplayer(true), { 0x570,0x8,0x40,0x18 });
+		if (!CoordsPointer) {
+			return; // Noclip will still be enabled if this passes.. - Clippy95.
+		}
 		float* x = (float*)(*(int*)CoordsPointer + 0x30);
 		float* y = (float*)(*(int*)CoordsPointer + 0x34);
 		float* z = (float*)(*(int*)CoordsPointer + 0x38);
