@@ -1494,10 +1494,10 @@ void SomePMFunc_Hacked()
 {
 
 	if (menustatus(menustatus::pausemenu) || menustatus(menustatus::pausemenuphone) || menustatus(menustatus::pausemenuscroll2) || menustatus(menustatus::pausemenescroll1) || menustatus(menustatus::pausemenuphonebook)) {
-		ChangeTextColor(255, 255, 255, 128);
+		ChangeTextColor(160, 160, 160, 128);
 		__asm pushad
-		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 690, 1280, 3);
-		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 690, 1280, 2);
+		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 680, 1120, 3);
+		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 680, 1120, 2);
 		__asm popad
 	}
 	// Call original func
