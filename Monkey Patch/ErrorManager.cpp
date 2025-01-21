@@ -169,7 +169,20 @@ namespace ErrorManager
 
         char errorBuffer[ERR_LENGTH];
 
-        snprintf(errorBuffer, ERR_LENGTH, "!- RAN INTO A FATAL ERROR AT 0x%08x -!\n\n%s", ExceptionInfo->ContextRecord->Eip, exceptionString);
+        char moduleName[MAX_PATH] = "Unknown Module";
+        DWORD64 moduleBase = SymGetModuleBase64(GetCurrentProcess(), crashAddr);
+
+        if (moduleBase) {
+            if (GetModuleFileNameA((HMODULE)moduleBase, moduleName, sizeof(moduleName)) == 0) {
+                snprintf(moduleName, sizeof(moduleName), "Unknown Module");
+            }
+        }
+
+        uint32_t offset = crashAddr - static_cast<uint32_t>(moduleBase);
+
+        snprintf(errorBuffer, ERR_LENGTH,
+            "!- RAN INTO A FATAL ERROR AT 0x%08x -!\n\n%s\nModule: %s\nOffset: 0x%08x \nModuleBase: 0x%08x",
+            crashAddr, exceptionString, moduleName,offset,moduleBase);
 
         // ------------------
 
@@ -315,6 +328,7 @@ namespace ErrorManager
         {
             Logger::TypedLog(CHN_DLL, "Enabling ExceptionHandler.\n");
             b_Enabled = true;
+            SymInitialize(GetCurrentProcess(), NULL, TRUE); // To load module names
 
             if (GameConfig::GetValue("Logger", "ImmediateExceptionHandler", 0))
                 AssignHandler();
