@@ -6,6 +6,8 @@
 #include "../Patcher/patch.h"
 #include "../SafeWrite.h"
 #include "../GameConfig.h"
+// Use me to store garbagedata when NOP doesn't work.
+static float garbagedata = 0;
 
 namespace Behavior
 {
@@ -111,6 +113,13 @@ namespace Behavior
 		patchBytesM((BYTE*)0x004992a2 + 2, (BYTE*)"\x71\x5D", 2);
 	}
 
+	void DisableLockedClimbCam()
+	{
+		Logger::TypedLog(CHN_DEBUG, "Disable Camera Lock during climb...\n");
+		SafeWrite32(0x0049BD70 + 2, (UInt32)&garbagedata); // X-Axis
+		SafeWrite32(0x0049BD9C + 2, (UInt32)&garbagedata); // Y-Axis
+	}
+
 	void Init()
 	{
 		if (GameConfig::GetValue("Gameplay", "BetterHandbrakeCam", 0)) // Fixes Car CAM Axis while doing handbrakes.
@@ -121,6 +130,11 @@ namespace Behavior
 		if (GameConfig::GetValue("Gameplay", "BetterDriveByCam", 1)) // Fixes Car CAM Axis while doing drive-bys.
 		{
 			BetterDBC();
+		}
+
+		if (GameConfig::GetValue("Gameplay", "DisableCameraLockForClimb", 1))
+		{
+			DisableLockedClimbCam();
 		}
 
 		if (GameConfig::GetValue("Gameplay", "FastDoors", 0)) // removes the anim for kicking or opening doors.
