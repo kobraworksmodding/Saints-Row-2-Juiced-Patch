@@ -1444,7 +1444,7 @@ int RenderLoopStuff_Hacked()
 typedef float(__cdecl* ChangeTextColorT)(int R, int G, int B, int Alpha);
 ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
 
-void __declspec(naked) InGamePrint(const char* Text, int y, int x, int font) {
+void __declspec(naked) InGamePrint(const char* Text, int x, int y, int font) {
 	__asm {
 		push ebp
 		mov ebp, esp
@@ -1456,8 +1456,8 @@ void __declspec(naked) InGamePrint(const char* Text, int y, int x, int font) {
 
 		mov edi, font
 		mov esi, Text
-		push y
 		push x
+		push y
 
 		mov eax, 0xD15DC0
 		call eax
@@ -1476,7 +1476,7 @@ typedef void SomeMMFunc_Native();
 SomeMMFunc_Native* UpdateSomeMMFunc = (SomeMMFunc_Native*)(0x0075B270);
 
 typedef void SomePMFunc_Native();
-SomePMFunc_Native* UpdateSomePMFunc = (SomePMFunc_Native*)(0x77A3C0);
+SomePMFunc_Native* UpdateSomePMFunc = (SomePMFunc_Native*)(0x00B99DB0);
 
 void SomeMMFunc_Hacked()
 {
@@ -1490,21 +1490,21 @@ void SomeMMFunc_Hacked()
 	// Call original func
 	return UpdateSomeMMFunc();
 }
-
+/*
 void SomePMFunc_Hacked()
 {
 
 	if (menustatus(menustatus::pausemenu) || menustatus(menustatus::pausemenuphone) || menustatus(menustatus::pausemenuscroll2) || menustatus(menustatus::pausemenescroll1) || menustatus(menustatus::pausemenuphonebook)) {
-		ChangeTextColor(255, 255, 255, 128);
+		ChangeTextColor(160, 160, 160, 128);
 		__asm pushad
-		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 690, 1280, 3);
-		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 690, 1280, 2);
+		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 680, 160, 6);
 		__asm popad
 	}
+
 	// Call original func
 	return UpdateSomePMFunc();
 }
-
+*/
 
 int(__stdcall* theirbind)(SOCKET, const struct sockaddr_in*, int) = nullptr;
 
@@ -1933,8 +1933,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_MOD, "Patching MenuVersionNumber...\n");
 		//patchCall((void*)0x0052050C, (void*)SomeMMFunc_Hacked);
 		patchCall((void*)0x0073CE0D, (void*)SomeMMFunc_Hacked);
-		if (2 <= GameConfig::GetValue("Debug", "MenuVersionNumber", 1))
-			SafeWrite32(0x00E8D060, (UInt32)&SomePMFunc_Hacked);
+		//patchCall((void*)0x00B995D5, (void*)SomePMFunc_Hacked);
 	}
 
 	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 0)) // great for testing stuff faster and also for an optional feature in gen
