@@ -187,6 +187,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ErrorManager.cpp" />
+    <ClCompile Include="Game\Game.cpp" />
     <ClCompile Include="LUA\GLua.cpp" />
     <ClCompile Include="LAAPatcher.cpp" />
     <ClCompile Include="loose files.cpp" />
@@ -217,6 +218,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="ext\inc\lua\lua.h" />
     <ClInclude Include="ext\inc\lua\lualib.h" />
     <ClInclude Include="ErrorManager.h" />
+    <ClInclude Include="Game\Game.h" />
     <ClInclude Include="LUA\GLua.h" />
     <ClInclude Include="LAAPatcher.h" />
     <ClInclude Include="loose files.h" />

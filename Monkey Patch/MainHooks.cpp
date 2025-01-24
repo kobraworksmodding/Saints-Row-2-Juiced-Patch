@@ -14,6 +14,7 @@
 #include "Math/Math.h"
 #include "Render/Render3D.h"
 #include "LUA/GLua.h"
+#include "Game/Game.h"
 #include "GameConfig.h"
 #include "iat_functions.h"
 #include <chrono>
