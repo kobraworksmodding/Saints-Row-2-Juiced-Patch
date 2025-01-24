@@ -13,7 +13,7 @@
 #include "Player/Behavior.h"
 #include "Math/Math.h"
 #include "Render/Render3D.h"
-
+#include "LUA/GLua.h"
 #include "GameConfig.h"
 #include "iat_functions.h"
 #include <chrono>
@@ -1917,6 +1917,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	Behavior::Init();
 	Memory::Init();
 	Render3D::Init();
+	GLua::Init();
 
 #if RELOADED
 

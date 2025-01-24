@@ -36,6 +36,9 @@
     <Filter Include="Source Files\Math">
       <UniqueIdentifier>{a786af15-dedf-4030-9d0f-45c55817223e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\LUA">
+      <UniqueIdentifier>{fe08247a-9082-4937-ac9a-58374eab3d71}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DFEngine.cpp">
@@ -109,6 +112,9 @@
     </ClCompile>
     <ClCompile Include="Math\Math.cpp">
       <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="LUA\GLua.cpp">
+      <Filter>Source Files\LUA</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -198,6 +204,9 @@
     </ClInclude>
     <ClInclude Include="Math\Math.h">
       <Filter>Source Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="LUA\GLua.h">
+      <Filter>Source Files\LUA</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
