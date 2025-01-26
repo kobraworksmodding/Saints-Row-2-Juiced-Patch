@@ -28,7 +28,7 @@ const double fourbythreeAR = 1.333333373069763;
 
 float deltaTime;
 
-const char* juicedversion = "7.2.1";
+const char* juicedversion = "7.2.2";
 
 char* executableDirectory[MAX_PATH];
 const char ServerNameRL[] = "[RELOADED Mod 1.0.0b4]";

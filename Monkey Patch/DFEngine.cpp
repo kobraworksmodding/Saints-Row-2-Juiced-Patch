@@ -73,7 +73,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 
 			auto pattern = hook::pattern("FD A1 CB 99 95 E9 F1 31 94 B8 5D 09 17 41");
 			if (!pattern.empty()) {
-				Logger::TypedLog(CHN_DLL, "This exe is surely the steam exe. Patching using xdelta to ensure unencrypted data.\n\n\n");
+				Logger::TypedLog(CHN_DLL, "We've now ensured that the running exe is a Steam EXE. Patching using xdelta to ensure unencrypted data.\n\n\n");
 				std::wstring rt = L"JuicedSteamXDel.bat";
 				startup(rt.c_str());
 				exit(0);
