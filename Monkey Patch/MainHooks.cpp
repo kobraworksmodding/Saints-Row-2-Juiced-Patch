@@ -1111,7 +1111,17 @@ void ToggleNoclip() {
 }
 
 bool IsWaiting = false;
-
+/*
+xtbl_node* test = nullptr;
+void xtbl_parse_test() {
+	test = Game::xml::parse_table_node("weapons.xtbl",0);
+	uint32_t checksum = Game::xml::checksum(test, 0);
+	printf("\n addr: 0x%X", &test);
+	if(test)
+	printf("\n test: 0x%X", test);
+	printf("\n checksum: 0x%X \n", checksum);
+}
+*/
 void Noclip() {
 	int PlayerBase = *(int*)0x21703D4;
 	if (!PlayerBase)
@@ -1278,7 +1288,13 @@ void LuaExecutor() {
 			else if (Converted == "noclip") {
 				ToggleNoclip();
 			}
+			/*
+			else if (Converted == "xtbl") {
 
+				xtbl_parse_test();
+
+			}
+			*/
 			else {
 				LuaExecute(Converted.c_str());
 			}
@@ -1825,6 +1841,7 @@ int dirExists(const char* const path)
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	//xtbl_parse_test();
 	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
 	/*if (FileExists("gotr.txt"))

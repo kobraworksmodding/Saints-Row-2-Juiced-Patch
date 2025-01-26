@@ -22,10 +22,28 @@ struct vint_message_struct
 	int field_24 = 0;
 };
 
+struct xtbl_node
+{
+	char* name;
+	xtbl_node* next; // next_node
+	xtbl_node* elements; // branch_node
+	char* text;
+};
+
 namespace Game
 {
 	namespace HUD {
 		extern int vint_message(wchar_t* message_text, vint_message_struct *a2);
 	};
+	namespace xml {
+		typedef int(__cdecl* read_and_parse_fileT)(char* xtbl_filename, int* xtbl_mempool_loc);
+		extern read_and_parse_fileT read_and_parse_file;
+		extern xtbl_node* parse_table_node(const char* filename, int* override_xtbl_mempool);
+		extern uint32_t checksum(xtbl_node* root, uint32_t accumulator);
+	}
+	namespace utils {
+		typedef uint32_t(__thiscall* crc_strT)(char* text);
+		extern crc_strT str_to_hash;
+	}
 };
 
