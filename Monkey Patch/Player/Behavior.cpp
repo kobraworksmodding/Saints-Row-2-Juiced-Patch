@@ -120,6 +120,10 @@ namespace Behavior
 		SafeWrite32(0x0049BD9C + 2, (UInt32)&garbagedata); // Y-Axis
 	}
 
+	void AllowToggleCrouchWhileWalk() {
+		Logger::TypedLog(CHN_DEBUG, "Allow Toggle Crouch to work while walking...\n");
+		patchNop((BYTE*)0x004F9944, 2);
+	}
 	void Init()
 	{
 		if (GameConfig::GetValue("Gameplay", "BetterHandbrakeCam", 0)) // Fixes Car CAM Axis while doing handbrakes.
@@ -135,6 +139,11 @@ namespace Behavior
 		if (GameConfig::GetValue("Gameplay", "DisableCameraLockForClimb", 1))
 		{
 			DisableLockedClimbCam();
+		}
+
+		if (GameConfig::GetValue("Gameplay", "AllowToggleCrouchWhileWalk", 1))
+		{
+			AllowToggleCrouchWhileWalk();
 		}
 
 		if (GameConfig::GetValue("Gameplay", "FastDoors", 0)) // removes the anim for kicking or opening doors.
