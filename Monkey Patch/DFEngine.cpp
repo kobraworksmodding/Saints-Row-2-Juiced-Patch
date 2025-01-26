@@ -10,6 +10,8 @@
 #include "GameConfig.h"
 #include "LAAPatcher.h"
 #include <vector>
+#include "Ext/Hooking.Patterns.h"
+#include <Windows.h>
 
 static CDFEngine DFEngine;
 static CDFObjectInstance fake_CDFObject;
@@ -18,6 +20,34 @@ int address_offset = 0;
 
 static std::vector<std::wstring> find_billboards_list;
 static int number_of_billboard_files;
+
+VOID startup(LPCTSTR lpApplicationName)
+{
+	// additional information
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+
+	// set the size of the structures
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	// start the program up
+	CreateProcess(lpApplicationName,   // the path
+		NULL,        // Command line
+		NULL,           // Process handle not inheritable
+		NULL,           // Thread handle not inheritable
+		FALSE,          // Set handle inheritance to FALSE
+		0,              // No creation flags
+		NULL,           // Use parent's environment block
+		NULL,           // Use parent's starting directory 
+		&si,            // Pointer to STARTUPINFO structure
+		&pi             // Pointer to PROCESS_INFORMATION structure (removed extra parentheses)
+	);
+	// Close process and thread handles. 
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+}
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -40,12 +70,22 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		UInt32 winmaindata = *((UInt32*)offset_addr(0x00520ba0));
 		if (winmaindata != 0x83ec8b55) {
 			Logger::TypedLog(CHN_DLL, "WinMain sanity check failed. Probably running the Steam encrypted version.\n");
+
+			auto pattern = hook::pattern("FD A1 CB 99 95 E9 F1 31 94 B8 5D 09 17 41");
+			if (!pattern.empty()) {
+				Logger::TypedLog(CHN_DLL, "This exe is surely the steam exe. Patching using xdelta to ensure unencrypted data.\n\n\n");
+				std::wstring rt = L"JuicedSteamXDel.bat";
+				startup(rt.c_str());
+				exit(0);
+			}
+
 			if (MessageBoxA(NULL, "Possible Steam game executable detected.\n\nAs a massive warning, the steam executable for SR2 is really un-stable and will cause more crashes than you should ever need.\n\nIf you want increased stability it is recommended you either find a download for the GOG executable for your game as it's a fixed version of the SR2 executable and is compatible with the steam game files, or you run Steamless on your Steam SR2 Game Executable.\n\nIf you run steamless on your Steam SR2 Executable and run SR2 with Juiced again, Juiced Patch will LAA (Large Address Aware) patch your game executable preventing most crashes.\n\nWould you like to ignore this warning and keep playing?", "Saints Row 2 Juiced Patch", MB_ICONEXCLAMATION | MB_YESNO) == IDNO) {
 				exit(0);
 			}
 		}
 		else 
 		{
+
 			LAAPatcher::LAACheck();
 		}
 

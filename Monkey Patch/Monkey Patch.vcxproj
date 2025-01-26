@@ -24,6 +24,7 @@
     <ProjectGuid>{470235EE-E987-45D6-8BCD-AA93D09EFACF}</ProjectGuid>
     <RootNamespace>BlankDFEngine</RootNamespace>
     <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -99,6 +100,7 @@
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -119,6 +121,7 @@
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)DFEngine.dll</OutputFile>
@@ -145,6 +148,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "Z:\Games\Saints Row 2\DFEngine.dll"
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)RLEngine.dll</OutputFile>
@@ -168,6 +172,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "Z:\Games\Saints Row 2\DFEngine.dll"
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)DFEngine.dll</OutputFile>
@@ -187,6 +192,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ErrorManager.cpp" />
+    <ClCompile Include="Ext\Hooking.Patterns.cpp" />
     <ClCompile Include="Game\Game.cpp" />
     <ClCompile Include="LUA\GLua.cpp" />
     <ClCompile Include="LAAPatcher.cpp" />
@@ -214,6 +220,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="UGC\Reloaded.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Ext\Hooking.Patterns.h" />
     <ClInclude Include="ext\inc\lua\lauxlib.h" />
     <ClInclude Include="ext\inc\lua\lua.h" />
     <ClInclude Include="ext\inc\lua\lualib.h" />
