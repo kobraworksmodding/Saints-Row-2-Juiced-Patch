@@ -8,11 +8,14 @@
 #include "../GameConfig.h"
 // Use me to store garbagedata when NOP doesn't work.
 static float garbagedata = 0;
+double bogusPi = 2.90;
+double bogusRagForce = 2.5;
+double animBlend = 3.0;
 
 namespace Behavior
 {
 
-	void BetterMovement() 
+	void BetterMovement()
 	{
 		// Majority of the SR2 movement sluggishness is due to the fact that certain walking anims add an
 		// increased latency to walking generally and 180 anims tend to play constantly when trying to strafe, 180 anims didnt exist in SR1.
@@ -25,6 +28,11 @@ namespace Behavior
 		patchNop((BYTE*)0x00E92364, 3); // WalkToStop
 		patchNop((BYTE*)0x00E92394, 3); // WalkToStand
 		patchNop((BYTE*)0x00E92388, 3); // StandToWalk
+	}
+
+	void AllowToggleCrouchWhileWalk() {
+		Logger::TypedLog(CHN_DEBUG, "Allow Toggle Crouch to work while walking...\n");
+		patchNop((BYTE*)0x004F9944, 2);
 	}
 
 	void SR1Reloading()
@@ -120,12 +128,22 @@ namespace Behavior
 		SafeWrite32(0x0049BD9C + 2, (UInt32)&garbagedata); // Y-Axis
 	}
 
-	void AllowToggleCrouchWhileWalk() {
-		Logger::TypedLog(CHN_DEBUG, "Allow Toggle Crouch to work while walking...\n");
-		patchNop((BYTE*)0x004F9944, 2);
-	}
 	void Init()
 	{
+		/*patchDWord((void*)(0x00D96A50 + 2), (uint32_t)&bogusRagForce);
+		patchDWord((void*)(0x00D974B0 + 2), (uint32_t)&bogusRagForce);
+		patchDWord((void*)(0x00D97AE8 + 2), (uint32_t)&bogusRagForce);
+		patchDWord((void*)(0x00D981E0 + 2), (uint32_t)&bogusRagForce);*/
+		if (GameConfig::GetValue("Gameplay", "BetterRagdollJoints", 0))
+		{
+			patchDWord((void*)(0x00D26587 + 2), (uint32_t)&bogusPi);
+		}
+
+		if (GameConfig::GetValue("Gameplay", "BetterAnimBlend", 0))
+		{
+			patchDWord((void*)(0x006F1CA6 + 2), (uint32_t)&animBlend);
+		}
+
 		if (GameConfig::GetValue("Gameplay", "BetterHandbrakeCam", 0)) // Fixes Car CAM Axis while doing handbrakes.
 		{
 			BetterHBC();
@@ -136,14 +154,15 @@ namespace Behavior
 			BetterDBC();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "DisableCameraLockForClimb", 1))
-		{
-			DisableLockedClimbCam();
-		}
-
 		if (GameConfig::GetValue("Gameplay", "AllowToggleCrouchWhileWalk", 1))
 		{
 			AllowToggleCrouchWhileWalk();
+		}
+
+		if (GameConfig::GetValue("Gameplay", "AllowToggleCrouchWhileWalk", 1))
+		if (GameConfig::GetValue("Gameplay", "DisableCameraLockForClimb", 1))
+		{
+			DisableLockedClimbCam();
 		}
 
 		if (GameConfig::GetValue("Gameplay", "FastDoors", 0)) // removes the anim for kicking or opening doors.
