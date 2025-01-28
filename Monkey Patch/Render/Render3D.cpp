@@ -79,7 +79,7 @@ namespace Render3D
 		BYTE ActorFade = *(BYTE*)0x00E8825F;
 
 		if (*(FLOAT*)WalkCamZoom > -0.5) {
-			*(FLOAT*)0x025F6334 = -0.4; // Force camera zoom to chest/in front of player.
+			*(FLOAT*)0x025F6334 = -0.6; // Force camera zoom to chest/in front of player.
 		}
 		if (ActorFade == 0x01) {
 			*(BYTE*)0x00E8825F = 0x00; // Force ActorFade to off.
@@ -254,12 +254,28 @@ namespace Render3D
 		{
 			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS...\n");
 			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
+			patchNop((BYTE*)0x0099453D, 2);
+			patchNop((BYTE*)0x00994541, 5);
+			patchNop((BYTE*)0x0099454C, 5);
 		}
 		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
 		{
 			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS with Viewmodel...\n");
 			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
+			patchNop((BYTE*)0x0099453D, 2);
+			patchNop((BYTE*)0x00994541, 5);
+			patchNop((BYTE*)0x0099454C, 5);
 			useFPSCam = 1;
+		}
+		if (GameConfig::GetValue("Graphics", "ClassicGTAIdle", 0) &&
+			!GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1 
+			|| !GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
+		{
+			Logger::TypedLog(CHN_MOD, "Patching in Classic GTA Idle...\n");
+			//patchByte((BYTE*)0x00960C30, 0xC3);
+			//patchNop((BYTE*)0x0099453D, 2);
+			patchNop((BYTE*)0x00994541, 5);
+			patchNop((BYTE*)0x0099454C, 5);
 		}
 	}
 }
