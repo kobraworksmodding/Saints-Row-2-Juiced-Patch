@@ -159,7 +159,6 @@ namespace Behavior
 			AllowToggleCrouchWhileWalk();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "AllowToggleCrouchWhileWalk", 1))
 		if (GameConfig::GetValue("Gameplay", "DisableCameraLockForClimb", 1))
 		{
 			DisableLockedClimbCam();
