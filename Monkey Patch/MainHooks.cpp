@@ -1060,7 +1060,7 @@ PlayerHolsterT PlayerHolster = (PlayerHolsterT)0x9661E0;
 typedef void(__stdcall* SetInvulnerableT)(int Pointer, bool Enable);
 SetInvulnerableT SetInvulnerable = (SetInvulnerableT)0x965F40;
 
-
+#if !RELOADED
 void ResetYVel() {
 	uintptr_t YVelBase = ReadPointer(getplayer(true), { 0x570 });
 	float* YVelPositive = (float*)(*(int*)YVelBase + 0x164);
@@ -1176,10 +1176,10 @@ void Noclip() {
 	}
 
 }
-
+#endif
 typedef void(*LoadLevelT)();
 LoadLevelT LoadLevel = (LoadLevelT)0x73C000;
-
+#if !RELOADED
 void LuaExecutor() {
 	BYTE CurrentGamemode = *(BYTE*)0x00E8B210; 
 	BYTE LobbyCheck = *(BYTE*)0x02528C14; // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.
@@ -1359,6 +1359,7 @@ void LuaExecutor() {
 		}
 	}
 }
+#endif
 #if !RELOADED
 inline void ModpackWarning(const wchar_t* Warning) {
 	__asm pushad
@@ -1402,9 +1403,10 @@ int RenderLoopStuff_Hacked()
 		UpdateKeys();
 	    cus_FrameToggles();
 	    Slew();
+#if !RELOADED
 		LuaExecutor();
 		Noclip();
-
+#endif
 	if (Render3D::VFXP_fixFog)
 	   FogTest();
 
@@ -1838,10 +1840,8 @@ int dirExists(const char* const path)
 
 	return (info.st_mode & S_IFDIR) ? 1 : 0;
 }
-
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-	//xtbl_parse_test();
 	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
 	/*if (FileExists("gotr.txt"))
@@ -1866,9 +1866,11 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchCall((void*)0x009A3D8E, (void*)IdleFix);
 	patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
 	patchCall((void*)0x00C08493, (void*)TextureCrashFix);
+#if !RELOADED
 	if (GameConfig::GetValue("Debug", "PatchPauseMenuLua", 1)) {
 		patchCall((void*)0x00CD9FE8, (void*)luaLoadBuff); // used to intercept the pause menu lua before compiled, needed for full 8x MSAA support + custom res
 	}
+#endif
 	WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
 	WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
 	WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out

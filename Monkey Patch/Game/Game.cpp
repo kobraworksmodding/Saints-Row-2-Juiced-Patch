@@ -28,6 +28,8 @@ namespace Game
 			}
 		}
 	};
+// maybe expose read_and_parse_file for outside reloaded but currently I don't have a use for it in Juiced -- Clippy95
+#if RELOADED
 	namespace xml {
 		read_and_parse_fileT read_and_parse_file = (read_and_parse_fileT)0x00966720;
 
@@ -69,4 +71,5 @@ namespace Game
 	namespace utils {
 		crc_strT str_to_hash = (crc_strT)0x00BDC9B0;
 	}
+#endif
 };
