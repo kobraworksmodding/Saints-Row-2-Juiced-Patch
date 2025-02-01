@@ -663,4 +663,7 @@ namespace RPCHandler {
     extern bool ShouldFixStereo;
     extern char* ClanTag[3];
     extern bool UsingClanTag;
+#if RELOADED
+    extern void RLServerNameUpdateOnce();
+#endif
 }
