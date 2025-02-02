@@ -59,6 +59,7 @@ bool IsSRFocused()
 	HWND Window = GetForegroundWindow();
 	GetWindowThreadProcessId(GetForegroundWindow(), &pid);
 	if (Window != ConsoleWindow) {
+		ClipCursor(0); // Make SR2 let go of the Cursor, hopefully.
 		return pid == GetCurrentProcessId();
 	}
 	return false;
