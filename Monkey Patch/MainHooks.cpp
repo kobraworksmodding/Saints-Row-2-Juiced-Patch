@@ -27,9 +27,9 @@
 #pragma comment(lib, "Xinput.lib")
 const double fourbythreeAR = 1.333333373069763;
 
-bool useJuicedOSD = false;
+BYTE useJuicedOSD = 0;
 bool useExpandedOSD = false;
-void PrintCoords(float x, float y, float z);
+void PrintCoords(float x, float y, float z,bool showplayerorient);
 void PrintFrametime();
 void PrintGameFrametime();
 void PrintFramerate();
@@ -900,13 +900,24 @@ void cus_FrameToggles() {
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
-		FPSCounter = !FPSCounter;
+		useJuicedOSD = (useJuicedOSD + 1) % 4;
 		std::wstring subtitles = L"Debugging Info:[format][color:purple]";
-		subtitles += FPSCounter ? L" ON" : L" OFF";
+		switch (useJuicedOSD) {
+		case 0:
+			subtitles += L" OFF";
+			break;
+		case 1:
+			subtitles += L" 1";
+			break;
+		case 2:
+			subtitles += L" 2";
+			break;
+		case 3:
+			subtitles += L" 3";
+			break;
+		}
 		subtitles += L"[/format]";
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-		useJuicedOSD = FPSCounter ? true : false;
-
 	}
 
 	if (IsKeyPressed(VK_F2, false)) { // F2
@@ -1434,12 +1445,12 @@ static bool modpackread = 0;
 #endif
 int RenderLoopStuff_Hacked()
 {
-	if (useJuicedOSD == true) {
+	if (useJuicedOSD) {
 		PrintFrametime();
 		PrintGameFrametime();
 		PrintFramerate();
-		if (useExpandedOSD == true) {
-			PrintCoords(*(float*)0x25F5BB4, *(float*)0x25F5BBC, *(float*)0x25F5BB8); // z = height? even though it's most likely Y since they are in X,Y,Z
+		if (useJuicedOSD >= 2) {
+			PrintCoords(*(float*)0x25F5BB4, *(float*)0x25F5BBC, *(float*)0x25F5BB8, (useJuicedOSD >= 3)); // z = height? even though it's most likely Y since they are in X,Y,Z
 			PrintUsername();
 			PrintPartnerUsername();
 		}
@@ -1557,9 +1568,19 @@ int processtextwidth(int width) {
 
 }
 
-void PrintCoords(float x, float z,float y) {
-	char buffer[50];
+void PrintCoords(float x, float z,float y, bool showplayerorient) {
+	int baseplayer = getplayer();
+	char buffer[90];
 	snprintf(buffer, sizeof(buffer), "UserCoords: (X: %.1f, Y: %.1f, Z: %.1f)", x, y, z);
+	 if(showplayerorient && baseplayer) {
+			float x_player_sin = *(float*)(baseplayer + 0x38);
+			float x_player_cos = *(float*)(baseplayer + 0x40);
+			float orient_player = atan2(x_player_sin, x_player_cos);
+			float xAngle = *(float*)0x025F5B50;
+			float zAngle = *(float*)0x025F5B58;
+			float orient_camera = atan2(xAngle, zAngle);
+		snprintf(buffer, sizeof(buffer), "UserCoords: (X: %.4f, Y: %.4f, Z: %.4f, C: %.4f, P: %.4f)", x, y, z, orient_camera, orient_player);
+	}
 	ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
 	InGamePrint(buffer, 60, processtextwidth(0), 6);
@@ -2116,12 +2137,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 
 #endif
-
-	if (GameConfig::GetValue("Debug", "ExpandedOSD", 0))
-	{
-		useExpandedOSD = true;
-		Logger::TypedLog(CHN_DEBUG, "Using Expanded F3 Debugging OSD.\n");
-	}
 
 	if (GameConfig::GetValue("Debug", "DisableXInput", 0))
 	{
