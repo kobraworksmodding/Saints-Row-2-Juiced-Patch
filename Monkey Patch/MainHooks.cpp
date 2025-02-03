@@ -26,6 +26,8 @@
 #pragma comment(lib, "Xinput.lib")
 const double fourbythreeAR = 1.333333373069763;
 void PrintCoords(float x, float y, float z);
+void PrintFrametime();
+void PrintFramerate();
 float deltaTime;
 
 const char* juicedversion = "7.2.2";
@@ -1425,6 +1427,8 @@ static bool modpackread = 0;
 int RenderLoopStuff_Hacked()
 {
 	//PrintCoords(*(float*)0x25F5BB4, *(float*)0x25F5BB8, *(float*)0x25F5BBC); // z = height? even though it's most likely Y since they are in X,Y,Z
+	//PrintFrametime();
+	//PrintFramerate();
 	if (RPCHandler::Enabled) 
 	{
 		RPCHandler::DiscordCallbacks();
@@ -1540,10 +1544,30 @@ int processtextwidth(int width) {
 
 void PrintCoords(float x, float z,float y) {
 	char buffer[50];
-	snprintf(buffer, sizeof(buffer), "(%.1f, %.1f, %.1f)", x, y, z);
+	snprintf(buffer, sizeof(buffer), "CurCoords: (X: %.1f, Y: %.1f, Z: %.1f)", x, y, z);
 	ChangeTextColor(160, 160, 160, 255);
 	__asm pushad
-	InGamePrint(buffer, 680, processtextwidth(1000), 6);
+	InGamePrint(buffer, 25, processtextwidth(0), 6);
+	__asm popad
+}
+
+void PrintFrametime() {
+	char buffer[50];
+	float ft = *(float*)(0x02527DA4);
+	snprintf(buffer, sizeof(buffer), "CurFrametime: %f", ft);
+	ChangeTextColor(160, 160, 160, 255);
+	__asm pushad
+	InGamePrint(buffer, 45, processtextwidth(0), 6);
+	__asm popad
+}
+
+void PrintFramerate() {
+	char buffer[50];
+	float fr = 1.0f / *(float*)(0xE84380);
+	snprintf(buffer, sizeof(buffer), "CurFramerate: %f", fr);
+	ChangeTextColor(160, 160, 160, 255);
+	__asm pushad
+	InGamePrint(buffer, 0, processtextwidth(0), 6);
 	__asm popad
 }
 
