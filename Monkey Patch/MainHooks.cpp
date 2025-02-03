@@ -950,12 +950,14 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_F5, false)) { // F5
 		FLOAT* hkg_playerPosition = (FLOAT*)0x00FA6DB0;
-		FLOAT* hkg_camOrient = (FLOAT*)0x025F5B5C; // ???? maybe
+		float xAngle = *(float*)0x025F5B50;
+		float zAngle = *(float*)0x025F5B58;
+		float hkg_camOrient = atan2(xAngle, zAngle);
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
 		std::wstring subtitles = (L"Player Position & Orient Printed to Console!");
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-		Logger::TypedLog(CHN_DEBUG, "Player Pos + Orient: <%0.6f %0.6f %0.6f> [%0.6f]\n", hkg_playerPosition[0], hkg_playerPosition[1], hkg_playerPosition[2], hkg_camOrient[0]);
+		Logger::TypedLog(CHN_DEBUG, "Player Pos + Orient: <%0.6f %0.6f %0.6f> [%0.6f]\n", hkg_playerPosition[0], hkg_playerPosition[1], hkg_playerPosition[2], hkg_camOrient);
 	}
 
 	if (IsKeyPressed(VK_F7, false)) {
