@@ -23,11 +23,17 @@
 #include <WinSock2.h>
 #include "Xinput.h"
 #include <windows.h>
+#include <codecvt>
 #pragma comment(lib, "Xinput.lib")
 const double fourbythreeAR = 1.333333373069763;
+
+bool useJuicedOSD = false;
 void PrintCoords(float x, float y, float z);
 void PrintFrametime();
 void PrintFramerate();
+void PrintUsername();
+void PrintPartnerUsername();
+
 float deltaTime;
 
 const char* juicedversion = "7.2.2";
@@ -897,7 +903,7 @@ void cus_FrameToggles() {
 		subtitles += FPSCounter ? L" ON" : L" OFF";
 		subtitles += L"[/format]";
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-		*(BYTE*)(0x0252734B) = FPSCounter ? 0x1 : 0x0;
+		useJuicedOSD = FPSCounter ? true : false;
 
 	}
 
@@ -1426,9 +1432,13 @@ static bool modpackread = 0;
 #endif
 int RenderLoopStuff_Hacked()
 {
-	//PrintCoords(*(float*)0x25F5BB4, *(float*)0x25F5BB8, *(float*)0x25F5BBC); // z = height? even though it's most likely Y since they are in X,Y,Z
-	//PrintFrametime();
-	//PrintFramerate();
+	if (useJuicedOSD == true) {
+		PrintCoords(*(float*)0x25F5BB4, *(float*)0x25F5BBC, *(float*)0x25F5BB8); // z = height? even though it's most likely Y since they are in X,Y,Z
+		PrintFrametime();
+		PrintFramerate();
+		PrintUsername();
+		PrintPartnerUsername();
+	}
 	if (RPCHandler::Enabled) 
 	{
 		RPCHandler::DiscordCallbacks();
@@ -1544,31 +1554,76 @@ int processtextwidth(int width) {
 
 void PrintCoords(float x, float z,float y) {
 	char buffer[50];
-	snprintf(buffer, sizeof(buffer), "CurCoords: (X: %.1f, Y: %.1f, Z: %.1f)", x, y, z);
-	ChangeTextColor(160, 160, 160, 255);
+	snprintf(buffer, sizeof(buffer), "UserCoords: (X: %.1f, Y: %.1f, Z: %.1f)", x, y, z);
+	ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
-	InGamePrint(buffer, 25, processtextwidth(0), 6);
+	InGamePrint(buffer, 40, processtextwidth(0), 6);
 	__asm popad
 }
 
 void PrintFrametime() {
 	char buffer[50];
 	float ft = *(float*)(0x02527DA4);
-	snprintf(buffer, sizeof(buffer), "CurFrametime: %f", ft);
-	ChangeTextColor(160, 160, 160, 255);
+	snprintf(buffer, sizeof(buffer), "Frametime: %f", ft);
+	ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
-	InGamePrint(buffer, 45, processtextwidth(0), 6);
+	InGamePrint(buffer, 20, processtextwidth(0), 6);
 	__asm popad
 }
 
 void PrintFramerate() {
 	char buffer[50];
 	float fr = 1.0f / *(float*)(0xE84380);
-	snprintf(buffer, sizeof(buffer), "CurFramerate: %f", fr);
-	ChangeTextColor(160, 160, 160, 255);
+	snprintf(buffer, sizeof(buffer), "FPS: %f", fr);
+	if (fr < 20.0) {
+		ChangeTextColor(255, 5, 5, 255);
+	}
+	else {
+		if (fr < 35.0) {
+			ChangeTextColor(255, 255, 0, 255);
+			__asm pushad
+			InGamePrint(buffer, 0, processtextwidth(0), 6);
+			__asm popad
+			return;
+		}
+		ChangeTextColor(255, 255, 255, 255);
+	}
 	__asm pushad
 	InGamePrint(buffer, 0, processtextwidth(0), 6);
 	__asm popad
+}
+void PrintUsername() {
+	BYTE GamespyStatus = *(BYTE*)0x02529334;
+	if (GamespyStatus == 4) {
+		char buffer[50];
+		char* playerName = (CHAR*)0x0212AB48;
+		snprintf(buffer, sizeof(buffer), "GS Username: %s", playerName);
+		ChangeTextColor(255, 255, 255, 255);
+		__asm pushad
+		InGamePrint(buffer, 60, processtextwidth(0), 6);
+		__asm popad
+	}
+}
+
+std::string wstring_to_string(const std::wstring& wstr) {
+	// Create a wide-to-narrow converter
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	return converter.to_bytes(wstr);
+}
+
+void PrintPartnerUsername() {
+	BYTE GamespyStatus = *(BYTE*)0x02529334;
+	if (GamespyStatus == 4) {
+		char buffer[50];
+		wchar_t* partnerName = (WCHAR*)0x02CD1870;
+		std::wstring wPartnerName = partnerName; // parse co-op partner name to a wstring
+		std::string f_PartnerName = wstring_to_string(wPartnerName); // THEN to a string
+		snprintf(buffer, sizeof(buffer), "Recently played with in CO-OP: %s", f_PartnerName.c_str());
+		ChangeTextColor(255, 255, 255, 255);
+		__asm pushad
+		InGamePrint(buffer, 80, processtextwidth(0), 6);
+		__asm popad
+	}
 }
 
 typedef void SomeMMFunc_Native();
