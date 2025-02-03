@@ -31,7 +31,6 @@ float deltaTime;
 const char* juicedversion = "7.2.2";
 
 char* executableDirectory[MAX_PATH];
-const char ServerNameRL[] = "[RELOADED Mod 1.0.0b4]";
 const char ServerNameSR2[] = "[Saints Row 2]";
 // - UNUSED
 float AOQuality = 0.05;
@@ -101,6 +100,7 @@ bool IsSRFocused()
 	HWND Window = GetForegroundWindow();
 	GetWindowThreadProcessId(GetForegroundWindow(), &pid);
 	if (Window != ConsoleWindow) {
+		ClipCursor(0); // Make SR2 let go of the Cursor, hopefully.
 		return pid == GetCurrentProcessId();
 	}
 	return false;
@@ -1608,8 +1608,9 @@ void SetDefaultGameSettings()
 {
 	patchBytesM((BYTE*)0x00774126, (BYTE*)"\xC6\x05\xAC\xA9\xF7\x01\x00", 7); // Force game into windowed on default settings.
 #if RELOADED
-	char* GameName = reinterpret_cast<char*>(0x0212AA08);
-	strcpy(GameName, (const char*)ServerNameRL);
+	//char* playerName = (CHAR*)0x0212AB48;
+	//char* GameName = reinterpret_cast<char*>(0x0212AA08);
+	//strcpy(GameName, playerName);
 
 	patchNop((BYTE*)0x0083FA3D, 22); // Removes the Unlim Score/Time check for MP.
 

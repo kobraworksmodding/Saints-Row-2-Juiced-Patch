@@ -231,6 +231,17 @@ namespace RPCHandler {
 	bool AlreadyAddedClanTag = 0;
 	int isDefaultSNameChecked = 0;
 	bool UsingClanTag = 0;
+#if RELOADED
+	bool ChangedRLServerName = 0;
+
+	void RLServerNameUpdateOnce() {
+		char* playerName = (CHAR*)0x0212AB48;
+		char finalSName[2048];
+		sprintf(finalSName, "%s - SR2 RL 1\.0b4", playerName);
+		char* GameName = reinterpret_cast<char*>(0x0212AA08);
+		strcpy(GameName, finalSName);
+	}
+#endif
 
 	// Updates state info for discord.
 	void UpdateDiscordParams() {
@@ -410,6 +421,12 @@ namespace RPCHandler {
 			if (LobbyCheck == 0x0) // Usually Menus Check
 			{
 #if RELOADED
+				if (GamespyStatus == 0x4) {
+					if (ChangedRLServerName == 0) {
+						RLServerNameUpdateOnce();
+						ChangedRLServerName = 1;
+					}
+				}
 				if (UsingClanTag == 1)
 				{
 					if (GamespyStatus == 0x4) {
@@ -491,6 +508,12 @@ namespace RPCHandler {
 			if (LobbyCheck == 0x0) // Usually Menus Check
 			{
 #if RELOADED
+				if (GamespyStatus == 0x4) {
+					if (ChangedRLServerName == 0) {
+						RLServerNameUpdateOnce();
+						ChangedRLServerName = 1;
+					}
+				}
 				if (UsingClanTag == 1)
 				{
 					if (GamespyStatus == 0x4) {
