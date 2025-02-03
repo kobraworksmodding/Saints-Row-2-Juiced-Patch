@@ -25,7 +25,7 @@
 #include <windows.h>
 #pragma comment(lib, "Xinput.lib")
 const double fourbythreeAR = 1.333333373069763;
-
+void PrintCoords(float x, float y, float z);
 float deltaTime;
 
 const char* juicedversion = "7.2.2";
@@ -54,6 +54,47 @@ void UpdateKeys()
 	}
 }
 
+/*bool IsMemoryReadable(void* address) {
+	MEMORY_BASIC_INFORMATION mbi;
+
+	if (VirtualQuery(address, &mbi, sizeof(mbi))) {
+		bool isReadable = (mbi.Protect & PAGE_READONLY) ||
+			(mbi.Protect & PAGE_READWRITE) ||
+			(mbi.Protect & PAGE_EXECUTE_READ) ||
+			(mbi.Protect & PAGE_EXECUTE_READWRITE);
+
+		printf("Address: %p | Protect: 0x%lx | Readable: %s\n",
+			address, mbi.Protect, isReadable ? "Yes" : "No");
+
+		return isReadable;
+	}
+	printf("Address: %p | VirtualQuery failed\n", address);
+	return false;
+}
+
+void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
+{
+	static int jmp_continue = 0x00C080F0;
+	static int jmp_skip = 0x00C080F2;
+	__asm {
+		pushad
+		lea edi, dword ptr[eax + 4]
+		push edi
+		call IsMemoryReadable
+		pop edi
+		test eax, eax
+		jz skip
+		popad
+		mov bp, [eax + 4]
+		cmp bp, [eax + 4]
+		jmp jmp_continue
+
+		skip :
+		popad
+			jmp jmp_skip
+	}
+}
+*/
 bool IsSRFocused()
 {
 	DWORD pid;
@@ -1383,6 +1424,7 @@ static bool modpackread = 0;
 #endif
 int RenderLoopStuff_Hacked()
 {
+	//PrintCoords(*(float*)0x25F5BB4, *(float*)0x25F5BB8, *(float*)0x25F5BBC); // z = height? even though it's most likely Y since they are in X,Y,Z
 	if (RPCHandler::Enabled) 
 	{
 		RPCHandler::DiscordCallbacks();
@@ -1490,6 +1532,21 @@ void __declspec(naked) InGamePrint(const char* Text, int x, int y, int font) {
 	}
 }
 
+int processtextwidth(int width) {
+	float currentAR = *(float*)0x022FD8EC;
+		return width * (currentAR / 1.77777777778f);
+
+}
+
+void PrintCoords(float x, float z,float y) {
+	char buffer[50];
+	snprintf(buffer, sizeof(buffer), "(%.1f, %.1f, %.1f)", x, y, z);
+	ChangeTextColor(160, 160, 160, 255);
+	__asm pushad
+	InGamePrint(buffer, 680, processtextwidth(1000), 6);
+	__asm popad
+}
+
 typedef void SomeMMFunc_Native();
 SomeMMFunc_Native* UpdateSomeMMFunc = (SomeMMFunc_Native*)(0x0075B270);
 
@@ -1501,7 +1558,7 @@ void SomeMMFunc_Hacked()
 	if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
 		ChangeTextColor(160, 160, 160, 128);
 		__asm pushad
-		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 680, 1120, 2);
+		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 680, processtextwidth(1120), 2);
 		__asm popad
 	}
 
@@ -1842,6 +1899,7 @@ int dirExists(const char* const path)
 }
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	//WriteRelJump(0x00C080E8, (UInt32)&TextureCrashFixRemasteredByGroveStreetGames);
 	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
 	/*if (FileExists("gotr.txt"))
