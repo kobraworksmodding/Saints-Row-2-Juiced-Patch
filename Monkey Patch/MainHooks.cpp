@@ -28,8 +28,10 @@
 const double fourbythreeAR = 1.333333373069763;
 
 bool useJuicedOSD = false;
+bool useExpandedOSD = false;
 void PrintCoords(float x, float y, float z);
 void PrintFrametime();
+void PrintGameFrametime();
 void PrintFramerate();
 void PrintUsername();
 void PrintPartnerUsername();
@@ -1433,11 +1435,14 @@ static bool modpackread = 0;
 int RenderLoopStuff_Hacked()
 {
 	if (useJuicedOSD == true) {
-		PrintCoords(*(float*)0x25F5BB4, *(float*)0x25F5BBC, *(float*)0x25F5BB8); // z = height? even though it's most likely Y since they are in X,Y,Z
 		PrintFrametime();
+		PrintGameFrametime();
 		PrintFramerate();
-		PrintUsername();
-		PrintPartnerUsername();
+		if (useExpandedOSD == true) {
+			PrintCoords(*(float*)0x25F5BB4, *(float*)0x25F5BBC, *(float*)0x25F5BB8); // z = height? even though it's most likely Y since they are in X,Y,Z
+			PrintUsername();
+			PrintPartnerUsername();
+		}
 	}
 	if (RPCHandler::Enabled) 
 	{
@@ -1557,24 +1562,35 @@ void PrintCoords(float x, float z,float y) {
 	snprintf(buffer, sizeof(buffer), "UserCoords: (X: %.1f, Y: %.1f, Z: %.1f)", x, y, z);
 	ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
-	InGamePrint(buffer, 40, processtextwidth(0), 6);
+	InGamePrint(buffer, 60, processtextwidth(0), 6);
 	__asm popad
 }
 
 void PrintFrametime() {
 	char buffer[50];
-	float ft = *(float*)(0x02527DA4);
-	snprintf(buffer, sizeof(buffer), "Frametime: %f", ft);
+	int fr = 1.0f / *(float*)(0xE84380);
+	int frms = 1.0f / fr * 1000;
+	snprintf(buffer, sizeof(buffer), "RenderMS: %i", frms);
 	ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
 	InGamePrint(buffer, 20, processtextwidth(0), 6);
 	__asm popad
 }
 
+void PrintGameFrametime() {
+	char buffer[50];
+	int ft = *(float*)(0x02527DA4) * 1000;
+	snprintf(buffer, sizeof(buffer), "GameMS: %i", ft);
+	ChangeTextColor(255, 255, 255, 255);
+	__asm pushad
+	InGamePrint(buffer, 40, processtextwidth(0), 6);
+	__asm popad
+}
+
 void PrintFramerate() {
 	char buffer[50];
-	float fr = 1.0f / *(float*)(0xE84380);
-	snprintf(buffer, sizeof(buffer), "FPS: %f", fr);
+	int fr = 1.0f / *(float*)(0xE84380);
+	snprintf(buffer, sizeof(buffer), "FPS: %i", fr);
 	if (fr < 20.0) {
 		ChangeTextColor(255, 5, 5, 255);
 	}
@@ -1600,7 +1616,7 @@ void PrintUsername() {
 		snprintf(buffer, sizeof(buffer), "GS Username: %s", playerName);
 		ChangeTextColor(255, 255, 255, 255);
 		__asm pushad
-		InGamePrint(buffer, 60, processtextwidth(0), 6);
+		InGamePrint(buffer, 80, processtextwidth(0), 6);
 		__asm popad
 	}
 }
@@ -1621,7 +1637,7 @@ void PrintPartnerUsername() {
 		snprintf(buffer, sizeof(buffer), "Recently played with in CO-OP: %s", f_PartnerName.c_str());
 		ChangeTextColor(255, 255, 255, 255);
 		__asm pushad
-		InGamePrint(buffer, 80, processtextwidth(0), 6);
+		InGamePrint(buffer, 100, processtextwidth(0), 6);
 		__asm popad
 	}
 }
@@ -2100,6 +2116,12 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 
 #endif
+
+	if (GameConfig::GetValue("Debug", "ExpandedOSD", 0))
+	{
+		useExpandedOSD = true;
+		Logger::TypedLog(CHN_DEBUG, "Using Expanded F3 Debugging OSD.\n");
+	}
 
 	if (GameConfig::GetValue("Debug", "DisableXInput", 0))
 	{
