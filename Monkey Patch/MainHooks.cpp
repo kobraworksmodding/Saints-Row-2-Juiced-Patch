@@ -35,6 +35,8 @@ void PrintGameFrametime();
 void PrintFramerate();
 void PrintUsername();
 void PrintPartnerUsername();
+void PrintLatestChunk();
+void PrintDBGGarble();
 
 float deltaTime;
 
@@ -1455,6 +1457,8 @@ int RenderLoopStuff_Hacked()
 			PrintCoords(*(float*)0x25F5BB4, *(float*)0x25F5BBC, *(float*)0x25F5BB8, (useJuicedOSD >= 3)); // z = height? even though it's most likely Y since they are in X,Y,Z
 			PrintUsername();
 			PrintPartnerUsername();
+			PrintLatestChunk();
+			PrintDBGGarble();
 		}
 	}
 	if (RPCHandler::Enabled) 
@@ -1639,9 +1643,29 @@ void PrintUsername() {
 		snprintf(buffer, sizeof(buffer), "GS Username: %s", playerName);
 		ChangeTextColor(255, 255, 255, 255);
 		__asm pushad
-		InGamePrint(buffer, 80, processtextwidth(0), 6);
+		InGamePrint(buffer, 120, processtextwidth(0), 6);
 		__asm popad
 	}
+}
+
+void PrintLatestChunk() {
+	char buffer[50];
+	char* latestChunk = (CHAR*)0x00EB865C;
+	snprintf(buffer, sizeof(buffer), "NewChunkStreamed: % s", latestChunk);
+	ChangeTextColor(255, 255, 255, 255);
+	__asm pushad
+	InGamePrint(buffer, 80, processtextwidth(0), 6);
+	__asm popad
+}
+
+void PrintDBGGarble() {
+	char buffer[50];
+	char* dbgg = (CHAR*)0x023460E0;
+	snprintf(buffer, sizeof(buffer), "DBGGarble: % s", dbgg);
+	ChangeTextColor(255, 255, 255, 255);
+	__asm pushad
+	InGamePrint(buffer, 100, processtextwidth(0), 6);
+	__asm popad
 }
 
 std::string wstring_to_string(const std::wstring& wstr) {
@@ -1660,7 +1684,7 @@ void PrintPartnerUsername() {
 		snprintf(buffer, sizeof(buffer), "Recently played with in CO-OP: %s", f_PartnerName.c_str());
 		ChangeTextColor(255, 255, 255, 255);
 		__asm pushad
-		InGamePrint(buffer, 100, processtextwidth(0), 6);
+		InGamePrint(buffer, 140, processtextwidth(0), 6);
 		__asm popad
 	}
 }
