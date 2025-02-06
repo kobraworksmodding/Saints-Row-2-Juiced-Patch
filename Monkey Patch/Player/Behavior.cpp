@@ -134,10 +134,10 @@ namespace Behavior
 		patchDWord((void*)(0x00D974B0 + 2), (uint32_t)&bogusRagForce);
 		patchDWord((void*)(0x00D97AE8 + 2), (uint32_t)&bogusRagForce);
 		patchDWord((void*)(0x00D981E0 + 2), (uint32_t)&bogusRagForce);*/
-		if (GameConfig::GetValue("Gameplay", "BetterRagdollJoints", 0))
-		{
-			patchDWord((void*)(0x00D26587 + 2), (uint32_t)&bogusPi);
-		}
+	//	if (GameConfig::GetValue("Gameplay", "BetterRagdollJoints", 0))
+	//	{
+	//		patchDWord((void*)(0x00D26587 + 2), (uint32_t)&bogusPi);
+		//}
 
 		if (GameConfig::GetValue("Gameplay", "BetterAnimBlend", 0))
 		{
