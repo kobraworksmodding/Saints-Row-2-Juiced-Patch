@@ -2004,6 +2004,21 @@ void __declspec(naked) RestoreFiltering()
 	}
 }
 
+void __declspec(naked) ShadowsFix()
+{
+	static int jmp_continue = 0x00773783;
+	__asm {
+		cmp ds : byte ptr[0xE98994], 0
+		jz Skip
+		mov ds : byte ptr[0x252A37C], 1
+		jmp jmp_continue
+
+		Skip :
+		mov ds : byte ptr[0x252A37C], 0
+		jmp jmp_continue
+	}
+}
+
 DWORD WINAPI XInputCheck(LPVOID lpParameter)
 {
 	while (true) {
@@ -2092,8 +2107,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchBytesM((BYTE*)0x004CBFF4, (BYTE*)"\xEB\x13", 2); // jump over the stupid checks
 	patchBytesM((BYTE*)0x0053818F, (BYTE*)"\xA1\x94\x89\xE9\x00", 5); // make shadow maps check shadows instead of shadow map type
 	patchBytesM((BYTE*)0x00538194, (BYTE*)"\x83\xE8\x02", 3); // make it check if full shadows are enabled (so none = no shadows, simple = stencil and full = stencil & s. maps)
-	patchNop((BYTE*)0x0077376D, 3); // force full stencil shadows with the simple setting, removes the == 2 check
-	patchNop((BYTE*)0x0077377B, 3); // fixes an issue with some users and the nop above.
+	WriteRelJump(0x0077377E, (UInt32)&ShadowsFix); // force full stencil shadows with the simple setting
 	patchNop((BYTE*)0x006C5FE0, 10); // fix cutscenes resetting shadows
 	patchNop((BYTE*)0x0073C01B, 6); // remove the command check from the level function
 	patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
