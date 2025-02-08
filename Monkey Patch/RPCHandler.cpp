@@ -1,3 +1,4 @@
+#if !JLITE
 #include <cstdint>
 #include <ctime>
 #include "FileLogger.h"
@@ -663,3 +664,4 @@ namespace RPCHandler {
 		// manually added in app settings)
 	}
 }
+#endif

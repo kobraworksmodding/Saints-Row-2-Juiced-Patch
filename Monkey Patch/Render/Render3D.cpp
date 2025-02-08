@@ -176,16 +176,12 @@ namespace Render3D
 
 	void Init()
 	{
-
+#if !JLITE
 		if (GameConfig::GetValue("Graphics", "RemoveVignette", 0))
 		{
 			Render3D::RemoveVignette();
 		}
 
-		if (GameConfig::GetValue("Graphics", "BetterAmbientOcclusion", 1))
-		{
-			BetterAO();
-		}
 		if (GameConfig::GetValue("Graphics", "DisableScreenBlur", 0))
 		{
 			Logger::TypedLog(CHN_MOD, "Disabling Screen Blur...\n");
@@ -212,6 +208,46 @@ namespace Render3D
 		{
 			Render3D::DisableFog();
 		}
+
+		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1)
+		{
+			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS...\n");
+			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
+			patchNop((BYTE*)0x0099453D, 2);
+			patchNop((BYTE*)0x00994541, 5);
+			patchNop((BYTE*)0x0099454C, 5);
+		}
+		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
+		{
+			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS with Viewmodel...\n");
+			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
+			patchNop((BYTE*)0x0099453D, 2);
+			patchNop((BYTE*)0x00994541, 5);
+			patchNop((BYTE*)0x0099454C, 5);
+			useFPSCam = 1;
+		}
+		if (GameConfig::GetValue("Graphics", "ClassicGTAIdle", 0) &&
+			!GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1
+			|| !GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
+		{
+			Logger::TypedLog(CHN_MOD, "Patching in Classic GTA Idle...\n");
+			//patchByte((BYTE*)0x00960C30, 0xC3);
+			//patchNop((BYTE*)0x0099453D, 2);
+			patchNop((BYTE*)0x00994541, 5);
+			patchNop((BYTE*)0x0099454C, 5);
+		}
+#endif
+		// Beefs up Tree Shadows considerably
+		if (GameConfig::GetValue("Graphics", "UHQTreeShadows", 0))
+		{
+			Logger::TypedLog(CHN_NET, "Juicing up Tree Shadow Resolutions...\n");
+			Render3D::PatchHQTreeShadows();
+		}
+
+		if (GameConfig::GetValue("Graphics", "BetterAmbientOcclusion", 1))
+		{
+	 		BetterAO();
+	    }
 
 		if (GameConfig::GetValue("Debug", "AltTabFPS", 1)) // Removes a sleep call in main render loop, this one seems to slow the game to below 25 fps when the game is alt-tabbed.
 		{
@@ -242,40 +278,6 @@ namespace Render3D
 		if (GameConfig::GetValue("Debug", "FasterLoadingScreens", 1))
 		{
 			Render3D::FasterLoadingScreens();
-		}
-
-		// Beefs up Tree Shadows considerably
-		if (GameConfig::GetValue("Graphics", "UHQTreeShadows", 0))
-		{
-			Logger::TypedLog(CHN_NET, "Juicing up Tree Shadow Resolutions...\n");
-			Render3D::PatchHQTreeShadows();
-		}
-		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1)
-		{
-			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS...\n");
-			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
-			patchNop((BYTE*)0x0099453D, 2);
-			patchNop((BYTE*)0x00994541, 5);
-			patchNop((BYTE*)0x0099454C, 5);
-		}
-		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
-		{
-			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS with Viewmodel...\n");
-			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
-			patchNop((BYTE*)0x0099453D, 2);
-			patchNop((BYTE*)0x00994541, 5);
-			patchNop((BYTE*)0x0099454C, 5);
-			useFPSCam = 1;
-		}
-		if (GameConfig::GetValue("Graphics", "ClassicGTAIdle", 0) &&
-			!GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1 
-			|| !GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
-		{
-			Logger::TypedLog(CHN_MOD, "Patching in Classic GTA Idle...\n");
-			//patchByte((BYTE*)0x00960C30, 0xC3);
-			//patchNop((BYTE*)0x0099453D, 2);
-			patchNop((BYTE*)0x00994541, 5);
-			patchNop((BYTE*)0x0099454C, 5);
 		}
 	}
 }

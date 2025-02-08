@@ -1,3 +1,4 @@
+#if !JLITE
 // InternalPrint.cpp (uzis, Tervel)
 // --------------------
 // Created: 11/01/2025
@@ -115,3 +116,4 @@ namespace InternalPrint
 		patchCall((void*)0x00BFACFF, (void*)vsprintfHook);
 	}
 }
+#endif

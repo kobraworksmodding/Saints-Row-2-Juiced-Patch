@@ -138,7 +138,7 @@ namespace Behavior
 	//	{
 	//		patchDWord((void*)(0x00D26587 + 2), (uint32_t)&bogusPi);
 		//}
-
+#if !JLITE
 		if (GameConfig::GetValue("Gameplay", "BetterAnimBlend", 0))
 		{
 			patchDWord((void*)(0x006F1CA6 + 2), (uint32_t)&animBlend);
@@ -192,5 +192,6 @@ namespace Behavior
 		{
 			BetterMovement();
 		}
+#endif
 	}
 }

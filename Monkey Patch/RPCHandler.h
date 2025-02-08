@@ -1,3 +1,4 @@
+#if !JLITE
 #pragma once
 
 namespace RPCHandler {
@@ -667,3 +668,4 @@ namespace RPCHandler {
     extern void RLServerNameUpdateOnce();
 #endif
 }
+#endif

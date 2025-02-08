@@ -39,8 +39,11 @@ void PrintLatestChunk();
 void PrintDBGGarble();
 
 float deltaTime;
-
+#if JLITE
+const char* juicedversion = "1.0.0";
+#else
 const char* juicedversion = "7.2.2";
+#endif
 
 char* executableDirectory[MAX_PATH];
 const char ServerNameSR2[] = "[Saints Row 2]";
@@ -199,7 +202,11 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 		*(exe + 1) = '\0';
 	}
     #if !RELOADED
+	#if JLITE
+	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " + std::string(juicedversion) + " ---\n").c_str());
+    #else
 	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED Version: " + std::string(juicedversion) + " ---\n").c_str());
+    #endif
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
     Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
 	Logger::TypedLog(CHN_DLL, "--- Based on MonkeyPatch by scanti, additional fixes by Uzis, Tervel, jason098 and Clippy95. ---\n");
@@ -849,6 +856,7 @@ int __declspec(naked) AddMessage(const wchar_t* Title, const wchar_t* Desc) { //
 bool hasCheatMessageBeenSeen = 0;
 
 void cus_FrameToggles() {
+#if !JLITE
 	float delay = 0.0f;
 	float duration = 1.5f;
 	float whateverthefuck = 0.0f;
@@ -999,6 +1007,7 @@ void cus_FrameToggles() {
 			isPaused ? pauseGame() : unpauseGame();
 		}
 	}
+#endif
 }
 
 typedef int(__cdecl* chatWindowT)();
@@ -1449,6 +1458,7 @@ static bool modpackread = 0;
 #endif
 int RenderLoopStuff_Hacked()
 {
+#if !JLITE
 	if (useJuicedOSD) {
 		PrintFrametime();
 		PrintGameFrametime();
@@ -1474,35 +1484,23 @@ int RenderLoopStuff_Hacked()
 	if (!ErrorManager::b_HandlerAssigned)
 		ErrorManager::AssignHandler();
 
-	if (fixFrametime)
-	    havokFrameTicker();
-
 	if (addBindToggles)
 		UpdateKeys();
 	    cus_FrameToggles();
 	    Slew();
-#if !RELOADED
+
+    #if !RELOADED
 		LuaExecutor();
 		Noclip();
-#endif
+    #endif
 	if (Render3D::VFXP_fixFog)
-	   FogTest();
-
-	if (ARfov)
-		AspectRatioFix();
+		FogTest();
 
 	if (coopPausePatch)
 		coopPauseLoop();
 
 	if (LoadLastSave)
 		SkipMainMenu();
-
-	if (*(uint8_t*)(0x00E87B4F) == 0 && betterTags)
-		RawTags();
-
-	if (BetterChatTest) {
-		LessRetardedChat();
-	}
 
 	if (Render3D::useFPSCam) {
 		Render3D::FPSCamHack();
@@ -1520,6 +1518,33 @@ int RenderLoopStuff_Hacked()
 		__asm popad
 		FirstBootFlag();
 	}
+#else 
+	if (FirstBootCheck()) {
+		const wchar_t* JuicedWelcome =
+			L"Welcome to [format][color:#B200FF]Juiced LITE[/format]! Thank you for installing the patch.\n"
+			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format]:\n\n"
+			L"[format][color:#4F9EFF]discord.com/invite/TkurdZJQ[/format]\n\n"
+			L"- [format][color:#B200FF]Juiced Team[/format]"
+			L"[format][scale:1.0][image:ui_hud_inv_d_ginjuice][/format]";
+		__asm pushad
+		AddMessage(L"Juiced LITE", JuicedWelcome);
+		__asm popad
+		FirstBootFlag();
+	}
+#endif
+	if (fixFrametime)
+	    havokFrameTicker();
+
+	if (ARfov)
+		AspectRatioFix();
+
+	if (*(uint8_t*)(0x00E87B4F) == 0 && betterTags)
+		RawTags();
+
+	if (BetterChatTest) {
+		LessRetardedChat();
+	}
+
 #if !RELOADED
 	/*if (!modpackread && GOTR()) {
 		ModpackWarning(L"Create a [format][color:#B200FF]gotr.txt[/format] file in the Saints Row 2 directory to stop receiving this message.");
@@ -1694,15 +1719,23 @@ SomeMMFunc_Native* UpdateSomeMMFunc = (SomeMMFunc_Native*)(0x0075B270);
 
 typedef void SomePMFunc_Native();
 SomePMFunc_Native* UpdateSomePMFunc = (SomePMFunc_Native*)(0x00B99DB0);
-
 void SomeMMFunc_Hacked()
 {
+#if JLITE
+	if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
+		ChangeTextColor(160, 160, 160, 128);
+		__asm pushad
+		InGamePrint(("JUICED LITE " + std::string(juicedversion)).c_str(), 680, processtextwidth(1070), 2);
+		__asm popad
+	}
+#else
 	if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
 		ChangeTextColor(160, 160, 160, 128);
 		__asm pushad
 		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 680, processtextwidth(1120), 2);
 		__asm popad
-	}
+    }
+#endif
 
 	// Call original func
 	return UpdateSomeMMFunc();
@@ -2067,11 +2100,17 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchCall((void*)0x009A3D8E, (void*)IdleFix);
 	patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
 	patchCall((void*)0x00C08493, (void*)TextureCrashFix);
+#if !JLITE
 #if !RELOADED
 	if (GameConfig::GetValue("Debug", "PatchPauseMenuLua", 1)) {
 		patchCall((void*)0x00CD9FE8, (void*)luaLoadBuff); // used to intercept the pause menu lua before compiled, needed for full 8x MSAA support + custom res
 	}
 #endif
+	// LUA EXECUTE
+	patchBytesM((BYTE*)0x0075D5D6, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
+	patchBytesM((BYTE*)0x0075D5B5, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
+
+#endif 
 	WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
 	WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
 	WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out
@@ -2119,10 +2158,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	// Probably Add SR2 Reloaded patch routines here, used to be OS and FPS patch from Monkey here.
 
-	// LUA EXECUTE
-	patchBytesM((BYTE*)0x0075D5D6, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
-	patchBytesM((BYTE*)0x0075D5B5, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
-
 	// Adds Clan tag to name
 	if (GameConfig::GetValue("Multiplayer", "FixNetworkBinding", 1))
 	{
@@ -2133,8 +2168,9 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	PatchOpenSpy();
 
 	patch_metrics();
-
+#if !JLITE
 	InternalPrint::Init();
+#endif
 	Behavior::Init();
 	Memory::Init();
 	Render3D::Init();
@@ -2147,6 +2183,14 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	Behavior::BetterMovement();
 
 #else
+#if !JLITE
+
+	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 0)) // great for testing stuff faster and also for an optional feature in gen
+	{
+		LoadLastSave = 1;
+		Logger::TypedLog(CHN_DEBUG, "Skipping main menu...\n");
+	}
+#endif
 
 	if (GameConfig::GetValue("Debug", "MenuVersionNumber", 1))
 	{
@@ -2154,12 +2198,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		//patchCall((void*)0x0052050C, (void*)SomeMMFunc_Hacked);
 		patchCall((void*)0x0073CE0D, (void*)SomeMMFunc_Hacked);
 		//patchCall((void*)0x00B995D5, (void*)SomePMFunc_Hacked);
-	}
-
-	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 0)) // great for testing stuff faster and also for an optional feature in gen
-	{
-		LoadLastSave = 1;
-		Logger::TypedLog(CHN_DEBUG, "Skipping main menu...\n");
 	}
 
 #endif
@@ -2207,13 +2245,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		ARCutscene = 1;
 	}
 
-	if (GameConfig::GetValue("Gameplay", "DisableCheatFlag", 0))
-	{
-		patchNop((BYTE*)0x00687e12, 6);
-		patchNop((BYTE*)0x00687e18, 6);
-		CheatFlagDisabled = 1;
-	}
-
 	if (GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", 1.0)) // 1.0 isn't go anywhere.
 	{
 		FOVMultiplier = GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
@@ -2225,63 +2256,10 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DEBUG, "FOV Multiplier: %f,\n", FOVMultiplier);
 	}
 
-	if (GameConfig::GetValue("Multiplayer", "NewLobbyList", 1))
-	{
-		char newLobby1[MAX_PATH];
-		char newLobby2[MAX_PATH];
-
-		Logger::TypedLog(CHN_DEBUG, "Changing Lobby List...\n");
-
-		GameConfig::GetStringValue("Multiplayer", "Lobby1", "sr2_mp_lobby03", newLobby1);
-		GameConfig::GetStringValue("Multiplayer", "Lobby2", "sr2_mp_lobby02", newLobby2);
-
-		Logger::TypedLog(CHN_DEBUG, "Lobby Map 1 Found: %s\n", newLobby1);
-		Logger::TypedLog(CHN_DEBUG, "Lobby Map 2 Found: %s\n", newLobby2);
-		Reloaded::lobby_list[0] = newLobby1;
-		Reloaded::lobby_list[1] = newLobby2;
-
-		patchDWord((void*)(0x0073EABA + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x0073EA0B + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x007E131A + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x007E161E + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x007E7670 + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x007E774F + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x0082F2E9 + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x0082F4CC + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x00842497 + 3), (int)&Reloaded::lobby_list);
-	}
-
-	if (GameConfig::GetValue("Multiplayer", "FreeMPClothing", 1))
-	{
-		Logger::TypedLog(CHN_DEBUG, "Making MP Clothing Free...\n");
-		patchNop((BYTE*)0x0088DDBD, 5); // nop the float call from xtbl > exe that parses clothing prices.
-	}
-
 	if (GameConfig::GetValue("Debug", "FixFrametime", 1))
 	{
 		Logger::TypedLog(CHN_DEBUG, "Fixing Frametime issues...\n");
 		fixFrametime = 1;
-	}
-
-	if (GameConfig::GetValue("Debug", "FixAudio", 0))
-	{
-		Logger::TypedLog(CHN_DEBUG, "Patching Stereo Cutscenes (EXPERIMENTAL)...\n");
-		RPCHandler::ShouldFixStereo = true;
-	}
-
-	if (GameConfig::GetValue("Debug", "AddBindToggles", 1))
-	{
-		Logger::TypedLog(CHN_DEBUG, "Adding Custom Key Toggles...\n");
-		addBindToggles = 1;
-		patchNop((BYTE*)0x0051FEB0, 7); // nop to prevent the game from locking the camera roll in slew
-		patchBytesM((BYTE*)0x00C01B52, (BYTE*)"\xD9\x1D\xF8\x2C\x7B\x02", 6); // slew roll patch, makes the game write to a random unallocated float instead to prevent issues
-		patchBytesM((BYTE*)0x00C01AC8, (BYTE*)"\xDC\x64\x24\x20", 4); // invert Y axis in slew 
-	} 
-
-	if (GameConfig::GetValue("Debug", "LUADebugPrintF", 1)) // Rewrites the DebugPrint LUA function to our own.
-	{
-		Logger::TypedLog(CHN_DEBUG, "Re-writing Debug_Print...\n");
-		copyFunc((uint32_t)0x00D74BA0, 0x00D74BD8, HookedDebugPrint); // Overwrite vanilla debug_print LUA function with ours.
 	}
 
 	if (GameConfig::GetValue("Debug", "PatchGameLoop", 1)) //THIS IS REQUIRED FOR RICH PRESENCE AND ERROR HANDLER
@@ -2303,15 +2281,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DEBUG, "Enabling Borderless Windowed.\n");
 	}
 
-	RPCHandler::Enabled = GameConfig::GetValue("Misc", "RichPresence", 0);
-
-	if (RPCHandler::Enabled)
-	{
-		Logger::TypedLog(CHN_RPC, "Attempting to initialize Discord RPC...\n");
-		RPCHandler::InitRPC();
-		//RPCHandler::DiscordCallbacks(); callbacks needs to be hooked into a game loop
-	}
-
 	if (!keepfpslimit)
 		PatchGOGNoFPSLimit();
 
@@ -2326,31 +2295,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_MOD, "Fixing Audio Device Assignment.\n");
 		// fixes, or attempts to fix the incorrect GUID assigning for BINK related stuff in SR2.
 		patchBytesM((BYTE*)0x00DBA69C, (BYTE*)"\x00\x00\x00\x00", 4);
-	}
-
-	if (GameConfig::GetValue("Graphics", "RemoveBlackBars", 0)) // Another Tervel moment
-	{
-		Logger::TypedLog(CHN_DLL, "Removing Black Bars.\n");
-		patchNop((BYTE*)(0x0075A265), 5);
-	}
-
-	if (GameConfig::GetValue("Gameplay", "SkipIntros", 0)) // can't stop Tervel won't stop Tervel
-	{
-		Logger::TypedLog(CHN_DLL, "Skipping intros & legal disclaimers.\n");
-		patchNop((BYTE*)(0x005207B4), 6); // prevent intros from triggering
-		patchBytesM((BYTE*)0x0068C740, (BYTE*)"\x96\xC5\x68\x00", 4); // replace case 0 with case 4 to skip legal disclaimers
-	}
-
-	// Disabled by default FOR NOW, too many issues arise when dealing with missions. Otherwise it works beautifully in freeroam.
-	if (GameConfig::GetValue("Gameplay", "coopPausePatch", 1)) // Tervel W streak
-	{
-		Logger::TypedLog(CHN_DEBUG, "Disabling CO-OP pause...\n");
-		coopPausePatch = 1;
-		patchNop((BYTE*)0x00779C5E, 5); // Prevent the game from pausing your co-op partner if you open the pause menu.
-		patchBytesM((BYTE*)0x0068CA79, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new pause check address
-		patchBytesM((BYTE*)0x00BF0A1B, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new particle pause check address
-		patchBytesM((BYTE*)0x00BDCFFD, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 2
-		patchBytesM((BYTE*)0x006B793F, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 3
 	}
 
 	if (GameConfig::GetValue("Audio", "51Surround", 0) == 1)
@@ -2408,6 +2352,101 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 	patchNop((BYTE*)0x004D6795, 5); // Fix for the sun flare disappearing upon reloading a save. Prevents the game from deallocating the flare.
 
+#if !JLITE
+	if (GameConfig::GetValue("Gameplay", "DisableCheatFlag", 0))
+	{
+		patchNop((BYTE*)0x00687e12, 6);
+		patchNop((BYTE*)0x00687e18, 6);
+		CheatFlagDisabled = 1;
+	}
+
+	if (GameConfig::GetValue("Multiplayer", "NewLobbyList", 1))
+	{
+		char newLobby1[MAX_PATH];
+		char newLobby2[MAX_PATH];
+
+		Logger::TypedLog(CHN_DEBUG, "Changing Lobby List...\n");
+
+		GameConfig::GetStringValue("Multiplayer", "Lobby1", "sr2_mp_lobby03", newLobby1);
+		GameConfig::GetStringValue("Multiplayer", "Lobby2", "sr2_mp_lobby02", newLobby2);
+
+		Logger::TypedLog(CHN_DEBUG, "Lobby Map 1 Found: %s\n", newLobby1);
+		Logger::TypedLog(CHN_DEBUG, "Lobby Map 2 Found: %s\n", newLobby2);
+		Reloaded::lobby_list[0] = newLobby1;
+		Reloaded::lobby_list[1] = newLobby2;
+
+		patchDWord((void*)(0x0073EABA + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x0073EA0B + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x007E131A + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x007E161E + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x007E7670 + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x007E774F + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x0082F2E9 + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x0082F4CC + 3), (int)&Reloaded::lobby_list);
+		patchDWord((void*)(0x00842497 + 3), (int)&Reloaded::lobby_list);
+	}
+
+	if (GameConfig::GetValue("Multiplayer", "FreeMPClothing", 1))
+	{
+		Logger::TypedLog(CHN_DEBUG, "Making MP Clothing Free...\n");
+		patchNop((BYTE*)0x0088DDBD, 5); // nop the float call from xtbl > exe that parses clothing prices.
+	}
+
+	if (GameConfig::GetValue("Debug", "FixAudio", 0))
+	{
+		Logger::TypedLog(CHN_DEBUG, "Patching Stereo Cutscenes (EXPERIMENTAL)...\n");
+		RPCHandler::ShouldFixStereo = true;
+	}
+
+	if (GameConfig::GetValue("Debug", "AddBindToggles", 1))
+	{
+		Logger::TypedLog(CHN_DEBUG, "Adding Custom Key Toggles...\n");
+		addBindToggles = 1;
+		patchNop((BYTE*)0x0051FEB0, 7); // nop to prevent the game from locking the camera roll in slew
+		patchBytesM((BYTE*)0x00C01B52, (BYTE*)"\xD9\x1D\xF8\x2C\x7B\x02", 6); // slew roll patch, makes the game write to a random unallocated float instead to prevent issues
+		patchBytesM((BYTE*)0x00C01AC8, (BYTE*)"\xDC\x64\x24\x20", 4); // invert Y axis in slew 
+	}
+
+	if (GameConfig::GetValue("Debug", "LUADebugPrintF", 1)) // Rewrites the DebugPrint LUA function to our own.
+	{
+		Logger::TypedLog(CHN_DEBUG, "Re-writing Debug_Print...\n");
+		copyFunc((uint32_t)0x00D74BA0, 0x00D74BD8, HookedDebugPrint); // Overwrite vanilla debug_print LUA function with ours.
+	}
+
+	RPCHandler::Enabled = GameConfig::GetValue("Misc", "RichPresence", 0);
+
+	if (RPCHandler::Enabled)
+	{
+		Logger::TypedLog(CHN_RPC, "Attempting to initialize Discord RPC...\n");
+		RPCHandler::InitRPC();
+		//RPCHandler::DiscordCallbacks(); callbacks needs to be hooked into a game loop
+	}
+
+	if (GameConfig::GetValue("Graphics", "RemoveBlackBars", 0)) // Another Tervel moment
+	{
+		Logger::TypedLog(CHN_DLL, "Removing Black Bars.\n");
+		patchNop((BYTE*)(0x0075A265), 5);
+	}
+
+	if (GameConfig::GetValue("Gameplay", "SkipIntros", 0)) // can't stop Tervel won't stop Tervel
+	{
+		Logger::TypedLog(CHN_DLL, "Skipping intros & legal disclaimers.\n");
+		patchNop((BYTE*)(0x005207B4), 6); // prevent intros from triggering
+		patchBytesM((BYTE*)0x0068C740, (BYTE*)"\x96\xC5\x68\x00", 4); // replace case 0 with case 4 to skip legal disclaimers
+	}
+
+	// Disabled by default FOR NOW, too many issues arise when dealing with missions. Otherwise it works beautifully in freeroam.
+	if (GameConfig::GetValue("Gameplay", "coopPausePatch", 1)) // Tervel W streak
+	{
+		Logger::TypedLog(CHN_DEBUG, "Disabling CO-OP pause...\n");
+		coopPausePatch = 1;
+		patchNop((BYTE*)0x00779C5E, 5); // Prevent the game from pausing your co-op partner if you open the pause menu.
+		patchBytesM((BYTE*)0x0068CA79, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new pause check address
+		patchBytesM((BYTE*)0x00BF0A1B, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new particle pause check address
+		patchBytesM((BYTE*)0x00BDCFFD, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 2
+		patchBytesM((BYTE*)0x006B793F, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 3
+	}
+
 #if !RELOADED
 	if (CreateCache("loose.txt"))
 	{
@@ -2419,8 +2458,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DLL, "Create loose file cache failed.\n");
 
 #endif
-
-	// Continue to the program's WinMain.
 
 	patchBytesM((BYTE*)0x009D3C70, (BYTE*)"\xD9\x05\x5A\x30\x7B\x02", 6); // TP X
 	patchBytesM((BYTE*)0x009D3C83, (BYTE*)"\xD9\x05\x5E\x30\x7B\x02", 6); // TP Y
@@ -2441,6 +2478,10 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchBytesM((BYTE*)0x00687CAB, (BYTE*)"\x6A\x06", 2);
 	// this should increase the stream priority for the character swap cheat - on 360, the loading times are much bigger so there are no issues there but here this might be needed
 	patchNop((BYTE*)0x00684C84, 5); // get rid of the loading screen with the cheat, remove the nop if there are any issues but it should be fine?
+
+#endif
+
+	// Continue to the program's WinMain.
 
 	WinMain_Type OldWinMain=(WinMain_Type)offset_addr(0x00520ba0);
 	return (OldWinMain(hInstance, hPrevInstance, lpCmdLine,nShowCmd));

@@ -184,6 +184,7 @@ namespace Memory
 			GangstaBrawlMemoryExt();
 		}
 #endif
+#if !JLITE
 		if (GameConfig::GetValue("Debug", "ExpandMemoryPools", 0))
 		{
 			ExpandGeneralPools();
@@ -203,5 +204,6 @@ namespace Memory
 		{
 			ExpandShadowRenderDist();
 		}
+#endif
 	}
 }
