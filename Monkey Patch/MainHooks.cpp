@@ -2097,8 +2097,11 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		modpackread = 1;
 		*/
 #endif
-	patchDWord((void*)0x00C08873, (int)"always_loaded"); // patches to correct the missing texture on PC
-	patchDWord((void*)0x00C088F8, (int)"missing-grey.tga");
+	if (GameConfig::GetValue("Debug", "FixDefaultTexture", 1)) {
+		Logger::TypedLog(CHN_DLL, "Fixing Default Texture\n");
+		patchDWord((void*)0x00C08873, (int)"always_loaded"); // patches to correct the missing texture on PC
+		patchDWord((void*)0x00C088F8, (int)"missing-grey.tga");
+	}
 	patchNop((BYTE*)0x0052598D, 6); // fix for black water in the distance with AA disabled
 	patchNop((BYTE*)0x005267F0, 6); // fix for black water in the distance with AA enabled
 	//patchDWord((void*)(0x007ECA66 + 1), (int)"PS3"); // patch get_platform to return ps3. Not ideal.
