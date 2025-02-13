@@ -2088,8 +2088,57 @@ int dirExists(const char* const path)
 
 	return (info.st_mode & S_IFDIR) ? 1 : 0;
 }
+
+double FilteringStrength;
+
+void __declspec(naked) StrengthWorkaround() {
+	static int Continue = 0x00515CA0;
+	__asm {
+		cmp ebx, 3
+		jnz Skip
+		cmp ds: byte ptr[0x2527D14], 1
+		jnz Skip
+		fld FilteringStrength
+		jmp Continue
+
+		Skip:
+		fld ds: dword ptr[0x00E849AC]
+		jmp Continue
+	}
+}
+
+void SetDOFRes() {
+	DWORD OldProtect;
+	int CurrentX = *(int*)0x22FD84C;
+
+	FilteringStrength = CurrentX / 1920;
+
+	std::vector<int*> Addresses = {
+		(int*)0x00DC8E80, (int*)0x00DC8E84, (int*)0x00DC8F0C, (int*)0x00DC8F08,
+		(int*)0x00E86278, (int*)0x00E8627C, (int*)0x00E86284, (int*)0x00E86288
+	};
+
+	if (VirtualProtect((void*)Addresses.front(), 56, PAGE_EXECUTE_READWRITE, &OldProtect)) {
+		for (int* Addr : Addresses) {
+			*Addr = CurrentX;
+		}
+		VirtualProtect((void*)Addresses.front(), 56, OldProtect, &OldProtect);
+	}
+}
+
+typedef int SetGraphicsT();
+SetGraphicsT* SetGraphics = (SetGraphicsT*)(0x7735C0);
+
+void ResizeDOF() {
+	SetDOFRes();
+	SetGraphics();
+}
+
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	WriteRelJump(0x00515C9A, (UInt32)&StrengthWorkaround);
+	patchCall((void*)0x007740D9, (void*)ResizeDOF);
+	patchCall((void*)0x007743CE, (void*)ResizeDOF);
 	//WriteRelJump(0x00C080E8, (UInt32)&TextureCrashFixRemasteredByGroveStreetGames);
 	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
