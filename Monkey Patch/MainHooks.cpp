@@ -2104,11 +2104,9 @@ void __declspec(naked) StrengthWorkaround() {
 	}
 }
 
-void SetDOFRes() {
-	int CurrentX = *(int*)0x22FD84C;
-	int CurrentY = *(int*)0x22FD850;
+void SetDOFRes(int X, int Y) {
 
-	FilteringStrength = CurrentY / 1080;
+	FilteringStrength = Y / 1080;
 
 	std::vector<int*> Addresses = {
 		(int*)0x00DC8E80, (int*)0x00DC8E84, (int*)0x00DC8F0C, (int*)0x00DC8F08,
@@ -2116,23 +2114,109 @@ void SetDOFRes() {
 	};
 
 	for (int* Addr : Addresses) {
-		SafeWrite32(UInt32(Addr), (UInt32)CurrentX);
+		SafeWrite32(UInt32(Addr), (UInt32)X);
+	}
+}
+
+void SetWaterReflRes(int X, int Y) {
+	
+	std::vector<int*> XAddresses = {
+		(int*)0x00DC8F60, (int*)0x00E86380
+	};
+
+	std::vector<int*> YAddresses = {
+		(int*)0x00DC8ED8, (int*)0x00E86384
+	};
+
+	for (int* Addr : XAddresses) {
+		SafeWrite32(UInt32(Addr), (UInt32)X);
+	}
+
+	for (int* Addr : YAddresses) {
+		SafeWrite32(UInt32(Addr), (UInt32)Y);
+	}
+}
+
+void SetAORes(int X, int Y) {
+
+	std::vector<int*> XAddresses = {
+		(int*)0x00DC8F6C, (int*)0x00E863A4, (int*)0x00E86398
+	};
+
+	std::vector<int*> YAddresses = {
+		(int*)0x00DC8EE4, (int*)0x00E863A8, (int*)0x00E8639C
+	};
+
+	for (int* Addr : XAddresses) {
+		SafeWrite32(UInt32(Addr), (UInt32)X);
+	}
+
+	for (int* Addr : YAddresses) {
+		SafeWrite32(UInt32(Addr), (UInt32)Y);
+	}
+}
+
+void SetVehReflRes(int X) {
+
+	std::vector<int*> Addresses = {
+		(int*)0x00DC8E78, (int*)0x00DC8F00, (int*)0x00E86264, (int*)0x00E86260
+	};
+
+	for (int* Addr : Addresses) {
+		SafeWrite32(UInt32(Addr), (UInt32)X);
+	}
+}
+
+float BloomResX;
+float BloomResY;
+
+void SetBloomRes(int X, int Y, float XFloat, float YFloat) {
+
+	BloomResX = XFloat;
+	BloomResY = YFloat;
+
+	std::vector<int*> XAddresses = {
+		(int*)0x00E86368, (int*)0x00DC8F58, (int*)0x00DC8F5C, (int*)0x00E86368,
+		(int*)0x00DC8F10, (int*)0x00DC8E88, (int*)0x00DC8E8C, (int*)0x00DC8F14,
+		(int*)0x00E862A0, (int*)0x00E86290, (int*)0x00E86374, (int*)0x00E8629C,
+		(int*)0x00E86294, (int*)0x00516947, (int*)0x00516A27, (int*)0x00516C6B
+	};
+
+	std::vector<int*> YAddresses = {
+		(int*)0x00DC8ED0, (int*)0x00DC8ED4, (int*)0x00E8636C, (int*)0x00E86378,
+		(int*)0x00516956, (int*)0x00516C76
+	};
+
+	for (int* Addr : XAddresses) {
+		SafeWrite32(UInt32(Addr), (UInt32)X);
+	}
+
+	for (int* Addr : YAddresses) {
+		SafeWrite32(UInt32(Addr), (UInt32)Y);
 	}
 }
 
 typedef int SetGraphicsT();
 SetGraphicsT* SetGraphics = (SetGraphicsT*)(0x7735C0);
 
-void ResizeDOF() {
-	SetDOFRes();
+void ResizeEffects() {
+	int CurrentX = *(int*)0x22FD84C;
+	int CurrentY = *(int*)0x22FD850;
+	SetDOFRes(CurrentX, CurrentY);
+	SetBloomRes(CurrentX, CurrentY, (float)CurrentX, (float)CurrentY);
+	SetWaterReflRes(CurrentX, CurrentY);
+	SetVehReflRes(CurrentX);
+	SetAORes(CurrentX, CurrentY);
 	SetGraphics();
 }
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	WriteRelJump(0x00515C9A, (UInt32)&StrengthWorkaround);
-	patchCall((void*)0x007740D9, (void*)ResizeDOF);
-	patchCall((void*)0x007743CE, (void*)ResizeDOF);
+	SafeWrite32(0x005169C8 + 2, (UInt32)&BloomResX);
+	SafeWrite32(0x005169BB + 2, (UInt32)&BloomResY);
+	patchCall((void*)0x007740D9, (void*)ResizeEffects);
+	patchCall((void*)0x007743CE, (void*)ResizeEffects);
 	//WriteRelJump(0x00C080E8, (UInt32)&TextureCrashFixRemasteredByGroveStreetGames);
 	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
