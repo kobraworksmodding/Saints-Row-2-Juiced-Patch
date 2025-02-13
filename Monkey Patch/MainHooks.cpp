@@ -816,10 +816,7 @@ void VehicleSpawner(const char* Name, const char* Var) {
 	int VarIndex = GetVarIndex(VehIndex, Var);
 	_asm popad
 
-	DWORD old;
-	VirtualProtect((LPVOID)0x00AE4BE8, sizeof(int), PAGE_READWRITE, &old);
-	*(unsigned char*)(0x00AE4BE8) = VarIndex;
-	VirtualProtect((LPVOID)0x00AE4BE8, sizeof(int), old, &old);
+	SafeWrite8((UInt32)0x00AE4BE8, (UInt32)VarIndex);
 
 	if (VehIndex != -1) {
 		VehicleSpawn(VehIndex);
@@ -2108,7 +2105,6 @@ void __declspec(naked) StrengthWorkaround() {
 }
 
 void SetDOFRes() {
-	DWORD OldProtect;
 	int CurrentX = *(int*)0x22FD84C;
 	int CurrentY = *(int*)0x22FD850;
 
@@ -2119,11 +2115,8 @@ void SetDOFRes() {
 		(int*)0x00E86278, (int*)0x00E8627C, (int*)0x00E86284, (int*)0x00E86288
 	};
 
-	if (VirtualProtect((void*)Addresses.front(), 58, PAGE_EXECUTE_READWRITE, &OldProtect)) {
-		for (int* Addr : Addresses) {
-			*Addr = CurrentX;
-		}
-		VirtualProtect((void*)Addresses.front(), 58, OldProtect, &OldProtect);
+	for (int* Addr : Addresses) {
+		SafeWrite32(UInt32(Addr), (UInt32)CurrentX);
 	}
 }
 
