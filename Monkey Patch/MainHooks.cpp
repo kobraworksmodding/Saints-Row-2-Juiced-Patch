@@ -2110,19 +2110,20 @@ void __declspec(naked) StrengthWorkaround() {
 void SetDOFRes() {
 	DWORD OldProtect;
 	int CurrentX = *(int*)0x22FD84C;
+	int CurrentY = *(int*)0x22FD850;
 
-	FilteringStrength = CurrentX / 1920;
+	FilteringStrength = CurrentY / 1080;
 
 	std::vector<int*> Addresses = {
 		(int*)0x00DC8E80, (int*)0x00DC8E84, (int*)0x00DC8F0C, (int*)0x00DC8F08,
 		(int*)0x00E86278, (int*)0x00E8627C, (int*)0x00E86284, (int*)0x00E86288
 	};
 
-	if (VirtualProtect((void*)Addresses.front(), 56, PAGE_EXECUTE_READWRITE, &OldProtect)) {
+	if (VirtualProtect((void*)Addresses.front(), 58, PAGE_EXECUTE_READWRITE, &OldProtect)) {
 		for (int* Addr : Addresses) {
 			*Addr = CurrentX;
 		}
-		VirtualProtect((void*)Addresses.front(), 56, OldProtect, &OldProtect);
+		VirtualProtect((void*)Addresses.front(), 58, OldProtect, &OldProtect);
 	}
 }
 
