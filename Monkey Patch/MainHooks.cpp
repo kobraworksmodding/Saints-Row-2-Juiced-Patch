@@ -2197,24 +2197,25 @@ void SetBloomRes(int X, int Y, float XFloat, float YFloat) {
 typedef int SetGraphicsT();
 SetGraphicsT* SetGraphics = (SetGraphicsT*)(0x7735C0);
 
+bool halfFxQuality = false;
+
 void ResizeEffects() {
 	int CurrentX = *(int*)0x22FD84C;
 	int CurrentY = *(int*)0x22FD850;
+	if (halfFxQuality == true) {
+		CurrentX = CurrentX / 2;
+		CurrentY = CurrentY / 2;
+	}
 	SetDOFRes(CurrentX, CurrentY);
 	SetBloomRes(CurrentX, CurrentY, (float)CurrentX, (float)CurrentY);
 	SetWaterReflRes(CurrentX, CurrentY);
 	SetVehReflRes(CurrentX);
-	SetAORes(CurrentX, CurrentY);
+	//SetAORes(CurrentX, CurrentY);
 	SetGraphics();
 }
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-	WriteRelJump(0x00515C9A, (UInt32)&StrengthWorkaround);
-	SafeWrite32(0x005169C8 + 2, (UInt32)&BloomResX);
-	SafeWrite32(0x005169BB + 2, (UInt32)&BloomResY);
-	patchCall((void*)0x007740D9, (void*)ResizeEffects);
-	patchCall((void*)0x007743CE, (void*)ResizeEffects);
 	//WriteRelJump(0x00C080E8, (UInt32)&TextureCrashFixRemasteredByGroveStreetGames);
 	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
@@ -2333,6 +2334,23 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DEBUG, "Skipping main menu...\n");
 	}
 #endif
+	if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) > 0 && GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) < 3)
+	{
+		WriteRelJump(0x00515C9A, (UInt32)&StrengthWorkaround);
+		SafeWrite32(0x005169C8 + 2, (UInt32)&BloomResX);
+		SafeWrite32(0x005169BB + 2, (UInt32)&BloomResY);
+		patchCall((void*)0x007740D9, (void*)ResizeEffects);
+		patchCall((void*)0x007743CE, (void*)ResizeEffects);
+		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) == 1) {
+			Logger::TypedLog(CHN_MOD, "Patching UHQScreenEffects at half quality...\n");
+			halfFxQuality = true;
+		}
+		else {
+			Logger::TypedLog(CHN_MOD, "Patching UHQScreenEffects at full quality...\n");
+		}
+
+	}
+
 
 	if (GameConfig::GetValue("Debug", "MenuVersionNumber", 1))
 	{
