@@ -2176,15 +2176,13 @@ void SetBloomRes(int X, int Y, float XFloat, float YFloat) {
 	BloomResY = YFloat;
 
 	std::vector<int*> XAddresses = {
-		(int*)0x00E86368, (int*)0x00DC8F58, (int*)0x00DC8F5C, (int*)0x00E86368,
-		(int*)0x00DC8F10, (int*)0x00DC8E88, (int*)0x00DC8E8C, (int*)0x00DC8F14,
-		(int*)0x00E862A0, (int*)0x00E86290, (int*)0x00E86374, (int*)0x00E8629C,
-		(int*)0x00E86294, (int*)0x00516947, (int*)0x00516A27, (int*)0x00516C6B
+		(int*)0x00516947, (int*)0x00516A27, (int*)0x00516C6B, (int*)0x00E86368,
+		(int*)0x00E86374, (int*)0x00DC8F5C, (int*)0x00DC8F58
 	};
 
 	std::vector<int*> YAddresses = {
-		(int*)0x00DC8ED0, (int*)0x00DC8ED4, (int*)0x00E8636C, (int*)0x00E86378,
-		(int*)0x00516956, (int*)0x00516C76
+		(int*)0x00516956, (int*)0x00516C76, (int*)0x00E8636C, (int*)0x00E86378,
+		(int*)0x00DC8ED0, (int*)0x00DC8ED4
 	};
 
 	for (int* Addr : XAddresses) {
