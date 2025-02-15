@@ -116,7 +116,6 @@ namespace Render3D
 		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // new contr address patch
 		patchByte((BYTE*)0x00E9787F, 0x01); // force HDR on
 		patchNop((BYTE*)0x00773792, 5); // prevent the game from turning HDR on/off
-		patchBytesM((BYTE*)0x005170EF, (BYTE*)"\x75", 1); // prevent bloom from appearing without breaking glow
 		patchBytesM((BYTE*)0x00517051, (BYTE*)"\x8B", 1); // flip the logic for the HDR strength (or radius?) float check
 		//patchNop((BYTE*)0x00533C25, 5); // disable sky refl (prevent the absurd blue tint on reflections)
 
@@ -133,6 +132,10 @@ namespace Render3D
 		patchBytesM((BYTE*)0x00524BB0, (BYTE*)"\xD9\x05\xBE\x2C\x7B\x02", 6);
 		patchBytesM((BYTE*)0x00D1A3A3, (BYTE*)"\xD9\x05\xBE\x2C\x7B\x02", 6);
 		VFXP_fixFog = 1;
+
+		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) == 0) {
+			patchBytesM((BYTE*)0x005170EF, (BYTE*)"\x75", 1); // prevent bloom from appearing without breaking glow
+		}
 	}
 
 	void DisableFog()
