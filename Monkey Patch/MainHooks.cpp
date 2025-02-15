@@ -2106,7 +2106,7 @@ void __declspec(naked) StrengthWorkaround() {
 
 void SetDOFRes(int X, int Y) {
 
-	FilteringStrength = Y / 1080;
+	FilteringStrength = Y / 1080.0;
 
 	std::vector<int*> Addresses = {
 		(int*)0x00DC8E80, (int*)0x00DC8E84, (int*)0x00DC8F0C, (int*)0x00DC8F08,
