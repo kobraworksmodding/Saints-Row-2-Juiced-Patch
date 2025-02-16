@@ -19,17 +19,19 @@ namespace Render3D
 
 	void __declspec(naked) LoadShadersHook() {
 		static int Continue = 0x00D1B7D3;
-		static int* Pointer;
-		static const char* Name;
+		static int* ShaderPointer;
+		static const char* ShaderName;
 		__asm {
 			mov edi, eax
 			mov Pointer, eax
 			mov Name, esi
 		}
 
-		if (_stricmp(Name, "distortion_tint_desat") == 0) {
-			SafeWriteBuf((UInt32)Pointer, GammaShader, sizeof(GammaShader));
+		__asm pushad
+		if (_stricmp(ShaderName, "distortion_tint_desat") == 0) {
+			SafeWriteBuf((UInt32)ShaderPointer, X360GammaShader, sizeof(X360GammaShader));
 		}
+		__asm popad
 
 		__asm {
 			add esp, 8
@@ -210,7 +212,7 @@ namespace Render3D
 
 		}
 
-		if (GameConfig::GetValue("Graphics", "ConsoleGamma", 1))
+		if (GameConfig::GetValue("Graphics", "X360Gamma", 1))
 		{
 			WriteRelJump(0x00D1B7CE, (UInt32)&LoadShadersHook);
 		}
