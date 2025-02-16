@@ -220,6 +220,9 @@
     <ClInclude Include="Ext\Hooking.Patterns.h">
       <Filter>Ext</Filter>
     </ClInclude>
+    <ClInclude Include="Shaders.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Properties.rc" />

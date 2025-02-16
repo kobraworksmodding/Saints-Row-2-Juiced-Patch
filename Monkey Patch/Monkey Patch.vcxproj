@@ -154,7 +154,8 @@
       <Command>copy /Y "$(TargetDir)DFEngine.dll" "C:\Games\GOG\Saints Row 2\DFEngine.dll" || ^
 copy /Y "$(TargetDir)DFEngine.dll" "C:\Program Files (x86)\Steam\steamapps\common\Saints Row 2\DFEngine.dll" || ^
 copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEngine.dll" || ^
-copy /Y "$(TargetDir)DFEngine.dll" "Z:\Games\Saints Row 2\DFEngine.dll"
+copy /Y "$(TargetDir)DFEngine.dll" "Z:\Games\Saints Row 2\DFEngine.dll" ||  ^
+copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -264,6 +265,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="UGC\Reloaded.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Shaders.h" />
     <ClInclude Include="Ext\Hooking.Patterns.h" />
     <ClInclude Include="ext\inc\lua\lauxlib.h" />
     <ClInclude Include="ext\inc\lua\lua.h" />

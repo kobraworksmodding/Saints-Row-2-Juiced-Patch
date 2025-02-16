@@ -7,6 +7,8 @@
 #include <thread>
 #include "../iat_functions.h"
 #include "../GameConfig.h"
+#include "../SafeWrite.h"
+#include "../Shaders.h"
 
 namespace Render3D
 {
@@ -14,6 +16,26 @@ namespace Render3D
 	bool useFPSCam = 0;
 	bool VFXP_fixFog = 0;
 	float AOStrength = 1.5;
+
+	void __declspec(naked) LoadShadersHook() {
+		static int Continue = 0x00D1B7D3;
+		static int* Pointer;
+		static const char* Name;
+		__asm {
+			mov edi, eax
+			mov Pointer, eax
+			mov Name, esi
+		}
+
+		if (_stricmp(Name, "distortion_tint_desat") == 0) {
+			SafeWriteBuf((UInt32)Pointer, GammaShader, sizeof(GammaShader));
+		}
+
+		__asm {
+			add esp, 8
+			jmp Continue
+		}
+	}
 
 	void PatchHQTreeShadows() 
 	{
@@ -147,17 +169,6 @@ namespace Render3D
 		patchFloat((BYTE*)0x00E989A4, 0.0f);
 	}
 
-	void ConsoleLikeBrightness()
-	{
-		Logger::TypedLog(CHN_DEBUG, "Patching Console-like Brightness...\n");
-		patchBytesM((BYTE*)0x0051A952, (BYTE*)"\xD9\x05\x7F\x2C\x7B\x02", 6); // new brightness address
-		patchFloat((BYTE*)0x027B2C7F, 1.05f); //Bright
-		patchBytesM((BYTE*)0x0051A980, (BYTE*)"\xD9\x05\x87\x2C\x7B\x02", 6); // new contr address patch
-		patchFloat((BYTE*)0x027B2C87, 1.40f); //Contr
-		patchBytesM((BYTE*)0x0051A997, (BYTE*)"\xD9\x05\x83\x2C\x7B\x02", 6); // new sat address patch
-		patchFloat((BYTE*)0x027B2C83, 0.65f); //Sat
-	}
-
 	void RemoveVignette()
 	{
 		Logger::TypedLog(CHN_MOD, "Disabling Vignette...\n");
@@ -199,9 +210,9 @@ namespace Render3D
 
 		}
 
-		if (GameConfig::GetValue("Graphics", "ConsoleBrightness", 0))
+		if (GameConfig::GetValue("Graphics", "ConsoleGamma", 1))
 		{
-			Render3D::ConsoleLikeBrightness();
+			WriteRelJump(0x00D1B7CE, (UInt32)&LoadShadersHook);
 		}
 
 		if (GameConfig::GetValue("Graphics", "VanillaFXPlus", 0))
