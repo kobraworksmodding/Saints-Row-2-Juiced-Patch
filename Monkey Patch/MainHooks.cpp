@@ -510,17 +510,22 @@ void FogTest() {
 	*(float*)(0x027B2CBE) = max(ogFogStrength2 / 1.5, 0.3f);
 }
 
-void Slew() {
-	float fovSpeed = 15.0f;
-	float* camPos = (float*)(0x25F5B20);
-	float* camOrient = (float*)(0x25F5B5C);
-	float& fov = *(float*)0x25F5BA8;
-	float& roll = *(float*)0x33DA350;
+bool DOFEnabled;
+float DOFBlur = 8.0f;
+float DOFRadius = 16.0f;
+float DOFDistance = 50.0f;
 
+void Slew() {
+	mouse Mouse;
+	float Speed = 15.0f;
+	float* CameraPos = (float*)(0x25F5B20);
+	float* CameraOrient = (float*)(0x25F5B5C);
+	float& FOV = *(float*)0x25F5BA8;
+	float& Roll = *(float*)0x33DA350;
 
 	if (slewMode) {
 
-		SlewCamera(camPos, camOrient, deltaTime, 0, false);
+		SlewCamera(CameraPos, CameraOrient, deltaTime, 0, false);
 
 		if (isPaused) {
 			UpdateCamera();
@@ -534,27 +539,38 @@ void Slew() {
 			*(float*)0x02F9B7E4 = *(float*)0x025F5B14;
 		}
 
-		if (IsKeyPressed(VK_UP, true)) {
-			fov -= fovSpeed * deltaTime;
-			fov = max(fov, 10.0f);
+		if (IsKeyPressed(VK_MBUTTON, false)) {
+			DOFEnabled =! DOFEnabled;
 		}
 
-		if (IsKeyPressed(VK_DOWN, true)) {
-			fov += fovSpeed * deltaTime;
-			fov = min(fov, 120.0f);
+		else if ((IsKeyPressed(VK_XBUTTON1, true)) && Mouse.getWheeldelta()) {
+			DOFDistance += (((float)Mouse.getWheeldelta()) / 10.0f);
+			DOFDistance = clamp(DOFDistance, 5.0f, 200.0f);
 		}
 
-		if (IsKeyPressed(0x31, true)) {
-			roll = 1.0f;
+		else if ((IsKeyPressed(VK_XBUTTON2, true)) && Mouse.getWheeldelta()) {
+			DOFBlur += (((float)Mouse.getWheeldelta()) / 240.0f);
+			DOFBlur = clamp(DOFBlur, 1.0f, 10.0f);
+			DOFRadius = DOFBlur * 2;
 		}
 
-		else if (IsKeyPressed(0x33, true)) { // number 3 key
-			roll = -1.0f;
+		else if (Mouse.getWheeldelta()) {
+			FOV -= (((float)Mouse.getWheeldelta()) / 120.0f);
+			FOV = clamp(FOV, 1.0f, 120.0f);
+		}
+
+		else if (IsKeyPressed(VK_LBUTTON, true)) {
+			Roll = 1.0f;
+		}
+
+		else if (IsKeyPressed(VK_RBUTTON, true)) {
+			Roll = -1.0f;
 		}
 
 		else {
-			roll = 0.0f;
+			Roll = 0.0f;
 		}
+
 	}
 }
 
@@ -901,6 +917,11 @@ void cus_FrameToggles() {
 		else {
 			*(int*)(0x25F5AE8) = (slewMode ? 2 : 0);
 		}
+
+		SafeWrite32(0x0051A8BD + 3, slewMode ? (UInt32)&DOFEnabled : (UInt32)0x276D00C);
+		SafeWrite32(0x0051A9C4 + 2, slewMode ? (UInt32)&DOFBlur : (UInt32)0x276D010);
+		SafeWrite32(0x0051A9D2 + 2, slewMode ? (UInt32)&DOFRadius : (UInt32)0x276D014);
+		SafeWrite32(0x0051A8F8 + 1, slewMode ? (UInt32)&DOFDistance : (UInt32)0x276D024);
 	}
 
 	if (IsKeyPressed(VK_F3, false)) { // F3
