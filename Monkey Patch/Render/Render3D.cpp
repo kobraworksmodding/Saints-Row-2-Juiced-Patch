@@ -119,10 +119,6 @@ namespace Render3D
 		patchBytesM((BYTE*)0x00517051, (BYTE*)"\x8B", 1); // flip the logic for the HDR strength (or radius?) float check
 		//patchNop((BYTE*)0x00533C25, 5); // disable sky refl (prevent the absurd blue tint on reflections)
 
-		patchNop((BYTE*)0x00532A4F, 6); // nop for whatever the fuck
-		patchBytesM((BYTE*)0x00532992, (BYTE*)"\xDD\x05\xAA\x2C\x7B\x02", 6); // new opacity address for sky reflections
-		patchDouble((BYTE*)0x027B2CAA, 128.0);
-
 		patchFloat((BYTE*)0x027B2C7F, 1.26f); //Bright
 		patchFloat((BYTE*)0x027B2C83, 0.8f); //Sat
 		patchFloat((BYTE*)0x027B2C87, 1.62f); //Contr
@@ -136,6 +132,12 @@ namespace Render3D
 		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) == 0) {
 			patchBytesM((BYTE*)0x005170EF, (BYTE*)"\x75", 1); // prevent bloom from appearing without breaking glow
 		}
+	}
+
+	void DisableSkyRefl() {
+		patchNop((BYTE*)0x00532A4F, 6); // nop for whatever the fuck
+		patchBytesM((BYTE*)0x00532992, (BYTE*)"\xDD\x05\xAA\x2C\x7B\x02", 6); // new opacity address for sky reflections
+		patchDouble((BYTE*)0x027B2CAA, 128.0);
 	}
 
 	void DisableFog()
@@ -205,6 +207,11 @@ namespace Render3D
 		if (GameConfig::GetValue("Graphics", "VanillaFXPlus", 0))
 		{
 			Render3D::VFXPlus();
+		}
+
+		if (GameConfig::GetValue("Graphics", "DisableSkyRefl", 0))
+		{
+			Render3D::DisableSkyRefl();
 		}
 
 		if (GameConfig::GetValue("Graphics", "DisableFog", 0)) // Option for the 2 psychopaths that think no fog looks better.
