@@ -23,8 +23,8 @@ namespace Render3D
 		static const char* ShaderName;
 		__asm {
 			mov edi, eax
-			mov Pointer, eax
-			mov Name, esi
+			mov ShaderPointer, eax
+			mov ShaderName, esi
 		}
 
 		__asm pushad
