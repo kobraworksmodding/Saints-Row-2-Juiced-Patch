@@ -1,0 +1,1491 @@
+<root>
+<Table>
+	<Camera>
+		<Name>Camera</Name>
+		<panning_group>
+			<fast_pan_horizontal_multiplier>7.5</fast_pan_horizontal_multiplier>
+			<fast_pan_vertical_multiplier>4</fast_pan_vertical_multiplier>
+			<slow_pan_horizontal_multiplier>0.7</slow_pan_horizontal_multiplier>
+			<slow_pan_vertical_multiplier>0.3</slow_pan_vertical_multiplier>
+			<zoom_scale_min>0.02</zoom_scale_min>
+			<fast_pan_input_threshold>0.70</fast_pan_input_threshold>
+			<Notes>The idea is to try to divide panning into a fine-aiming circle and a fast movement circle. Within the fine aiming circle, the slow-pan constants are used. Within the fast movement circle, the fast-pan constants are used. To make this seem smoother for the user, we adjust the equations involved so that the user input  at the maximum amount of slow-panning speed gives us the same desired speed as the minimum amount of fast-panning speed.</Notes>
+			<accel_scale>.75</accel_scale>
+			<decel_scale>10.0</decel_scale>
+			<hpan_threshold>0.15</hpan_threshold>
+			<vpan_threshold>0.30</vpan_threshold>
+			<fine_aim_accel_scale>0.25</fine_aim_accel_scale>
+			<fine_aim_decel_scale>10</fine_aim_decel_scale>
+			<fine_aim_vert_dampening>0.3</fine_aim_vert_dampening>
+			<zoom_scale_max>0.19</zoom_scale_max>
+			<interior_h_dampening>0</interior_h_dampening>
+			<interior_v_dampening>0</interior_v_dampening>
+			</panning_group>
+		<asvct_group>
+			<default_time>3.0</default_time>
+			<stationary_time>0.5</stationary_time>
+			<stationary_threshold>1.0</stationary_threshold>
+			</asvct_group>
+		<crouch_group>
+			<crouch_y_offset>0.45</crouch_y_offset>
+			<crouch_damping>0.25</crouch_damping>
+			<dead_crouch_damping>0.75</dead_crouch_damping>
+			<crouch_max_accel>3.0</crouch_max_accel>
+			<Notes>In any given frame of processing, we're trying to approach the desired crouch amount by the difference between our current value and our desired multiplied by crouch_damping. So at .25, we're trying to approach the ideal crouch offset by 1/4th of the difference between where we are and where we want to be. This effect is capped by the crouch_max_vel. So while damping effects how badly we _want_ to be there, the max_vel effects how quickly we _can_ be there.</Notes>
+			</crouch_group>
+		<follow_aggression_group>
+			<default_swing_rate>0.045</default_swing_rate>
+			<Notes>ALTER THIS VALUE AT YOUR OWN RISK!
+
+This will scale all follow aggression effects in the game, and the math is very sensitive...</Notes>
+			</follow_aggression_group>
+		<hill_tracking_group>
+			<default_aggression>0.95</default_aggression>
+			</hill_tracking_group>
+		<miscellany_group>
+			<pitch_reset_time>1.3</pitch_reset_time>
+			<backaway_speed>3.0</backaway_speed>
+			<Manual_Aim_Elevation_Angle>3.5</Manual_Aim_Elevation_Angle>
+			<Helicopter_Landing_Pitch>0.6</Helicopter_Landing_Pitch>
+			<Helicopter_Landing_Max_Speed>6</Helicopter_Landing_Max_Speed>
+			<Helicopter_Landing_Max_Altitude>20</Helicopter_Landing_Max_Altitude>
+			<Chainsaw_swing_angle>45</Chainsaw_swing_angle>
+			<Exterior_Interior_Blend_Time>2</Exterior_Interior_Blend_Time>
+			</miscellany_group>
+		<_Editor>
+			<Category>Entries</Category>
+			</_Editor>
+		<submodes>
+			<submode>
+				<name>exterior close</name>
+				<lookat_offset>
+					<X>0</X>
+					<Y>1.9</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-85</min_elevation>
+				<max_elevation>55</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>1.0</blend_time>
+				<x_shift>0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>sprint</name>
+				<lookat_offset>
+					<X>0</X>
+					<Y>1.9</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-85</min_elevation>
+				<max_elevation>55</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0.3</blend_time>
+				<override_exit_blend_time>True</override_exit_blend_time>
+				<x_shift>0</x_shift>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>interior close</name>
+				<Aspect>all</Aspect>
+				<lookat_offset>
+					<X>0</X>
+					<Y>1.9</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-85</min_elevation>
+				<max_elevation>55</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>1.0</blend_time>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<x_shift>0</x_shift>
+				</submode>
+			<submode>
+				<name>interior sprint</name>
+				<Aspect>all</Aspect>
+				<lookat_offset>
+					<X>0</X>
+					<Y>1.9</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-85</min_elevation>
+				<max_elevation>55</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0.3</blend_time>
+				<override_exit_blend_time>True</override_exit_blend_time>
+				<x_shift>0</x_shift>
+				</submode>
+			<submode>
+				<name>fine aim</name>
+				<lookat_offset>
+					<X>0.1</X>
+					<Y>1.6</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-85</min_elevation>
+				<max_elevation>85</max_elevation>
+				<base_fov>55</base_fov>
+				<z_dist>0.3</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0.2</blend_time>
+				<x_shift>0</x_shift>
+				<override_exit_blend_time>True</override_exit_blend_time>
+				<Aspect>widescreen</Aspect>
+				</submode>
+			<submode>
+				<name>fine aim</name>
+				<Aspect>standard</Aspect>
+				<lookat_offset>
+					<X>0.1</X>
+					<Y>1.6</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-85</min_elevation>
+				<max_elevation>85</max_elevation>
+				<base_fov>55</base_fov>
+				<z_dist>0.3</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0.2</blend_time>
+				<override_exit_blend_time>True</override_exit_blend_time>
+				<x_shift>0</x_shift>
+				</submode>
+			<submode>
+				<name>fine aim crouch</name>
+				<Aspect>widescreen</Aspect>
+				<lookat_offset>
+					<X>0.1</X>
+					<Y>1.7</Y>
+					<Z>0.5</Z>
+					</lookat_offset>
+				<min_elevation>-85</min_elevation>
+				<max_elevation>85</max_elevation>
+				<base_fov>55</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0.2</blend_time>
+				<override_exit_blend_time>True</override_exit_blend_time>
+				<x_shift>0</x_shift>
+				</submode>
+			<submode>
+				<name>fine aim crouch</name>
+				<Aspect>standard</Aspect>
+				<lookat_offset>
+					<X>0.1</X>
+					<Y>1.7</Y>
+					<Z>0.5</Z>
+					</lookat_offset>
+				<min_elevation>-85</min_elevation>
+				<max_elevation>85</max_elevation>
+				<base_fov>55</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0.2</blend_time>
+				<override_exit_blend_time>True</override_exit_blend_time>
+				<x_shift>0</x_shift>
+				</submode>
+			<submode>
+				<name>zoom</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.7</Y>
+					<Z>-0.5</Z>
+					</lookat_offset>
+				<min_elevation>-37.5</min_elevation>
+				<max_elevation>55</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0.0</z_dist>
+				<y_dist>0.0</y_dist>
+				<blend_time>0.2</blend_time>
+				<x_shift>0.0</x_shift>
+				<override_exit_blend_time>True</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>human shield</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.7</Y>
+					<Z>0.0</Z>
+					</lookat_offset>
+				<min_elevation>-37.5</min_elevation>
+				<max_elevation>65</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0.5</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0.75</blend_time>
+				<x_shift>0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>melee lock</name>
+				<lookat_offset>
+					<X>0</X>
+					<Y>1.7</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-90</min_elevation>
+				<max_elevation>90</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0.45</blend_time>
+				<x_shift>0</x_shift>
+				<override_exit_blend_time>True</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>vehicle driver</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.3</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-35</min_elevation>
+				<max_elevation>55</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>8</z_dist>
+				<y_dist>1.5</y_dist>
+				<blend_time>1.0</blend_time>
+				<x_shift>0.0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>widescreen</Aspect>
+				</submode>
+			<submode>
+				<name>vehicle driver</name>
+				<Aspect>standard</Aspect>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.3</Y>
+					<Z>0.0</Z>
+					</lookat_offset>
+				<min_elevation>-35</min_elevation>
+				<max_elevation>55</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>8</z_dist>
+				<y_dist>1.5</y_dist>
+				<blend_time>1.0</blend_time>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<x_shift>0.0</x_shift>
+				</submode>
+			<submode>
+				<name>vehicle driver alt</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.3</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-35</min_elevation>
+				<max_elevation>55</max_elevation>
+				<base_fov>50.0</base_fov>
+				<z_dist>6</z_dist>
+				<y_dist>1.2</y_dist>
+				<blend_time>1.0</blend_time>
+				<x_shift>0.0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>widescreen</Aspect>
+				</submode>
+			<submode>
+				<name>vehicle driver alt</name>
+				<Aspect>standard</Aspect>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.3</Y>
+					<Z>0.0</Z>
+					</lookat_offset>
+				<min_elevation>-35</min_elevation>
+				<max_elevation>55</max_elevation>
+				<base_fov>60.0</base_fov>
+				<z_dist>6</z_dist>
+				<y_dist>1.2</y_dist>
+				<blend_time>1.0</blend_time>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<x_shift>0.0</x_shift>
+				</submode>
+			<submode>
+				<name>watercraft driver</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.3</Y>
+					<Z>0.0</Z>
+					</lookat_offset>
+				<min_elevation>-30</min_elevation>
+				<max_elevation>55</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>8</z_dist>
+				<y_dist>1.5</y_dist>
+				<blend_time>1.0</blend_time>
+				<x_shift>0.0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>helicopter driver</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.3</Y>
+					<Z>0.0</Z>
+					</lookat_offset>
+				<min_elevation>-37.5</min_elevation>
+				<max_elevation>75</max_elevation>
+				<base_fov>60.0</base_fov>
+				<z_dist>8</z_dist>
+				<y_dist>1.5</y_dist>
+				<blend_time>1.0</blend_time>
+				<x_shift>0.0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>airplane driver</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.3</Y>
+					<Z>0.0</Z>
+					</lookat_offset>
+				<min_elevation>-15</min_elevation>
+				<max_elevation>75</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>8</z_dist>
+				<y_dist>1.5</y_dist>
+				<blend_time>1.0</blend_time>
+				<x_shift>0.0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>vehicle fine aim</name>
+				<lookat_offset>
+					<X>0</X>
+					<Y>1.6</Y>
+					<Z>0.0</Z>
+					</lookat_offset>
+				<min_elevation>-75</min_elevation>
+				<max_elevation>55</max_elevation>
+				<base_fov>60.0</base_fov>
+				<z_dist>0.1</z_dist>
+				<y_dist>0.0</y_dist>
+				<blend_time>1.0</blend_time>
+				<x_shift>0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>fine aim vehicle</name>
+				<lookat_offset>
+					<X>-1.0</X>
+					<Y>0.4</Y>
+					<Z>-0.2</Z>
+					</lookat_offset>
+				<min_elevation>-60</min_elevation>
+				<max_elevation>43</max_elevation>
+				<base_fov>36</base_fov>
+				<z_dist>1.95</z_dist>
+				<y_dist>0.411</y_dist>
+				<blend_time>1.0</blend_time>
+				<x_shift>0.0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>leaping</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.7</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-45</min_elevation>
+				<max_elevation>85</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0</blend_time>
+				<x_shift>0.0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>swimming</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>0.2</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-60</min_elevation>
+				<max_elevation>60</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0</blend_time>
+				<x_shift>0.0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>spectator</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>2.0</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-45</min_elevation>
+				<max_elevation>60</max_elevation>
+				<base_fov>50.0</base_fov>
+				<z_dist>6.5</z_dist>
+				<y_dist>1.5</y_dist>
+				<blend_time>1.0</blend_time>
+				<x_shift>0.0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>fence</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.7</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-85</min_elevation>
+				<max_elevation>85</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>1.0</blend_time>
+				<x_shift>0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>ragdoll</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>0.2</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-45</min_elevation>
+				<max_elevation>60</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>4</z_dist>
+				<y_dist>1</y_dist>
+				<blend_time>0.25</blend_time>
+				<x_shift>0.0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>falling</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.7</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-45</min_elevation>
+				<max_elevation>85</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0</blend_time>
+				<x_shift>0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>freefall</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.7</Y>
+					<Z>0</Z>
+					</lookat_offset>
+				<min_elevation>-45</min_elevation>
+				<max_elevation>60</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>0</blend_time>
+				<x_shift>0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			<submode>
+				<name>parachute</name>
+				<lookat_offset>
+					<X>0.0</X>
+					<Y>1.7</Y>
+					<Z>0.0</Z>
+					</lookat_offset>
+				<min_elevation>-45</min_elevation>
+				<max_elevation>60</max_elevation>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<blend_time>1.0</blend_time>
+				<x_shift>0</x_shift>
+				<override_exit_blend_time>False</override_exit_blend_time>
+				<Aspect>all</Aspect>
+				</submode>
+			</submodes>
+		<vehicle_fallbacks>
+			<vehicle_fallback>
+				<name>nitrous</name>
+				<distance>0</distance>
+				<duration>0</duration>
+				<return>0</return>
+				<rampin>0</rampin>
+				</vehicle_fallback>
+			<vehicle_fallback>
+				<name>burnout</name>
+				<distance>0</distance>
+				<duration>0</duration>
+				<return>0</return>
+				<rampin>0</rampin>
+				</vehicle_fallback>
+			<vehicle_fallback>
+				<name>stunt cam 1</name>
+				<distance>0</distance>
+				<duration>0</duration>
+				<return>0</return>
+				<rampin>0</rampin>
+				</vehicle_fallback>
+			<vehicle_fallback>
+				<name>stunt cam 3</name>
+				<distance>0</distance>
+				<duration>0</duration>
+				<return>0</return>
+				<rampin>0</rampin>
+				</vehicle_fallback>
+			<vehicle_fallback>
+				<name>stunt cam 4</name>
+				<distance>0</distance>
+				<duration>0</duration>
+				<return>0</return>
+				<rampin>0</rampin>
+				</vehicle_fallback>
+			<vehicle_fallback>
+				<name>parachute open</name>
+				<distance>-1</distance>
+				<rampin>750</rampin>
+				<duration>1500</duration>
+				<return>1500</return>
+				</vehicle_fallback>
+			<vehicle_fallback>
+				<name>chainsaw</name>
+				<distance>-2</distance>
+				<rampin>500</rampin>
+				<duration>1650</duration>
+				<return>750</return>
+				</vehicle_fallback>
+			</vehicle_fallbacks>
+		<melee_lock_group>
+			<Max_COC_Radius>16.0</Max_COC_Radius>
+			<Preblur_Radius>8.0</Preblur_Radius>
+			<Near_Dist>0.075</Near_Dist>
+			<Ideal_Near_Dist>2</Ideal_Near_Dist>
+			<Ideal_Far_Dist>6</Ideal_Far_Dist>
+			<Far_Dist>50.0</Far_Dist>
+			<Vertical_Rotation>0.25</Vertical_Rotation>
+			<Horizontal_Rotation>-0.3</Horizontal_Rotation>
+			<Vertical_Rotation_Finisher>-0.25</Vertical_Rotation_Finisher>
+			<Horizontal_Rotation_Finisher>0.5</Horizontal_Rotation_Finisher>
+			<Vertical_Rotation_Zombie>-0.25</Vertical_Rotation_Zombie>
+			<Horizontal_Rotation_Zombie>-1</Horizontal_Rotation_Zombie>
+			</melee_lock_group>
+		<Vehicle_Fine_Aims>
+			<Vehicle_Fine_Aim>
+				<Name>Yacht Primary</Name>
+				<Lookat_Offset>
+					<X>-1.1</X>
+					<Y>1.7</Y>
+					<Z>-8.6</Z>
+					</Lookat_Offset>
+				<Min_Pitch>-45</Min_Pitch>
+				<Max_Pitch>25</Max_Pitch>
+				<X_Shift>0</X_Shift>
+				<Heading_Range>170</Heading_Range>
+				<Heading_Center>180</Heading_Center>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<flags>
+					<Flag>limit_heading_range</Flag>
+					<Flag>turn_player_toward_camera</Flag>
+					</flags>
+				<Aspect>widescreen</Aspect>
+				</Vehicle_Fine_Aim>
+			<Vehicle_Fine_Aim>
+				<Name>Yacht Primary</Name>
+				<Lookat_Offset>
+					<X>-1.1</X>
+					<Y>1.7</Y>
+					<Z>-8.6</Z>
+					</Lookat_Offset>
+				<Min_Pitch>-45</Min_Pitch>
+				<Max_Pitch>25</Max_Pitch>
+				<X_Shift>0</X_Shift>
+				<Heading_Range>170</Heading_Range>
+				<Heading_Center>180</Heading_Center>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<flags>
+					<Flag>limit_heading_range</Flag>
+					<Flag>turn_player_toward_camera</Flag>
+					</flags>
+				<Aspect>standard</Aspect>
+				</Vehicle_Fine_Aim>
+			<Vehicle_Fine_Aim>
+				<Name>Yacht Secondary</Name>
+				<Lookat_Offset>
+					<X>1.3</X>
+					<Y>1.7</Y>
+					<Z>-8.6</Z>
+					</Lookat_Offset>
+				<Min_Pitch>-45</Min_Pitch>
+				<Max_Pitch>25</Max_Pitch>
+				<X_Shift>0</X_Shift>
+				<Heading_Range>170</Heading_Range>
+				<Heading_Center>180</Heading_Center>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<flags>
+					<Flag>limit_heading_range</Flag>
+					<Flag>turn_player_toward_camera</Flag>
+					</flags>
+				<Aspect>widescreen</Aspect>
+				</Vehicle_Fine_Aim>
+			<Vehicle_Fine_Aim>
+				<Name>Yacht Secondary</Name>
+				<Lookat_Offset>
+					<X>1.3</X>
+					<Y>1.7</Y>
+					<Z>-8.6</Z>
+					</Lookat_Offset>
+				<Min_Pitch>-45</Min_Pitch>
+				<Max_Pitch>25</Max_Pitch>
+				<X_Shift>0</X_Shift>
+				<Heading_Range>170</Heading_Range>
+				<Heading_Center>180</Heading_Center>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<flags>
+					<Flag>limit_heading_range</Flag>
+					<Flag>turn_player_toward_camera</Flag>
+					</flags>
+				<Aspect>standard</Aspect>
+				</Vehicle_Fine_Aim>
+			<Vehicle_Fine_Aim>
+				<Name>Fireworks Truck</Name>
+				<Lookat_Offset>
+					<X>0.35</X>
+					<Y>0.39</Y>
+					<Z>-3.3</Z>
+					</Lookat_Offset>
+				<Min_Pitch>-10</Min_Pitch>
+				<Max_Pitch>25</Max_Pitch>
+				<X_Shift>0</X_Shift>
+				<Heading_Range>40</Heading_Range>
+				<Heading_Center>180</Heading_Center>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<flags>
+					<Flag>limit_heading_range</Flag>
+					<Flag>turn_camera_with_vehicle</Flag>
+					</flags>
+				<Aspect>widescreen</Aspect>
+				</Vehicle_Fine_Aim>
+			<Vehicle_Fine_Aim>
+				<Name>Fireworks Truck</Name>
+				<Lookat_Offset>
+					<X>0.35</X>
+					<Y>0.39</Y>
+					<Z>-3.3</Z>
+					</Lookat_Offset>
+				<Min_Pitch>-10</Min_Pitch>
+				<Max_Pitch>25</Max_Pitch>
+				<X_Shift>0</X_Shift>
+				<Heading_Range>40</Heading_Range>
+				<Heading_Center>180</Heading_Center>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<flags>
+					<Flag>limit_heading_range</Flag>
+					<Flag>turn_camera_with_vehicle</Flag>
+					</flags>
+				<Aspect>standard</Aspect>
+				</Vehicle_Fine_Aim>
+			<Vehicle_Fine_Aim>
+				<Name>Heli Primary</Name>
+				<Lookat_Offset>
+					<X>1.45</X>
+					<Y>-0.2</Y>
+					<Z>0.4</Z>
+					</Lookat_Offset>
+				<Min_Pitch>-35</Min_Pitch>
+				<Max_Pitch>65</Max_Pitch>
+				<X_Shift>0</X_Shift>
+				<Heading_Range>120</Heading_Range>
+				<Heading_Center>90</Heading_Center>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<flags>
+					<Flag>limit_heading_range</Flag>
+					</flags>
+				<Aspect>widescreen</Aspect>
+				</Vehicle_Fine_Aim>
+			<Vehicle_Fine_Aim>
+				<Name>Heli Primary</Name>
+				<Lookat_Offset>
+					<X>1.45</X>
+					<Y>-0.2</Y>
+					<Z>0.4</Z>
+					</Lookat_Offset>
+				<Min_Pitch>-35</Min_Pitch>
+				<Max_Pitch>65</Max_Pitch>
+				<X_Shift>0</X_Shift>
+				<Heading_Range>120</Heading_Range>
+				<Heading_Center>90</Heading_Center>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<flags>
+					<Flag>limit_heading_range</Flag>
+					</flags>
+				<Aspect>standard</Aspect>
+				</Vehicle_Fine_Aim>
+			<Vehicle_Fine_Aim>
+				<Name>Heli Secondary</Name>
+				<Lookat_Offset>
+					<X>1.35</X>
+					<Y>0.1</Y>
+					<Z>-0.8</Z>
+					</Lookat_Offset>
+				<Min_Pitch>-30</Min_Pitch>
+				<Max_Pitch>55</Max_Pitch>
+				<X_Shift>-0</X_Shift>
+				<Heading_Range>115</Heading_Range>
+				<Heading_Center>90</Heading_Center>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<flags>
+					<Flag>limit_heading_range</Flag>
+					</flags>
+				<Aspect>widescreen</Aspect>
+				</Vehicle_Fine_Aim>
+			<Vehicle_Fine_Aim>
+				<Name>Heli Secondary</Name>
+				<Lookat_Offset>
+					<X>1.35</X>
+					<Y>0.1</Y>
+					<Z>-0.8</Z>
+					</Lookat_Offset>
+				<Min_Pitch>-30</Min_Pitch>
+				<Max_Pitch>55</Max_Pitch>
+				<X_Shift>-0</X_Shift>
+				<Heading_Range>115</Heading_Range>
+				<Heading_Center>90</Heading_Center>
+				<base_fov>60</base_fov>
+				<z_dist>0</z_dist>
+				<y_dist>0</y_dist>
+				<flags>
+					<Flag>limit_heading_range</Flag>
+					</flags>
+				<Aspect>standard</Aspect>
+				</Vehicle_Fine_Aim>
+			</Vehicle_Fine_Aims>
+		</Camera>
+	</Table>
+
+<TableTemplates>
+	</TableTemplates>
+
+<TableDescription>
+	<Name>Camera</Name>
+	<Type>TableDescription</Type>
+	<Description>Everything we can expose (so far) regarding camera 
+behaviors.</Description>
+	<Unique>true</Unique>
+	<Element>
+		<Name>Name</Name>
+		<Type>String</Type>
+		<Unique>true</Unique>
+		<Default>Camera</Default>
+		<MaxLength>6</MaxLength>
+		</Element>
+	<Element>
+		<Name>panning_group</Name>
+		<Type>Element</Type>
+		<Description>Variables concerning the panning behavior of the 
+camera.</Description>
+		<Element>
+			<Name>fast_pan_horizontal_multiplier</Name>
+			<Type>Float</Type>
+			<Description>When the stick is pegged, multiply horizontal movement 
+by this amount.</Description>
+			<Default>8.0</Default>
+			</Element>
+		<Element>
+			<Name>fast_pan_vertical_multiplier</Name>
+			<Type>Float</Type>
+			<Description>When the stick is pegged, multiply vertical movement by 
+this amount.</Description>
+			<Default>4.0</Default>
+			</Element>
+		<Element>
+			<Name>slow_pan_horizontal_multiplier</Name>
+			<Type>Float</Type>
+			<Description>Multiply horizontal movement by this amount.</Description>
+			<Default>0.3</Default>
+			</Element>
+		<Element>
+			<Name>slow_pan_vertical_multiplier</Name>
+			<Type>Float</Type>
+			<Description>Multiply vertical movement by this amount.</Description>
+			<Default>0.7</Default>
+			</Element>
+		<Element>
+			<Name>zoom_scale_min</Name>
+			<Type>Float</Type>
+			<Description>When zoomed, multiply all movement by an amount between this and zoom_scale_max based on the zoom magnification.</Description>
+			<Default>0.4</Default>
+			</Element>
+		<Element>
+			<Name>zoom_scale_max</Name>
+			<Type>Float</Type>
+			<Description>When zoomed, multiply all movement by an amount between this zoom_scale_min and this value based on the zoom magnification.</Description>
+			<Default>0.02</Default>
+			</Element>
+		<Element>
+			<Name>fast_pan_input_threshold</Name>
+			<Type>Float</Type>
+			<Description>How far off-center must the stick be before it is considered 
+"pegged"?</Description>
+			<Default>0.75</Default>
+			<MinValue>0</MinValue>
+			<MaxValue>1</MaxValue>
+			</Element>
+		<Element>
+			<Name>accel_scale</Name>
+			<Type>Float</Type>
+			<Description>Radians/sec/sec to accelerate the camera's 
+movement by when in the "fast-pan" zone. Maximum 
+speed will still be capped by the fast-pan multipliers.</Description>
+			<Default>6.0</Default>
+			</Element>
+		<Element>
+			<Name>decel_scale</Name>
+			<Type>Float</Type>
+			<Description>Radians/sec/sec to decelerate the camera by 
+when in the fast-pan zone. (There is a small region of 
+movement in the fast-pan zone, but this is mostly a relic 
+from when all camera movement was based in 
+acceleration/deceleration.)</Description>
+			<Default>10.0</Default>
+			</Element>
+		<Element>
+			<Name>fine_aim_accel_scale</Name>
+			<Type>Float</Type>
+			<Description>Radians/sec/sec to accelerate the camera's 
+movement by when in fine-aim mode. Maximum 
+speed will still be capped by the fast-pan multipliers.</Description>
+			<Default>0.0</Default>
+			</Element>
+		<Element>
+			<Name>fine_aim_decel_scale</Name>
+			<Type>Float</Type>
+			<Description>Radians/sec/sec to decelerate the camera by 
+when in fine-aim mode.</Description>
+			<Default>0.0</Default>
+			</Element>
+		<Element>
+			<Name>hpan_threshold</Name>
+			<Type>Float</Type>
+			<Display_Name>pegged_horizontal_deadzone</Display_Name>
+			<Description>If the stick is pegged, it must have at least this much 
+horizontal input for the camera to move horizontally. 
+
+Think of it like a plus-sign you can make with the stick which 
+only allows either vertical or horizontal movement - outside 
+of this plus sign you get both horizontal and vertical, but 
+within this plus sign you only get one or the other. This 
+value sets the width of the up-down bar of the plus-sign 
+where there will only be vertical movement.</Description>
+			<Default>0.04</Default>
+			</Element>
+		<Element>
+			<Name>vpan_threshold</Name>
+			<Type>Float</Type>
+			<Display_Name>pegged_vertical_deadzone</Display_Name>
+			<Description>If the stick is pegged, it must have at least this much 
+vertical input for the camera to move vertically.
+
+Picking up from the description of the 
+pegged_horizontal_deadzone, this value adjusts the height of 
+the left-right bar of the plus-sign where there will only 
+be horizontal movement.</Description>
+			<Default>0.04</Default>
+			</Element>
+		<Element>
+			<Name>fine_aim_vert_dampening</Name>
+			<Type>Float</Type>
+			<Default>1.0</Default>
+			<MinValue>0</MinValue>
+			<MaxValue>1</MaxValue>
+			<UseSlider>True</UseSlider>
+			</Element>
+		<Element>
+			<Name>interior_h_dampening</Name>
+			<Type>Float</Type>
+			<Description>multiplier applied to camera heading rotation when in interiors</Description>
+			<Default>1.0</Default>
+			<MinValue>0</MinValue>
+			<MaxValue>1</MaxValue>
+			<UseSlider>True</UseSlider>
+			</Element>
+		<Element>
+			<Name>interior_v_dampening</Name>
+			<Type>Float</Type>
+			<Description>multiplier applied to camera pitch rotation when in interiors (overridden by the fine aim dempening)</Description>
+			<Default>1.0</Default>
+			<MinValue>0</MinValue>
+			<MaxValue>1</MaxValue>
+			<UseSlider>True</UseSlider>
+			</Element>
+		<Element>
+			<Name>Notes</Name>
+			<Type>String</Type>
+			<Description>Notes about the variables here.</Description>
+			<Required>false</Required>
+			</Element>
+		</Element>
+	<Element>
+		<Name>asvct_group</Name>
+		<Type>Element</Type>
+		<Description>Variables concerning the Alvan's Special Vehicle 
+Camera Timestamp, one of our worst-named variables ever, 
+and the timestamp that is responsible for determining 
+how long we make the camera "stick" in a position 
+relative to the vehicle after it has been moved by the user.</Description>
+		<Element>
+			<Name>default_time</Name>
+			<Type>Float</Type>
+			<Description>The default time (seconds) that we stick the camera 
+in-place after the user has moved it.</Description>
+			<Default>3.0</Default>
+			<MinValue>0</MinValue>
+			</Element>
+		<Element>
+			<Name>stationary_time</Name>
+			<Type>Float</Type>
+			<Description>Time (seconds) that we stick the camera in-place when the 
+user moves it around a stationary vehicle.</Description>
+			<Default>0.5</Default>
+			<MinValue>0</MinValue>
+			</Element>
+		<Element>
+			<Name>stationary_threshold</Name>
+			<Type>Float</Type>
+			<Description>Maxmimum velocity (meters/second) squared at 
+which a vehicle is considered stationary for the sake of 
+choosing how long to stick the camera in place after the user 
+has moved it around the
+vehicle.</Description>
+			<Default>1.0</Default>
+			<MinValue>0</MinValue>
+			</Element>
+		<Element>
+			<Name>Notes</Name>
+			<Type>String</Type>
+			<Description>Notes about the variables here.</Description>
+			<Required>false</Required>
+			</Element>
+		</Element>
+	<Element>
+		<Name>crouch_group</Name>
+		<Type>Element</Type>
+		<Description>Variables concerning the camera following the player as 
+they crouch.</Description>
+		<Element>
+			<Name>crouch_y_offset</Name>
+			<Type>Float</Type>
+			<Description>Maximum amount will we drop the camera by when it's at 
+100% crouch.</Description>
+			<Default>0.0</Default>
+			</Element>
+		<Element>
+			<Name>crouch_damping</Name>
+			<Type>Float</Type>
+			<Description>Damping constant for crouch offset. Larger values make us 
+try to crouch faster.</Description>
+			<Default>0.25</Default>
+			<MinValue>0</MinValue>
+			<MaxValue>1</MaxValue>
+			</Element>
+		<Element>
+			<Name>dead_crouch_damping</Name>
+			<Type>Float</Type>
+			<Description>Damping constant for crouching, like above but this one is used when the target is 
+dead.</Description>
+			<Default>0.75</Default>
+			<MinValue>0</MinValue>
+			<MaxValue>1</MaxValue>
+			</Element>
+		<Element>
+			<Name>crouch_max_accel</Name>
+			<Type>Float</Type>
+			<Display_Name>crouch_max_vel</Display_Name>
+			<Description>The maximum amount we're allowed to move towards the 
+goal crouch amount per second. This applies to the 
+percentage towards the new value, not the value itself, so a 
+value of 1 allows us to move fully to crouch over a minimum 
+of 1 second, a value of 3 allows us to move fully to 
+crouch over a minimum of 1/3 of a second, etc.</Description>
+			<Default>3.0</Default>
+			<MinValue>0</MinValue>
+			</Element>
+		<Element>
+			<Name>Notes</Name>
+			<Type>String</Type>
+			<Description>Notes about the variables here.</Description>
+			<Required>false</Required>
+			</Element>
+		</Element>
+	<Element>
+		<Name>follow_aggression_group</Name>
+		<Type>Element</Type>
+		<Description>Variables concerning Flavin's follow aggression system.</Description>
+		<Element>
+			<Name>default_swing_rate</Name>
+			<Type>Float</Type>
+			<Description>The default swing rate of the camera as it tries to follow the 
+target according to the follow aggression system.
+
+Basically, this scales the efffects of the follow 
+aggression system.</Description>
+			<Default>0.02526</Default>
+			<MinValue>0</MinValue>
+			</Element>
+		<Element>
+			<Name>Notes</Name>
+			<Type>String</Type>
+			<Description>Notes about the variables here.</Description>
+			<Required>false</Required>
+			</Element>
+		</Element>
+	<Element>
+		<Name>hill_tracking_group</Name>
+		<Type>Element</Type>
+		<Description>Variables concerning hill-tracking when the player is 
+in a vehicle.</Description>
+		<Element>
+			<Name>default_aggression</Name>
+			<Type>Float</Type>
+			<Description>Default hill tracking aggression. Larger values 
+make the camera try harder to follow the slope of a hill, 
+smaller values make the camera more lenient.</Description>
+			<Default>0.95</Default>
+			<MinValue>0</MinValue>
+			</Element>
+		<Element>
+			<Name>Notes</Name>
+			<Type>String</Type>
+			<Description>Notes about the variables here.</Description>
+			<Required>false</Required>
+			</Element>
+		</Element>
+	<Element>
+		<Name>melee_lock_group</Name>
+		<Type>Element</Type>
+		<Element>
+			<Name>Max_COC_Radius</Name>
+			<Type>Float</Type>
+			<Display_Name>Max COC Radius</Display_Name>
+			<Default>16.0</Default>
+			</Element>
+		<Element>
+			<Name>Preblur_Radius</Name>
+			<Type>Float</Type>
+			<Display_Name>Preblur Radius</Display_Name>
+			<Default>8.0</Default>
+			</Element>
+		<Element>
+			<Name>Near_Dist</Name>
+			<Type>Float</Type>
+			<Display_Name>Near Dist</Display_Name>
+			<Default>0.5</Default>
+			</Element>
+		<Element>
+			<Name>Ideal_Near_Dist</Name>
+			<Type>Float</Type>
+			<Display_Name>Ideal Near Dist</Display_Name>
+			<Default>3.5</Default>
+			</Element>
+		<Element>
+			<Name>Ideal_Far_Dist</Name>
+			<Type>Float</Type>
+			<Display_Name>Ideal Far Dist</Display_Name>
+			<Default>4.5</Default>
+			</Element>
+		<Element>
+			<Name>Far_Dist</Name>
+			<Type>Float</Type>
+			<Display_Name>Far Dist</Display_Name>
+			<Default>50.0</Default>
+			</Element>
+		<Element>
+			<Name>Vertical_Rotation</Name>
+			<Type>Float</Type>
+			<Display_Name>Vertical Rotation Melee</Display_Name>
+			<Description>How far (in radians) to rotate the camera vertically.</Description>
+			<Default>0.3</Default>
+			</Element>
+		<Element>
+			<Name>Horizontal_Rotation</Name>
+			<Type>Float</Type>
+			<Display_Name>Horizontal Rotation Melee</Display_Name>
+			<Description>How far (in radians) to rotate the camera horizontally.</Description>
+			<Default>0.3</Default>
+			</Element>
+		<Element>
+			<Name>Vertical_Rotation_Finisher</Name>
+			<Type>Float</Type>
+			<Display_Name>Vertical_Rotation_FC_Finisher</Display_Name>
+			<Default>0.0</Default>
+			</Element>
+		<Element>
+			<Name>Horizontal_Rotation_Finisher</Name>
+			<Type>Float</Type>
+			<Display_Name>Horizontal_Rotation_FC_Finisher</Display_Name>
+			<Default>0.0</Default>
+			</Element>
+		<Element>
+			<Name>Vertical_Rotation_Zombie</Name>
+			<Type>Float</Type>
+			<Default>0.0</Default>
+			</Element>
+		<Element>
+			<Name>Horizontal_Rotation_Zombie</Name>
+			<Type>Float</Type>
+			<Default>0.0</Default>
+			</Element>
+		</Element>
+	<Element>
+		<Name>miscellany_group</Name>
+		<Type>Element</Type>
+		<Description>Miscellaneous values.</Description>
+		<Element>
+			<Name>pitch_reset_time</Name>
+			<Type>Float</Type>
+			<Description>Time (seconds) for the camera to spend resetting its pitch 
+from an arbitrary value.</Description>
+			<Default>1.3</Default>
+			<MinValue>0</MinValue>
+			</Element>
+		<Element>
+			<Name>backaway_speed</Name>
+			<Type>Float</Type>
+			<Description>Speed (meters/sec) that the camera will try to back away from a target when an obstruction forced it to come closer to the target than the angle's ideal distance suggested.</Description>
+			<Default>3.0</Default>
+			<MinValue>0</MinValue>
+			</Element>
+		<Element>
+			<Name>Manual_Aim_Elevation_Angle</Name>
+			<Type>Float</Type>
+			<Display_Name>Manual Aim Elevation Angle</Display_Name>
+			<Description>Degrees by which the players gunfire is redirected so it will hit the reticule.</Description>
+			<Default>0.0</Default>
+			</Element>
+		<Element>
+			<Name>Helicopter_Landing_Pitch</Name>
+			<Type>Float</Type>
+			<Description>The angle (0-1) percentage the landing camera rotates upwards to look down.</Description>
+			<Default>0.0</Default>
+			</Element>
+		<Element>
+			<Name>Helicopter_Landing_Max_Speed</Name>
+			<Type>Float</Type>
+			<Description>The maximum speed (m/s) the helicopter can be moving and have the landing camera engage.</Description>
+			<Default>0.0</Default>
+			</Element>
+		<Element>
+			<Name>Helicopter_Landing_Max_Altitude</Name>
+			<Type>Float</Type>
+			<Description>The max height(m) the helicopter can be from the nearest geometry directly below it and have the landing camera engage.</Description>
+			<Default>0.0</Default>
+			</Element>
+		<Element>
+			<Name>Chainsaw_swing_angle</Name>
+			<Type>Float</Type>
+			<Display_Name>Chainsaw swing angle</Display_Name>
+			<Description>Angle the chainsaw swings to either to the left or right from the player's forward angle</Description>
+			<Default>0.0</Default>
+			<MinValue>0</MinValue>
+			<MaxValue>180</MaxValue>
+			<UseSlider>True</UseSlider>
+			</Element>
+		<Element>
+			<Name>Notes</Name>
+			<Type>String</Type>
+			<Description>Notes about the variables here.</Description>
+			<Required>false</Required>
+			</Element>
+		<Element>
+			<Name>Exterior_Interior_Blend_Time</Name>
+			<Type>Float</Type>
+			<Default>0.0</Default>
+			</Element>
+		</Element>
+	<Element>
+		<Name>submodes</Name>
+		<Type>Grid</Type>
+		<Element>
+			<Name>submode</Name>
+			<Type>Element</Type>
+			<Element>
+				<Name>name</Name>
+				<Type>String</Type>
+				<Description>X= distance to the side of the player
+Y= distance up from player
+Z= distance back from player</Description>
+				</Element>
+			<Element>
+				<Name>Aspect</Name>
+				<Type>Selection</Type>
+				<Default>all</Default>
+				<Choice>widescreen</Choice>
+				<Choice>standard</Choice>
+				<Choice>all</Choice>
+				</Element>
+			<Element>
+				<Name>lookat_offset</Name>
+				<Type>Vector</Type>
+				<Description>Pre-rotation offset from the player.</Description>
+				<X>
+					<Name>X</Name>
+					<Type>Float</Type>
+					<Default>0.0</Default>
+					</X>
+				<Y>
+					<Name>Y</Name>
+					<Type>Float</Type>
+					<Default>0.0</Default>
+					</Y>
+				<Z>
+					<Name>Z</Name>
+					<Type>Float</Type>
+					<Default>0.0</Default>
+					</Z>
+				</Element>
+			<Element>
+				<Name>min_elevation</Name>
+				<Type>Float</Type>
+				<Description>The lowest angle the camera can rotate down to.</Description>
+				<Default>0.0</Default>
+				</Element>
+			<Element>
+				<Name>max_elevation</Name>
+				<Type>Float</Type>
+				<Description>The highest angle the camera can rotate up to.</Description>
+				<Default>0.0</Default>
+				</Element>
+			<Element>
+				<Name>base_fov</Name>
+				<Type>Float</Type>
+				<Default>60.0</Default>
+				</Element>
+			<Element>
+				<Name>z_dist</Name>
+				<Type>Float</Type>
+				<Description>Post-rotation distance from PC.
+Higher is farther away.</Description>
+				<Default>0.0</Default>
+				</Element>
+			<Element>
+				<Name>y_dist</Name>
+				<Type>Float</Type>
+				<Description>Post-rotation height from PC.
+Higher is higher up.
+This default position can be undone by the player changing the camera pitch.</Description>
+				<Default>0.0</Default>
+				</Element>
+			<Element>
+				<Name>blend_time</Name>
+				<Type>Float</Type>
+				<Description>Time required to blend into/out of this camera mode.</Description>
+				<Default>1.0</Default>
+				</Element>
+			<Element>
+				<Name>override_exit_blend_time</Name>
+				<Type>Selection</Type>
+				<Display_Name>override exit blend time</Display_Name>
+				<Description>Should this submode's blend time override the blend-in time of the next submode?</Description>
+				<Default>False</Default>
+				<Choice>True</Choice>
+				<Choice>False</Choice>
+				</Element>
+			<Element>
+				<Name>x_shift</Name>
+				<Type>Float</Type>
+				<Description>Amount the camera is shifted horizontally after each frame of processing.  The camra is shifted back at the beginning of each frame.</Description>
+				<Default>0.0</Default>
+				</Element>
+			</Element>
+		<Num_Display_Rows>8</Num_Display_Rows>
+		</Element>
+	<Element>
+		<Name>vehicle_fallbacks</Name>
+		<Type>Grid</Type>
+		<Element>
+			<Name>vehicle_fallback</Name>
+			<Type>Element</Type>
+			<Element>
+				<Name>name</Name>
+				<Type>String</Type>
+				</Element>
+			<Element>
+				<Name>distance</Name>
+				<Type>Float</Type>
+				<Default>0.0</Default>
+				</Element>
+			<Element>
+				<Name>rampin</Name>
+				<Type>Int</Type>
+				<Default>0</Default>
+				</Element>
+			<Element>
+				<Name>duration</Name>
+				<Type>Int</Type>
+				<Default>0</Default>
+				</Element>
+			<Element>
+				<Name>return</Name>
+				<Type>Int</Type>
+				<Default>0</Default>
+				</Element>
+			</Element>
+		<Num_Display_Rows>8</Num_Display_Rows>
+		</Element>
+	<Element>
+		<Name>Vehicle_Fine_Aims</Name>
+		<Type>Grid</Type>
+		<Display_Name>Vehicle Fine Aims</Display_Name>
+		<Description>Vehicle fine-aim cameras used during activities.  The lookat offset is kept relative to the vehicle rather than the human.</Description>
+		<Element>
+			<Name>Vehicle_Fine_Aim</Name>
+			<Type>Element</Type>
+			<Display_Name>Vehicle Fine Aim</Display_Name>
+			<Element>
+				<Name>Name</Name>
+				<Type>String</Type>
+				</Element>
+			<Element>
+				<Name>Aspect</Name>
+				<Type>Selection</Type>
+				<Default>widescreen</Default>
+				<Choice>standard</Choice>
+				<Choice>widescreen</Choice>
+				</Element>
+			<Element>
+				<Name>Lookat_Offset</Name>
+				<Type>Vector</Type>
+				<Display_Name>Lookat Offset</Display_Name>
+				<X>
+					<Name>X</Name>
+					<Type>Float</Type>
+					<Default>0.0</Default>
+					</X>
+				<Y>
+					<Name>Y</Name>
+					<Type>Float</Type>
+					<Default>0.0</Default>
+					</Y>
+				<Z>
+					<Name>Z</Name>
+					<Type>Float</Type>
+					<Default>0.0</Default>
+					</Z>
+				</Element>
+			<Element>
+				<Name>Min_Pitch</Name>
+				<Type>Float</Type>
+				<Display_Name>Min Pitch</Display_Name>
+				<Default>-45</Default>
+				</Element>
+			<Element>
+				<Name>Max_Pitch</Name>
+				<Type>Float</Type>
+				<Display_Name>Max Pitch</Display_Name>
+				<Default>65</Default>
+				</Element>
+			<Element>
+				<Name>X_Shift</Name>
+				<Type>Float</Type>
+				<Display_Name>X Shift</Display_Name>
+				<Default>0.0</Default>
+				</Element>
+			<Element>
+				<Name>Heading_Range</Name>
+				<Type>Float</Type>
+				<Display_Name>Heading Range</Display_Name>
+				<Description>Horizontal range of movement in vehicle fine aim mode</Description>
+				<Default>85</Default>
+				</Element>
+			<Element>
+				<Name>Heading_Center</Name>
+				<Type>Float</Type>
+				<Display_Name>Heading Center</Display_Name>
+				<Description>The heading that the camera faces relative to the vehicle's forward vector</Description>
+				<Default>90</Default>
+				</Element>
+			<Element>
+				<Name>base_fov</Name>
+				<Type>Float</Type>
+				<Default>60.0</Default>
+				</Element>
+			<Element>
+				<Name>z_dist</Name>
+				<Type>Float</Type>
+				<Description>Post-rotation distance from PC.
+Higher is farther away.</Description>
+				<Default>0.0</Default>
+				</Element>
+			<Element>
+				<Name>y_dist</Name>
+				<Type>Float</Type>
+				<Description>Post-rotation height from PC.
+Higher is higher up.
+This default position can be undone by the player changing the camera pitch.</Description>
+				<Default>0.0</Default>
+				</Element>
+			<Element>
+				<Name>flags</Name>
+				<Type>Flags</Type>
+				<Flag>limit_heading_range</Flag>
+				<Flag>turn_player_toward_camera</Flag>
+				<Flag>turn_camera_with_vehicle</Flag>
+				</Element>
+			</Element>
+		<Num_Display_Rows>8</Num_Display_Rows>
+		</Element>
+	<Single_Line_XML>False</Single_Line_XML>
+	</TableDescription>
+
+<EntryCategories>
+	<Category>
+		<Name>Entries</Name>
+		</Category>
+	</EntryCategories>
+</root>
