@@ -143,9 +143,16 @@ namespace Render3D
 		patchBytesM((BYTE*)0x00517051, (BYTE*)"\x8B", 1); // flip the logic for the HDR strength (or radius?) float check
 		//patchNop((BYTE*)0x00533C25, 5); // disable sky refl (prevent the absurd blue tint on reflections)
 
-		patchFloat((BYTE*)0x027B2C7F, 1.26f); //Bright
-		patchFloat((BYTE*)0x027B2C83, 0.8f); //Sat
-		patchFloat((BYTE*)0x027B2C87, 1.62f); //Contr
+		if (GameConfig::GetValue("Graphics", "X360Gamma", 1)) {
+			patchFloat((BYTE*)0x027B2C7F, 1.32f); //Bright
+			patchFloat((BYTE*)0x027B2C83, 0.8f); //Sat
+			patchFloat((BYTE*)0x027B2C87, 1.58f); //Contr
+		}
+		else {
+			patchFloat((BYTE*)0x027B2C7F, 1.26f); //Bright
+			patchFloat((BYTE*)0x027B2C83, 0.8f); //Sat
+			patchFloat((BYTE*)0x027B2C87, 1.62f); //Contr
+		}
 
 		patchBytesM((BYTE*)0x00524BA4, (BYTE*)"\xD9\x05\xBA\x2C\x7B\x02", 6);
 		patchBytesM((BYTE*)0x00D1A333, (BYTE*)"\xD9\x05\xBA\x2C\x7B\x02", 6);
