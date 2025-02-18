@@ -2235,8 +2235,23 @@ void ResizeEffects() {
 	SetGraphics();
 }
 
+
+/*void __declspec(naked) TextureCrashFixDefinitive() {
+
+	static bitmap_entry* BMP;
+	static peg_entry* Peg;
+	__asm {
+		mov BMP, edi
+		mov Peg, esi
+	}
+	__asm pushad
+	add_to_entry_list(BMP, Peg);
+	__asm popad
+}*/
+
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	//patchCall((void*)0x00C080C0, (void*)TextureCrashFixDefinitive);
 	//WriteRelJump(0x00C080E8, (UInt32)&TextureCrashFixRemasteredByGroveStreetGames);
 	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
