@@ -559,11 +559,11 @@ void Slew() {
 			FOV = clamp(FOV, 1.0f, 120.0f);
 		}
 
-		else if (IsKeyPressed(VK_LBUTTON, true)) {
+		else if (IsKeyPressed(0x31, true)) {
 			Roll = 1.0f;
 		}
 
-		else if (IsKeyPressed(VK_RBUTTON, true)) {
+		else if (IsKeyPressed(0x33, true)) {
 			Roll = -1.0f;
 		}
 
