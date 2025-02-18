@@ -559,11 +559,11 @@ void Slew() {
 			FOV = clamp(FOV, 1.0f, 120.0f);
 		}
 
-		else if (IsKeyPressed(VK_LBUTTON, true)) {
+		else if (IsKeyPressed(0x31, true)) {
 			Roll = 1.0f;
 		}
 
-		else if (IsKeyPressed(VK_RBUTTON, true)) {
+		else if (IsKeyPressed(0x33, true)) {
 			Roll = -1.0f;
 		}
 
@@ -2235,23 +2235,8 @@ void ResizeEffects() {
 	SetGraphics();
 }
 
-void __declspec(naked) AddPermPeg()
-{
-	static char* juicedAl = "sr2_alwaysload_juiced.peg";
-	static int jmp_continue = 0x0051FC12;
-	__asm {
-		mov edi, dword ptr[0x522450]
-		call edi
-		mov edx, 0x27714D4
-		mov ecx, juicedAl
-		call edi
-		jmp jmp_continue
-	}
-}
-
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-	WriteRelJump(0x0051FC0D, (UInt32)&AddPermPeg);
 	//WriteRelJump(0x00C080E8, (UInt32)&TextureCrashFixRemasteredByGroveStreetGames);
 	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
