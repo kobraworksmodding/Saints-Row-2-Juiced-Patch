@@ -34,7 +34,7 @@ namespace Render3D
 			}
 		}
 
-		if (GameConfig::GetValue("Graphics", "UHQTreeShadows", 0)) {
+		if (GameConfig::GetValue("Graphics", "ShadowMapFiltering", 0)) {
 			if (_stricmp(ShaderName, "shadow_combiner_xxxx") == 0) {
 				SafeWriteBuf((UInt32)ShaderPointer, ShadowMapShader, sizeof(ShadowMapShader));
 			}
