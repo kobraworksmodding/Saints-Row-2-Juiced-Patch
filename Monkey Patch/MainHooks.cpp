@@ -2262,8 +2262,10 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchNop((BYTE*)0x0073C01B, 6); // remove the command check from the level function
 	patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
 	patchCall((void*)0x009A3D8E, (void*)IdleFix);
-	patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
-	patchCall((void*)0x00C08493, (void*)TextureCrashFix);
+	if (GameConfig::GetValue("Debug", "TextureCrashFix", 1)) { // cause i want to disable it for reasons -- Clippy95, dont include in config?
+		patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
+		patchCall((void*)0x00C08493, (void*)TextureCrashFix);
+	}
 #if !JLITE
 #if !RELOADED
 	if (GameConfig::GetValue("Debug", "PatchPauseMenuLua", 1)) {
