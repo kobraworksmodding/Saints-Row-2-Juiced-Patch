@@ -28,8 +28,16 @@ namespace Render3D
 		}
 
 		__asm pushad
-		if (_stricmp(ShaderName, "distortion_tint_desat") == 0) {
-			SafeWriteBuf((UInt32)ShaderPointer, X360GammaShader, sizeof(X360GammaShader));
+		if (GameConfig::GetValue("Graphics", "X360Gamma", 1)) {
+			if (_stricmp(ShaderName, "distortion_tint_desat") == 0) {
+				SafeWriteBuf((UInt32)ShaderPointer, X360GammaShader, sizeof(X360GammaShader));
+			}
+		}
+
+		if (GameConfig::GetValue("Graphics", "UHQTreeShadows", 0)) {
+			if (_stricmp(ShaderName, "shadow_combiner_xxxx") == 0) {
+				SafeWriteBuf((UInt32)ShaderPointer, ShadowMapShader, sizeof(ShadowMapShader));
+			}
 		}
 		__asm popad
 
@@ -202,6 +210,8 @@ namespace Render3D
 	void Init()
 	{
 #if !JLITE
+		WriteRelJump(0x00D1B7CE, (UInt32)&LoadShadersHook);
+		
 		if (GameConfig::GetValue("Graphics", "RemoveVignette", 0))
 		{
 			Render3D::RemoveVignette();
@@ -217,11 +227,6 @@ namespace Render3D
 			Logger::TypedLog(CHN_MOD, "Enabling Screen Blur...\n");
 			patchByte((BYTE*)0x02527297, 0x1);
 
-		}
-
-		if (GameConfig::GetValue("Graphics", "X360Gamma", 1))
-		{
-			WriteRelJump(0x00D1B7CE, (UInt32)&LoadShadersHook);
 		}
 
 		if (GameConfig::GetValue("Graphics", "VanillaFXPlus", 0))
