@@ -868,6 +868,12 @@ int __declspec(naked) AddMessage(const wchar_t* Title, const wchar_t* Desc) { //
 
 bool hasCheatMessageBeenSeen = 0;
 
+typedef int(__cdecl* ShowPauseDialogT)(bool a1, bool a2, bool a3, bool a4);
+ShowPauseDialogT ShowPauseDialog = (ShowPauseDialogT)0x7540D0;
+
+typedef void(*RemovePauseDialogT)();
+RemovePauseDialogT RemovePauseDialog = (RemovePauseDialogT)0x754270;
+
 void cus_FrameToggles() {
 #if !JLITE
 	float delay = 0.0f;
@@ -878,6 +884,8 @@ void cus_FrameToggles() {
 	static bool FPSCounter = false;
 	static bool HUDTogg = false;
 	static uint8_t ogAA;
+	bool InCutscene = *(bool*)(0x2527D14);
+	static bool CutscenePaused;
 
 
 	if (IsKeyPressed(VK_F1, false)) { // F1
@@ -911,7 +919,7 @@ void cus_FrameToggles() {
 		subtitles += L"[/format]";
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
 
-		if (*(uint8_t*)(0x2527D14) == 1) {
+		if (InCutscene) {
 			*(int*)(0x25F5AE8) = (slewMode ? 2 : 5);
 		}
 		else {
@@ -974,6 +982,11 @@ void cus_FrameToggles() {
 		Logger::TypedLog(CHN_DEBUG, "-FOV Multiplier: %f,\n", FOVMultiplier);
 		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
 
+	}
+
+	if (IsKeyPressed(VK_TAB, false) && InCutscene && !isCoop()) {
+		CutscenePaused = !CutscenePaused;
+		CutscenePaused ? ShowPauseDialog(true, false, false, false) : RemovePauseDialog();
 	}
 
 	if (IsKeyPressed(VK_F5, false)) { // F5
@@ -2249,8 +2262,51 @@ void ResizeEffects() {
 	__asm popad
 }*/
 
+void __declspec(naked) CutscenePauseCheck()
+{
+	static int Continue = 0x006D8E10;
+	static int SkipAddr = 0x006D8F6F;
+	__asm {
+		jnz Skip
+		mov edi, ds:dword ptr[0x2527C08]
+		cmp edi, 0
+		jnz Skip
+		jmp Continue
+
+		Skip:
+		jmp SkipAddr
+	}
+}
+
+void __declspec(naked) CutscenePauseWorkaround()
+{
+	static int Continue = 0x0068CAA7;
+	static int SkipAddr = 0x0068CB03;
+	__asm {
+		jnz Check
+		jmp Resume
+
+		Check :
+		mov al, ds:byte ptr[0x1F768DA]
+		cmp al, 0
+		jnz Skip
+		jmp Resume
+
+		Skip:
+		jmp SkipAddr
+
+		Resume:
+		mov edi, dword ptr[0x6C6870]
+		call edi
+		jmp Continue
+
+	}
+}
+
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	WriteRelJump(0x0068CAA0, (UInt32)&CutscenePauseWorkaround); // we need to make the cutscene process(?) function run even if the game's paused, original if check is dumb
+	WriteRelJump(0x006D8E0A, (UInt32)&CutscenePauseCheck); // editing one of the ifs to prevent cutscenes from getting updated when paused
 	//patchCall((void*)0x00C080C0, (void*)TextureCrashFixDefinitive);
 	//WriteRelJump(0x00C080E8, (UInt32)&TextureCrashFixRemasteredByGroveStreetGames);
 	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
