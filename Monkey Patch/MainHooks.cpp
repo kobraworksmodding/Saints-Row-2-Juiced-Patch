@@ -2524,15 +2524,15 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	SetDefaultGameSettings(); // Set SR2 Reloaded Modernized Default Settings
 
-	if (GameConfig::GetValue("Graphics", "BetterWindowed", 0) && (!GameConfig::GetValue("Graphics", "Borderless", 0)))
-	{
-		SetupBetterWindowed();
-		Logger::TypedLog(CHN_DEBUG, "Fixing Windowed Mode.\n");
-	}
-	else
+	if (GameConfig::GetValue("Graphics", "Borderless", 0))
 	{
 		SetupBorderless();
 		Logger::TypedLog(CHN_DEBUG, "Enabling Borderless Windowed.\n");
+	}
+	else
+	{
+		SetupBetterWindowed();
+		Logger::TypedLog(CHN_DEBUG, "Fixing Windowed Mode.\n");
 	}
 
 	if (!keepfpslimit)

@@ -9,7 +9,11 @@
 
 #include "Patcher/patch.h"
 
+#if !RELOADED
+char ini_name[] = "juiced.ini";
+#else
 char ini_name[] = "reloaded.ini";
+#endif
 
 namespace GameConfig
 {
