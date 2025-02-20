@@ -210,7 +210,6 @@ namespace Render3D
 	void Init()
 	{
 #if !JLITE
-		WriteRelJump(0x00D1B7CE, (UInt32)&LoadShadersHook);
 		
 		if (GameConfig::GetValue("Graphics", "RemoveVignette", 0))
 		{
@@ -234,10 +233,6 @@ namespace Render3D
 			Render3D::VFXPlus();
 		}
 
-		if (GameConfig::GetValue("Graphics", "DisableSkyRefl", 0))
-		{
-			Render3D::DisableSkyRefl();
-		}
 
 		if (GameConfig::GetValue("Graphics", "DisableFog", 0)) // Option for the 2 psychopaths that think no fog looks better.
 		{
@@ -272,6 +267,13 @@ namespace Render3D
 			patchNop((BYTE*)0x0099454C, 5);
 		}
 #endif
+		WriteRelJump(0x00D1B7CE, (UInt32)&LoadShadersHook);
+
+		if (GameConfig::GetValue("Graphics", "DisableSkyRefl", 0))
+		{
+			Render3D::DisableSkyRefl();
+		}
+
 		// Beefs up Tree Shadows considerably
 		if (GameConfig::GetValue("Graphics", "UHQTreeShadows", 0))
 		{
