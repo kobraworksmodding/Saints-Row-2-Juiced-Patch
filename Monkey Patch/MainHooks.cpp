@@ -42,7 +42,7 @@ float deltaTime;
 #if JLITE
 const char* juicedversion = "1.0.0";
 #else
-const char* juicedversion = "7.2.2";
+const char* juicedversion = "7.3.0";
 #endif
 
 char* executableDirectory[MAX_PATH];
