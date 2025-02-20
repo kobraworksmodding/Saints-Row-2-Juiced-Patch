@@ -2281,15 +2281,15 @@ void __declspec(naked) CutscenePauseCheck()
 void __declspec(naked) CutscenePauseWorkaround()
 {
 	static int Continue = 0x0068CAA7;
-	static int SkipAddr = 0x0068CB03;
+	static int SkipAddr = 0x0068CAFA;
 	__asm {
 		jnz Check
 		jmp Resume
 
 		Check :
-		mov al, ds:byte ptr[0x1F768DA]
+		mov al, ds:byte ptr[0x2527D14]
 		cmp al, 0
-		jnz Skip
+		jz Skip
 		jmp Resume
 
 		Skip:
