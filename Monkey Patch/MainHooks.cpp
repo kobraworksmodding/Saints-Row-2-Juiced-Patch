@@ -42,7 +42,7 @@ float deltaTime;
 #if JLITE
 const char* juicedversion = "1.1.0";
 #else
-const char* juicedversion = "7.3.0";
+const char* juicedversion = "7.3.1";
 #endif
 
 char* executableDirectory[MAX_PATH];
@@ -2305,8 +2305,10 @@ void __declspec(naked) CutscenePauseWorkaround()
 
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+#if !JLITE
 	WriteRelJump(0x0068CAA0, (UInt32)&CutscenePauseWorkaround); // we need to make the cutscene process(?) function run even if the game's paused, original if check is dumb
 	WriteRelJump(0x006D8E0A, (UInt32)&CutscenePauseCheck); // editing one of the ifs to prevent cutscenes from getting updated when paused
+#endif
 	//patchCall((void*)0x00C080C0, (void*)TextureCrashFixDefinitive);
 	//WriteRelJump(0x00C080E8, (UInt32)&TextureCrashFixRemasteredByGroveStreetGames);
 	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
