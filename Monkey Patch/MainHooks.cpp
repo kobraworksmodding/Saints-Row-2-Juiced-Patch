@@ -1596,7 +1596,7 @@ int RenderLoopStuff_Hacked()
 typedef float(__cdecl* ChangeTextColorT)(int R, int G, int B, int Alpha);
 ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
 
-void __declspec(naked) InGamePrint(const char* Text, int x, int y, int font) {
+void __declspec(naked) InGamePrintASM(const char* Text, int x, int y, int font) {
 	__asm {
 		push ebp
 		mov ebp, esp
@@ -1622,6 +1622,18 @@ void __declspec(naked) InGamePrint(const char* Text, int x, int y, int font) {
 		pop ebp
 		ret
 	}
+}
+
+void InGamePrint(const char* Text, int x, int y, int font) {
+	int game_setting_language = *(int*)0x00E98AF8;
+	switch (game_setting_language) {
+	case LANG_JAPANESE:
+	case LANG_CHINESE:
+		return;
+		break;
+	}
+	InGamePrintASM(Text, x, y, font);
+
 }
 
 int processtextwidth(int width) {
