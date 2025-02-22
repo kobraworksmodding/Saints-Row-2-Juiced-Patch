@@ -1,4 +1,6 @@
 #include "MainHooks.h"
+#include "UtilsGlobal.h"
+#include "General/General.h"
 #include "FileLogger.h"
 #include "SafeWrite.h"
 #include "Patches/All Patches.h"
@@ -8,23 +10,39 @@
 #include "LuaHandler.h"
 #include "DFEngine.h"
 #include "Mem/Memory.h"
+
 #include "UGC/Reloaded.h"
 #include "UGC/InternalPrint.h"
+
+#include "Player/Input.h"
 #include "Player/Behavior.h"
+
 #include "Math/Math.h"
+
 #include "Render/Render3D.h"
+
 #include "LUA/GLua.h"
 #include "Game/Game.h"
 #include "GameConfig.h"
 #include "iat_functions.h"
 #include <chrono>
 
+#include "Audio/Audio.h"
+#include "Audio/XACT.h"
+
 #include <format>
 #include <WinSock2.h>
-#include "Xinput.h"
 #include <windows.h>
 #include <codecvt>
-#pragma comment(lib, "Xinput.lib")
+
+#if JLITE
+const char* juicedversion = "1.1.0";
+#else
+const char* juicedversion = "7.3.1";
+#endif
+
+const char ServerNameSR2[] = "[Saints Row 2]";
+
 const double fourbythreeAR = 1.333333373069763;
 
 BYTE useJuicedOSD = 0;
@@ -39,24 +57,38 @@ void PrintLatestChunk();
 void PrintDBGGarble();
 
 float deltaTime;
-#if JLITE
-const char* juicedversion = "1.1.0";
-#else
-const char* juicedversion = "7.3.1";
-#endif
 
 char* executableDirectory[MAX_PATH];
-const char ServerNameSR2[] = "[Saints Row 2]";
-// - UNUSED
-float AOQuality = 0.05;
-float AOSmoothness = -4.0;
-int ResolutionX = 1920;
-int ResolutionY = 1080;
-// --------
+
 bool CheatFlagDisabled = 0;
 
 bool lastFrameStates[256];
 bool wasPressedThisFrame[256];
+
+void SetDefaultGameSettings()
+{
+	patchBytesM((BYTE*)0x00774126, (BYTE*)"\xC6\x05\xAC\xA9\xF7\x01\x00", 7); // Force game into windowed on default settings.
+#if RELOADED
+	//char* playerName = (CHAR*)0x0212AB48;
+	//char* GameName = reinterpret_cast<char*>(0x0212AA08);
+	//strcpy(GameName, playerName);
+
+	patchNop((BYTE*)0x0083FA3D, 22); // Removes the Unlim Score/Time check for MP.
+
+	// change game version from 201 to 209 
+	// 201 is Vanilla , 209 is Reloaded.
+	//patchBytesM((BYTE*)0x008D01F6, (BYTE*)"\x68\xB1", 2);
+#else
+	char* GameName = reinterpret_cast<char*>(0x0212AA08);
+	strcpy(GameName, (const char*)ServerNameSR2);
+#endif
+
+	// -- RAHHHHHHH I HATE RESOLUTION STUFF --
+	/* patchNop((BYTE*)0x00775F24, 7);
+	patchNop((BYTE*)0x00775F2A, 7);
+	patchDWord((void*)(0x007EAEC3 + 2), (uint32_t)ResolutionY);
+	patchDWord((void*)(0x007EAEB4 + 2), (uint32_t)ResolutionX); */
+}
 
 void UpdateKeys()
 {
@@ -66,59 +98,6 @@ void UpdateKeys()
 		wasPressedThisFrame[i] = thisFrameState && !lastFrameStates[i];
 		lastFrameStates[i] = thisFrameState;
 	}
-}
-
-/*bool IsMemoryReadable(void* address) {
-	MEMORY_BASIC_INFORMATION mbi;
-
-	if (VirtualQuery(address, &mbi, sizeof(mbi))) {
-		bool isReadable = (mbi.Protect & PAGE_READONLY) ||
-			(mbi.Protect & PAGE_READWRITE) ||
-			(mbi.Protect & PAGE_EXECUTE_READ) ||
-			(mbi.Protect & PAGE_EXECUTE_READWRITE);
-
-		printf("Address: %p | Protect: 0x%lx | Readable: %s\n",
-			address, mbi.Protect, isReadable ? "Yes" : "No");
-
-		return isReadable;
-	}
-	printf("Address: %p | VirtualQuery failed\n", address);
-	return false;
-}
-
-void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
-{
-	static int jmp_continue = 0x00C080F0;
-	static int jmp_skip = 0x00C080F2;
-	__asm {
-		pushad
-		lea edi, dword ptr[eax + 4]
-		push edi
-		call IsMemoryReadable
-		pop edi
-		test eax, eax
-		jz skip
-		popad
-		mov bp, [eax + 4]
-		cmp bp, [eax + 4]
-		jmp jmp_continue
-
-		skip :
-		popad
-			jmp jmp_skip
-	}
-}
-*/
-bool IsSRFocused()
-{
-	DWORD pid;
-	HWND Window = GetForegroundWindow();
-	GetWindowThreadProcessId(GetForegroundWindow(), &pid);
-	if (Window != ConsoleWindow) {
-		ClipCursor(0); // Make SR2 let go of the Cursor, hopefully.
-		return pid == GetCurrentProcessId();
-	}
-	return false;
 }
 
 // Returns the address last in the chain, for example if value of ADDRESS (0x1)
@@ -146,7 +125,7 @@ uintptr_t ReadPointer(uintptr_t baseAddress, const std::vector<uintptr_t>& offse
 
 bool IsKeyPressed(unsigned char Key, bool Hold) // USE THIS FROM NOW ON
 {
-	if (IsSRFocused())
+	if (General::IsSRFocused())
 	{
 		if (Hold)
 		{
@@ -203,7 +182,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	}
     #if !RELOADED
 	#if JLITE
-	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " + std::string(juicedversion) + " ---\n").c_str());
+	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " + std::string(UtilsGlobal::juicedversion) + " ---\n").c_str());
     #else
 	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED Version: " + std::string(juicedversion) + " ---\n").c_str());
     #endif
@@ -302,99 +281,7 @@ bool isPaused = false;
 bool ARfov = 0;
 bool ARCutscene = 0;
 double FOVMultiplier = 1;
-bool betterTags = 0;
 
-typedef int __cdecl PlayerSpin(float a1);
-PlayerSpin* UpdatePlayerSpin = (PlayerSpin*)(0x0073FB20); //0x00BD4A80
-
-static bool invert;
-int NativeMouse_clothing_store(float a1) {
-	// Same implementation as Saints Row 1 Mousehook 
-	// expect for vehicle spinning as it's already implemented.
-
-	// Only current issue as of now is that the tickrate of the function we're replacing is quite low so it doesn't detect small mouse movements, 
-	// not an issue of the mouse struct as if we move this to the main game loop it's actually quite smooth! also it's pretty slow that it can't even detect scroll wheel :(
-
-
-	int8_t& busy = *(int8_t*)(0x00E8D57F);
-	mouse mouse;
-	//float wheeldelta = mouse.getWheeldelta() * 7.5f;
-	float deltax = mouse.getXdelta() / 7.5f;
-	// Unlike SR1, SR2 doesn't like it when you play with the players rotation directly so clamp the delta otherwise the player gets squished, it still does but not as bad.
-	deltax = clamp(deltax, -40.f, 40.f);
-	int baseplayer = getplayer();
-	if (deltax != 0.f && !busy) {
-		float* x_player_cos = (float*)(baseplayer + 0x38);
-		float* x_player_sin = (float*)(baseplayer + 0x40);
-		float x = atan2(*x_player_sin, *x_player_cos);
-		x = RadianstoDegree(x);
-		if (invert)
-			x += deltax;
-		else
-			x -= deltax;
-		x = fmod(x + 180.0f, 360.0f);
-		if (x < 0) x += 360.0f;
-		x -= 180.0f;
-		x = DegreetoRadians(x);
-		*x_player_cos = cos(x);
-		*x_player_sin = sin(x);
-		/*
-		float* zoom_level = (float*)0x00E997E0;
-		float zoom = *zoom_level;
-		zoom += wheeldelta;
-		zoom = clamp(zoom, 0.75f, 3.f);
-		*zoom_level = zoom;
-		*/
-		return 1;
-	}
-	else
-		return UpdatePlayerSpin(a1);
-
-
-}
-static float X_divisor = 30.f;
-// Not a proper fix but final outcome should look like this lol, ideally find out why vehicles fuck up the sens when reading
-void WorkAroundHorizontalMouseSensitivity() {
-	BYTE PlayerStatus = *(BYTE*)0x00E9A5BC;
-	enum status {
-		vehicle = 3,
-		boat = 5,
-		helicopter = 6,
-		plane = 8,
-	};
-	switch (PlayerStatus) {
-	case vehicle:
-	case boat:
-	case helicopter:
-	case plane:
-		X_divisor = 10.f;
-		break;
-	default:
-		X_divisor = 30.f;
-		break;
-	}
-
-
-}
-
-void __declspec(naked) WorkAroundHorizontalMouseSensitivityASMHelper() {
-	static int jmp_continue = 0x00C13720;
-
-	__asm {
-		pushad
-		pushfd
-	}
-	__asm {
-		call WorkAroundHorizontalMouseSensitivity
-	}
-	__asm {
-		popfd
-		popad
-		fdiv ds: X_divisor
-		jmp jmp_continue
-	}
-
-}
 
 void RawTags() {
 	// CLIPPY TODO: Figure out what's wrong with X axis sensitivty at low speed, maybe use mouse struct instead of reading from overall ingame delta?
@@ -516,7 +403,7 @@ float DOFRadius = 16.0f;
 float DOFDistance = 50.0f;
 
 void Slew() {
-	mouse Mouse;
+	UtilsGlobal::mouse Mouse;
 	float Speed = 15.0f;
 	float* CameraPos = (float*)(0x25F5B20);
 	float* CameraOrient = (float*)(0x25F5B5C);
@@ -545,18 +432,18 @@ void Slew() {
 
 		else if ((IsKeyPressed(VK_XBUTTON1, true)) && Mouse.getWheeldelta()) {
 			DOFDistance += (((float)Mouse.getWheeldelta()) / 10.0f);
-			DOFDistance = clamp(DOFDistance, 5.0f, 200.0f);
+			DOFDistance = UtilsGlobal::clamp(DOFDistance, 5.0f, 200.0f);
 		}
 
 		else if ((IsKeyPressed(VK_XBUTTON2, true)) && Mouse.getWheeldelta()) {
 			DOFBlur += (((float)Mouse.getWheeldelta()) / 240.0f);
-			DOFBlur = clamp(DOFBlur, 1.0f, 10.0f);
+			DOFBlur = UtilsGlobal::clamp(DOFBlur, 1.0f, 10.0f);
 			DOFRadius = DOFBlur * 2;
 		}
 
 		else if (Mouse.getWheeldelta()) {
 			FOV -= (((float)Mouse.getWheeldelta()) / 120.0f);
-			FOV = clamp(FOV, 1.0f, 120.0f);
+			FOV = UtilsGlobal::clamp(FOV, 1.0f, 120.0f);
 		}
 
 		else if (IsKeyPressed(0x31, true)) {
@@ -575,11 +462,11 @@ void Slew() {
 }
 
 void SlewScrollWheelSmoothing() {
-	mouse mouse;
+	UtilsGlobal::mouse mouse;
 	int wheel_delta = mouse.getWheeldelta();
 		if (wheel_delta) {
 			float* smoothing = (float*)(0x00E83E1C);
-			*smoothing = clamp(*smoothing + ( (float)wheel_delta / 2850.f), 0.f, 1.3f);
+			*smoothing = UtilsGlobal::clamp(*smoothing + ( (float)wheel_delta / 2850.f), 0.f, 1.3f);
 			//Logger::TypedLog(CHN_DEBUG, "Mouse slew smoothing: %f,\n", *smoothing);
 		}
 }
@@ -1071,93 +958,6 @@ int __declspec(naked) LuaExecute(const char* command)
 
 bool hasCheatMessageBeenSeen2 = 0;
 
-
-typedef int* (__thiscall* GetCharacterIDT)(const char* Name);
-GetCharacterIDT GetCharacterID = (GetCharacterIDT)0x4A5A90;
-
-typedef int(__cdecl* ChangeCharacterT)(int** a1); // IDA believes it's int* on PC however that didn't work so I copied ** from 360, it can also take a second arg that isn't needed and I've no idea what it'd do
-ChangeCharacterT ChangeCharacter = (ChangeCharacterT)0x6856A0;
-
-typedef void(__cdecl* ResetCharacterT)(int a1); // no idea what it expects as the first arg, on 360 I can call it without one and it works but here it dies
-ResetCharacterT ResetCharacter = (ResetCharacterT)0x685D50;
-
-typedef int(__thiscall* DeleteNPCT)(int a1, int a2);
-DeleteNPCT DeleteNPC = (DeleteNPCT)0x960240;
-
-bool IsSpawning = false;
-int CurrentNPC = 0;
-int SpawnedNPCs[10] = { 0 }; // we could make this a vector maybe, i don't mind it being like this though
-
-char __declspec(naked) SpawnNPC(int NPCPointer) {
-	__asm {
-		push ebp
-		mov ebp, esp
-		sub esp, __LOCAL_SIZE
-
-		mov     eax, NPCPointer
-		push	eax
-		mov     eax, ds: 0x21703D4
-		mov     ecx, 0x98E400
-		call    ecx
-
-		mov esp, ebp
-		pop ebp
-		ret
-	}
-}
-
-void NPCSpawner(const char* Name) {
-	static int Index = 0;
-	int CharID = (int)GetCharacterID(Name);
-	if (CharID != NULL) {
-		IsSpawning = true;
-		if (SpawnedNPCs[Index] != 0) {
-			DeleteNPC(SpawnedNPCs[Index], 0); // deletes the oldest npc once you go past 10 (feel free to change the max amount)
-		}
-		SpawnNPC(CharID);
-		SpawnedNPCs[Index] = CurrentNPC;
-		Index = (Index + 1) % 10;
-		IsSpawning = false;
-	}
-}
-
-void YeetAllNPCs() {
-	for (int i = 0; i < 10; i++) {
-		if (SpawnedNPCs[i] != 0) {
-			DeleteNPC(SpawnedNPCs[i], 0);
-			SpawnedNPCs[i] = 0;
-		}
-	}
-}
-
-void __declspec(naked) SpawningCheck()
-{
-	static int jmp_skip = 0x0098EE3D;
-	static int jmp_continue = 0x0098EE11;
-
-	__asm {
-		cmp		IsSpawning, 0
-		jnz		skip
-		mov		eax, [esi + 3132]
-		jmp		jmp_continue
-
-		skip :
-		mov		edx, [esi + 68]
-		jmp		jmp_skip
-	}
-}
-
-void __declspec(naked) StoreNPCPointer()
-{
-	static int jmp_continue = 0x0098E498;
-	__asm {
-		mov		ecx, 0x9CFCE0
-		call	ecx
-		mov		CurrentNPC, eax
-		jmp		jmp_continue
-	}
-}
-
 bool NoclipEnabled = false;
 
 typedef void(__stdcall* PlayerHolsterT)(int Player, bool Holster);
@@ -1168,7 +968,7 @@ SetInvulnerableT SetInvulnerable = (SetInvulnerableT)0x965F40;
 
 #if !RELOADED
 void ResetYVel() {
-	uintptr_t YVelBase = ReadPointer(getplayer(true), { 0x570 });
+	uintptr_t YVelBase = ReadPointer(UtilsGlobal::getplayer(true), { 0x570 });
 	float* YVelPositive = (float*)(*(int*)YVelBase + 0x164);
 	float* YVelNegative = (float*)(*(int*)YVelBase + 0x144);
 	*YVelPositive = 0.0f;
@@ -1177,7 +977,7 @@ void ResetYVel() {
 
 void ToggleNoclip() {
 	NoclipEnabled = !NoclipEnabled;
-	CollisionTest(getplayer(), 1, 0);
+	CollisionTest(UtilsGlobal::getplayer(), 1, 0);
 	ResetYVel();
 	patchByte((BYTE*)0x4FAA90, NoclipEnabled ? 0xC3 : 0x55);
 
@@ -1195,8 +995,8 @@ void ToggleNoclip() {
 	}
 
 	int AnimState = NoclipEnabled ? GetAnimState("streaking stand") : -1;
-	SetAnimState(getplayer(), &AnimState);
-	ExitFineAim(getplayer());
+	SetAnimState(UtilsGlobal::getplayer(), &AnimState);
+	ExitFineAim(UtilsGlobal::getplayer());
 	ExitVehicle();
 
 	DWORD old;
@@ -1204,10 +1004,10 @@ void ToggleNoclip() {
 	*(float*)0xDD04F4 = NoclipEnabled ? 0.0f : 1.5f;
 	VirtualProtect((LPVOID)0xDD04F4, sizeof(float), old, &old);
 
-	StopRagdoll(getplayer(), 0);
-	DisableRagdoll(getplayer(), NoclipEnabled ? true : false);
-	PlayerHolster(getplayer(), NoclipEnabled ? true : false);
-	SetInvulnerable(getplayer(), NoclipEnabled ? true : false);
+	StopRagdoll(UtilsGlobal::getplayer(), 0);
+	DisableRagdoll(UtilsGlobal::getplayer(), NoclipEnabled ? true : false);
+	PlayerHolster(UtilsGlobal::getplayer(), NoclipEnabled ? true : false);
+	SetInvulnerable(UtilsGlobal::getplayer(), NoclipEnabled ? true : false);
 
 	*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 	std::wstring subtitles = L"Noclip:[format][color:purple]";
@@ -1240,7 +1040,7 @@ void Noclip() {
 	float* PlayerCos = (float*)(PlayerBase + 0x40);
 
 	if (NoclipEnabled && !slewMode && !IsWaiting) {
-		uintptr_t CoordsPointer = ReadPointer(getplayer(true), { 0x570,0x8,0x40,0x18 });
+		uintptr_t CoordsPointer = ReadPointer(UtilsGlobal::getplayer(true), { 0x570,0x8,0x40,0x18 });
 		if (!CoordsPointer) {
 			return; // Noclip will still be enabled if this passes.. - Clippy95.
 		}
@@ -1368,16 +1168,16 @@ void LuaExecutor() {
 			}
 
 			else if (sscanf_s(Converted.c_str(), "play_as %s", Arg1) == 1) {
-				int* Character = GetCharacterID(Arg1);
-				ChangeCharacter(&Character); // pointer to pointer because of **
+				int* Character = General::GetCharacterID(Arg1);
+				General::ChangeCharacter(&Character); // pointer to pointer because of **
 			}
 
 			else if (Converted == "reset_player") {
-				ResetCharacter(0); // passing 0 to the unknown arg to avoid crashing
+				General::ResetCharacter(0); // passing 0 to the unknown arg to avoid crashing
 			}
 
 			else if (sscanf_s(Converted.c_str(), "spawn_npc %s", Arg1) == 1) {
-				NPCSpawner(Arg1);
+				General::NPCSpawner(Arg1);
 			}
 
 			else if (sscanf_s(Converted.c_str(), "level %s", Arg1) == 1) {
@@ -1388,7 +1188,7 @@ void LuaExecutor() {
 			}
 
 			else if (Converted == "delete_npcs") {
-				YeetAllNPCs();
+				General::YeetAllNPCs();
 			}
 
 			else if (Converted == "noclip") {
@@ -1569,7 +1369,7 @@ int RenderLoopStuff_Hacked()
 	if (ARfov)
 		AspectRatioFix();
 
-	if (*(uint8_t*)(0x00E87B4F) == 0 && betterTags)
+	if (*(uint8_t*)(0x00E87B4F) == 0 && Input::betterTags)
 		RawTags();
 
 	if (BetterChatTest) {
@@ -1643,7 +1443,7 @@ int processtextwidth(int width) {
 }
 
 void PrintCoords(float x, float z,float y, bool showplayerorient) {
-	int baseplayer = getplayer();
+	int baseplayer = UtilsGlobal::getplayer();
 	char buffer[90];
 	snprintf(buffer, sizeof(buffer), "UserCoords: (X: %.1f, Y: %.1f, Z: %.1f)", x, y, z);
 	 if(showplayerorient && baseplayer) {
@@ -1822,31 +1622,6 @@ void patchNetworkBind() { // Binds local ip to any instead of 127.0.0.1 which fu
 	//patchCall((BYTE*)0x008E7681, bindWrapper);
 }
 
-void SetDefaultGameSettings()
-{
-	patchBytesM((BYTE*)0x00774126, (BYTE*)"\xC6\x05\xAC\xA9\xF7\x01\x00", 7); // Force game into windowed on default settings.
-#if RELOADED
-	//char* playerName = (CHAR*)0x0212AB48;
-	//char* GameName = reinterpret_cast<char*>(0x0212AA08);
-	//strcpy(GameName, playerName);
-
-	patchNop((BYTE*)0x0083FA3D, 22); // Removes the Unlim Score/Time check for MP.
-
-	// change game version from 201 to 209 
-    // 201 is Vanilla , 209 is Reloaded.
-	//patchBytesM((BYTE*)0x008D01F6, (BYTE*)"\x68\xB1", 2);
-#else
-	char* GameName = reinterpret_cast<char*>(0x0212AA08);
-	strcpy(GameName, (const char*)ServerNameSR2);
-#endif
-
-	// -- RAHHHHHHH I HATE RESOLUTION STUFF --
-	/* patchNop((BYTE*)0x00775F24, 7);
-	patchNop((BYTE*)0x00775F2A, 7);
-	patchDWord((void*)(0x007EAEC3 + 2), (uint32_t)ResolutionY);
-	patchDWord((void*)(0x007EAEB4 + 2), (uint32_t)ResolutionX); */
-}
-
 void SetupBorderless()
 {
 	int l_IsBorderless = GameConfig::GetValue("Graphics", "Borderless", 0);
@@ -1862,251 +1637,6 @@ void SetupBetterWindowed()
 	patchDWord((void*)(0x00BFA35A + 4), windowed_style);
 }
 
-void replace_all( // taken from https://stackoverflow.com/questions/5878775/how-to-find-and-replace-string - we could code our own if there's a problem
-	std::string& s,
-	std::string const& toReplace,
-	std::string const& replaceWith
-) {
-	std::string buf;
-	std::size_t pos = 0;
-	std::size_t prevPos;
-
-	buf.reserve(s.size());
-
-	while (true) {
-		prevPos = pos;
-		pos = s.find(toReplace, pos);
-		if (pos == std::string::npos)
-			break;
-		buf.append(s, prevPos, pos - prevPos);
-		buf += replaceWith;
-		pos += toReplace.size();
-	}
-
-	buf.append(s, prevPos, s.size() - prevPos);
-	s.swap(buf);
-}
-
-int userResX = GetSystemMetrics(SM_CXSCREEN);
-int userResY = GetSystemMetrics(SM_CYSCREEN);
-std::string patchedRes;
-
-bool resFound = false;
-
-typedef int __cdecl luaLoadBufferOrig_T(void* L, const char* buff, size_t sz, const char* name);
-luaLoadBufferOrig_T* luaLoadBufferOrig = (luaLoadBufferOrig_T*)(0xCDCFB0);
-
-int luaLoadBuff(void* L, const char* buff, size_t sz, const char* name) {
-
-	__asm pushad
-
-	std::string convertedBuff(buff);
-
-	int* resX = (int*)(0xE8DF14);
-	int* resY = (int*)(0xE8DF4C);
-
-	patchedRes = std::to_string(resX[13]) + "x" + std::to_string(resY[13]);
-	std::string searchAA = "adv_antiali_slider_values \t\t\t= { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"2x\" },\t\t\t\t[2] = { label = \"4x\" },\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tnum_values = 3, cur_value = 0 }";
-	std::string newAA = "adv_antiali_slider_values = { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"2x\" }, [2] = { label = \"4x\" }, [3] = { label = \"8x\" }, num_values = 4, cur_value = 0 }";
-	// removed unnecessary tabs and spaces to make the extra label fit in without breaking the buffer
-	std::string sLibSuperUI =
-		"audio_play(\"SYS_RACE_FAIL\")\n\t"
-		"local error_message = \"attempted to read undefined global variable '\"..k..\"'\"\n\t"
-		"debug_print(error_message..\"\\n\")\n\t"
-		"mission_help_table(\"[format][color:red]\"..tostring(error_message)..\"[/format]\")\n\t"
-		"error(error_message)";
-
-	std::string blankLib(sLibSuperUI.length(), ' ');
-
-	if (buff) {
-		for (int i = 0; i < 14; ++i) { // parses the hardcoded array to check if your current resolution exists in it
-			if (userResX == resX[i] && userResY == resY[i]) {
-				resFound = true;
-				break;
-			}
-		}
-
-		if (!resFound) {
-			resX[13] = userResX;
-			resY[13] = userResY;
-		}
-
-		replace_all(convertedBuff, searchAA, newAA);
-		replace_all(convertedBuff, "Fullscreen_Antialiasing", "MSAA                   "); // extra spaces for padding otherwise it'll break the buffer
-		replace_all(convertedBuff, "2048x1536", patchedRes); // easier to do it this way than to only patch if the user's res isn't found
-		replace_all(convertedBuff, sLibSuperUI, blankLib); // fixes the error logger from SuperUI in system_lib.lua from crashing our executor, if nclok fixes it we'll get rid of this
-
-		if (*(BYTE*)(0xE8C470) == 0) { // only patch these if the game's running in English
-			replace_all(convertedBuff, "MENU_BLUR\",\t\t", "Pause Blur\",\t");
-			replace_all(convertedBuff, "MENU_DEPTH_OF_FIELD", "Depth of Field     ");
-			replace_all(convertedBuff, "ANISOTROPY_FILTERING\",\t\t", "Anisotropic Filtering\",\t");
-			replace_all(convertedBuff, "CONTROLS_MINIMAP_VIEW", "Minimap View         ");
-			replace_all(convertedBuff, "MENU_VSYNC\",\t\t\t\t\t\t", "Fullscreen VSync\",");
-			replace_all(convertedBuff, "Shadow_Maps", "Shadows    ");
-		}
-
-		sz = convertedBuff.length();
-
-		strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
-		const_cast<char*>(buff)[sz] = '\0';
-
-		__asm popad
-
-		return luaLoadBufferOrig(L, buff, sz, name);
-	}
-}
-
-void __declspec(naked) MSAA()
-{
-	static int jmp_continue = 0x007737E4;
-	__asm {
-		mov ds:dword ptr[0x252A2DC], 0
-		sub eax, 1
-		jz MSAA8
-		jmp jmp_continue
-
-		MSAA8:
-		mov ds:dword ptr[0x252A2DC], 8
-		jmp jmp_continue
-	}
-}
-
-void __declspec(naked) MouseFix()
-{
-	static int jmp_continue = 0x00C1F4F2;
-	__asm {
-		mov ds : dword ptr[0x234F460], eax
-		mov ds : dword ptr[0x0347B2F4], eax // reset the missing old delta to fix ghost scrolling when tabbing in and out of the game
-		mov ds : dword ptr[0x0234F473], eax // reset left mouse button
-		mov ds : dword ptr[0x0234F483], eax // reset right mouse button
-		jmp jmp_continue
-	}
-}
-
-BOOL __declspec(naked) ValidCharFix()
-{
-	static int jmp_continue = 0x0075C8D5;
-	static int jmp_xor = 0x0075C8E7;
-
-	__asm {
-		mov ax, [esp + 4]
-		cmp ax, 0x20
-		jb short skip
-		jmp jmp_continue
-
-		skip:
-		jmp jmp_xor
-	}
-}
-
-
-typedef void __cdecl HudControlT(bool Hide);
-HudControlT* HudControl = (HudControlT*)(0x793D60);
-
-void IdleFix(bool Hide) {
-
-	patchByte((BYTE*)0x004F81EE, Hide ? 0x00 : 0x32);
-	patchByte((BYTE*)0x004F81CE, Hide ? 0x00 : 0x33);
-
-	return HudControl(Hide);
-}
-
-typedef int __cdecl TextureTestT(int idk1, int idk2);
-TextureTestT* TextureTest = (TextureTestT*)(0xC080C0);
-
-int TextureCrashFix(int idk1, int idk2) {
-
-	__asm pushad
-	idk1 = *(int*)(idk2); // making the first arg be the same as the second seems to not break the game and could maybe fix the crash
-	__asm popad
-	return TextureTest(idk1, idk2);
-}
-
-bool IsControllerConnected(int controllerIndex)
-{
-	XINPUT_CAPABILITIES capabilities;
-	return XInputGetCapabilities(controllerIndex, 0, &capabilities); // perhaps a little more lightweight than GetState?
-}
-
-typedef int(__stdcall* XInputEnableT)(bool Enable); // this is a deprecated feature and I couldn't get it to register through the XInput lib
-XInputEnableT XInputEnable = (XInputEnableT)0x00CCD4F8;
-
-int controllerConnected[4] = { 1, 1, 1, 1 };
-bool NoControllers = false;
-bool XInputEnabled = true;
-
-void __declspec(naked) RestoreFiltering()
-{
-	static int jmp_continue = 0x00515974;
-	__asm {
-		fstp st(1)
-		push esp
-		add dword ptr[esp], 8
-		fstp st
-		jmp jmp_continue
-	}
-}
-
-void __declspec(naked) ShadowsFix()
-{
-	static int jmp_continue = 0x00773783;
-	__asm {
-		cmp ds : byte ptr[0xE98994], 0
-		jz Skip
-		mov ds : byte ptr[0x252A37C], 1
-		jmp jmp_continue
-
-		Skip :
-		mov ds : byte ptr[0x252A37C], 0
-		jmp jmp_continue
-	}
-}
-
-DWORD WINAPI XInputCheck(LPVOID lpParameter)
-{
-	while (true) {
-		for (int i = 0; i < 4; ++i)
-		{
-			controllerConnected[i] = IsControllerConnected(i);
-		}
-
-		for (int i = 0; i < 4; ++i) {
-			if (controllerConnected[i] == 0) {
-				NoControllers = false;
-				break;
-			}
-			else {
-				NoControllers = true;
-			}
-		}
-
-		bool inFocus = IsSRFocused(); // calling it less = better for performance; local variable
-
-		static bool focusedLast = true;
-
-
-		if (inFocus && NoControllers && XInputEnabled) {
-			XInputEnable(false);
-			XInputEnabled = false;
-		}
-
-		else if (inFocus && !NoControllers && !XInputEnabled) {
-			XInputEnable(true);
-			XInputEnabled = true;
-		}
-
-		else if (focusedLast && !inFocus) {
-			XInputEnabled = false;
-			// we set to false so it knows to re-enable but we do nothing else as we let the game flush for us out of focus (which disables XInput)
-		}
-
-		focusedLast = inFocus;
-
-		SleepEx(500, 0); // feel free to decrease or increase; using SleepEx to make it independent from our third sleep hack
-	}
-	return 0;
-}
-
 bool FileExists(const char* fileName) {
 	WIN32_FIND_DATAA findFileData;
 	HANDLE handle = FindFirstFileA(fileName, &findFileData);
@@ -2117,268 +1647,11 @@ bool FileExists(const char* fileName) {
 	return found;
 }
 
-int dirExists(const char* const path)
-{
-	struct stat info;
-
-	int statRC = stat(path, &info);
-	if (statRC != 0)
-	{
-		if (errno == ENOENT) { return 0; } // something along the path does not exist
-		if (errno == ENOTDIR) { return 0; } // something in path prefix is not a dir
-		return -1;
-	}
-
-	return (info.st_mode & S_IFDIR) ? 1 : 0;
-}
-
-double FilteringStrength;
-
-void __declspec(naked) StrengthWorkaround() {
-	static int Continue = 0x00515CA0;
-	__asm {
-		cmp ebx, 3
-		jnz Skip
-		cmp ds: byte ptr[0x2527D14], 1
-		jnz Skip
-		fld FilteringStrength
-		jmp Continue
-
-		Skip:
-		fld ds: dword ptr[0x00E849AC]
-		jmp Continue
-	}
-}
-
-void SetDOFRes(int X, int Y) {
-
-	FilteringStrength = Y / 1080.0;
-
-	std::vector<int*> Addresses = {
-		(int*)0x00DC8E80, (int*)0x00DC8E84, (int*)0x00DC8F0C, (int*)0x00DC8F08,
-		(int*)0x00E86278, (int*)0x00E8627C, (int*)0x00E86284, (int*)0x00E86288
-	};
-
-	for (int* Addr : Addresses) {
-		SafeWrite32(UInt32(Addr), (UInt32)X);
-	}
-}
-
-void SetWaterReflRes(int X, int Y) {
-	
-	std::vector<int*> XAddresses = {
-		(int*)0x00DC8F60, (int*)0x00E86380
-	};
-
-	std::vector<int*> YAddresses = {
-		(int*)0x00DC8ED8, (int*)0x00E86384
-	};
-
-	for (int* Addr : XAddresses) {
-		SafeWrite32(UInt32(Addr), (UInt32)X);
-	}
-
-	for (int* Addr : YAddresses) {
-		SafeWrite32(UInt32(Addr), (UInt32)Y);
-	}
-}
-
-void SetAORes(int X, int Y) {
-
-	std::vector<int*> XAddresses = {
-		(int*)0x00DC8F6C, (int*)0x00E863A4, (int*)0x00E86398
-	};
-
-	std::vector<int*> YAddresses = {
-		(int*)0x00DC8EE4, (int*)0x00E863A8, (int*)0x00E8639C
-	};
-
-	for (int* Addr : XAddresses) {
-		SafeWrite32(UInt32(Addr), (UInt32)X);
-	}
-
-	for (int* Addr : YAddresses) {
-		SafeWrite32(UInt32(Addr), (UInt32)Y);
-	}
-}
-
-void SetVehReflRes(int X) {
-
-	std::vector<int*> Addresses = {
-		(int*)0x00DC8E78, (int*)0x00DC8F00, (int*)0x00E86264, (int*)0x00E86260
-	};
-
-	for (int* Addr : Addresses) {
-		SafeWrite32(UInt32(Addr), (UInt32)X);
-	}
-}
-
-float BloomResX;
-float BloomResY;
-
-void SetBloomRes(int X, int Y, float XFloat, float YFloat) {
-
-	BloomResX = XFloat;
-	BloomResY = YFloat;
-
-	std::vector<int*> XAddresses = {
-		(int*)0x00516947, (int*)0x00516A27, (int*)0x00516C6B, (int*)0x00E86368,
-		(int*)0x00E86374, (int*)0x00DC8F5C, (int*)0x00DC8F58
-	};
-
-	std::vector<int*> YAddresses = {
-		(int*)0x00516956, (int*)0x00516C76, (int*)0x00E8636C, (int*)0x00E86378,
-		(int*)0x00DC8ED0, (int*)0x00DC8ED4
-	};
-
-	for (int* Addr : XAddresses) {
-		SafeWrite32(UInt32(Addr), (UInt32)X);
-	}
-
-	for (int* Addr : YAddresses) {
-		SafeWrite32(UInt32(Addr), (UInt32)Y);
-	}
-}
-
-typedef int SetGraphicsT();
-SetGraphicsT* SetGraphics = (SetGraphicsT*)(0x7735C0);
-
-bool halfFxQuality = false;
-
-void ResizeEffects() {
-	int CurrentX = *(int*)0x22FD84C;
-	int CurrentY = *(int*)0x22FD850;
-	if (halfFxQuality == true) {
-		CurrentX = CurrentX / 2;
-		CurrentY = CurrentY / 2;
-	}
-	SetDOFRes(CurrentX, CurrentY);
-	SetBloomRes(CurrentX, CurrentY, (float)CurrentX, (float)CurrentY);
-	SetWaterReflRes(CurrentX, CurrentY);
-	SetVehReflRes(CurrentX);
-	//SetAORes(CurrentX, CurrentY);
-	SetGraphics();
-}
-
-
-/*void __declspec(naked) TextureCrashFixDefinitive() {
-
-	static bitmap_entry* BMP;
-	static peg_entry* Peg;
-	__asm {
-		mov BMP, edi
-		mov Peg, esi
-	}
-	__asm pushad
-	add_to_entry_list(BMP, Peg);
-	__asm popad
-}*/
-
-void __declspec(naked) CutscenePauseCheck()
-{
-	static int Continue = 0x006D8E10;
-	static int SkipAddr = 0x006D8F6F;
-	__asm {
-		jnz Skip
-		mov edi, ds:dword ptr[0x2527C08]
-		cmp edi, 0
-		jnz Skip
-		jmp Continue
-
-		Skip:
-		jmp SkipAddr
-	}
-}
-
-void __declspec(naked) CutscenePauseWorkaround()
-{
-	static int Continue = 0x0068CAA7;
-	static int SkipAddr = 0x0068CAFA;
-	__asm {
-		jnz Check
-		jmp Resume
-
-		Check :
-		mov al, ds:byte ptr[0x2527D14]
-		cmp al, 0
-		jz Skip
-		jmp Resume
-
-		Skip:
-		jmp SkipAddr
-
-		Resume:
-		mov edi, dword ptr[0x6C6870]
-		call edi
-		jmp Continue
-
-	}
-}
-
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-#if !JLITE
-	WriteRelJump(0x0068CAA0, (UInt32)&CutscenePauseWorkaround); // we need to make the cutscene process(?) function run even if the game's paused, original if check is dumb
-	WriteRelJump(0x006D8E0A, (UInt32)&CutscenePauseCheck); // editing one of the ifs to prevent cutscenes from getting updated when paused
-#endif
-	//patchCall((void*)0x00C080C0, (void*)TextureCrashFixDefinitive);
-	//WriteRelJump(0x00C080E8, (UInt32)&TextureCrashFixRemasteredByGroveStreetGames);
-	Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
-#if !RELOADED
-	/*if (FileExists("gotr.txt"))
-		modpackread = 1;
-		*/
-#endif
-	if (GameConfig::GetValue("Debug", "FixDefaultTexture", 1)) {
-		Logger::TypedLog(CHN_DLL, "Fixing Default Texture\n");
-		patchDWord((void*)0x00C08873, (int)"always_loaded"); // patches to correct the missing texture on PC
-		patchDWord((void*)0x00C088F8, (int)"missing-grey.tga");
-	}
-	patchNop((BYTE*)0x0052598D, 6); // fix for black water in the distance with AA disabled
-	patchNop((BYTE*)0x005267F0, 6); // fix for black water in the distance with AA enabled
-	//patchDWord((void*)(0x007ECA66 + 1), (int)"PS3"); // patch get_platform to return ps3. Not ideal.
-	//patchDWord((void*)(0x0051F62F + 1), (int)"PS3bitmap_sheets"); // patch get_platform to return ps3. Not ideal.
-	SafeWrite32(0x004CBFEE + 2, (UInt32)0xE84380); // change the motion blur to directly read the current frametime (fix strength above 30 fps)
-	patchBytesM((BYTE*)0x004CBFF4, (BYTE*)"\xEB\x13", 2); // jump over the stupid checks
-	patchBytesM((BYTE*)0x0053818F, (BYTE*)"\xA1\x94\x89\xE9\x00", 5); // make shadow maps check shadows instead of shadow map type
-	patchBytesM((BYTE*)0x00538194, (BYTE*)"\x83\xE8\x02", 3); // make it check if full shadows are enabled (so none = no shadows, simple = stencil and full = stencil & s. maps)
-	WriteRelJump(0x0077377E, (UInt32)&ShadowsFix); // force full stencil shadows with the simple setting
-	patchNop((BYTE*)0x006C5FE0, 10); // fix cutscenes resetting shadows
-	patchNop((BYTE*)0x0073C01B, 6); // remove the command check from the level function
-	patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
-	patchCall((void*)0x009A3D8E, (void*)IdleFix);
-	if (GameConfig::GetValue("Debug", "TextureCrashFix", 1)) { // cause i want to disable it for reasons -- Clippy95, dont include in config?
-		patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
-		patchCall((void*)0x00C08493, (void*)TextureCrashFix);
-	}
-#if !JLITE
-#if !RELOADED
-	if (GameConfig::GetValue("Debug", "PatchPauseMenuLua", 1)) {
-		patchCall((void*)0x00CD9FE8, (void*)luaLoadBuff); // used to intercept the pause menu lua before compiled, needed for full 8x MSAA support + custom res
-	}
-#endif
-	// LUA EXECUTE
-	patchBytesM((BYTE*)0x0075D5D6, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
-	patchBytesM((BYTE*)0x0075D5B5, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
-
-#endif 
-	WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
-	WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
-	WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out
-	if (GameConfig::GetValue("Gameplay", "FixHorizontalMouseSensitivity", 1)) {
-		WriteRelJump(0x00C1371A, (UInt32)&WorkAroundHorizontalMouseSensitivityASMHelper); // attempt to fix Horizontal sens being 3x faster compared to vertical while on foot
-	}
-	//FixandImproveSlewMouseRuntimePatch();
-	WriteRelJump(0x0098E493, (UInt32)&StoreNPCPointer);
-	WriteRelJump(0x0098EE0B, (UInt32)&SpawningCheck);
-	if (!dirExists("./shaderoverride")) {
-		Logger::TypedLog(CHN_DLL, "We can patch 2x Filtering.\n");
-		WriteRelJump(0x0051596E, (UInt32)&RestoreFiltering);
-	}
-	else {
-		Logger::TypedLog(CHN_DLL,"Not patching 2x Filtering.\n");
-	}
+	General::TopWinMain();
 	ErrorManager::Initialize();
+
 	char NameBuffer[260];
 	PIMAGE_DOS_HEADER dos_header;
 	PIMAGE_NT_HEADERS nt_header;
@@ -2422,10 +1695,13 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 #if !JLITE
 	InternalPrint::Init();
 #endif
+	Input::Init();
 	Behavior::Init();
 	Memory::Init();
 	Render3D::Init();
 	GLua::Init();
+	Audio::Init();
+	XACT::Init();
 
 #if RELOADED
 
@@ -2442,23 +1718,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_DEBUG, "Skipping main menu...\n");
 	}
 #endif
-	if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) > 0 && GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) < 3)
-	{
-		WriteRelJump(0x00515C9A, (UInt32)&StrengthWorkaround);
-		SafeWrite32(0x005169C8 + 2, (UInt32)&BloomResX);
-		SafeWrite32(0x005169BB + 2, (UInt32)&BloomResY);
-		patchCall((void*)0x007740D9, (void*)ResizeEffects);
-		patchCall((void*)0x007743CE, (void*)ResizeEffects);
-		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) == 1) {
-			Logger::TypedLog(CHN_MOD, "Patching UHQScreenEffects at half quality...\n");
-			halfFxQuality = true;
-		}
-		else {
-			Logger::TypedLog(CHN_MOD, "Patching UHQScreenEffects at full quality...\n");
-		}
-
-	}
-
 
 	if (GameConfig::GetValue("Debug", "MenuVersionNumber", 1))
 	{
@@ -2469,39 +1728,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 
 #endif
-
-	if (GameConfig::GetValue("Debug", "DisableXInput", 0))
-	{
-		patchBytesM((BYTE*)0x00BFA090, (BYTE*)"\x6A\x00", 2);
-		patchBytesM((BYTE*)0x00BFA0C8, (BYTE*)"\x6A\x00", 2);
-		Logger::TypedLog(CHN_DEBUG, "XInput Disabled.\n");
-	}
-
-	else { // if XInput is not disabled completely, we just force our fix
-		patchNop((BYTE*)0x00BFA090, 2);
-		patchNop((BYTE*)0x00BFA099, 5);
-		patchNop((BYTE*)0x00BFA0C8, 2);
-		patchNop((BYTE*)0x00BFA0CA, 5);
-		CreateThread(0, 0, XInputCheck, 0, 0, 0);
-	}
-
-	if (GameConfig::GetValue("Debug", "ForceDisableVibration", 0)) // Fixes load/new save insta-crash due to broken / shitty joystick drivers.
-	{
-		patchBytesM((BYTE*)0x00C14930, (BYTE*)"\xC3\x00", 2);
-		Logger::TypedLog(CHN_DEBUG, "Vibration Forced to OFF.\n");
-	}
-
-
-	if (GameConfig::GetValue("Audio", "UseFixedXACT", 1)) // Scanti the Goat
-	{
-		// Forces the game to use a newer version of XACT which in turn fixes all of the audio issues
-		// in SR2 aside from 3D Panning.
-		GUID xaudio = { 0x4c5e637a, 0x16c7, 0x4de3, 0x9c, 0x46, 0x5e, 0xd2, 0x21, 0x81, 0x96, 0x2d };        // version 2.3
-		GUID ixaudio = { 0x8bcf1f58, 0x9fe7, 0x4583, 0x8a, 0xc6, 0xe2, 0xad, 0xc4, 0x65, 0xc8, 0xbb };
-		SafeWriteBuf((0x00DD8A08), &xaudio, sizeof(xaudio));
-		SafeWriteBuf((0x00DD8A18), &ixaudio, sizeof(ixaudio));
-		Logger::TypedLog(CHN_MOD, "Forcing the use of a fixed XACT version.\n");
-	}
 
 	if (GameConfig::GetValue("Gameplay", "FixUltrawideFOV", 1))
 	{
@@ -2558,32 +1784,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((BYTE*)0x00E3CC80, 16); // nop aim_assist.xtbl
 	}
 
-	if (GameConfig::GetValue("Audio", "FixAudioDeviceAssign", 1))
-	{
-		Logger::TypedLog(CHN_MOD, "Fixing Audio Device Assignment.\n");
-		// fixes, or attempts to fix the incorrect GUID assigning for BINK related stuff in SR2.
-		patchBytesM((BYTE*)0x00DBA69C, (BYTE*)"\x00\x00\x00\x00", 4);
-	}
-
-	if (GameConfig::GetValue("Audio", "51Surround", 0) == 1)
-	{
-		Logger::TypedLog(CHN_AUDIO, "Using 5.1 Surround Sound...\n");
-	}
-	else {
-		Logger::TypedLog(CHN_AUDIO, "Fixing Stereo Audio...\n");
-		UINT32 number_of_speakers = 2;
-		UINT32 frequency = 48000;
-
-		//SafeWrite8(0x004818E3, number_of_speakers);         // Causes major audio glitches
-		SafeWrite8(0x00482B08, number_of_speakers);
-		SafeWrite8(0x00482B41, number_of_speakers);
-		SafeWrite8(0x00482B96, number_of_speakers);
-
-		SafeWrite32(0x00482B03, frequency);
-		SafeWrite32(0x00482B3C, frequency);
-		SafeWrite32(0x00482B91, frequency);
-	}
-
 	if (GameConfig::GetValue("Gameplay", "BetterChat", 1)) // changes char limit from 64 to 128 and formats the input after the 64th character
 	{
 		BetterChatTest = 1;
@@ -2592,33 +1792,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x0075CDEA, (BYTE*)"\x68\xFF\x92\x20\x02", 5); // new chat read address for entered message
 		Logger::TypedLog(CHN_DEBUG, "Enabling better chat...\n");
 	}
-
-	if (GameConfig::GetValue("Gameplay", "TagsHook", 1))
-	{
-		betterTags = 1;
-		patchNop((BYTE*)0x006221AA, 6); // Original stores for Tags, X and Y.
-		patchNop((BYTE*)0x00622189, 6);
-		Logger::TypedLog(CHN_DEBUG, "Replaced Tags controls with BetterTags\n");
-	}
-
-	if (uint8_t direction = GameConfig::GetValue("Gameplay", "NativeMousetoPlayerWardrobe", 0))
-	{
-		if (direction >= 2) { // invert player rotation in wardrobe if 2 or above.
-			invert = true;
-		}
-		patchCall((int*)0x007CE170, (int*)NativeMouse_clothing_store);
-		Logger::TypedLog(CHN_DEBUG,
-			"Native mouse to player rotation in clothing store menus: %s.\n",
-			invert ? "inverted direction" : "normal rotation");
-	}
-
-	if (GameConfig::GetValue("Gameplay", "SwapScrollWheel", 0))
-	{
-		// TODO: maybe have optional options for when to swap scroll? like map only or weapon wheel only, mouse function is done at 0x00C1F320.
-
-		patchBytesM((BYTE*)0x00C1F0F7, (BYTE*)"\x29", 1); // opcode for sub, add previously.
-	}
-	patchNop((BYTE*)0x004D6795, 5); // Fix for the sun flare disappearing upon reloading a save. Prevents the game from deallocating the flare.
 
 #if !JLITE
 	if (GameConfig::GetValue("Gameplay", "DisableCheatFlag", 0))
@@ -2660,12 +1833,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((BYTE*)0x0088DDBD, 5); // nop the float call from xtbl > exe that parses clothing prices.
 	}
 
-	if (GameConfig::GetValue("Debug", "FixAudio", 0))
-	{
-		Logger::TypedLog(CHN_DEBUG, "Patching Stereo Cutscenes (EXPERIMENTAL)...\n");
-		RPCHandler::ShouldFixStereo = true;
-	}
-
 	if (GameConfig::GetValue("Debug", "AddBindToggles", 1))
 	{
 		Logger::TypedLog(CHN_DEBUG, "Adding Custom Key Toggles...\n");
@@ -2675,12 +1842,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchBytesM((BYTE*)0x00C01AC8, (BYTE*)"\xDC\x64\x24\x20", 4); // invert Y axis in slew 
 	}
 
-	if (GameConfig::GetValue("Debug", "LUADebugPrintF", 1)) // Rewrites the DebugPrint LUA function to our own.
-	{
-		Logger::TypedLog(CHN_DEBUG, "Re-writing Debug_Print...\n");
-		copyFunc((uint32_t)0x00D74BA0, 0x00D74BD8, HookedDebugPrint); // Overwrite vanilla debug_print LUA function with ours.
-	}
-
 	RPCHandler::Enabled = GameConfig::GetValue("Misc", "RichPresence", 0);
 
 	if (RPCHandler::Enabled)
@@ -2688,12 +1849,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		Logger::TypedLog(CHN_RPC, "Attempting to initialize Discord RPC...\n");
 		RPCHandler::InitRPC();
 		//RPCHandler::DiscordCallbacks(); callbacks needs to be hooked into a game loop
-	}
-
-	if (GameConfig::GetValue("Graphics", "RemoveBlackBars", 0)) // Another Tervel moment
-	{
-		Logger::TypedLog(CHN_DLL, "Removing Black Bars.\n");
-		patchNop((BYTE*)(0x0075A265), 5);
 	}
 
 	if (GameConfig::GetValue("Gameplay", "SkipIntros", 0)) // can't stop Tervel won't stop Tervel
@@ -2727,25 +1882,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 #endif
 
-	patchBytesM((BYTE*)0x009D3C70, (BYTE*)"\xD9\x05\x5A\x30\x7B\x02", 6); // TP X
-	patchBytesM((BYTE*)0x009D3C83, (BYTE*)"\xD9\x05\x5E\x30\x7B\x02", 6); // TP Y
-	patchBytesM((BYTE*)0x009D3CAE, (BYTE*)"\xD9\x05\x62\x30\x7B\x02", 6); // TP Z
-	patchBytesM((BYTE*)0x00BE1B50, (BYTE*)"\xC3", 1); // return - avoid crashing from the unused broken debug console variable checker
-	patchNop((BYTE*)0x009D3C65, 2); // nop out the command check so TP works without it
-
-
-	patchBytesM((BYTE*)0x0068579B, (BYTE*)"\x6A\x06", 2);
-	patchBytesM((BYTE*)0x006857CB, (BYTE*)"\x6A\x06", 2);
-	patchBytesM((BYTE*)0x0068571F, (BYTE*)"\x6A\x06", 2);
-	patchBytesM((BYTE*)0x0068574F, (BYTE*)"\x6A\x06", 2);
-	patchBytesM((BYTE*)0x00685E12, (BYTE*)"\x6A\x06", 2);
-	patchBytesM((BYTE*)0x00685E1E, (BYTE*)"\x6A\x06", 2);
-	patchBytesM((BYTE*)0x00685DC7, (BYTE*)"\x6A\x06", 2);
-	patchBytesM((BYTE*)0x00687C32, (BYTE*)"\x6A\x06", 2);
-	patchBytesM((BYTE*)0x00687BC2, (BYTE*)"\x6A\x06", 2);
-	patchBytesM((BYTE*)0x00687CAB, (BYTE*)"\x6A\x06", 2);
-	// this should increase the stream priority for the character swap cheat - on 360, the loading times are much bigger so there are no issues there but here this might be needed
-	patchNop((BYTE*)0x00684C84, 5); // get rid of the loading screen with the cheat, remove the nop if there are any issues but it should be fine?
+	General::BottomWinMain();
 
 #endif
 

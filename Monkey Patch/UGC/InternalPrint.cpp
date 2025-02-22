@@ -8,6 +8,7 @@
 #include <intrin.h>
 #include "../Patcher/patch.h"
 #include "../GameConfig.h"
+#include "../LuaHandler.h"
 
 namespace InternalPrint
 {
@@ -63,6 +64,13 @@ namespace InternalPrint
 	}
 
 	void Init() {
+
+		if (GameConfig::GetValue("Debug", "LUADebugPrintF", 1)) // Rewrites the DebugPrint LUA function to our own.
+		{
+			Logger::TypedLog(CHN_DEBUG, "Re-writing Debug_Print...\n");
+			copyFunc((uint32_t)0x00D74BA0, 0x00D74BD8, HookedDebugPrint); // Overwrite vanilla debug_print LUA function with ours.
+		}
+
 		if (GameConfig::GetValue("Logger", "AssetLoadPrint", 0))
 		{
 			Logger::TypedLog(CHN_INTPR, "Printing Asset Loads...\n");

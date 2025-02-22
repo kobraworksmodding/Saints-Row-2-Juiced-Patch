@@ -236,9 +236,12 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Audio\Audio.cpp" />
+    <ClCompile Include="Audio\XACT.cpp" />
     <ClCompile Include="ErrorManager.cpp" />
     <ClCompile Include="Ext\Hooking.Patterns.cpp" />
     <ClCompile Include="Game\Game.cpp" />
+    <ClCompile Include="General\General.cpp" />
     <ClCompile Include="LUA\GLua.cpp" />
     <ClCompile Include="LAAPatcher.cpp" />
     <ClCompile Include="loose files.cpp" />
@@ -257,6 +260,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="Patcher\patch.cpp" />
     <ClCompile Include="Patches\QueryPerformance Fix.cpp" />
     <ClCompile Include="Player\Behavior.cpp" />
+    <ClCompile Include="Player\Input.cpp" />
     <ClCompile Include="Render\Render3D.cpp" />
     <ClCompile Include="RPCHandler.cpp" />
     <ClCompile Include="SafeWrite.cpp" />
@@ -265,6 +269,10 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="UGC\Reloaded.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Audio\Audio.h" />
+    <ClInclude Include="Audio\XACT.h" />
+    <ClInclude Include="General\General.h" />
+    <ClInclude Include="Player\Input.h" />
     <ClInclude Include="Shaders.h" />
     <ClInclude Include="Ext\Hooking.Patterns.h" />
     <ClInclude Include="ext\inc\lua\lauxlib.h" />
@@ -298,6 +306,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UGC\InternalPrint.h" />
     <ClInclude Include="UGC\Reloaded.h" />
+    <ClInclude Include="UtilsGlobal.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Properties.rc" />

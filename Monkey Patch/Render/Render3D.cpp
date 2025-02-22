@@ -5,6 +5,7 @@
 #include "../FileLogger.h"
 #include "../Patcher/patch.h"
 #include <thread>
+#include <vector>
 #include "../iat_functions.h"
 #include "../GameConfig.h"
 #include "../SafeWrite.h"
@@ -207,6 +208,156 @@ namespace Render3D
 		//patchFloat((BYTE*)0x00E9898C, (float)AOQuality);
 	}
 
+	void RemBlackBars()
+	{
+		Logger::TypedLog(CHN_DLL, "Removing Black Bars.\n");
+		patchNop((BYTE*)(0x0075A265), 5);
+	}
+
+	double FilteringStrength;
+
+	void __declspec(naked) StrengthWorkaround() {
+		static int Continue = 0x00515CA0;
+		__asm {
+			cmp ebx, 3
+			jnz Skip
+			cmp ds : byte ptr[0x2527D14], 1
+			jnz Skip
+			fld FilteringStrength
+			jmp Continue
+
+			Skip :
+			fld ds : dword ptr[0x00E849AC]
+				jmp Continue
+		}
+	}
+
+	void SetAORes(int X, int Y) {
+
+		std::vector<int*> XAddresses = {
+			(int*)0x00DC8F6C, (int*)0x00E863A4, (int*)0x00E86398
+		};
+
+		std::vector<int*> YAddresses = {
+			(int*)0x00DC8EE4, (int*)0x00E863A8, (int*)0x00E8639C
+		};
+
+		for (int* Addr : XAddresses) {
+			SafeWrite32(UInt32(Addr), (UInt32)X);
+		}
+
+		for (int* Addr : YAddresses) {
+			SafeWrite32(UInt32(Addr), (UInt32)Y);
+		}
+	}
+
+	void SetVehReflRes(int X) {
+
+		std::vector<int*> Addresses = {
+			(int*)0x00DC8E78, (int*)0x00DC8F00, (int*)0x00E86264, (int*)0x00E86260
+		};
+
+		for (int* Addr : Addresses) {
+			SafeWrite32(UInt32(Addr), (UInt32)X);
+		}
+	}
+
+	float BloomResX;
+	float BloomResY;
+
+	void SetWaterReflRes(int X, int Y) {
+
+		std::vector<int*> XAddresses = {
+			(int*)0x00DC8F60, (int*)0x00E86380
+		};
+
+		std::vector<int*> YAddresses = {
+			(int*)0x00DC8ED8, (int*)0x00E86384
+		};
+
+		for (int* Addr : XAddresses) {
+			SafeWrite32(UInt32(Addr), (UInt32)X);
+		}
+
+		for (int* Addr : YAddresses) {
+			SafeWrite32(UInt32(Addr), (UInt32)Y);
+		}
+	}
+
+	void SetBloomRes(int X, int Y, float XFloat, float YFloat) {
+
+		BloomResX = XFloat;
+		BloomResY = YFloat;
+
+		std::vector<int*> XAddresses = {
+			(int*)0x00516947, (int*)0x00516A27, (int*)0x00516C6B, (int*)0x00E86368,
+			(int*)0x00E86374, (int*)0x00DC8F5C, (int*)0x00DC8F58
+		};
+
+		std::vector<int*> YAddresses = {
+			(int*)0x00516956, (int*)0x00516C76, (int*)0x00E8636C, (int*)0x00E86378,
+			(int*)0x00DC8ED0, (int*)0x00DC8ED4
+		};
+
+		for (int* Addr : XAddresses) {
+			SafeWrite32(UInt32(Addr), (UInt32)X);
+		}
+
+		for (int* Addr : YAddresses) {
+			SafeWrite32(UInt32(Addr), (UInt32)Y);
+		}
+	}
+
+	void SetDOFRes(int X, int Y) {
+
+		FilteringStrength = Y / 1080.0;
+
+		std::vector<int*> Addresses = {
+			(int*)0x00DC8E80, (int*)0x00DC8E84, (int*)0x00DC8F0C, (int*)0x00DC8F08,
+			(int*)0x00E86278, (int*)0x00E8627C, (int*)0x00E86284, (int*)0x00E86288
+		};
+
+		for (int* Addr : Addresses) {
+			SafeWrite32(UInt32(Addr), (UInt32)X);
+		}
+	}
+
+	typedef int SetGraphicsT();
+	SetGraphicsT* SetGraphics = (SetGraphicsT*)(0x7735C0);
+
+	bool halfFxQuality = false;
+
+	void ResizeEffects() {
+		int CurrentX = *(int*)0x22FD84C;
+		int CurrentY = *(int*)0x22FD850;
+		if (halfFxQuality == true) {
+			CurrentX = CurrentX / 2;
+			CurrentY = CurrentY / 2;
+		}
+		SetDOFRes(CurrentX, CurrentY);
+		SetBloomRes(CurrentX, CurrentY, (float)CurrentX, (float)CurrentY);
+		SetWaterReflRes(CurrentX, CurrentY);
+		SetVehReflRes(CurrentX);
+		//SetAORes(CurrentX, CurrentY);
+		SetGraphics();
+	}
+
+	void UHQEffects() {
+		WriteRelJump(0x00515C9A, (UInt32)&StrengthWorkaround);
+		SafeWrite32(0x005169C8 + 2, (UInt32)&BloomResX);
+		SafeWrite32(0x005169BB + 2, (UInt32)&BloomResY);
+		patchCall((void*)0x007740D9, (void*)ResizeEffects);
+		patchCall((void*)0x007743CE, (void*)ResizeEffects);
+		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) == 1) {
+			Logger::TypedLog(CHN_MOD, "Patching UHQScreenEffects at half quality...\n");
+			halfFxQuality = true;
+		}
+		else {
+			Logger::TypedLog(CHN_MOD, "Patching UHQScreenEffects at full quality...\n");
+		}
+
+	}
+
 	void Init()
 	{
 #if !JLITE
@@ -268,6 +419,16 @@ namespace Render3D
 		}
 #endif
 		WriteRelJump(0x00D1B7CE, (UInt32)&LoadShadersHook);
+
+		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) > 0 && GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) < 3)
+		{
+			UHQEffects();
+		}
+
+		if (GameConfig::GetValue("Graphics", "RemoveBlackBars", 0)) // Another Tervel moment
+		{
+			RemBlackBars();
+		}
 
 		if (GameConfig::GetValue("Graphics", "DisableSkyRefl", 0))
 		{
