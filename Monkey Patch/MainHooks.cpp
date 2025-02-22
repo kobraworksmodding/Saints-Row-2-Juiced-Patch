@@ -1429,7 +1429,7 @@ void InGamePrint(const char* Text, int x, int y, int font) {
 	case LANG_JAPANESE:
 	case LANG_CHINESE:
 
-		font = 0;
+		font = 0; // Fixes crash for Japanese and Chinese SR2 and our InGamePrint
 		break;
 	}
 	InGamePrintASM(Text, x, y, font);
