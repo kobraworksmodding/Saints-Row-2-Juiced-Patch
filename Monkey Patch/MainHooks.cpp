@@ -180,21 +180,18 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	if (exe) {
 		*(exe + 1) = '\0';
 	}
-    #if !RELOADED
+#if !RELOADED
 	#if JLITE
-	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " + std::string(UtilsGlobal::juicedversion) + " ---\n").c_str());
+	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " + std::string(juicedversion) + " ---\n").c_str());
     #else
 	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED Version: " + std::string(juicedversion) + " ---\n").c_str());
     #endif
-	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
-    Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
-	Logger::TypedLog(CHN_DLL, "--- Based on MonkeyPatch by scanti, additional fixes by Uzis, Tervel, jason098 and Clippy95. ---\n");
-    #else
+#else
 	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 RELOADED ---\n");
+#endif
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
 	Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
 	Logger::TypedLog(CHN_DLL, "--- DLL Based on MonkeyPatch by scanti, additional work by Uzis, Tervel, jason098 and Clippy95. ---\n");
-    #endif
 	
 	if(GetVersionExAFirstRun)
 	{

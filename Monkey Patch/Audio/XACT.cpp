@@ -12,6 +12,7 @@ namespace XACT
 {
 	void FixAudioHack()
 	{
+#if !JLITE
 		if (GameConfig::GetValue("Debug", "FixAudio", 0)) // Hacky half fix for 3D Audio in cutscenes.
 		{
 			Logger::TypedLog(CHN_DEBUG, "Patching Stereo Cutscenes (EXPERIMENTAL)...\n");
@@ -19,6 +20,7 @@ namespace XACT
 			/* Hack is located in the rich presence code, kind of lazy yesand might be moved in the future
 			 but it was only a temporary patch anyway until we find something nicer. */
 		}
+#endif
 	}
 
 	void UpdateToNewerXACT()
