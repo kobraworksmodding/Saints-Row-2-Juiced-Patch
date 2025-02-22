@@ -277,7 +277,6 @@ typedef void(*VegStrT)();
 VegStrT VegStr = (VegStrT)0x4E66A0;
 
 bool slewMode = false;
-bool isPaused = false;
 bool ARfov = 0;
 bool ARCutscene = 0;
 double FOVMultiplier = 1;
@@ -414,7 +413,7 @@ void Slew() {
 
 		SlewCamera(CameraPos, CameraOrient, deltaTime, 0, false);
 
-		if (isPaused) {
+		if (UtilsGlobal::isPaused) {
 			UpdateCamera();
 			ChunkStr();
 			VegStr();
@@ -921,8 +920,8 @@ void cus_FrameToggles() {
 	if (RPCHandler::IsCoopOrSP == true) 
 	{
 		if (IsKeyPressed(VK_F6, false)) {
-			isPaused = !isPaused;
-			isPaused ? pauseGame() : unpauseGame();
+			UtilsGlobal::isPaused = !UtilsGlobal::isPaused;
+			UtilsGlobal::isPaused ? pauseGame() : unpauseGame();
 		}
 	}
 #endif

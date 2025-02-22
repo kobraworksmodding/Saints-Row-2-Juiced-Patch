@@ -105,6 +105,8 @@ namespace Input {
 	PlayerSpin* UpdatePlayerSpin = (PlayerSpin*)(0x0073FB20); //0x00BD4A80
 
 	int NativeMouse_clothing_store(float a1) {
+		if (UtilsGlobal::isPaused)
+			return UpdatePlayerSpin(a1);
 		// Same implementation as Saints Row 1 Mousehook 
 		// expect for vehicle spinning as it's already implemented.
 

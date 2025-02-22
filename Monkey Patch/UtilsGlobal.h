@@ -11,6 +11,8 @@ inline uintptr_t getplayer(bool provideaddress = false) {
 
 inline bool invert;
 
+inline bool isPaused;
+
 struct mouse {
     static constexpr uintptr_t x_delta_address = 0x234F45C;
     static constexpr uintptr_t y_delta_address = 0x234F458;
