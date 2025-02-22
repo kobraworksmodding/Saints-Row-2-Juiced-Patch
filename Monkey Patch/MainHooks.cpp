@@ -1428,7 +1428,8 @@ void InGamePrint(const char* Text, int x, int y, int font) {
 	switch (game_setting_language) {
 	case LANG_JAPANESE:
 	case LANG_CHINESE:
-		return;
+
+		font = 0;
 		break;
 	}
 	InGamePrintASM(Text, x, y, font);
