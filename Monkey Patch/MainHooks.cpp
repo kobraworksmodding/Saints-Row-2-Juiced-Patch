@@ -1,6 +1,7 @@
 #include "MainHooks.h"
 #include "UtilsGlobal.h"
 #include "General/General.h"
+
 #include "FileLogger.h"
 #include "SafeWrite.h"
 #include "Patches/All Patches.h"
@@ -36,9 +37,9 @@
 #include <codecvt>
 
 #if JLITE
-const char* juicedversion = "1.1.0";
+const char* juicedversion = "1.1.1";
 #else
-const char* juicedversion = "7.3.1";
+const char* juicedversion = "7.3.2";
 #endif
 
 const char ServerNameSR2[] = "[Saints Row 2]";
