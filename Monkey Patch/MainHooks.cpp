@@ -915,7 +915,7 @@ void cus_FrameToggles() {
 		}
 	}
 
-	if (RPCHandler::IsCoopOrSP == true) 
+	if (Game::InLoop::IsCoopOrSP == true)
 	{
 		if (IsKeyPressed(VK_F6, false)) {
 			UtilsGlobal::isPaused = !UtilsGlobal::isPaused;
@@ -1299,14 +1299,13 @@ int RenderLoopStuff_Hacked()
 			PrintDBGGarble();
 		}
 	}
+
+	Game::InLoop::FrameChecks();
+
 	if (RPCHandler::Enabled) 
 	{
 		RPCHandler::DiscordCallbacks();
 		RPCHandler::UpdateDiscordParams();
-	}
-	else 
-	{
-		RPCHandler::UpdateNoDiscParams();
 	}
 
 	if (!ErrorManager::b_HandlerAssigned)

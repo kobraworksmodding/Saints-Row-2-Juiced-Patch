@@ -659,13 +659,5 @@ namespace RPCHandler {
     extern void ShutdownRPC();
     extern void ChangeDetails();
     extern void UpdateDiscordParams();
-    extern void UpdateNoDiscParams();
-    extern bool IsCoopOrSP;
-    extern bool ShouldFixStereo;
-    extern char* ClanTag[3];
-    extern bool UsingClanTag;
-#if RELOADED
-    extern void RLServerNameUpdateOnce();
-#endif
 }
 #endif

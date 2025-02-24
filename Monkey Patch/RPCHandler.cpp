@@ -28,9 +28,6 @@ namespace RPCHandler {
 	DiscordActivity pres;
 	uint8_t Enabled;
 
-	typedef int(__cdecl* hostcheckT)(int);
-	hostcheckT hostcheck = (hostcheckT)0x7EE0D0;
-
 	std::string wstring_to_string(const std::wstring& wstr) {
 		// Create a wide-to-narrow converter
 		std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
@@ -43,9 +40,8 @@ namespace RPCHandler {
 		app.core->run_callbacks(app.core); // do i need to do this every frame
 	}
 
-	bool IsCoopOrSP = false;
-	bool ShouldFixStereo = false;
 	const char* FancyChunkName[2048];
+
 	//sr2_mp_custBG
 	int mapListAPI(const char* word) {
 		if (strcmp(word, "sr2_mp_lobby") == 0) return 1;
@@ -214,35 +210,8 @@ namespace RPCHandler {
 		}
 	}
 
-	char* ClanTag[3] = {
-		const_cast<char*>("["),
-		const_cast<char*>(""),
-		const_cast<char*>("]")
-	};
-
-	void RemoveWordFromLine(std::string& line, const std::string& word)
-	{
-		auto n = line.find(word);
-		if (n != std::string::npos)
-		{
-			line.erase(n, word.length());
-		}
-	}
-
-	bool AlreadyAddedClanTag = 0;
-	int isDefaultSNameChecked = 0;
-	bool UsingClanTag = 0;
-#if RELOADED
-	bool ChangedRLServerName = 0;
-
-	void RLServerNameUpdateOnce() {
-		char* playerName = (CHAR*)0x0212AB48;
-		char finalSName[2048];
-		sprintf(finalSName, "%s - SR2 RL 1\.0b4", playerName);
-		char* GameName = reinterpret_cast<char*>(0x0212AA08);
-		strcpy(GameName, finalSName);
-	}
-#endif
+	typedef bool(*isCoopT)();
+	isCoopT isCoop = (isCoopT)0x007F7AD0;
 
 	// Updates state info for discord.
 	void UpdateDiscordParams() {
@@ -251,9 +220,7 @@ namespace RPCHandler {
 		BYTE MatchType = *(BYTE*)0x00E8B20C; // Checks match type
 		char* playerName = (CHAR*)0x0212AB48; // parses player name
 		wchar_t* partnerName = (WCHAR*)0x02CD1870; // parses Co-op Partner name, usually
-		BYTE AbleToStartGame = *(BYTE*)0x02528D90; // Determines whether the gamemode is able to start or not (we'll force this on when we can, nice QOL feature.)
 		BYTE IsInCutscene = *(BYTE*)0x02527D14; // Checks if user is in a cutscene.
-		BYTE GamespyStatus = *(BYTE*)0x02529334; // Checks the current gamespy status.
 
 		std::wstring wPartnerName = partnerName; // parse co-op partner name to a wstring
 		std::string f_PartnerName = wstring_to_string(wPartnerName); // THEN to a string
@@ -262,11 +229,14 @@ namespace RPCHandler {
 		char finalMPDesc[2048];
 		char finalCOOPDescCutsc[2048];
 		char finalCOOPDesc[2048];
+		char finalMisCOOPDesc[2048];
 
+		BYTE IsInMission = *(BYTE*)0x27B3C60; // parses mission (?)
 		sprintf(finalUsername, "Username: %s", playerName);
 		sprintf(finalMPDesc, "Username: %s | In Map: %s", playerName, *FancyChunkName);
 		sprintf(finalCOOPDescCutsc, "Watching a Cutscene with %s", COOPPartner);
-		sprintf(finalCOOPDesc, "Playing CO-OP with %s", COOPPartner);
+		sprintf(finalCOOPDesc, "Exploring Stilwater with %s", COOPPartner);
+		sprintf(finalMisCOOPDesc, "Reclaiming Stilwater with %s", COOPPartner);
 
 		static DWORD lastTick = 0;
 
@@ -278,12 +248,7 @@ namespace RPCHandler {
 			{
 				if (IsInCutscene == 1)
 				{
-					if (ShouldFixStereo == true) {
-						patchNop((BYTE*)0x00482658, 5); // nop mono aud
-						patchNop((BYTE*)0x0046CAC8, 5); // nop ambient aud
-					}
-
-					if (f_PartnerName == playerName || f_PartnerName.empty()) {
+					if (f_PartnerName == playerName || f_PartnerName.empty() || !isCoop) {
 						strcpy_s(pres.details, "Watching a Cutscene");
 					}
 					else
@@ -291,29 +256,28 @@ namespace RPCHandler {
 						strcpy_s(pres.details, finalCOOPDescCutsc);
 						strcpy_s(pres.state, finalUsername);
 					}
-					IsCoopOrSP = true;
 				}
 				else
 				{
-					if (ShouldFixStereo == true) {
-						patchBytesM((BYTE*)0x00482658, (BYTE*)"\xE8\x43\xFD\xFF\xFF", 5); // patch mono aud back in
-						patchBytesM((BYTE*)0x0046CAC8, (BYTE*)"\xE8\x83\xA7\x00\x00", 5); // patch ambient aud back in
-					}
-
-					if (f_PartnerName == playerName || f_PartnerName.empty()) {
-						strcpy_s(pres.details, "Playing Story Mode");
+					if (f_PartnerName == playerName || f_PartnerName.empty() || !isCoop) {
+						if (!IsInMission) {
+							strcpy_s(pres.details, "Exploring Stilwater...");
+						}
+						else {
+							strcpy_s(pres.details, "Reclaiming Stilwater...");
+						}
 					}
 					else
 					{
-						strcpy_s(pres.details, finalCOOPDesc);
+						if (!IsInMission) {
+							strcpy_s(pres.details, finalCOOPDesc);
+						}
+						else {
+							strcpy_s(pres.details, finalMisCOOPDesc);
+						}
 						strcpy_s(pres.state, finalUsername);
 					}
-					IsCoopOrSP = true;
 				}
-			}
-			else
-			{
-				IsCoopOrSP = false;
 			}
 			if (CurrentGamemode == 0xD) // Strong Arm
 			{
@@ -371,38 +335,6 @@ namespace RPCHandler {
 			}
 			if (LobbyCheck == 0x44) // Game Lobby
 			{
-#if RELOADED
-				if (UsingClanTag == 1)
-				{
-					char* currentPlayerName = playerName;
-					std::string Clanresult = ClanTag[0];
-					Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
-					const char* finalClanstring = Clanresult.c_str();
-
-					if (GamespyStatus == 0x4) {
-						if (AlreadyAddedClanTag == 0) {
-							char* newPlayerName = reinterpret_cast<char*>(playerName);
-							strcpy(newPlayerName, (const char*)finalClanstring);
-							AlreadyAddedClanTag = 1;
-						}
-					}
-				}
-#endif
-				if (MatchType == (BYTE)2) { // If in ranked
-					if (!CurrentGamemode == 0xD || !CurrentGamemode == 0xC || CurrentGamemode == 0xB) // And gamemode is not TGB or Strong Arm but is Gangsta Brawl
-					{
-						AbleToStartGame = 1; // Force Able to Start
-					}
-					else {
-						AbleToStartGame = 0; // Uhh dumb ass fix?
-					}
-
-				}
-				else
-				{
-					AbleToStartGame = 1;
-				}
-
 				// Player MP Lobby shows as default for everyone, Ranked and Party seem to only show in rich presence if host
 				// so we'll keep the conditions because we need it for friendly fire shit anyway.
 				if (MatchType == (BYTE)1) // Player Lobby
@@ -411,9 +343,6 @@ namespace RPCHandler {
 				if (MatchType == (BYTE)2) // Ranked Lobby
 				{
 					strcpy_s(pres.details, "Waiting in Ranked MP Lobby...");
-#if RELOADED
-					* (BYTE*)0x02A4D134 = 0x1; // Force Friendly Fire to Full Damage.
-#endif
 				}
 
 				if (MatchType == (BYTE)3) // Party Lobby
@@ -421,145 +350,14 @@ namespace RPCHandler {
 			}
 			if (LobbyCheck == 0x0) // Usually Menus Check
 			{
-#if RELOADED
-				if (GamespyStatus == 0x4) {
-					if (ChangedRLServerName == 0) {
-						RLServerNameUpdateOnce();
-						ChangedRLServerName = 1;
-					}
-				}
-				if (UsingClanTag == 1)
-				{
-					if (GamespyStatus == 0x4) {
-						if (AlreadyAddedClanTag == 1) {
-							std::string NameResult = playerName;
-							std::string ClanTagresult = ClanTag[0];
-							ClanTagresult = ClanTagresult + ClanTag[1] + ClanTag[2] + " ";
-							RemoveWordFromLine(NameResult, ClanTagresult);
-							const char* finalNameString = NameResult.c_str();
-							char* newPlayerName = reinterpret_cast<char*>(playerName);
-							strcpy(newPlayerName, finalNameString);
-							AlreadyAddedClanTag = 0;
-						}
-					}
-				}
-				*(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
-#endif
-				AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
 				strcpy_s(pres.details, "In Menus...");
 				strcpy_s(pres.state, "");
 			}
-
-			*(BYTE*)0x02528D90 = AbleToStartGame;
 
 			app.activities->update_activity(app.activities, &pres, 0, 0);
 		}
 
 	}
-
-	void UpdateNoDiscParams() { // Updates state info for non discord users.
-		BYTE CurrentGamemode = *(BYTE*)0x00E8B210; // Parses the current gamemode from EXE
-		BYTE LobbyCheck = *(BYTE*)0x02528C14; // Checks lobby, technically this is another gamemode check but we'll use it for lobby
-		BYTE MatchType = *(BYTE*)0x00E8B20C; // Checks match type
-		BYTE AbleToStartGame = *(BYTE*)0x02528D90; // Determines whether the gamemode is able to start or not (we'll force this on when we can, nice QOL feature.)
-		BYTE IsInCutscene = *(BYTE*)0x02527D14; // Checks if user is in a cutscene.
-		char* playerName = (CHAR*)0x0212AB48; // parses player name
-		BYTE GamespyStatus = *(BYTE*)0x02529334; // Checks the current gamespy status.
-
-		static DWORD lastTick = 0;
-
-		DWORD currentTick = GetTickCount();
-
-		if (currentTick - lastTick >= 600) {
-			lastTick = currentTick;
-			if (LobbyCheck == 0x44) // Game Lobby
-			{
-#if RELOADED
-				if (UsingClanTag == 1)
-				{
-					char* currentPlayerName = playerName;
-					std::string Clanresult = ClanTag[0];
-					Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
-					const char* finalClanstring = Clanresult.c_str();
-
-					if (GamespyStatus == 0x4) {
-						if (AlreadyAddedClanTag == 0) {
-							char* newPlayerName = reinterpret_cast<char*>(playerName);
-							strcpy(newPlayerName, (const char*)finalClanstring);
-							AlreadyAddedClanTag = 1;
-						}
-					}
-				}
-#endif
-				if (MatchType == (BYTE)2) { // If in ranked
-#if RELOADED
-					* (BYTE*)0x02A4D134 = 0x1; // Force Friendly Fire to Full Damage.
-#endif
-					if (!CurrentGamemode == 0xD || !CurrentGamemode == 0xC || CurrentGamemode == 0xB) // And gamemode is not TGB or Strong Arm but is Gangsta Brawl
-					{
-						AbleToStartGame = 1; // Force Able to Start
-					}
-
-				}
-				else
-				{
-					AbleToStartGame = 1;
-				}
-			}
-			if (LobbyCheck == 0x0) // Usually Menus Check
-			{
-#if RELOADED
-				if (GamespyStatus == 0x4) {
-					if (ChangedRLServerName == 0) {
-						RLServerNameUpdateOnce();
-						ChangedRLServerName = 1;
-					}
-				}
-				if (UsingClanTag == 1)
-				{
-					if (GamespyStatus == 0x4) {
-						if (AlreadyAddedClanTag == 1) {
-							std::string NameResult = playerName;
-							std::string ClanTagresult = ClanTag[0];
-							ClanTagresult = ClanTagresult + ClanTag[1] + ClanTag[2] + " ";
-							RemoveWordFromLine(NameResult, ClanTagresult);
-							const char* finalNameString = NameResult.c_str();
-							char* newPlayerName = reinterpret_cast<char*>(playerName);
-							strcpy(newPlayerName, finalNameString);
-							AlreadyAddedClanTag = 0;
-						}
-					}
-				}
-				*(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
-#endif
-				AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
-			}
-			if (!LobbyCheck == 0x0 && CurrentGamemode == 0xFF) // This should be CO-OP / Singleplayer
-			{
-				IsCoopOrSP = true;
-				if (IsInCutscene == 1)
-				{
-					if (ShouldFixStereo == true) {
-						patchNop((BYTE*)0x00482658, 5); // nop mono aud
-						patchNop((BYTE*)0x0046CAC8, 5); // nop ambient aud
-					}
-				}
-				else
-				{
-					if (ShouldFixStereo == true) {
-						patchBytesM((BYTE*)0x00482658, (BYTE*)"\xE8\x43\xFD\xFF\xFF", 5); // patch mono aud back in
-						patchBytesM((BYTE*)0x0046CAC8, (BYTE*)"\xE8\x83\xA7\x00\x00", 5); // patch ambient aud back in
-					}
-				}
-			}
-			else
-			{
-				IsCoopOrSP = false;
-			}
-			*(BYTE*)0x02528D90 = AbleToStartGame;
-		}
-	}
-
 
 	void InitRPC()
 	{

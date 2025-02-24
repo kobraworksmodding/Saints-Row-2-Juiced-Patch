@@ -7,6 +7,7 @@
 #include "../GameConfig.h"
 #include "../SafeWrite.h"
 #include "../RPCHandler.h"
+#include "../Game/Game.h"
 
 namespace XACT
 {
@@ -16,7 +17,7 @@ namespace XACT
 		if (GameConfig::GetValue("Debug", "FixAudio", 0)) // Hacky half fix for 3D Audio in cutscenes.
 		{
 			Logger::TypedLog(CHN_DEBUG, "Patching Stereo Cutscenes (EXPERIMENTAL)...\n");
-			RPCHandler::ShouldFixStereo = true; 
+			Game::InLoop::ShouldFixStereo = true; 
 			/* Hack is located in the rich presence code, kind of lazy yesand might be moved in the future
 			 but it was only a temporary patch anyway until we find something nicer. */
 		}

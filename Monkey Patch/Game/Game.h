@@ -35,6 +35,16 @@ namespace Game
 	namespace HUD {
 		extern int vint_message(wchar_t* message_text, vint_message_struct *a2);
 	};
+	namespace InLoop {
+		extern bool IsCoopOrSP;
+		extern bool ShouldFixStereo;
+		extern char* ClanTag[3];
+		extern bool UsingClanTag;
+#if RELOADED
+		extern void RLServerNameUpdateOnce();
+#endif
+		extern void FrameChecks();
+	}
 	namespace xml {
 		typedef int(__cdecl* read_and_parse_fileT)(char* xtbl_filename, int* xtbl_mempool_loc);
 		extern read_and_parse_fileT read_and_parse_file;

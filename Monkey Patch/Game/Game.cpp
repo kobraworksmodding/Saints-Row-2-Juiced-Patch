@@ -28,6 +28,146 @@ namespace Game
 			}
 		}
 	};
+
+	namespace InLoop
+	{
+		void RemoveWordFromLine(std::string& line, const std::string& word)
+		{
+			auto n = line.find(word);
+			if (n != std::string::npos)
+			{
+				line.erase(n, word.length());
+			}
+		}
+
+		bool IsCoopOrSP = false;
+		bool ShouldFixStereo = false;
+
+		bool AlreadyAddedClanTag = 0;
+		int isDefaultSNameChecked = 0;
+		bool UsingClanTag = 0;
+
+		char* ClanTag[3] = {
+        	const_cast<char*>("["),
+        	const_cast<char*>(""),
+	        const_cast<char*>("]")
+		};
+#if RELOADED
+		bool ChangedRLServerName = 0;
+
+		void RLServerNameUpdateOnce() {
+			char* playerName = (CHAR*)0x0212AB48;
+			char finalSName[2048];
+			sprintf(finalSName, "%s - SR2 RL 1\.0b4", playerName);
+			char* GameName = reinterpret_cast<char*>(0x0212AA08);
+			strcpy(GameName, finalSName);
+		}
+#endif
+
+		void FrameChecks() { // Updates some specific stuff we need to loop all the time
+			BYTE CurrentGamemode = *(BYTE*)0x00E8B210; // Parses the current gamemode from EXE
+			BYTE LobbyCheck = *(BYTE*)0x02528C14; // Checks lobby, technically this is another gamemode check but we'll use it for lobby
+			BYTE MatchType = *(BYTE*)0x00E8B20C; // Checks match type
+			BYTE AbleToStartGame = *(BYTE*)0x02528D90; // Determines whether the gamemode is able to start or not (we'll force this on when we can, nice QOL feature.)
+			BYTE IsInCutscene = *(BYTE*)0x02527D14; // Checks if user is in a cutscene.
+			char* playerName = (CHAR*)0x0212AB48; // parses player name
+			BYTE GamespyStatus = *(BYTE*)0x02529334; // Checks the current gamespy status.
+
+			static DWORD lastTick2 = 0;
+
+			DWORD currentTick2 = GetTickCount();
+
+			if (currentTick2 - lastTick2 >= 600) {
+				lastTick2 = currentTick2;
+				if (LobbyCheck == 0x44) // Game Lobby
+				{
+#if RELOADED
+					if (UsingClanTag == 1)
+					{
+						char* currentPlayerName = playerName;
+						std::string Clanresult = ClanTag[0];
+						Clanresult = Clanresult + ClanTag[1] + ClanTag[2] + " " + currentPlayerName;
+						const char* finalClanstring = Clanresult.c_str();
+
+						if (GamespyStatus == 0x4) {
+							if (AlreadyAddedClanTag == 0) {
+								char* newPlayerName = reinterpret_cast<char*>(playerName);
+								strcpy(newPlayerName, (const char*)finalClanstring);
+								AlreadyAddedClanTag = 1;
+							}
+						}
+					}
+#endif
+					if (MatchType == (BYTE)2) { // If in ranked
+#if RELOADED
+						* (BYTE*)0x02A4D134 = 0x1; // Force Friendly Fire to Full Damage.
+#endif
+						if (!CurrentGamemode == 0xD || !CurrentGamemode == 0xC || CurrentGamemode == 0xB) // And gamemode is not TGB or Strong Arm but is Gangsta Brawl
+						{
+							AbleToStartGame = 1; // Force Able to Start
+						}
+
+					}
+					else
+					{
+						AbleToStartGame = 1;
+					}
+				}
+				if (LobbyCheck == 0x0) // Usually Menus Check
+				{
+#if RELOADED
+					if (GamespyStatus == 0x4) {
+						if (ChangedRLServerName == 0) {
+							RLServerNameUpdateOnce();
+							ChangedRLServerName = 1;
+						}
+					}
+					if (UsingClanTag == 1)
+					{
+						if (GamespyStatus == 0x4) {
+							if (AlreadyAddedClanTag == 1) {
+								std::string NameResult = playerName;
+								std::string ClanTagresult = ClanTag[0];
+								ClanTagresult = ClanTagresult + ClanTag[1] + ClanTag[2] + " ";
+								RemoveWordFromLine(NameResult, ClanTagresult);
+								const char* finalNameString = NameResult.c_str();
+								char* newPlayerName = reinterpret_cast<char*>(playerName);
+								strcpy(newPlayerName, finalNameString);
+								AlreadyAddedClanTag = 0;
+							}
+						}
+					}
+					*(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
+#endif
+					AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
+				}
+				if (!LobbyCheck == 0x0 && CurrentGamemode == 0xFF) // This should be CO-OP / Singleplayer
+				{
+					IsCoopOrSP = true;
+					if (IsInCutscene == 1)
+					{
+						if (ShouldFixStereo == true) {
+							patchNop((BYTE*)0x00482658, 5); // nop mono aud
+							patchNop((BYTE*)0x0046CAC8, 5); // nop ambient aud
+						}
+					}
+					else
+					{
+						if (ShouldFixStereo == true) {
+							patchBytesM((BYTE*)0x00482658, (BYTE*)"\xE8\x43\xFD\xFF\xFF", 5); // patch mono aud back in
+							patchBytesM((BYTE*)0x0046CAC8, (BYTE*)"\xE8\x83\xA7\x00\x00", 5); // patch ambient aud back in
+						}
+					}
+					}
+				else
+				{
+					IsCoopOrSP = false;
+				}
+				*(BYTE*)0x02528D90 = AbleToStartGame;
+				}
+			}
+	}
+
 // maybe expose read_and_parse_file for outside reloaded but currently I don't have a use for it in Juiced -- Clippy95
 #if RELOADED
 	namespace xml {
