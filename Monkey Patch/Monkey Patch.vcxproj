@@ -249,6 +249,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="Math\Math.cpp" />
     <ClCompile Include="Mem\Memory.cpp" />
     <ClCompile Include="metrics dump.cpp" />
+    <ClCompile Include="Network\Gamespy.cpp" />
     <ClCompile Include="Network\NetPlayer.cpp" />
     <ClCompile Include="Patches\GOG No FPS limiter.cpp" />
     <ClCompile Include="Patches\OpenSpy.cpp" />
@@ -261,10 +262,12 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="Patches\QueryPerformance Fix.cpp" />
     <ClCompile Include="Player\Behavior.cpp" />
     <ClCompile Include="Player\Input.cpp" />
+    <ClCompile Include="Render\Render2D.cpp" />
     <ClCompile Include="Render\Render3D.cpp" />
     <ClCompile Include="RPCHandler.cpp" />
     <ClCompile Include="SafeWrite.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="UGC\Debug.cpp" />
     <ClCompile Include="UGC\InternalPrint.cpp" />
     <ClCompile Include="UGC\Reloaded.cpp" />
   </ItemGroup>
@@ -272,7 +275,9 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="Audio\Audio.h" />
     <ClInclude Include="Audio\XACT.h" />
     <ClInclude Include="General\General.h" />
+    <ClInclude Include="Network\Gamespy.h" />
     <ClInclude Include="Player\Input.h" />
+    <ClInclude Include="Render\Render2D.h" />
     <ClInclude Include="Shaders.h" />
     <ClInclude Include="Ext\Hooking.Patterns.h" />
     <ClInclude Include="ext\inc\lua\lauxlib.h" />
@@ -304,6 +309,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="RPCHandler.h" />
     <ClInclude Include="SafeWrite.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="UGC\Debug.h" />
     <ClInclude Include="UGC\InternalPrint.h" />
     <ClInclude Include="UGC\Reloaded.h" />
     <ClInclude Include="UtilsGlobal.h" />

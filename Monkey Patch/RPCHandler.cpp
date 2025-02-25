@@ -359,6 +359,17 @@ namespace RPCHandler {
 
 	}
 
+	void Init() {
+		Enabled = GameConfig::GetValue("Misc", "RichPresence", 0);
+
+		if (Enabled)
+		{
+			Logger::TypedLog(CHN_RPC, "Attempting to initialize Discord RPC...\n");
+			InitRPC();
+			//RPCHandler::DiscordCallbacks(); callbacks needs to be hooked into a game loop
+		}
+	}
+
 	void InitRPC()
 	{
 #if !RELOADED

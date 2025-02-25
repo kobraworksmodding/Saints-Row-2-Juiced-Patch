@@ -659,5 +659,6 @@ namespace RPCHandler {
     extern void ShutdownRPC();
     extern void ChangeDetails();
     extern void UpdateDiscordParams();
+    extern void Init();
 }
 #endif

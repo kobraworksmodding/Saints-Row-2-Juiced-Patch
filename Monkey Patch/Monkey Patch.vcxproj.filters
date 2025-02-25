@@ -140,6 +140,15 @@
     <ClCompile Include="Player\Input.cpp">
       <Filter>Source Files\Player</Filter>
     </ClCompile>
+    <ClCompile Include="Render\Render2D.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\Gamespy.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="UGC\Debug.cpp">
+      <Filter>Source Files\UGC</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DFEngine.h">
@@ -255,6 +264,15 @@
     </ClInclude>
     <ClInclude Include="Player\Input.h">
       <Filter>Source Files\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Render2D.h">
+      <Filter>Source Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Gamespy.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="UGC\Debug.h">
+      <Filter>Source Files\UGC</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

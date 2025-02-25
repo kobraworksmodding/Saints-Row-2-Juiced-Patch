@@ -17,6 +17,10 @@ namespace Render3D
 	bool useFPSCam = 0;
 	bool VFXP_fixFog = 0;
 	float AOStrength = 1.5;
+	bool ARfov = 0;
+	bool ARCutscene = 0;
+	double FOVMultiplier = 1;
+	const double fourbythreeAR = 1.333333373069763;
 
 	void __declspec(naked) LoadShadersHook() {
 		static int Continue = 0x00D1B7D3;
@@ -419,6 +423,27 @@ namespace Render3D
 		}
 #endif
 		WriteRelJump(0x00D1B7CE, (UInt32)&LoadShadersHook);
+
+		if (GameConfig::GetValue("Gameplay", "FixUltrawideFOV", 1))
+		{
+			ARfov = 1;
+		}
+
+		if (GameConfig::GetValue("Gameplay", "FixUltrawideCutsceneFOV", 1))
+		{
+			ARCutscene = 1;
+		}
+
+		if (GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", 1.0)) // 1.0 isn't go anywhere.
+		{
+			FOVMultiplier = GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
+			if (FOVMultiplier > 1.0) {
+				ARfov = 1;
+				Logger::TypedLog(CHN_DEBUG, "Applying FOV Multiplier.\n");
+			}
+			SafeWrite32(0x00AA5648 + 0x2, (UInt32)&fourbythreeAR); // patch vehicle turning radius, this read from the FOV and the radius gets smaller if FOV is lower than 4/3
+			Logger::TypedLog(CHN_DEBUG, "FOV Multiplier: %f,\n", FOVMultiplier);
+		}
 
 		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) > 0 && GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) < 3)
 		{

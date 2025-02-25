@@ -35,16 +35,11 @@
 #include <WinSock2.h>
 #include <windows.h>
 #include <codecvt>
-
-#if JLITE
-const char* juicedversion = "1.1.1";
-#else
-const char* juicedversion = "7.3.2";
-#endif
+#include "Render/Render2D.h"
+#include "Network/Gamespy.h"
+#include "UGC/Debug.h"
 
 const char ServerNameSR2[] = "[Saints Row 2]";
-
-const double fourbythreeAR = 1.333333373069763;
 
 BYTE useJuicedOSD = 0;
 bool useExpandedOSD = false;
@@ -60,8 +55,6 @@ void PrintDBGGarble();
 float deltaTime;
 
 char* executableDirectory[MAX_PATH];
-
-bool CheatFlagDisabled = 0;
 
 bool lastFrameStates[256];
 bool wasPressedThisFrame[256];
@@ -183,9 +176,9 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	}
 #if !RELOADED
 	#if JLITE
-	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " + std::string(juicedversion) + " ---\n").c_str());
+	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " + std::string(UtilsGlobal::juicedversion) + " ---\n").c_str());
     #else
-	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED Version: " + std::string(juicedversion) + " ---\n").c_str());
+	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED Version: " + std::string(UtilsGlobal::juicedversion) + " ---\n").c_str());
     #endif
 #else
 	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 RELOADED ---\n");
@@ -275,10 +268,6 @@ typedef void(*VegStrT)();
 VegStrT VegStr = (VegStrT)0x4E66A0;
 
 bool slewMode = false;
-bool ARfov = 0;
-bool ARCutscene = 0;
-double FOVMultiplier = 1;
-
 
 void RawTags() {
 	// CLIPPY TODO: Figure out what's wrong with X axis sensitivty at low speed, maybe use mouse struct instead of reading from overall ingame delta?
@@ -339,14 +328,14 @@ void AspectRatioFix() {
 		const double defaultFOV = 1.33333337306976;
 		//double currentFOV = *(double*)0x0E5C808;
 		double correctFOV = (defaultFOV * ((double)currentAR / (double)a169));
-		if (currentAR > a169 && ARfov) { // otherwise causes issues for odd ARs like 16:10/5:4 and the common 4:3.
+		if (currentAR > a169 && Render3D::ARfov) { // otherwise causes issues for odd ARs like 16:10/5:4 and the common 4:3.
 			patchDouble((BYTE*)0x00E5C808, correctFOV);
 			patchNop((BYTE*)0x00797181, 6); // Crosshair location that is read from FOV, we'll replace with our own logic below.
 			patchFloat((BYTE*)0x00EC2614, correctFOV);
 			Logger::TypedLog(CHN_DEBUG, "Aspect Ratio FOV fixed...\n");
 			//ARfov = 0;// stop this thread 
 
-			if (ARCutscene) {
+			if (Render3D::ARCutscene) {
 				const double currentCFOV = *(double*)0x00e5c3f0; // default 57.2957795131, this is (180 / pi).
 				double correctCFOV = currentCFOV * ((double)currentAR / (double)a169);
 				if (correctCFOV > 125) {
@@ -355,20 +344,20 @@ void AspectRatioFix() {
 				}
 				patchDouble((BYTE*)0x00e5c3f0, correctCFOV);
 				Logger::TypedLog(CHN_DEBUG, "Aspect Ratio Cutscenes (might break above 21:9) hack...\n");
-				ARCutscene = 0;
+				Render3D::ARCutscene = 0;
 
 			}
 		}
-		if (FOVMultiplier >= 1.01 || !ARfov) { // Not mixed above due to 16:10 and 4:3
-			double multipliedFOV = (currentAR > a169) ? correctFOV * FOVMultiplier : defaultFOV * FOVMultiplier;
+		if (Render3D::FOVMultiplier >= 1.01 || !Render3D::ARfov) { // Not mixed above due to 16:10 and 4:3
+			double multipliedFOV = (currentAR > a169) ? correctFOV * Render3D::FOVMultiplier : defaultFOV * Render3D::FOVMultiplier;
 			patchDouble((BYTE*)0x00E5C808, multipliedFOV);
 			patchNop((BYTE*)0x00797181, 6);
 			patchFloat((BYTE*)0x00EC2614, (float)multipliedFOV);
-			ARfov = 0;
+			Render3D::ARfov = 0;
 		}
 		else {
-			ARfov = 0;
-			ARCutscene = 0;
+			Render3D::ARfov = 0;
+			Render3D::ARCutscene = 0;
 		}
 		return;
 
@@ -854,17 +843,17 @@ void cus_FrameToggles() {
 	}
 
 	if (IsKeyPressed(VK_F9, false)) { // F9
-		FOVMultiplier += 0.1;
+		Render3D::FOVMultiplier += 0.1;
 		AspectRatioFix();
-		Logger::TypedLog(CHN_DEBUG, "+FOV Multiplier: %f,\n", FOVMultiplier);
-		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
+		Logger::TypedLog(CHN_DEBUG, "+FOV Multiplier: %f,\n", Render3D::FOVMultiplier);
+		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
 	}
 
 	if (IsKeyPressed(VK_F8, false)) { // F8
-		FOVMultiplier -= 0.1;
+		Render3D::FOVMultiplier -= 0.1;
 		AspectRatioFix();
-		Logger::TypedLog(CHN_DEBUG, "-FOV Multiplier: %f,\n", FOVMultiplier);
-		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
+		Logger::TypedLog(CHN_DEBUG, "-FOV Multiplier: %f,\n", Render3D::FOVMultiplier);
+		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
 
 	}
 
@@ -887,9 +876,9 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_F7, false)) {
 
-		if (hasCheatMessageBeenSeen == 1 || CheatFlagDisabled == 1) {
+		if (hasCheatMessageBeenSeen == 1 || Debug::CheatFlagDisabled == 1) {
 			if ((*(int*)(0x1F7A418) != 0)) { // check if there's a waypoint
-				if (CheatFlagDisabled != 1) {
+				if (Debug::CheatFlagDisabled != 1) {
 					*(BYTE*)0x02527B5A = 0x1;
 					*(BYTE*)0x02527BE6 = 0x1;
 				}
@@ -901,7 +890,7 @@ void cus_FrameToggles() {
 			}
 		}
 
-		if (CheatFlagDisabled != 1) {
+		if (Debug::CheatFlagDisabled != 1) {
 			if (hasCheatMessageBeenSeen == 0) {
 				const wchar_t* JuicedF7Cheat =
 					L"The F7 key hosts a command that allows you to teleport to your waypoint on your map.\n"
@@ -1099,7 +1088,7 @@ void LuaExecutor() {
 	if (AreWeLoaded == 0x1 && !LobbyCheck == 0x0 && CurrentGamemode == 0xFF) { // If SP/CO-OP allow executor... hopefully.
 
 		if (IsKeyPressed(GameConfig::GetValue("Debug", "ExecutorBind", VK_INSERT), false)) {
-			if (hasCheatMessageBeenSeen2 == 1 || CheatFlagDisabled == 1) {
+			if (hasCheatMessageBeenSeen2 == 1 || Debug::CheatFlagDisabled == 1) {
 				if (*IsOpen && OpenedByExecutor) {
 					*(BYTE*)(0x2349849) = 1;
 					OpenedByExecutor = false;
@@ -1113,7 +1102,7 @@ void LuaExecutor() {
 					OpenedByExecutor = true;
 				}
 			}
-			if (CheatFlagDisabled != 1) {
+			if (Debug::CheatFlagDisabled != 1) {
 				if (hasCheatMessageBeenSeen2 == 0) {
 					const wchar_t* LUAExeCheat =
 						L"The LUA Executor console allows you to do a LOT of things not possible in the vanilla game.\n"
@@ -1201,7 +1190,7 @@ void LuaExecutor() {
 			else {
 				LuaExecute(Converted.c_str());
 			}
-			if (CheatFlagDisabled != 1) {
+			if (Debug::CheatFlagDisabled != 1) {
 				*(BYTE*)0x02527B5A = 0x1;
 				*(BYTE*)0x02527BE6 = 0x1;
 			}
@@ -1275,12 +1264,6 @@ inline void ModpackWarning(const wchar_t* Warning) {
 typedef int __cdecl RenderLoopStuff_Native();
 RenderLoopStuff_Native* UpdateRenderLoopStuff = (RenderLoopStuff_Native*)(0x00C063D0); //0x00BD4A80
 
-bool fixFrametime = 0;
-bool addBindToggles = 0;
-bool coopPausePatch = 0;
-bool LoadLastSave = 0;
-bool BetterChatTest = 0;
-
 #if !RELOADED
 static bool modpackread = 0;
 #endif
@@ -1311,7 +1294,7 @@ int RenderLoopStuff_Hacked()
 	if (!ErrorManager::b_HandlerAssigned)
 		ErrorManager::AssignHandler();
 
-	if (addBindToggles)
+	if (Debug::addBindToggles)
 		UpdateKeys();
 	    cus_FrameToggles();
 	    Slew();
@@ -1323,10 +1306,10 @@ int RenderLoopStuff_Hacked()
 	if (Render3D::VFXP_fixFog)
 		FogTest();
 
-	if (coopPausePatch)
+	if (Gamespy::coopPausePatch)
 		coopPauseLoop();
 
-	if (LoadLastSave)
+	if (Debug::LoadLastSave)
 		SkipMainMenu();
 
 	if (Render3D::useFPSCam) {
@@ -1359,16 +1342,16 @@ int RenderLoopStuff_Hacked()
 		FirstBootFlag();
 	}
 #endif
-	if (fixFrametime)
+	if (Debug::fixFrametime)
 	    havokFrameTicker();
 
-	if (ARfov)
+	if (Render3D::ARfov)
 		AspectRatioFix();
 
 	if (*(uint8_t*)(0x00E87B4F) == 0 && Input::betterTags)
 		RawTags();
 
-	if (BetterChatTest) {
+	if (Render2D::BetterChatTest) {
 		LessRetardedChat();
 	}
 
@@ -1389,56 +1372,6 @@ int RenderLoopStuff_Hacked()
 	return UpdateRenderLoopStuff();
 }
 
-typedef float(__cdecl* ChangeTextColorT)(int R, int G, int B, int Alpha);
-ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
-
-void __declspec(naked) InGamePrintASM(const char* Text, int x, int y, int font) {
-	__asm {
-		push ebp
-		mov ebp, esp
-		sub esp, __LOCAL_SIZE
-
-		push edi
-		push esi
-		push eax
-
-		mov edi, font
-		mov esi, Text
-		push x
-		push y
-
-		mov eax, 0xD15DC0
-		call eax
-
-		pop eax
-		pop esi
-		pop edi
-
-		mov esp, ebp
-		pop ebp
-		ret
-	}
-}
-
-void InGamePrint(const char* Text, int x, int y, int font) {
-	int game_setting_language = *(int*)0x00E98AF8;
-	switch (game_setting_language) {
-	case LANG_JAPANESE:
-	case LANG_CHINESE:
-
-		font = 0; // Fixes crash for Japanese and Chinese SR2 and our InGamePrint
-		break;
-	}
-	InGamePrintASM(Text, x, y, font);
-
-}
-
-int processtextwidth(int width) {
-	float currentAR = *(float*)0x022FD8EC;
-		return width * (currentAR / 1.77777777778f);
-
-}
-
 void PrintCoords(float x, float z,float y, bool showplayerorient) {
 	int baseplayer = UtilsGlobal::getplayer();
 	char buffer[90];
@@ -1452,9 +1385,9 @@ void PrintCoords(float x, float z,float y, bool showplayerorient) {
 			float orient_camera = atan2(xAngle, zAngle);
 		snprintf(buffer, sizeof(buffer), "UserCoords: (X: %.4f, Y: %.4f, Z: %.4f, C: %.4f, P: %.4f)", x, y, z, orient_camera, orient_player);
 	}
-	ChangeTextColor(255, 255, 255, 255);
+	Render2D::ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
-	InGamePrint(buffer, 60, processtextwidth(0), 6);
+	Render2D::InGamePrint(buffer, 60, Render2D::processtextwidth(0), 6);
 	__asm popad
 }
 
@@ -1463,9 +1396,9 @@ void PrintFrametime() {
 	int fr = 1.0f / *(float*)(0xE84380);
 	int frms = 1.0f / fr * 1000;
 	snprintf(buffer, sizeof(buffer), "RenderMS: %i", frms);
-	ChangeTextColor(255, 255, 255, 255);
+	Render2D::ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
-	InGamePrint(buffer, 20, processtextwidth(0), 6);
+	Render2D::InGamePrint(buffer, 20, Render2D::processtextwidth(0), 6);
 	__asm popad
 }
 
@@ -1473,9 +1406,9 @@ void PrintGameFrametime() {
 	char buffer[50];
 	int ft = *(float*)(0x02527DA4) * 1000;
 	snprintf(buffer, sizeof(buffer), "GameMS: %i", ft);
-	ChangeTextColor(255, 255, 255, 255);
+	Render2D::ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
-	InGamePrint(buffer, 40, processtextwidth(0), 6);
+	Render2D::InGamePrint(buffer, 40, Render2D::processtextwidth(0), 6);
 	__asm popad
 }
 
@@ -1484,20 +1417,20 @@ void PrintFramerate() {
 	int fr = 1.0f / *(float*)(0xE84380);
 	snprintf(buffer, sizeof(buffer), "FPS: %i", fr);
 	if (fr < 20.0) {
-		ChangeTextColor(255, 5, 5, 255);
+		Render2D::ChangeTextColor(255, 5, 5, 255);
 	}
 	else {
 		if (fr < 35.0) {
-			ChangeTextColor(255, 255, 0, 255);
+			Render2D::ChangeTextColor(255, 255, 0, 255);
 			__asm pushad
-			InGamePrint(buffer, 0, processtextwidth(0), 6);
+			Render2D::InGamePrint(buffer, 0, Render2D::processtextwidth(0), 6);
 			__asm popad
 			return;
 		}
-		ChangeTextColor(255, 255, 255, 255);
+		Render2D::ChangeTextColor(255, 255, 255, 255);
 	}
 	__asm pushad
-	InGamePrint(buffer, 0, processtextwidth(0), 6);
+	Render2D::InGamePrint(buffer, 0, Render2D::processtextwidth(0), 6);
 	__asm popad
 }
 void PrintUsername() {
@@ -1506,9 +1439,9 @@ void PrintUsername() {
 		char buffer[50];
 		char* playerName = (CHAR*)0x0212AB48;
 		snprintf(buffer, sizeof(buffer), "GS Username: %s", playerName);
-		ChangeTextColor(255, 255, 255, 255);
+		Render2D::ChangeTextColor(255, 255, 255, 255);
 		__asm pushad
-		InGamePrint(buffer, 120, processtextwidth(0), 6);
+		Render2D::InGamePrint(buffer, 120, Render2D::processtextwidth(0), 6);
 		__asm popad
 	}
 }
@@ -1517,9 +1450,9 @@ void PrintLatestChunk() {
 	char buffer[50];
 	char* latestChunk = (CHAR*)0x00EB865C;
 	snprintf(buffer, sizeof(buffer), "NewChunkStreamed: % s", latestChunk);
-	ChangeTextColor(255, 255, 255, 255);
+	Render2D::ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
-	InGamePrint(buffer, 80, processtextwidth(0), 6);
+	Render2D::InGamePrint(buffer, 80, Render2D::processtextwidth(0), 6);
 	__asm popad
 }
 
@@ -1527,9 +1460,9 @@ void PrintDBGGarble() {
 	char buffer[50];
 	char* dbgg = (CHAR*)0x023460E0;
 	snprintf(buffer, sizeof(buffer), "DBGGarble: % s", dbgg);
-	ChangeTextColor(255, 255, 255, 255);
+	Render2D::ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
-	InGamePrint(buffer, 100, processtextwidth(0), 6);
+	Render2D::InGamePrint(buffer, 100, Render2D::processtextwidth(0), 6);
 	__asm popad
 }
 
@@ -1547,91 +1480,11 @@ void PrintPartnerUsername() {
 		std::wstring wPartnerName = partnerName; // parse co-op partner name to a wstring
 		std::string f_PartnerName = wstring_to_string(wPartnerName); // THEN to a string
 		snprintf(buffer, sizeof(buffer), "Recently played with in CO-OP: %s", f_PartnerName.c_str());
-		ChangeTextColor(255, 255, 255, 255);
+		Render2D::ChangeTextColor(255, 255, 255, 255);
 		__asm pushad
-		InGamePrint(buffer, 140, processtextwidth(0), 6);
+		Render2D::InGamePrint(buffer, 140, Render2D::processtextwidth(0), 6);
 		__asm popad
 	}
-}
-
-typedef void SomeMMFunc_Native();
-SomeMMFunc_Native* UpdateSomeMMFunc = (SomeMMFunc_Native*)(0x0075B270);
-
-typedef void SomePMFunc_Native();
-SomePMFunc_Native* UpdateSomePMFunc = (SomePMFunc_Native*)(0x00B99DB0);
-void SomeMMFunc_Hacked()
-{
-#if JLITE
-	if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
-		ChangeTextColor(160, 160, 160, 128);
-		__asm pushad
-		InGamePrint(("JUICED LITE " + std::string(juicedversion)).c_str(), 680, processtextwidth(1070), 2);
-		__asm popad
-	}
-#else
-	if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
-		ChangeTextColor(160, 160, 160, 128);
-		__asm pushad
-		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 680, processtextwidth(1120), 2);
-		__asm popad
-    }
-#endif
-
-	// Call original func
-	return UpdateSomeMMFunc();
-}
-/*
-void SomePMFunc_Hacked()
-{
-
-	if (menustatus(menustatus::pausemenu) || menustatus(menustatus::pausemenuphone) || menustatus(menustatus::pausemenuscroll2) || menustatus(menustatus::pausemenescroll1) || menustatus(menustatus::pausemenuphonebook)) {
-		ChangeTextColor(160, 160, 160, 128);
-		__asm pushad
-		InGamePrint(("JUICED " + std::string(juicedversion)).c_str(), 680, 160, 6);
-		__asm popad
-	}
-
-	// Call original func
-	return UpdateSomePMFunc();
-}
-*/
-
-int(__stdcall* theirbind)(SOCKET, const struct sockaddr_in*, int) = nullptr;
-
-int __stdcall bindWrapper(SOCKET socket, struct sockaddr_in* address, int namelen) {
-	address->sin_addr.S_un.S_addr = INADDR_ANY; // bind to all interfaces instead of just one
-
-	int result = theirbind(socket, address, namelen);
-
-	//Logger::TypedLog(CHN_NET, "Redirecting network bind to %i\n", result);
-
-	return result;
-}
-
-void patchNetworkBind() { // Binds local ip to any instead of 127.0.0.1 which fucks up if you have more than 1 network adapter.
-	uint32_t* bindaddr = reinterpret_cast<uint32_t*>(0x00C1BC76 + 1);
-
-	theirbind = reinterpret_cast<int(_stdcall*)(SOCKET, const struct sockaddr_in*, int)>(reinterpret_cast<intptr_t>(bindaddr) + 4 + *bindaddr);
-
-	patchCall((BYTE*)0x00C1BC76, bindWrapper); // join
-	patchCall((BYTE*)0x00D2526F, bindWrapper); // host
-	//patchCall((BYTE*)0x0090A779, bindWrapper);
-	//patchCall((BYTE*)0x008E7681, bindWrapper);
-}
-
-void SetupBorderless()
-{
-	int l_IsBorderless = GameConfig::GetValue("Graphics", "Borderless", 0);
-	uint32_t window_style = l_IsBorderless ? (WS_POPUP) : (WS_CAPTION | WS_BORDER);
-	patchDWord((void*)(0x00BFA35A + 4), window_style);
-	patchBytesM((BYTE*)0x00BFA494, (BYTE*)"\x6A\x03", 2); //Maximise Borderless so it fits perfectly.
-}
-
-void SetupBetterWindowed()
-{
-	int l_IsBetterWindowed = GameConfig::GetValue("Graphics", "BetterWindowed", 0);
-	uint32_t windowed_style = l_IsBetterWindowed ? (WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_DLGFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX) : (WS_DLGFRAME);
-	patchDWord((void*)(0x00BFA35A + 4), windowed_style);
 }
 
 bool FileExists(const char* fileName) {
@@ -1643,7 +1496,6 @@ bool FileExists(const char* fileName) {
 	}
 	return found;
 }
-
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	General::TopWinMain();
@@ -1679,79 +1531,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	// Probably Add SR2 Reloaded patch routines here, used to be OS and FPS patch from Monkey here.
 
-	// Adds Clan tag to name
-	if (GameConfig::GetValue("Multiplayer", "FixNetworkBinding", 1))
-	{
-		Logger::TypedLog(CHN_NET, "Fixing Network Adapter Binding...\n");
-		patchNetworkBind();
-	}
-
 	PatchOpenSpy();
-
 	patch_metrics();
-#if !JLITE
-	InternalPrint::Init();
-#endif
-	Input::Init();
-	Behavior::Init();
-	Memory::Init();
-	Render3D::Init();
-	GLua::Init();
-	Audio::Init();
-	XACT::Init();
-
-#if RELOADED
-
-	Reloaded::PatchTables();
-	Reloaded::Init();
-	Behavior::BetterMovement();
-
-#else
-#if !JLITE
-
-	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 0)) // great for testing stuff faster and also for an optional feature in gen
-	{
-		LoadLastSave = 1;
-		Logger::TypedLog(CHN_DEBUG, "Skipping main menu...\n");
-	}
-#endif
-
-	if (GameConfig::GetValue("Debug", "MenuVersionNumber", 1))
-	{
-		Logger::TypedLog(CHN_MOD, "Patching MenuVersionNumber...\n");
-		//patchCall((void*)0x0052050C, (void*)SomeMMFunc_Hacked);
-		patchCall((void*)0x0073CE0D, (void*)SomeMMFunc_Hacked);
-		//patchCall((void*)0x00B995D5, (void*)SomePMFunc_Hacked);
-	}
-
-#endif
-
-	if (GameConfig::GetValue("Gameplay", "FixUltrawideFOV", 1))
-	{
-		ARfov = 1;
-	}
-
-	if (GameConfig::GetValue("Gameplay", "FixUltrawideCutsceneFOV", 1))
-	{
-		ARCutscene = 1;
-	}
-
-	if (GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", 1.0)) // 1.0 isn't go anywhere.
-	{
-		FOVMultiplier = GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
-		if (FOVMultiplier > 1.0) {
-			ARfov = 1;
-			Logger::TypedLog(CHN_DEBUG, "Applying FOV Multiplier.\n");
-		}
-		SafeWrite32(0x00AA5648 + 0x2, (UInt32)&fourbythreeAR); // patch vehicle turning radius, this read from the FOV and the radius gets smaller if FOV is lower than 4/3
-		Logger::TypedLog(CHN_DEBUG, "FOV Multiplier: %f,\n", FOVMultiplier);
-	}
-
-	if (GameConfig::GetValue("Debug", "FixFrametime", 1))
-	{
-		Logger::TypedLog(CHN_DEBUG, "Fixing Frametime issues...\n");
-		fixFrametime = 1;
-	}
 
 	if (GameConfig::GetValue("Debug", "PatchGameLoop", 1)) //THIS IS REQUIRED FOR RICH PRESENCE AND ERROR HANDLER
 	{
@@ -1759,133 +1540,46 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchCall((void*)0x0052050C, (void*)RenderLoopStuff_Hacked); // Patch stuff into Render loop, we could do game loop but this was easier to find, and works i guess.
 	}
 
-	SetDefaultGameSettings(); // Set SR2 Reloaded Modernized Default Settings
+#if !JLITE
+	InternalPrint::Init();
+	RPCHandler::Init();
 
-	if (GameConfig::GetValue("Graphics", "Borderless", 0))
-	{
-		SetupBorderless();
-		Logger::TypedLog(CHN_DEBUG, "Enabling Borderless Windowed.\n");
-	}
-	else
-	{
-		SetupBetterWindowed();
-		Logger::TypedLog(CHN_DEBUG, "Fixing Windowed Mode.\n");
-	}
+#if !RELOADED
+	Debug::PatchDatafiles();
+#endif
+
+#endif
+	Gamespy::Init();
+	Input::Init();
+	Behavior::Init();
+	Memory::Init();
+	Render3D::Init();
+	Render2D::Init();
+	GLua::Init();
+	Audio::Init();
+	XACT::Init();
+	Debug::Init();
+
+#if RELOADED
+	Reloaded::PatchTables();
+	Reloaded::Init();
+	Behavior::BetterMovement();
+#else
+	Render2D::InitMenVerNum();
+#endif
+
+	SetDefaultGameSettings(); // Set SR2 Reloaded Modernized Default Settings
 
 	if (!keepfpslimit)
 		PatchGOGNoFPSLimit();
 
-	if (GameConfig::GetValue("Gameplay", "DisableAimAssist", 0))
-	{
-		Logger::TypedLog(CHN_MOD, "Disabling Aim Assist...\n");
-		patchNop((BYTE*)0x00E3CC80, 16); // nop aim_assist.xtbl
-	}
-
-	if (GameConfig::GetValue("Gameplay", "BetterChat", 1)) // changes char limit from 64 to 128 and formats the input after the 64th character
-	{
-		BetterChatTest = 1;
-		patchBytesM((BYTE*)0x0075C91E, (BYTE*)"\xC7\x05\x1C\x69\xF7\x01\x80\x00\00\x00", 10); // change chat char limit from 64 to 128
-		patchBytesM((BYTE*)0x0075CCF7, (BYTE*)"\x6A\x82", 2);  // change chat print limit from 64 to 130 (extra 2 characters to account for formatted input with - and newline)
-		patchBytesM((BYTE*)0x0075CDEA, (BYTE*)"\x68\xFF\x92\x20\x02", 5); // new chat read address for entered message
-		Logger::TypedLog(CHN_DEBUG, "Enabling better chat...\n");
-	}
-
 #if !JLITE
-	if (GameConfig::GetValue("Gameplay", "DisableCheatFlag", 0))
-	{
-		patchNop((BYTE*)0x00687e12, 6);
-		patchNop((BYTE*)0x00687e18, 6);
-		CheatFlagDisabled = 1;
-	}
-
-	if (GameConfig::GetValue("Multiplayer", "NewLobbyList", 1))
-	{
-		char newLobby1[MAX_PATH];
-		char newLobby2[MAX_PATH];
-
-		Logger::TypedLog(CHN_DEBUG, "Changing Lobby List...\n");
-
-		GameConfig::GetStringValue("Multiplayer", "Lobby1", "sr2_mp_lobby03", newLobby1);
-		GameConfig::GetStringValue("Multiplayer", "Lobby2", "sr2_mp_lobby02", newLobby2);
-
-		Logger::TypedLog(CHN_DEBUG, "Lobby Map 1 Found: %s\n", newLobby1);
-		Logger::TypedLog(CHN_DEBUG, "Lobby Map 2 Found: %s\n", newLobby2);
-		Reloaded::lobby_list[0] = newLobby1;
-		Reloaded::lobby_list[1] = newLobby2;
-
-		patchDWord((void*)(0x0073EABA + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x0073EA0B + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x007E131A + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x007E161E + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x007E7670 + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x007E774F + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x0082F2E9 + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x0082F4CC + 3), (int)&Reloaded::lobby_list);
-		patchDWord((void*)(0x00842497 + 3), (int)&Reloaded::lobby_list);
-	}
-
-	if (GameConfig::GetValue("Multiplayer", "FreeMPClothing", 1))
-	{
-		Logger::TypedLog(CHN_DEBUG, "Making MP Clothing Free...\n");
-		patchNop((BYTE*)0x0088DDBD, 5); // nop the float call from xtbl > exe that parses clothing prices.
-	}
-
-	if (GameConfig::GetValue("Debug", "AddBindToggles", 1))
-	{
-		Logger::TypedLog(CHN_DEBUG, "Adding Custom Key Toggles...\n");
-		addBindToggles = 1;
-		patchNop((BYTE*)0x0051FEB0, 7); // nop to prevent the game from locking the camera roll in slew
-		patchBytesM((BYTE*)0x00C01B52, (BYTE*)"\xD9\x1D\xF8\x2C\x7B\x02", 6); // slew roll patch, makes the game write to a random unallocated float instead to prevent issues
-		patchBytesM((BYTE*)0x00C01AC8, (BYTE*)"\xDC\x64\x24\x20", 4); // invert Y axis in slew 
-	}
-
-	RPCHandler::Enabled = GameConfig::GetValue("Misc", "RichPresence", 0);
-
-	if (RPCHandler::Enabled)
-	{
-		Logger::TypedLog(CHN_RPC, "Attempting to initialize Discord RPC...\n");
-		RPCHandler::InitRPC();
-		//RPCHandler::DiscordCallbacks(); callbacks needs to be hooked into a game loop
-	}
-
-	if (GameConfig::GetValue("Gameplay", "SkipIntros", 0)) // can't stop Tervel won't stop Tervel
-	{
-		Logger::TypedLog(CHN_DLL, "Skipping intros & legal disclaimers.\n");
-		patchNop((BYTE*)(0x005207B4), 6); // prevent intros from triggering
-		patchBytesM((BYTE*)0x0068C740, (BYTE*)"\x96\xC5\x68\x00", 4); // replace case 0 with case 4 to skip legal disclaimers
-	}
-
-	// Disabled by default FOR NOW, too many issues arise when dealing with missions. Otherwise it works beautifully in freeroam.
-	if (GameConfig::GetValue("Gameplay", "coopPausePatch", 1)) // Tervel W streak
-	{
-		Logger::TypedLog(CHN_DEBUG, "Disabling CO-OP pause...\n");
-		coopPausePatch = 1;
-		patchNop((BYTE*)0x00779C5E, 5); // Prevent the game from pausing your co-op partner if you open the pause menu.
-		patchBytesM((BYTE*)0x0068CA79, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new pause check address
-		patchBytesM((BYTE*)0x00BF0A1B, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7); // new particle pause check address
-		patchBytesM((BYTE*)0x00BDCFFD, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 2
-		patchBytesM((BYTE*)0x006B793F, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 3
-	}
-
-#if !RELOADED
-	if (CreateCache("loose.txt"))
-	{
-		CacheConflicts();
-		patchJmp((void*)0x0051DAC0, (void*)hook_loose_files);						// Allow the loading of loose files
-		patchCall((void*)0x00BFD8F5, (void*)hook_raw_get_file_info_by_name);		// Add optional search in the ./loose directory
-	}
-	else
-		Logger::TypedLog(CHN_DLL, "Create loose file cache failed.\n");
-
-#endif
-
 	General::BottomWinMain();
-
 #endif
 
 	// Continue to the program's WinMain.
 
-	WinMain_Type OldWinMain=(WinMain_Type)offset_addr(0x00520ba0);
-	return (OldWinMain(hInstance, hPrevInstance, lpCmdLine,nShowCmd));
+	WinMain_Type OldWinMain = (WinMain_Type)offset_addr(0x00520ba0);
+	return (OldWinMain(hInstance, hPrevInstance, lpCmdLine, nShowCmd));
 }
 

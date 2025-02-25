@@ -13,6 +13,12 @@ inline bool invert;
 
 inline bool isPaused;
 
+#if JLITE
+inline const char* juicedversion = "1.1.1";
+#else
+inline const char* juicedversion = "7.3.2";
+#endif
+
 struct mouse {
     static constexpr uintptr_t x_delta_address = 0x234F45C;
     static constexpr uintptr_t y_delta_address = 0x234F458;

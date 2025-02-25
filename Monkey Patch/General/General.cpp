@@ -40,6 +40,7 @@ namespace General {
 		return false;
 	}
 
+
 	void __declspec(naked) CutscenePauseWorkaround()
 	{
 		static int Continue = 0x0068CAA7;
