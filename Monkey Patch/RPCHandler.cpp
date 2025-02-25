@@ -232,8 +232,8 @@ namespace RPCHandler {
 		char finalMisCOOPDesc[2048];
 
 		BYTE IsInMission = *(BYTE*)0x27B3C60; // parses mission (?)
-		sprintf(finalUsername, "Username: %s", playerName);
-		sprintf(finalMPDesc, "Username: %s | In Map: %s", playerName, *FancyChunkName);
+		sprintf(finalUsername, "Name: %s", playerName);
+		sprintf(finalMPDesc, "Name: %s | In Map: %s", playerName, *FancyChunkName);
 		sprintf(finalCOOPDescCutsc, "Watching a Cutscene with %s", COOPPartner);
 		sprintf(finalCOOPDesc, "Exploring Stilwater with %s", COOPPartner);
 		sprintf(finalMisCOOPDesc, "Reclaiming Stilwater with %s", COOPPartner);
