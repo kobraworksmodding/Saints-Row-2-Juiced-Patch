@@ -1320,7 +1320,7 @@ int RenderLoopStuff_Hacked()
 		const wchar_t* JuicedWelcome =
 			L"Welcome to [format][color:#B200FF]Juiced[/format]! Thank you for installing the patch.\n"
 			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format]:\n\n"
-			L"[format][color:#4F9EFF]discord.com/invite/TkurdZJQ[/format]\n\n"
+			L"[format][color:#4F9EFF]discord.com/invite/HEMaT2mUpU[/format]\n\n"
 			L"- [format][color:#B200FF]Juiced Team[/format]"
 			L"[format][scale:1.0][image:ui_hud_inv_d_ginjuice][/format]";
 		__asm pushad
@@ -1333,7 +1333,7 @@ int RenderLoopStuff_Hacked()
 		const wchar_t* JuicedWelcome =
 			L"Welcome to [format][color:#B200FF]Juiced LITE[/format]! Thank you for installing the patch.\n"
 			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format]:\n\n"
-			L"[format][color:#4F9EFF]discord.com/invite/TkurdZJQ[/format]\n\n"
+			L"[format][color:#4F9EFF]discord.com/invite/HEMaT2mUpU[/format]\n\n"
 			L"- [format][color:#B200FF]Juiced Team[/format]"
 			L"[format][scale:1.0][image:ui_hud_inv_d_ginjuice][/format]";
 		__asm pushad
