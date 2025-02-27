@@ -274,6 +274,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
   <ItemGroup>
     <ClInclude Include="Audio\Audio.h" />
     <ClInclude Include="Audio\XACT.h" />
+    <ClInclude Include="BlingMenu_public.h" />
     <ClInclude Include="General\General.h" />
     <ClInclude Include="Network\Gamespy.h" />
     <ClInclude Include="Player\Input.h" />

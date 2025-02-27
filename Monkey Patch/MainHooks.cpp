@@ -39,6 +39,7 @@
 #include "Network/Gamespy.h"
 #include "UGC/Debug.h"
 
+#include "BlingMenu_public.h"
 const char ServerNameSR2[] = "[Saints Row 2]";
 
 BYTE useJuicedOSD = 0;
@@ -1498,6 +1499,11 @@ bool FileExists(const char* fileName) {
 }
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+
+	if (BlingMenuLoad()) {
+		BlingMenuAddFuncRaw("Juiced", ("Version: " + std::string(UtilsGlobal::juicedversion)).c_str(), NULL);
+	}
+	
 	General::TopWinMain();
 	ErrorManager::Initialize();
 

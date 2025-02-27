@@ -274,6 +274,9 @@
     <ClInclude Include="UGC\Debug.h">
       <Filter>Source Files\UGC</Filter>
     </ClInclude>
+    <ClInclude Include="BlingMenu_public.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Properties.rc" />
