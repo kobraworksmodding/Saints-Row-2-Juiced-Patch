@@ -25,6 +25,13 @@ extern "C" {
     typedef void (*BlingMenuAddFuncRaw_TYPE)(const char* path, const char* name,
         void* rawAddress);
 
+    typedef void (*BlingMenuAddFuncCustom_TYPE)(
+        const char* path,
+        const char* name,
+        void* userData,
+        const char* (*customFunc)(void* userData, int action),
+        void (*triggerFunc)()
+        );
 
     struct BlingMenuAPI
     {
@@ -36,6 +43,7 @@ extern "C" {
         BlingMenuAddInt_TYPE AddInt;
         BlingMenuAddFunc_TYPE AddFunc;
         BlingMenuAddFuncRaw_TYPE AddFuncRaw;
+        BlingMenuAddFuncCustom_TYPE AddFuncCustom;
     };
 
 
@@ -86,6 +94,18 @@ extern "C" {
         if (gBlingMenuAPI.isLoaded && gBlingMenuAPI.AddFuncRaw)
             gBlingMenuAPI.AddFuncRaw(path, name, rawAddress);
     }
+
+    inline void BlingMenuAddFuncCustom(
+        const char* path,
+        const char* name,
+        void* userData,
+        const char* (*customFunc)(void* userData, int action),
+        void (*triggerFunc)()
+    )
+    {
+        if (gBlingMenuAPI.isLoaded && gBlingMenuAPI.AddFuncCustom)
+            gBlingMenuAPI.AddFuncCustom(path, name, userData, customFunc, triggerFunc);
+    }
 }
 
 
@@ -121,6 +141,7 @@ inline bool BlingMenuLoad(void)
     gBlingMenuAPI.AddInt = (BlingMenuAddInt_TYPE)GetProcAddress(mod, "BlingMenuAddInt");
     gBlingMenuAPI.AddFunc = (BlingMenuAddFunc_TYPE)GetProcAddress(mod, "BlingMenuAddFunc");
     gBlingMenuAPI.AddFuncRaw = (BlingMenuAddFuncRaw_TYPE)GetProcAddress(mod, "BlingMenuAddFuncRaw");
+    gBlingMenuAPI.AddFuncCustom = (BlingMenuAddFuncCustom_TYPE)GetProcAddress(mod, "BlingMenuAddFuncCustom");
 
 
     if (!gBlingMenuAPI.AddInt8 || !gBlingMenuAPI.AddBool || !gBlingMenuAPI.AddFloat ||

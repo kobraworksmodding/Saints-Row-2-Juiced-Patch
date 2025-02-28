@@ -1497,11 +1497,30 @@ bool FileExists(const char* fileName) {
 	}
 	return found;
 }
+
+bool BM_Juiced_Kobra_Toggle = false;
+// YOU NEED USERDATA AND ACTION!
+const char* BM_ReportVersion(void* userdata, int action) {
+	if (action != -1)
+		BM_Juiced_Kobra_Toggle = !BM_Juiced_Kobra_Toggle;
+	switch (BM_Juiced_Kobra_Toggle) {
+	case false: {
+		static std::string versionStr;
+		versionStr = std::string(UtilsGlobal::juicedversion);
+		return versionStr.c_str();
+	}
+	break;
+	case true: return "By Kobraworks"; break;
+
+	}
+}
+
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 
 	if (BlingMenuLoad()) {
-		BlingMenuAddFuncRaw("Juiced", ("Version: " + std::string(UtilsGlobal::juicedversion)).c_str(), NULL);
+		//BlingMenuAddFuncRaw("Juiced", ("Version: " + std::string(UtilsGlobal::juicedversion)).c_str(), NULL);
+		BlingMenuAddFuncCustom("Juiced","Juiced",NULL,&BM_ReportVersion,NULL);
 	}
 	
 	General::TopWinMain();
