@@ -39,7 +39,7 @@
 #include "Network/Gamespy.h"
 #include "UGC/Debug.h"
 
-#include "BlingMenu_public.h"
+#include "BlingMenuInstall.h"
 const char ServerNameSR2[] = "[Saints Row 2]";
 
 BYTE useJuicedOSD = 0;
@@ -748,6 +748,50 @@ ShowPauseDialogT ShowPauseDialog = (ShowPauseDialogT)0x7540D0;
 typedef void(*RemovePauseDialogT)();
 RemovePauseDialogT RemovePauseDialog = (RemovePauseDialogT)0x754270;
 
+void SlewModeToggle() {
+	float delay = 0.0f;
+	float duration = 1.5f;
+	float whateverthefuck = 0.0f;
+	bool InCutscene = *(bool*)(0x2527D14);
+	*(bool*)(0x252740E) = 1; // Ins Fraud Sound
+
+	slewMode = !slewMode;
+
+	std::wstring subtitles = L"Slew Mode:[format][color:purple]";
+	subtitles += slewMode ? L" ON" : L" OFF";
+	subtitles += L"[/format]";
+	addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
+
+	if (InCutscene) {
+		*(int*)(0x25F5AE8) = (slewMode ? 2 : 5);
+	}
+	else {
+		*(int*)(0x25F5AE8) = (slewMode ? 2 : 0);
+	}
+
+	SafeWrite32(0x0051A8BD + 3, slewMode ? (UInt32)&DOFEnabled : (UInt32)0x276D00C);
+	SafeWrite32(0x0051A9C4 + 2, slewMode ? (UInt32)&DOFBlur : (UInt32)0x276D010);
+	SafeWrite32(0x0051A9D2 + 2, slewMode ? (UInt32)&DOFRadius : (UInt32)0x276D014);
+	SafeWrite32(0x0051A8F8 + 1, slewMode ? (UInt32)&DOFDistance : (UInt32)0x276D024);
+
+}
+
+void TeleportToWaypoint() {
+	if (!UtilsGlobal::getplayer())
+		return;
+	if ((*(int*)(0x1F7A418) != 0)) { // check if there's a waypoint
+		if (Debug::CheatFlagDisabled != 1) {
+			*(BYTE*)0x02527B5A = 0x1;
+			*(BYTE*)0x02527BE6 = 0x1;
+		}
+		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
+		std::wstring subtitles = (L"Teleported to waypoint!");
+		addsubtitles(subtitles.c_str(), 0.0f, 1.5f, 0.0f);
+		tpCoords(*(float*)0x29B9CD0, *(float*)0x29B9CD4, *(float*)0x29B9CD8);
+
+	}
+}
+
 void cus_FrameToggles() {
 #if !JLITE
 	float delay = 0.0f;
@@ -756,7 +800,6 @@ void cus_FrameToggles() {
 	static bool uglyMode = false;
 	static bool DetachCam = false;
 	static bool FPSCounter = false;
-	static bool HUDTogg = false;
 	static uint8_t ogAA;
 	bool InCutscene = *(bool*)(0x2527D14);
 	static bool CutscenePaused;
@@ -783,27 +826,7 @@ void cus_FrameToggles() {
 	}
 
 	if (IsKeyPressed(VK_F4, false)) { // F4
-
-		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
-
-		slewMode = !slewMode;
-
-		std::wstring subtitles = L"Slew Mode:[format][color:purple]";
-		subtitles += slewMode ? L" ON" : L" OFF";
-		subtitles += L"[/format]";
-		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-
-		if (InCutscene) {
-			*(int*)(0x25F5AE8) = (slewMode ? 2 : 5);
-		}
-		else {
-			*(int*)(0x25F5AE8) = (slewMode ? 2 : 0);
-		}
-
-		SafeWrite32(0x0051A8BD + 3, slewMode ? (UInt32)&DOFEnabled : (UInt32)0x276D00C);
-		SafeWrite32(0x0051A9C4 + 2, slewMode ? (UInt32)&DOFBlur : (UInt32)0x276D010);
-		SafeWrite32(0x0051A9D2 + 2, slewMode ? (UInt32)&DOFRadius : (UInt32)0x276D014);
-		SafeWrite32(0x0051A8F8 + 1, slewMode ? (UInt32)&DOFDistance : (UInt32)0x276D024);
+		SlewModeToggle();
 	}
 
 	if (IsKeyPressed(VK_F3, false)) { // F3
@@ -833,13 +856,11 @@ void cus_FrameToggles() {
 	if (IsKeyPressed(VK_F2, false)) { // F2
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
-
-		HUDTogg = !HUDTogg;
 		std::wstring subtitles = L"HUD Toggle:[format][color:purple]";
-		subtitles += HUDTogg ? L" ON" : L" OFF";
+		subtitles += *(BYTE*)(0x0252737C) ? L" ON" : L" OFF";
 		subtitles += L"[/format]";
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-		*(BYTE*)(0x0252737C) = HUDTogg ? 0x0 : 0x1; // why was it 0x1 : 0x0 previously? The game starts off with the HUD on and then you enable something that's already on
+		*(BYTE*)(0x0252737C) = !(*(BYTE*)(0x0252737C));
 
 	}
 
@@ -877,19 +898,10 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_F7, false)) {
 
-		if (hasCheatMessageBeenSeen == 1 || Debug::CheatFlagDisabled == 1) {
-			if ((*(int*)(0x1F7A418) != 0)) { // check if there's a waypoint
-				if (Debug::CheatFlagDisabled != 1) {
-					*(BYTE*)0x02527B5A = 0x1;
-					*(BYTE*)0x02527BE6 = 0x1;
-				}
-				*(bool*)(0x252740E) = 1; // Ins Fraud Sound
-				std::wstring subtitles = (L"Teleported to waypoint!");
-				addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-				tpCoords(*(float*)0x29B9CD0, *(float*)0x29B9CD4, *(float*)0x29B9CD8);
-
-			}
-		}
+		if (hasCheatMessageBeenSeen == 1 || Debug::CheatFlagDisabled == 1)
+			TeleportToWaypoint();
+			
+		
 
 		if (Debug::CheatFlagDisabled != 1) {
 			if (hasCheatMessageBeenSeen == 0) {
@@ -963,6 +975,9 @@ void ResetYVel() {
 }
 
 void ToggleNoclip() {
+	if (!UtilsGlobal::getplayer())
+		return;
+
 	NoclipEnabled = !NoclipEnabled;
 	CollisionTest(UtilsGlobal::getplayer(), 1, 0);
 	ResetYVel();
@@ -1160,7 +1175,7 @@ void LuaExecutor() {
 			}
 
 			else if (Converted == "reset_player") {
-				General::ResetCharacter(0); // passing 0 to the unknown arg to avoid crashing
+				General::ResetCharacter(0,255); // passing 0 to the unknown arg to avoid crashing
 			}
 
 			else if (sscanf_s(Converted.c_str(), "spawn_npc %s", Arg1) == 1) {
@@ -1498,31 +1513,8 @@ bool FileExists(const char* fileName) {
 	return found;
 }
 
-bool BM_Juiced_Kobra_Toggle = false;
-// YOU NEED USERDATA AND ACTION!
-const char* BM_ReportVersion(void* userdata, int action) {
-	if (action != -1)
-		BM_Juiced_Kobra_Toggle = !BM_Juiced_Kobra_Toggle;
-	switch (BM_Juiced_Kobra_Toggle) {
-	case false: {
-		static std::string versionStr;
-		versionStr = std::string(UtilsGlobal::juicedversion);
-		return versionStr.c_str();
-	}
-	break;
-	case true: return "By Kobraworks"; break;
-
-	}
-}
-
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-
-	if (BlingMenuLoad()) {
-		//BlingMenuAddFuncRaw("Juiced", ("Version: " + std::string(UtilsGlobal::juicedversion)).c_str(), NULL);
-		BlingMenuAddFuncCustom("Juiced","Juiced",NULL,&BM_ReportVersion,NULL);
-	}
-	
 	General::TopWinMain();
 	ErrorManager::Initialize();
 
@@ -1570,6 +1562,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	RPCHandler::Init();
 
 #if !RELOADED
+	BlingMenuInstall::AddOptions();
 	Debug::PatchDatafiles();
 #endif
 

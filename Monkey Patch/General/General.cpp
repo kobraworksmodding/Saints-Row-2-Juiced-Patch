@@ -7,6 +7,7 @@ and / or run completely on startup or after we check everything else.*/
 
 #include "../FileLogger.h"
 #include "../Patcher/patch.h"
+#include "../Patcher/CPatch.h"
 #include "../GameConfig.h"
 #include "../SafeWrite.h"
 #include "General.h"
@@ -370,7 +371,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 
 	}
-
 	void __declspec(naked) WorkAroundHorizontalMouseSensitivityASMHelper() {
 		static int jmp_continue = 0x00C13720;
 
@@ -389,7 +389,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		}
 
 	}
-
+	CPatch CFixHorizontalMouseSensitivity = CPatch::WriteRelJump(0x00C1371A, (uintptr_t)&WorkAroundHorizontalMouseSensitivityASMHelper);
 	void __declspec(naked) StoreNPCPointer()
 	{
 		static int jmp_continue = 0x0098E498;
@@ -495,7 +495,8 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
 		WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out
 		if (GameConfig::GetValue("Gameplay", "FixHorizontalMouseSensitivity", 1)) {
-			WriteRelJump(0x00C1371A, (UInt32)&WorkAroundHorizontalMouseSensitivityASMHelper); // attempt to fix Horizontal sens being 3x faster compared to vertical while on foot
+			//WriteRelJump(0x00C1371A, (UInt32)&WorkAroundHorizontalMouseSensitivityASMHelper); // attempt to fix Horizontal sens being 3x faster compared to vertical while on foot
+			CFixHorizontalMouseSensitivity.Apply();
 		}
 		//FixandImproveSlewMouseRuntimePatch();
 		WriteRelJump(0x0098E493, (UInt32)&StoreNPCPointer);

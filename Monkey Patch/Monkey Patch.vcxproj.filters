@@ -149,6 +149,15 @@
     <ClCompile Include="UGC\Debug.cpp">
       <Filter>Source Files\UGC</Filter>
     </ClCompile>
+    <ClCompile Include="Patcher\CPatch.cpp">
+      <Filter>Patcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Patcher\CMultiPatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BlingMenuInstall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DFEngine.h">
@@ -275,6 +284,18 @@
       <Filter>Source Files\UGC</Filter>
     </ClInclude>
     <ClInclude Include="BlingMenu_public.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Patcher\CPatch.h">
+      <Filter>Patcher</Filter>
+    </ClInclude>
+    <ClInclude Include="Patcher\CMultiPatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BlingMenuInstall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InternalNameLists.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

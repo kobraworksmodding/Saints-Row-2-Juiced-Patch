@@ -2,10 +2,15 @@
 // --------------------
 // Created: 13/12/2024
 
+#include "Behavior.h"
+
 #include "../FileLogger.h"
 #include "../Patcher/patch.h"
 #include "../SafeWrite.h"
 #include "../GameConfig.h"
+#include "../Patcher/CPatch.h"
+#include "../Patcher/CMultiPatch.h"
+#include "../BlingMenu_public.h"
 // Use me to store garbagedata when NOP doesn't work.
 static float garbagedata = 0;
 double bogusPi = 2.90;
@@ -34,24 +39,52 @@ namespace Behavior
 		Logger::TypedLog(CHN_DEBUG, "Allow Toggle Crouch to work while walking...\n");
 		patchNop((BYTE*)0x004F9944, 2);
 	}
+CMultiPatch CMPatches_SR1Reloading = {
 
+		[](CMultiPatch& mp) {
+			mp.AddPatchNop(0x009F1A9C, 5);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddPatchNop(0x009F1ACE, 5);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite8(0x009F1A4C, 0x75);
+		},
+};
 	void SR1Reloading()
 	{
 		//This fixes the functionality to be able to reload while sprinting.
 		Logger::TypedLog(CHN_MOD, "Patching In ReloadDuringSprint...\n");
-		patchNop((BYTE*)0x009F1A9C, 5);
+		/*patchNop((BYTE*)0x009F1A9C, 5);
 		patchNop((BYTE*)0x009F1ACE, 5);
-		patchByte((BYTE*)0x009F1A4C, 0x75);
+		patchByte((BYTE*)0x009F1A4C, 0x75);*/
+		CMPatches_SR1Reloading.Apply();
 	}
+	CMultiPatch CMPatches_SR1QuickSwitch = {
 
+			[](CMultiPatch& mp) {
+				mp.AddPatchNop(0x0079266D, 6);
+			},
+
+			[](CMultiPatch& mp) {
+				mp.AddPatchNop(0x004F943E, 14);
+			},
+
+			[](CMultiPatch& mp) {
+				mp.AddPatchNop(0x00797003, 5);
+			},
+	};
 	void SR1QuickSwitch()
 	{
 		// Fixes broken weapon wheel implementation and brings back quick switching.
 
 		Logger::TypedLog(CHN_MOD, "Patching in Weapon Quick Switching...\n");
-		patchNop((BYTE*)0x0079266D, 6);
+		/*patchNop((BYTE*)0x0079266D, 6);
 		patchNop((BYTE*)0x004F943E, 14);
-		patchNop((BYTE*)0x00797003, 5);
+		patchNop((BYTE*)0x00797003, 5);*/
+		CMPatches_SR1QuickSwitch.Apply();
 	}
 
 	void __declspec(naked) TauntLeft()
@@ -108,26 +141,41 @@ namespace Behavior
 		patchNop((BYTE*)0x00E92268, 3);
 		patchNop((BYTE*)0x00E9225C, 3);
 	}
-
+	CPatch CBetterDBC = CPatch::SafeWrite32(0x00498689 + 2, reinterpret_cast<uint32_t>(&garbagedata));
 	void BetterDBC()
 	{
 		Logger::TypedLog(CHN_DEBUG, "Patching Better Drive-by Cam...\n");
-		patchBytesM((BYTE*)0x00498689 + 2, (BYTE*)"\x71\x5D", 2);
-	}
+		//patchBytesM((BYTE*)0x00498689 + 2, (BYTE*)"\x71\x5D", 2);
+		CBetterDBC.Apply();
 
+	}
+	CPatch CBetterHBC = CPatch::SafeWrite32(0x004992a2 + 2, reinterpret_cast<uint32_t>(&garbagedata));
 	void BetterHBC()
 	{
 		Logger::TypedLog(CHN_DEBUG, "Patching Better Handbrake Cam...\n");
-		patchBytesM((BYTE*)0x004992a2 + 2, (BYTE*)"\x71\x5D", 2);
+		//patchBytesM((BYTE*)0x004992a2 + 2, (BYTE*)"\x71\x5D", 2);
+		CBetterHBC.Apply();
 	}
+	CMultiPatch CMPatches_DisableLockedClimbCam = {
 
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite32(0x0049BD70 + 2, (uint32_t)&garbagedata);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite32(0x0049BD9C + 2, (uint32_t)&garbagedata);
+		},
+	};
 	void DisableLockedClimbCam()
 	{
 		Logger::TypedLog(CHN_DEBUG, "Disable Camera Lock during climb...\n");
-		SafeWrite32(0x0049BD70 + 2, (UInt32)&garbagedata); // X-Axis
-		SafeWrite32(0x0049BD9C + 2, (UInt32)&garbagedata); // Y-Axis
+		//SafeWrite32(0x0049BD70 + 2, (UInt32)&garbagedata); // X-Axis
+		//SafeWrite32(0x0049BD9C + 2, (UInt32)&garbagedata); // Y-Axis
+		CMPatches_DisableLockedClimbCam.Apply();
 	}
-
+#if !JLITE
+	CPatch CAnimBlend = CPatch::SafeWrite32(0x006F1CA6 + 2, (uint32_t)&animBlend);
+#endif
 	void Init()
 	{
 		/*patchDWord((void*)(0x00D96A50 + 2), (uint32_t)&bogusRagForce);
@@ -141,7 +189,7 @@ namespace Behavior
 #if !JLITE
 		if (GameConfig::GetValue("Gameplay", "BetterAnimBlend", 0))
 		{
-			patchDWord((void*)(0x006F1CA6 + 2), (uint32_t)&animBlend);
+			CAnimBlend.Apply();
 		}
 
 		if (GameConfig::GetValue("Gameplay", "BetterHandbrakeCam", 0)) // Fixes Car CAM Axis while doing handbrakes.

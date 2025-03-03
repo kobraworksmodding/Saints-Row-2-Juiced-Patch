@@ -1,4 +1,6 @@
 #pragma once
+#include "../Patcher/CMultiPatch.h"
+#include "../Patcher/CPatch.h"
 
 namespace Render3D
 {
@@ -12,4 +14,11 @@ namespace Render3D
     extern bool ARCutscene;
     extern double FOVMultiplier;
     extern const double fourbythreeAR;
+    extern bool IsSleepHooked;
+    extern CMultiPatch CMPatches_PatchLowSleepHack;
+    extern CMultiPatch CMPatches_ClassicGTAIdleCam;
+    extern CMultiPatch CMPatches_DisableFog;
+    extern CPatch CPatches_MediumSleepHack;
+    extern CPatch CUncapFPS;
+    extern CPatch CBetterAO;
 }

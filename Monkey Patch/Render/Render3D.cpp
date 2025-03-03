@@ -10,7 +10,8 @@
 #include "../GameConfig.h"
 #include "../SafeWrite.h"
 #include "../Shaders.h"
-
+#include "../BlingMenu_public.h"
+#include "Render3D.h"
 namespace Render3D
 {
 	const char FPSCam[] = "camera_fpss.xtbl";
@@ -64,7 +65,24 @@ namespace Render3D
 		patchBytesM((BYTE*)0x0051FE40, (BYTE*)"\x68\x00\x3C\x00\x00", 5);
 		patchBytesM((BYTE*)0x0051FE45, (BYTE*)"\x68\x00\x3C\x00\x00", 5);
 	}
+	CMultiPatch CMPatches_PatchLowSleepHack = {
 
+		[](CMultiPatch& mp) {
+			mp.AddPatchNop(0x0052108C,3);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWriteBuf(0x00521FC0, "\x6A\x00", 2);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWriteBuf(0x00521FE5, "\x6A\x00", 2);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWriteBuf(0x005285A2, "\x6A\x00", 2);
+		},
+	};
 	void PatchLowSleepHack()
 	{
 		// Woohoo, this is a dirty patch, but we'll include it for people who want it and CAN actually run it.
@@ -74,18 +92,23 @@ namespace Render3D
 
 		Logger::TypedLog(CHN_DLL, "Removing a Very Safe Amount of Sleep Calls...\n");
 		//patchNop((BYTE*)0x0052108C, 3); // patch win main sleep call
-		patchBytesM((BYTE*)0x00521FC0, (BYTE*)"\x6A\x00", 2); // wait call in a threaded function, i think
+		/*patchBytesM((BYTE*)0x00521FC0, (BYTE*)"\x6A\x00", 2); // wait call in a threaded function, i think
 		patchBytesM((BYTE*)0x00521FE5, (BYTE*)"\x6A\x00", 2); // same with this one
-		patchBytesM((BYTE*)0x005285A2, (BYTE*)"\x6A\x00", 2); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
+		patchBytesM((BYTE*)0x005285A2, (BYTE*)"\x6A\x00", 2); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. */
+		CMPatches_PatchLowSleepHack.Apply();
 	}
-
+	CPatch CPatches_MediumSleepHack = CPatch::SafeWriteBuf(0x0052847C, "\x6A\x00", 2);
 	void PatchMediumSleepHack()
 	{
 		Logger::TypedLog(CHN_DLL, "Removing a Safe Amount of Sleep Calls...\n");
-		patchBytesM((BYTE*)0x00521FC0, (BYTE*)"\x6A\x00", 2); // wait call in a threaded function, i think
+		/*patchBytesM((BYTE*)0x00521FC0, (BYTE*)"\x6A\x00", 2); // wait call in a threaded function, i think
 		patchBytesM((BYTE*)0x00521FE5, (BYTE*)"\x6A\x00", 2); // same with this one
 		patchBytesM((BYTE*)0x005285A2, (BYTE*)"\x6A\x00", 2); // this ones a doozy, this is some weird threaded exchange function, for each something, sleep. 
-		patchBytesM((BYTE*)0x0052847C, (BYTE*)"\x6A\x00", 2); //make the shadow pool less sleepy
+		patchBytesM((BYTE*)0x0052847C, (BYTE*)"\x6A\x00", 2); //make the shadow pool less sleepy*/
+			
+		CMPatches_PatchLowSleepHack.Apply();
+
+		CPatches_MediumSleepHack.Apply();
 	}
 	typedef void (WINAPI* SleepFn)(DWORD dwMilliseconds);
 	SleepFn OriginalSleep = nullptr;
@@ -99,7 +122,7 @@ namespace Render3D
 			OriginalSleep(dwMilliseconds / 1.5);
 		}
 	}
-
+	bool IsSleepHooked = false;
 	void HookSleep() {
 		HMODULE main_handle = GetModuleHandleA(NULL);
 
@@ -107,6 +130,7 @@ namespace Render3D
 
 		if (PatchIat(main_handle, "Kernel32.dll", "Sleep", (void*)SleepDetour, &old_proc) == S_OK) {
 			OriginalSleep = (SleepFn)old_proc;
+			IsSleepHooked = true;
 		}
 	}
 
@@ -125,11 +149,11 @@ namespace Render3D
 			*(BYTE*)0x00E9A5BC = 0x00; // Force the cam(?) state to 0x00 -- (Walking Outside) if got Running Outside, Running Inside or Walking Inside.
 		}
 	}
-
+	CPatch CUncapFPS = CPatch::PatchNop(0x00D20E3E, 7);
 	void UncapFPS()
 	{
 		Logger::TypedLog(CHN_DLL, "Uncapping FPS...\n");
-		patchNop((BYTE*)0x00D20E3E, 7);
+		CUncapFPS.Apply();
 	}
 
 	void AltTabFPS()
@@ -184,11 +208,28 @@ namespace Render3D
 		patchDouble((BYTE*)0x027B2CAA, 128.0);
 	}
 
+	CMultiPatch CMPatches_DisableFog = {
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite8(0x0025273BE, 1);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite<float>(0x00E989A0, 0.0f);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite<float>(0x00E989A4, 0.0f);
+		},
+
+	};
+
 	void DisableFog()
 	{
-		patchBytesM((BYTE*)0x0025273BE, (BYTE*)"\x01", 1); // leftover debug bool for being able to overwrite fog values
+		/*patchBytesM((BYTE*)0x0025273BE, (BYTE*)"\x01", 1); // leftover debug bool for being able to overwrite fog values
 		patchFloat((BYTE*)0x00E989A0, 0.0f);
-		patchFloat((BYTE*)0x00E989A4, 0.0f);
+		patchFloat((BYTE*)0x00E989A4, 0.0f);*/
+		CMPatches_DisableFog.Apply();
 	}
 
 	void RemoveVignette()
@@ -196,14 +237,15 @@ namespace Render3D
 		Logger::TypedLog(CHN_MOD, "Disabling Vignette...\n");
 		patchNop((BYTE*)0x00E0C62C, 9); // nop aVignette
 	}
-
+	CPatch CBetterAO = CPatch::SafeWriteBuf(0x00518AFE, "\xEB\x0A", 2);
 	void BetterAO()
 	{
 		Logger::TypedLog(CHN_MOD, "Making AO Better...\n");
 		//patchNop((BYTE*)0x0052AA90, 6);
 		//patchNop((BYTE*)0x005183C8, 6);
 		//*(float*)0x348FFDC = (float)AOStrength;
-		patchBytesM((BYTE*)0x00518AFE, (BYTE*)"\xEB\x0A", 2);
+													//patchBytesM((BYTE*)0x00518AFE, (BYTE*)"\xEB\x0A", 2);
+		CBetterAO.Apply();
 		//patchFloat((BYTE*)0x00518375 + 2, AOStrength);
 
 		//patchFloat((BYTE*)0x00518B00 + 2, AOSmoothness);
@@ -361,9 +403,21 @@ namespace Render3D
 		}
 
 	}
+#if !JLITE
+	CMultiPatch CMPatches_ClassicGTAIdleCam = {
 
+		[](CMultiPatch& mp) {
+			mp.AddPatchNop(0x00994541, 5);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddPatchNop(0x0099454C, 5);
+		},
+	};
+#endif
 	void Init()
 	{
+
 #if !JLITE
 		
 		if (GameConfig::GetValue("Graphics", "RemoveVignette", 0))
@@ -399,16 +453,14 @@ namespace Render3D
 			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS...\n");
 			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
 			patchNop((BYTE*)0x0099453D, 2);
-			patchNop((BYTE*)0x00994541, 5);
-			patchNop((BYTE*)0x0099454C, 5);
+			CMPatches_ClassicGTAIdleCam.Apply();
 		}
 		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
 		{
 			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS with Viewmodel...\n");
 			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
 			patchNop((BYTE*)0x0099453D, 2);
-			patchNop((BYTE*)0x00994541, 5);
-			patchNop((BYTE*)0x0099454C, 5);
+			CMPatches_ClassicGTAIdleCam.Apply();
 			useFPSCam = 1;
 		}
 		if (GameConfig::GetValue("Graphics", "ClassicGTAIdle", 0) &&
@@ -418,8 +470,7 @@ namespace Render3D
 			Logger::TypedLog(CHN_MOD, "Patching in Classic GTA Idle...\n");
 			//patchByte((BYTE*)0x00960C30, 0xC3);
 			//patchNop((BYTE*)0x0099453D, 2);
-			patchNop((BYTE*)0x00994541, 5);
-			patchNop((BYTE*)0x0099454C, 5);
+			CMPatches_ClassicGTAIdleCam.Apply();
 		}
 #endif
 		WriteRelJump(0x00D1B7CE, (UInt32)&LoadShadersHook);
