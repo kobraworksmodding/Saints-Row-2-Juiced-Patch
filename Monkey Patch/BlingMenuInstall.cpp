@@ -327,6 +327,14 @@ namespace BlingMenuInstall
                General::ChangeCharacter(&character_id);
                });
        }
+       BlingMenuAddFunc("Juiced spawn_npc", "Delete all spawned NPCs", General::YeetAllNPCs);
+       for (const char* character : Characters) {
+           BlingMenuAddFuncStd("Juiced spawn_npc", character, [character]() {
+               if (!UtilsGlobal::getplayer())
+                   return;
+               General::NPCSpawner(character);
+               });
+       }
 
        for (const auto& vehicle : AllVehicles) {
            BlingMenuAddFuncStd("Juiced Vehicle Spawner", vehicle.first.c_str(), [vehicle]() {
