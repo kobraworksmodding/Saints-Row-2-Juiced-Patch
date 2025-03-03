@@ -1,4 +1,4 @@
-#if !RELOADED
+#if !RELOADED && !JLITE
 #include "GameConfig.h"
 #include "Patcher/CPatch.h"
 #include "BlingMenu_public.h"

@@ -528,7 +528,7 @@ namespace Render3D
 		// Beefs up Tree Shadows considerably
 		if (GameConfig::GetValue("Graphics", "UHQTreeShadows", 0))
 		{
-			Logger::TypedLog(CHN_NET, "Juicing up Tree Shadow Resolutions...\n");
+			Logger::TypedLog(CHN_SHADER, "Juicing up Tree Shadow Resolutions...\n");
 			Render3D::PatchHQTreeShadows();
 		}
 
