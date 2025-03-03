@@ -124,6 +124,8 @@ namespace Render3D
 	}
 	bool IsSleepHooked = false;
 	void HookSleep() {
+		if (IsSleepHooked)
+			return;
 		HMODULE main_handle = GetModuleHandleA(NULL);
 
 		void* old_proc;
@@ -131,6 +133,18 @@ namespace Render3D
 		if (PatchIat(main_handle, "Kernel32.dll", "Sleep", (void*)SleepDetour, &old_proc) == S_OK) {
 			OriginalSleep = (SleepFn)old_proc;
 			IsSleepHooked = true;
+		}
+	}
+
+	void UnHookSleep() {
+		if (!IsSleepHooked)
+			return;
+		HMODULE main_handle = GetModuleHandleA(NULL);
+
+		void* old_proc;
+
+		if (PatchIat(main_handle, "Kernel32.dll", "Sleep", OriginalSleep, NULL) == S_OK) {
+			IsSleepHooked = false;
 		}
 	}
 

@@ -50,16 +50,17 @@ namespace BlingMenuInstall
 
 
         using namespace Render3D;
-        if (IsSleepHooked)
-            return "HIGH (UNTOGGLEABLE)";
         if (action == 1) { // Increment
-            BM_sleephack = (BM_sleephack + 1) % 3;
+            BM_sleephack = (BM_sleephack + 1) % 4;
         }
         else if (action == 0) { // Decrement
-            BM_sleephack = (BM_sleephack == 0) ? 2 : (BM_sleephack - 1);
+            BM_sleephack = (BM_sleephack == 0) ? 3 : (BM_sleephack - 1);
         }
         else if (action == -1) {
-            if (CPatches_MediumSleepHack.IsApplied()) {
+            if (IsSleepHooked) {
+                BM_sleephack = 3;
+            }
+            else if (CPatches_MediumSleepHack.IsApplied()) {
                 BM_sleephack = 2;
             }
             else if (CMPatches_PatchLowSleepHack.IsApplied()) {
@@ -74,25 +75,31 @@ namespace BlingMenuInstall
             case 0: return "OFF";
             case 1: return "LOW";
             case 2: return "MEDIUM";
+            case 3: return "HIGH";
             }
         }
-
-
         switch (BM_sleephack) {
         case 0: // OFF
+            UnHookSleep();
             if (CMPatches_PatchLowSleepHack.IsApplied()) CMPatches_PatchLowSleepHack.Restore();
             if (CPatches_MediumSleepHack.IsApplied()) CPatches_MediumSleepHack.Restore();
             return "OFF";
-
         case 1:
-            if (!CMPatches_PatchLowSleepHack.IsApplied()) CMPatches_PatchLowSleepHack.Apply();
+            UnHookSleep();
             if (CPatches_MediumSleepHack.IsApplied()) CPatches_MediumSleepHack.Restore();
+            if (!CMPatches_PatchLowSleepHack.IsApplied()) CMPatches_PatchLowSleepHack.Apply();
             return "LOW";
 
         case 2:
+            UnHookSleep();
             if (!CMPatches_PatchLowSleepHack.IsApplied()) CMPatches_PatchLowSleepHack.Apply();
             if (!CPatches_MediumSleepHack.IsApplied()) CPatches_MediumSleepHack.Apply();
             return "MEDIUM";
+        case 3:
+            if (CMPatches_PatchLowSleepHack.IsApplied()) CMPatches_PatchLowSleepHack.Restore();
+            if (CPatches_MediumSleepHack.IsApplied()) CPatches_MediumSleepHack.Restore();
+            HookSleep();
+            return "HIGH";
         }
         return "OFF"; // Fallback (should never reach here)
     }

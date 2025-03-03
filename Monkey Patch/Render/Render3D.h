@@ -9,7 +9,8 @@ namespace Render3D
     extern bool VFXP_fixFog;
     extern void FPSCamHack();
     void PatchHQTreeShadows();
-
+    extern void HookSleep();
+    extern void UnHookSleep();
     extern bool ARfov;
     extern bool ARCutscene;
     extern double FOVMultiplier;
