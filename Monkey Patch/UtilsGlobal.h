@@ -16,7 +16,7 @@ inline bool isPaused;
 #if JLITE
 inline const char* juicedversion = "1.1.1";
 #else
-inline const char* juicedversion = "7.3.2";
+inline const char* juicedversion = "7.3.3";
 #endif
 
 struct mouse {
