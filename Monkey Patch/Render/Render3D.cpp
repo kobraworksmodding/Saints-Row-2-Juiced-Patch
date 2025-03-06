@@ -268,10 +268,13 @@ namespace Render3D
 		//patchFloat((BYTE*)0x00E9898C, (float)AOQuality);
 	}
 
+	CPatch CRemoveBlackBars = CPatch::PatchNop(0x0075A265, 5);
+
 	void RemBlackBars()
 	{
 		Logger::TypedLog(CHN_DLL, "Removing Black Bars.\n");
-		patchNop((BYTE*)(0x0075A265), 5);
+		//patchNop((BYTE*)(0x0075A265), 5);
+		CRemoveBlackBars.Apply();
 	}
 
 	double FilteringStrength;

@@ -172,6 +172,25 @@ namespace BlingMenuInstall
         return ERROR_MESSAGE;
     }
 
+    const char* BM_DisableCutSceneBlackBars(void* userdata, int action) {
+        using namespace Render3D;
+        if (action != -1) {
+            if (CRemoveBlackBars.IsApplied())
+                CRemoveBlackBars.Restore();
+            else
+                CRemoveBlackBars.Apply();
+            // Just showing that you can save with BM.
+            GameConfig::SetValue("Graphics", "RemoveBlackBars", (uint32_t)CRemoveBlackBars.IsApplied());
+        }
+        switch (CRemoveBlackBars.IsApplied()) {
+        case false: return "OFF";
+            break;
+        case true: return "ON ";
+            break;
+        }
+        return ERROR_MESSAGE;
+    }
+
     const char* BM_DBC(void* userdata, int action) {
         using namespace Behavior;
         if (action != -1) {
@@ -296,6 +315,7 @@ namespace BlingMenuInstall
        BlingMenuAddFuncCustom("Juiced", "Uncap FPS", NULL, &BM_UncapFPS, NULL);
        BlingMenuAddInt8("Juiced", "OSD", (signed char*)&useJuicedOSD, NULL, 1, 0, 3);
        BlingMenuAddFuncCustom("Juiced", "Better Ambient Occlusion", NULL, &BM_BetterAO, NULL);
+       BlingMenuAddFuncCustom("Juiced", "Disable Cutscene black-bars", NULL, &BM_DisableCutSceneBlackBars, NULL);
        BlingMenuAddFuncCustom("Juiced", "Disable Fog", NULL, &BM_DisableFog, NULL);
        BlingMenuAddDouble("Juiced", "FOV Multiplier", &Render3D::FOVMultiplier, []() {
            AspectRatioFix();

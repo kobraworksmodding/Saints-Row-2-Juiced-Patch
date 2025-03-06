@@ -22,4 +22,5 @@ namespace Render3D
     extern CPatch CPatches_MediumSleepHack;
     extern CPatch CUncapFPS;
     extern CPatch CBetterAO;
+    extern CPatch CRemoveBlackBars;
 }
