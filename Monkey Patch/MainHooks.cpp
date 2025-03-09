@@ -780,7 +780,7 @@ void TeleportToWaypoint() {
 	if (!UtilsGlobal::getplayer())
 		return;
 	if ((*(int*)(0x1F7A418) != 0)) { // check if there's a waypoint
-		if (Debug::CheatFlagDisabled != 1) {
+		if (!Debug::CMPatches_DisableCheatFlag.IsApplied()) {
 			*(BYTE*)0x02527B5A = 0x1;
 			*(BYTE*)0x02527BE6 = 0x1;
 		}
@@ -898,12 +898,12 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_F7, false)) {
 
-		if (hasCheatMessageBeenSeen == 1 || Debug::CheatFlagDisabled == 1)
+		if (hasCheatMessageBeenSeen == 1 || Debug::CMPatches_DisableCheatFlag.IsApplied())
 			TeleportToWaypoint();
 			
 		
 
-		if (Debug::CheatFlagDisabled != 1) {
+		if (!Debug::CMPatches_DisableCheatFlag.IsApplied()) {
 			if (hasCheatMessageBeenSeen == 0) {
 				const wchar_t* JuicedF7Cheat =
 					L"The F7 key hosts a command that allows you to teleport to your waypoint on your map.\n"
@@ -1104,7 +1104,7 @@ void LuaExecutor() {
 	if (AreWeLoaded == 0x1 && !LobbyCheck == 0x0 && CurrentGamemode == 0xFF) { // If SP/CO-OP allow executor... hopefully.
 
 		if (IsKeyPressed(GameConfig::GetValue("Debug", "ExecutorBind", VK_INSERT), false)) {
-			if (hasCheatMessageBeenSeen2 == 1 || Debug::CheatFlagDisabled == 1) {
+			if (hasCheatMessageBeenSeen2 == 1 || Debug::CMPatches_DisableCheatFlag.IsApplied()) {
 				if (*IsOpen && OpenedByExecutor) {
 					*(BYTE*)(0x2349849) = 1;
 					OpenedByExecutor = false;
@@ -1118,7 +1118,7 @@ void LuaExecutor() {
 					OpenedByExecutor = true;
 				}
 			}
-			if (Debug::CheatFlagDisabled != 1) {
+			if (!Debug::CMPatches_DisableCheatFlag.IsApplied()) {
 				if (hasCheatMessageBeenSeen2 == 0) {
 					const wchar_t* LUAExeCheat =
 						L"The LUA Executor console allows you to do a LOT of things not possible in the vanilla game.\n"
@@ -1206,7 +1206,7 @@ void LuaExecutor() {
 			else {
 				LuaExecute(Converted.c_str());
 			}
-			if (Debug::CheatFlagDisabled != 1) {
+			if (!Debug::CMPatches_DisableCheatFlag.IsApplied()) {
 				*(BYTE*)0x02527B5A = 0x1;
 				*(BYTE*)0x02527BE6 = 0x1;
 			}

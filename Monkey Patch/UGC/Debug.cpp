@@ -11,10 +11,20 @@
 
 namespace Debug
 {
-	bool CheatFlagDisabled = 0;
 	bool addBindToggles = 0;
 	bool LoadLastSave = 0;
 	bool fixFrametime = 0;
+
+	CMultiPatch CMPatches_DisableCheatFlag = {
+
+	[](CMultiPatch& mp) {
+		mp.AddPatchNop(0x00687e12,6);
+	},
+
+	[](CMultiPatch& mp) {
+		mp.AddPatchNop(0x00687e18,6);
+	},
+	};
 
 	void PatchDatafiles() {
 		if (CreateCache("loose.txt"))
@@ -38,9 +48,9 @@ namespace Debug
 
 		if (GameConfig::GetValue("Gameplay", "DisableCheatFlag", 0))
 		{
-			patchNop((BYTE*)0x00687e12, 6);
-			patchNop((BYTE*)0x00687e18, 6);
-			CheatFlagDisabled = 1;
+			//patchNop((BYTE*)0x00687e12, 6);
+			//patchNop((BYTE*)0x00687e18, 6);
+			CMPatches_DisableCheatFlag.Apply();
 		}
 
 

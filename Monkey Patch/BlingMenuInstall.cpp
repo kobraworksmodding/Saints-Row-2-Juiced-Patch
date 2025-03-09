@@ -303,6 +303,29 @@ namespace BlingMenuInstall
         }
         return ERROR_MESSAGE;
     }
+
+    const char* BM_AllowCheatFlagging(void* userdata, int action) {
+        using namespace Debug;
+        if (action != -1) {
+            if (CMPatches_DisableCheatFlag.IsApplied())
+                CMPatches_DisableCheatFlag.Restore();
+            else {
+                CMPatches_DisableCheatFlag.Apply();
+                // Will remove cheat flag if we disable the flag, but wont restore it since we don't know the previous status.
+                *(bool*)0x2527B5A = false;
+                *(bool*)0x2527BE6 = false;
+            }
+        }
+        switch (CMPatches_DisableCheatFlag.IsApplied()) {
+            // SWITCHED OFF/ON RETURNS SINCE DEFAULT IS ON!!
+        case true: return "OFF";
+            break;
+        case false: return "ON ";
+            break;
+        }
+        return ERROR_MESSAGE;
+    }
+
     void BM_restoreHavok() {
         if(!Debug::fixFrametime)
             *(float*)(0x02527DA4) = 0.01666666666f;
@@ -331,6 +354,7 @@ namespace BlingMenuInstall
        BlingMenuAddFuncCustom("Juiced", "Juiced", NULL, &BM_ReportVersion, NULL);
        BlingMenuAddBool("Juiced Misc", "HUD (WILL DISABLE MENU RENDERING, PRESS F2 TO RESTORE)", (bool*)0x0252737C, NULL);
        BlingMenuAddFuncCustom("Juiced Cheats", "Noclip", NULL, &BM_ToggleNoclip, NULL);
+       BlingMenuAddFuncCustom("Juiced Cheats", "Toggle Cheats flagging saves", NULL, &BM_AllowCheatFlagging, NULL);
        BlingMenuAddFunc("Juiced Cheats", "Teleport to Waypoint", TeleportToWaypoint);
        BlingMenuAddFunc("Juiced Cheats", "Toggle Slew Mode", SlewModeToggle);
        BlingMenuAddFunc("Juiced play_as", "RESTORE PLAYER", []() {
