@@ -13,8 +13,10 @@ and / or run completely on startup or after we check everything else.*/
 #include "General.h"
 
 namespace General {
-
+	bool DeletionMode;
+	const wchar_t* SaveMessage = L"Are you sure you want to delete this save?"; // ultimately, if we get extra strings to load, we should use a string label and request the string instead of hardcoding it
 	bool IsSpawning = false;
+	bool* EnterPressed = (bool*)0x02348CD0;
 	int CurrentNPC = 0;
 	int SpawnedNPCs[10] = { 0 }; // we could make this a vector maybe, i don't mind it being like this though
 
@@ -83,6 +85,69 @@ namespace General {
 		}
 	}
 
+	void __cdecl SaveDelCallback(int Unk, bool Result, int Action) {
+		if (Action == 2) {
+			*(bool*)0x25283B0 = true;
+			*(bool*)0x25283B1 = Result ? false : true;
+		}
+	}
+
+	void __declspec(naked) ChangeSOCallback()
+	{
+		static int Continue = 0x007787D5;
+		__asm {
+			mov		cl, byte ptr[DeletionMode]
+			test	cl, cl
+			jnz     Replace
+			mov     ecx, dword ptr[0x7786E0]
+			push	ecx
+			jmp		Continue
+
+			Replace :
+			push SaveDelCallback
+				jmp Continue
+		}
+	}
+
+	void __declspec(naked) ReplaceSOMessage()
+	{
+		static int Continue = 0x00778800;
+		__asm {
+			mov		cl, byte ptr[DeletionMode]
+			test	cl, cl
+			jnz     Skip
+			mov     ecx, dword ptr[0x7F49E0]
+			call	ecx
+			jmp		Continue
+
+			Skip :
+			mov eax, SaveMessage
+			mov     ecx, [EnterPressed]
+			mov     ds : byte ptr[ecx], 0
+			jmp Continue
+		}
+	}
+
+	void __declspec(naked) SkipSaving()
+	{
+		static int Continue = 0x007788C3;
+		static int SkipAddr = 0x007788DC;
+		__asm {
+			mov		ecx, dword ptr[0x695150]
+			call	ecx
+			mov		cl, byte ptr[DeletionMode]
+			test	cl, cl
+			jnz     Skip
+			jmp		Continue
+
+			Skip :
+			add esp, 4
+			mov byte ptr[DeletionMode], 0
+			mov ds : byte ptr[0x2528377], 1
+			jmp SkipAddr
+		}
+	}
+
 	void __declspec(naked) ShadowsFix()
 	{
 		static int jmp_continue = 0x00773783;
@@ -94,7 +159,7 @@ namespace General {
 
 			Skip :
 			mov ds : byte ptr[0x252A37C], 0
-				jmp jmp_continue
+			jmp jmp_continue
 		}
 	}
 
@@ -447,6 +512,9 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 	void TopWinMain() {
 #if !JLITE
+		WriteRelJump(0x007787D0, (UInt32)&ChangeSOCallback); // replace the save overwrite callback with ours to avoid various warnings
+		WriteRelJump(0x007787FB, (UInt32)&ReplaceSOMessage); // replace the save overwrite warning message
+		WriteRelJump(0x007788BE, (UInt32)&SkipSaving); // skip saving if deletion mode is enabled
 		WriteRelJump(0x0068CAA0, (UInt32)&CutscenePauseWorkaround); // we need to make the cutscene process(?) function run even if the game's paused, original if check is dumb
 		WriteRelJump(0x006D8E0A, (UInt32)&CutscenePauseCheck); // editing one of the ifs to prevent cutscenes from getting updated when paused
 #endif

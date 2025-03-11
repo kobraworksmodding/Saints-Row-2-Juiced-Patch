@@ -21,5 +21,6 @@ namespace General {
 	extern void YeetAllNPCs();
 	extern bool IsSRFocused();
 	extern CPatch CFixHorizontalMouseSensitivity;
-
+	extern bool DeletionMode;
+	extern bool* EnterPressed;
 }

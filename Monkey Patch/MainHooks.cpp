@@ -41,6 +41,8 @@
 
 #include "BlingMenuInstall.h"
 #include <shellapi.h>
+#include "General/General.h"
+using namespace General;
 const char ServerNameSR2[] = "[Saints Row 2]";
 
 BYTE useJuicedOSD = 0;
@@ -949,6 +951,11 @@ void cus_FrameToggles() {
 				hasCheatMessageBeenSeen = 1;
 			}
 		}
+	}
+
+	if (IsKeyPressed(VK_DELETE, false)) {
+		DeletionMode = true;
+		*EnterPressed = true;
 	}
 
 	if (Game::InLoop::IsCoopOrSP == true)
