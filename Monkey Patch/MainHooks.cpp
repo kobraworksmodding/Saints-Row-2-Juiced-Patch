@@ -1376,7 +1376,7 @@ int RenderLoopStuff_Hacked()
 	if (FirstBootCheck()) {
 		const wchar_t* JuicedWelcome =
 			L"Welcome to [format][color:#B200FF]Juiced[/format]! Thank you for installing the patch.\n"
-			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format]\n"
+			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format].\n"
 			L"- [format][color:#B200FF]Juiced Team[/format]"
 			L"[format][scale:1.0][image:ui_hud_inv_d_ginjuice][/format]";
 		const wchar_t* Options[] = { L"OK", L"Join the [format][color:#5864F6]Discord[/format]\n\n" };
@@ -1389,7 +1389,7 @@ int RenderLoopStuff_Hacked()
 	if (FirstBootCheck()) {
 		const wchar_t* JuicedWelcome =
 			L"Welcome to [format][color:#B200FF]Juiced[/format]! Thank you for installing the patch.\n"
-			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format]\n"
+			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format].\n"
 			L"- [format][color:#B200FF]Juiced Team[/format]"
 			L"[format][scale:1.0][image:ui_hud_inv_d_ginjuice][/format]";
 		const wchar_t* Options[] = { L"OK", L"Join the [format][color:#5864F6]Discord[/format]\n\n" };
