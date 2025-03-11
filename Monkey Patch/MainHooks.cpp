@@ -40,6 +40,7 @@
 #include "UGC/Debug.h"
 
 #include "BlingMenuInstall.h"
+#include <shellapi.h>
 const char ServerNameSR2[] = "[Saints Row 2]";
 
 BYTE useJuicedOSD = 0;
@@ -160,6 +161,13 @@ void FirstBootFlag() {
 		DWORD value = 1;
 		RegSetValueExA(hKey, Name, 0, REG_DWORD, (const BYTE*)&value, sizeof(value));
 		RegCloseKey(hKey);
+	}
+}
+
+void __cdecl WelcomeCallback(int Unk, int SelectedOption, int Action) {
+
+	if (Action == 2 && SelectedOption == 1) {
+		ShellExecute(0, 0, L"https://discord.com/invite/HEMaT2mUpU", 0, 0, SW_SHOW);
 	}
 }
 
@@ -733,6 +741,32 @@ int __declspec(naked) AddMessage(const wchar_t* Title, const wchar_t* Desc) { //
 
 		mov eax, 0x7E6250
 		call eax
+
+		mov esp, ebp
+		pop ebp
+		ret
+	}
+}
+
+int __declspec(naked) AddMessageCustomized(const wchar_t* Title, const wchar_t* Desc, const wchar_t* Options[], int OptionCount) { // same thing as above except we have freedom over everything
+	__asm {
+		push ebp
+		mov ebp, esp
+		sub esp, __LOCAL_SIZE
+
+		push 0
+		push 1
+		push 2
+		push OptionCount
+		mov edx, Options
+		push edx
+		push Desc
+		mov eax, Title
+		push eax
+		or eax, -1
+
+		mov ecx, 0x753080
+		call ecx
 
 		mov esp, ebp
 		pop ebp
@@ -1335,26 +1369,26 @@ int RenderLoopStuff_Hacked()
 	if (FirstBootCheck()) {
 		const wchar_t* JuicedWelcome =
 			L"Welcome to [format][color:#B200FF]Juiced[/format]! Thank you for installing the patch.\n"
-			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format]:\n\n"
-			L"[format][color:#4F9EFF]discord.com/invite/HEMaT2mUpU[/format]\n\n"
+			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format]\n"
 			L"- [format][color:#B200FF]Juiced Team[/format]"
 			L"[format][scale:1.0][image:ui_hud_inv_d_ginjuice][/format]";
-		__asm pushad
-		AddMessage(L"Juiced", JuicedWelcome);
-		__asm popad
+		const wchar_t* Options[] = { L"OK", L"Join the [format][color:#5864F6]Discord[/format]\n\n" };
+		const wchar_t* Title = L"Juiced";
+		int Result = AddMessageCustomized(Title, JuicedWelcome, Options, _countof(Options));
+		*(void**)(Result + 0x930) = &WelcomeCallback;
 		FirstBootFlag();
 	}
-#else 
+#else // what the fuck is the point of this someone needs to explain it to me because I'm confused??
 	if (FirstBootCheck()) {
 		const wchar_t* JuicedWelcome =
-			L"Welcome to [format][color:#B200FF]Juiced LITE[/format]! Thank you for installing the patch.\n"
-			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format]:\n\n"
-			L"[format][color:#4F9EFF]discord.com/invite/HEMaT2mUpU[/format]\n\n"
+			L"Welcome to [format][color:#B200FF]Juiced[/format]! Thank you for installing the patch.\n"
+			L"If you're in need of support, head over to our [format][color:#5864F6]Discord[/format]\n"
 			L"- [format][color:#B200FF]Juiced Team[/format]"
 			L"[format][scale:1.0][image:ui_hud_inv_d_ginjuice][/format]";
-		__asm pushad
-		AddMessage(L"Juiced LITE", JuicedWelcome);
-		__asm popad
+		const wchar_t* Options[] = { L"OK", L"Join the [format][color:#5864F6]Discord[/format]\n\n" };
+		const wchar_t* Title = L"Juiced";
+		int Result = AddMessageCustomized(Title, JuicedWelcome, Options, _countof(Options));
+		*(void**)(Result + 0x930) = &WelcomeCallback;
 		FirstBootFlag();
 	}
 #endif
