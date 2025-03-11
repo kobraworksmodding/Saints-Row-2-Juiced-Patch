@@ -169,7 +169,7 @@ void FirstBootFlag() {
 void __cdecl WelcomeCallback(int Unk, int SelectedOption, int Action) {
 
 	if (Action == 2 && SelectedOption == 1) {
-		ShellExecute(0, 0, L"https://discord.com/invite/HEMaT2mUpU", 0, 0, SW_SHOW);
+		ShellExecute(0, 0, L"https://kobraworks.com/discord", 0, 0, SW_SHOW);
 	}
 }
 
