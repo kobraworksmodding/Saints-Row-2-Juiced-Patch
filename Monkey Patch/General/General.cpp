@@ -87,9 +87,11 @@ namespace General {
 
 	void __cdecl SaveDelCallback(int Unk, bool Result, int Action) {
 		if (Action == 2) {
-			DeletionMode = false;
 			*(bool*)0x25283B0 = true;
 			*(bool*)0x25283B1 = Result ? false : true;
+			if (Result) {
+				DeletionMode = false;
+			}
 		}
 	}
 
