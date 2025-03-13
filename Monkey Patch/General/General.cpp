@@ -16,6 +16,7 @@ namespace General {
 	bool DeletionMode;
 	const wchar_t* SaveMessage = L"Are you sure you want to delete this save?"; // ultimately, if we get extra strings to load, we should use a string label and request the string instead of hardcoding it
 	const char* JVLib = "juiced_vint_lib";
+	const char* JStr = "juiced";
 	bool IsSpawning = false;
 	bool* EnterPressed = (bool*)0x02348CD0;
 	int CurrentNPC = 0;
@@ -638,8 +639,24 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		}
 	}
 
+	void __declspec(naked) AddStrings()
+	{
+		static int Continue = 0x007F46F0;
+		static int StringsLoad = 0x7F4780;
+
+		__asm {
+			call StringsLoad
+			add esp, 4
+			push 0
+			mov ecx, JStr
+			call StringsLoad
+			jmp Continue
+		}
+	}
+
 	void TopWinMain() {
 #if !JLITE
+		WriteRelJump(0x007F46EB, (UInt32)&AddStrings); // add custom string loading - the game automatically appends the string so it will load the right string file based on your language, eg - juiced_us.le_strings
 		WriteRelJump(0x00B91541, (UInt32)&AddVintLib); // allows us to add our own side lib for vint to add new global variables without messing up mod support
 		WriteRelJump(0x007787D0, (UInt32)&ChangeSOCallback); // replace the save overwrite callback with ours to avoid various warnings
 		WriteRelJump(0x0077952F, (UInt32)&DeletionModeCheck); // avoid being able to "delete" when hovering over save new game
