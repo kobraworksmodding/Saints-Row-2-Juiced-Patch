@@ -953,7 +953,7 @@ void cus_FrameToggles() {
 		}
 	}
 
-	if (IsKeyPressed(VK_DELETE, false)) {
+	if (IsKeyPressed(VK_DELETE, false) && IsInSaveMenu()) {
 		DeletionMode = true;
 		*EnterPressed = true;
 	}
@@ -970,31 +970,6 @@ void cus_FrameToggles() {
 
 typedef int(__cdecl* chatWindowT)();
 chatWindowT chatWindow = (chatWindowT)0x75C8F0;
-
-int __declspec(naked) LuaExecute(const char* command)
-{
-	_asm {
-		push ebp
-		mov ebp, esp
-		sub esp, __LOCAL_SIZE
-
-
-		mov esi, ds:0x0252983C // Lua State
-		mov eax, command
-		mov edx, 0xCDA000
-		call edx
-
-		mov esi, ds : 0x0252A1B8 // Vint State
-		mov eax, command
-		mov edx, 0xCDA000
-		call edx
-
-
-		mov esp, ebp
-		pop ebp
-		ret
-	}
-}
 
 bool hasCheatMessageBeenSeen2 = 0;
 
@@ -1246,6 +1221,7 @@ void LuaExecutor() {
 			*/
 			else {
 				LuaExecute(Converted.c_str());
+				VintExecute(Converted.c_str());
 			}
 			if (!Debug::CMPatches_DisableCheatFlag.IsApplied()) {
 				*(BYTE*)0x02527B5A = 0x1;

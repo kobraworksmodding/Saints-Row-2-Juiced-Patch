@@ -2,8 +2,8 @@
 #include "../Patcher/CPatch.h"
 
 namespace General {
-	extern void TopWinMain();
-	extern void BottomWinMain();
+	void TopWinMain();
+	void BottomWinMain();
 
 	typedef int* (__thiscall* GetCharacterIDT)(const char* Name);
 	extern GetCharacterIDT GetCharacterID;
@@ -17,10 +17,15 @@ namespace General {
 	typedef int(__thiscall* DeleteNPCT)(int a1, int a2);
 	extern DeleteNPCT DeleteNPC;
 
-	extern void NPCSpawner(const char* Name);
-	extern void YeetAllNPCs();
-	extern bool IsSRFocused();
+	void NPCSpawner(const char* Name);
+	void YeetAllNPCs();
+	bool IsSRFocused();
 	extern CPatch CFixHorizontalMouseSensitivity;
 	extern bool DeletionMode;
 	extern bool* EnterPressed;
+	bool VintGetGlobalBool(const char* Name);
+	bool VintSetGlobalBool(const char* Name, bool Value);
+	bool IsInSaveMenu();
+	int LuaExecute(const char* Command);
+	int VintExecute(const char* Command);
 }

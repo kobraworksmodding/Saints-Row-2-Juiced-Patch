@@ -54,17 +54,17 @@ namespace General {
 
 			Check :
 			mov al, ds : byte ptr[0x2527D14]
-				cmp al, 0
-				jz Skip
-				jmp Resume
+			cmp al, 0
+			jz Skip
+			jmp Resume
 
-				Skip :
+			Skip :
 			jmp SkipAddr
 
-				Resume :
+			Resume :
 			mov edi, dword ptr[0x6C6870]
-				call edi
-				jmp Continue
+			call edi
+			jmp Continue
 
 		}
 	}
@@ -87,6 +87,7 @@ namespace General {
 
 	void __cdecl SaveDelCallback(int Unk, bool Result, int Action) {
 		if (Action == 2) {
+			DeletionMode = false;
 			*(bool*)0x25283B0 = true;
 			*(bool*)0x25283B1 = Result ? false : true;
 		}
@@ -105,7 +106,28 @@ namespace General {
 
 			Replace :
 			push SaveDelCallback
-				jmp Continue
+			jmp Continue
+		}
+	}
+
+	void __declspec(naked) DeletionModeCheck()
+	{
+		static int Continue = 0x00779534;
+		__asm {
+			mov		cl, byte ptr[DeletionMode]
+			test	cl, cl
+			jnz     Skip
+			mov		edx, 0x778A40
+			call	edx
+			jmp		Continue
+		}
+		Skip:
+		__asm{
+			mov eax, 1
+			mov		ds: DeletionMode, 0
+			mov     ecx, [EnterPressed]
+			mov     ds : byte ptr[ecx], 0
+			jmp Continue
 		}
 	}
 
@@ -369,6 +391,89 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		}
 	}
 
+	bool __declspec(naked) VintGetGlobalBool(const char* Name)
+	{
+		_asm {
+			push ebp
+			mov ebp, esp
+			sub esp, __LOCAL_SIZE
+
+
+			mov ecx, ds: dword ptr[0x252A1B8] // Vint State
+			mov eax, Name
+			mov edx, 0xCDD760
+			call edx
+
+			mov esp, ebp
+			pop ebp
+			ret
+		}
+	}
+
+	bool __declspec(naked) VintSetGlobalBool(const char* Name, bool Value)
+	{
+		_asm {
+			push ebp
+			mov ebp, esp
+			sub esp, __LOCAL_SIZE
+
+
+			mov eax, ds: dword ptr[0x252A1B8] // Vint State
+			push eax
+			push Value
+			push Name
+			mov edx, 0xCDD610
+			call edx
+
+			mov esp, ebp
+			pop ebp
+			ret
+		}
+	}
+
+	int __declspec(naked) LuaExecute(const char* command)
+	{
+		_asm {
+			push ebp
+			mov ebp, esp
+			sub esp, __LOCAL_SIZE
+
+
+			mov esi, ds:0x0252983C // Lua State
+			mov eax, command
+			mov edx, 0xCDA000
+			call edx
+
+			mov esp, ebp
+			pop ebp
+			ret
+		}
+	}
+
+	int __declspec(naked) VintExecute(const char* command)
+	{
+		_asm {
+			push ebp
+			mov ebp, esp
+			sub esp, __LOCAL_SIZE
+
+			mov esi, ds : 0x0252A1B8 // Vint State
+			mov eax, command
+			mov edx, 0xCDA000
+			call edx
+
+
+			mov esp, ebp
+			pop ebp
+			ret
+		}
+	}
+
+	bool IsInSaveMenu() {
+		VintExecute("_G.GAME_BUILD_DATE = _G.Menu_active and _G.Menu_active.is_save_menu or false");
+		return VintGetGlobalBool("GAME_BUILD_DATE");
+	}
+
 	void __declspec(naked) MSAA()
 	{
 		static int jmp_continue = 0x007737E4;
@@ -513,6 +618,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	void TopWinMain() {
 #if !JLITE
 		WriteRelJump(0x007787D0, (UInt32)&ChangeSOCallback); // replace the save overwrite callback with ours to avoid various warnings
+		WriteRelJump(0x0077952F, (UInt32)&DeletionModeCheck); // avoid being able to "delete" when hovering over save new game
 		WriteRelJump(0x007787FB, (UInt32)&ReplaceSOMessage); // replace the save overwrite warning message
 		WriteRelJump(0x007788BE, (UInt32)&SkipSaving); // skip saving if deletion mode is enabled
 		WriteRelJump(0x0068CAA0, (UInt32)&CutscenePauseWorkaround); // we need to make the cutscene process(?) function run even if the game's paused, original if check is dumb
