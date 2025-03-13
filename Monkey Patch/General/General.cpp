@@ -15,6 +15,7 @@ and / or run completely on startup or after we check everything else.*/
 namespace General {
 	bool DeletionMode;
 	const wchar_t* SaveMessage = L"Are you sure you want to delete this save?"; // ultimately, if we get extra strings to load, we should use a string label and request the string instead of hardcoding it
+	const char* JVLib = "juiced_vint_lib";
 	bool IsSpawning = false;
 	bool* EnterPressed = (bool*)0x02348CD0;
 	int CurrentNPC = 0;
@@ -472,8 +473,8 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	}
 
 	bool IsInSaveMenu() {
-		VintExecute("_G.GAME_BUILD_DATE = _G.Menu_active and _G.Menu_active.is_save_menu or false");
-		return VintGetGlobalBool("GAME_BUILD_DATE");
+		VintExecute("is_in_save_menu = Menu_active and Menu_active.is_save_menu or false");
+		return VintGetGlobalBool("is_in_save_menu");
 	}
 
 	void __declspec(naked) MSAA()
@@ -617,8 +618,29 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		}
 	}
 
+	void __declspec(naked) AddVintLib()
+	{
+		static int Continue = 0x00B91553;
+		static int VintLib = 0x00E4CEA8;
+		static int LoadLib = 0xCDDF30;
+
+		__asm {
+			mov ecx, ds: 0x252A1B8
+			push VintLib
+			mov esi, ecx
+			call LoadLib
+			add esp, 4
+			mov ecx, ds : 0x252A1B8
+			push JVLib
+			mov esi, ecx
+			call LoadLib
+			jmp Continue
+		}
+	}
+
 	void TopWinMain() {
 #if !JLITE
+		WriteRelJump(0x00B91541, (UInt32)&AddVintLib); // allows us to add our own side lib for vint to add new global variables without messing up mod support
 		WriteRelJump(0x007787D0, (UInt32)&ChangeSOCallback); // replace the save overwrite callback with ours to avoid various warnings
 		WriteRelJump(0x0077952F, (UInt32)&DeletionModeCheck); // avoid being able to "delete" when hovering over save new game
 		WriteRelJump(0x007787FB, (UInt32)&ReplaceSOMessage); // replace the save overwrite warning message
