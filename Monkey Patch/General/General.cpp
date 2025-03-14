@@ -654,6 +654,23 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		}
 	}
 
+	__declspec(naked) wchar_t* RequestString(const wchar_t* Dest, const char* Label) { // first arg is used to format an existing wchar string, pass nullptr if you just want to get a string (use pushad and popad)
+		__asm {
+			push ebp
+			mov ebp, esp
+			sub esp, __LOCAL_SIZE
+
+			mov		edi, Dest
+			mov		esi, Label
+			mov     ecx, 0x7F49E0
+			call    ecx
+
+			mov esp, ebp
+			pop ebp
+			ret
+		}
+	}
+
 	void TopWinMain() {
 #if !JLITE
 		WriteRelJump(0x007F46EB, (UInt32)&AddStrings); // add custom string loading - the game automatically appends the string so it will load the right string file based on your language, eg - juiced_us.le_strings

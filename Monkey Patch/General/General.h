@@ -28,4 +28,5 @@ namespace General {
 	bool IsInSaveMenu();
 	int LuaExecute(const char* Command);
 	int VintExecute(const char* Command);
+	wchar_t* RequestString(const wchar_t* Dest, const char* Label);
 }
