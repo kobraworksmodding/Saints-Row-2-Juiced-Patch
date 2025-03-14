@@ -331,6 +331,34 @@ namespace BlingMenuInstall
             *(float*)(0x02527DA4) = 0.01666666666f;
 
 }
+// Not the real console_do_command, but rather a helper function to set the bool if a function is called or not to true then back to false, 
+// probably could just keep it as true but for safety we'll reset to false.
+    void callconsolecommand(int func_address) {
+        bool* console_flag_function_call = (bool*)0x02345B68;
+       *console_flag_function_call = true;
+       ((void(__cdecl*)(void))func_address)();
+       *console_flag_function_call = false;
+    }
+
+
+    char __declspec(naked) load_weapons_xtbl(const char* filename,int refresh)
+    {
+        _asm {
+            push ebp
+            mov ebp, esp
+            sub esp, __LOCAL_SIZE
+
+            push refresh
+            mov eax, filename
+            mov edx, 0xB710C0
+            call edx
+
+            mov esp, ebp
+            pop ebp
+            ret
+        }
+    }
+
    void AddOptions() {
        if (BlingMenuLoad()) {
        BlingMenuAddFuncCustom("Juiced", "SleepHack", NULL, &BM_SleepHacks, NULL);
@@ -387,6 +415,35 @@ namespace BlingMenuInstall
                VehicleSpawner(vehicle.second, "-1");
                });
        }
+       BlingMenuAddFunc("Reload table", "Following are untested.", NULL);
+       BlingMenuAddFunc("Reload table", "reload weather & weather_time_of_day.xtbl", []() {
+
+           ((void(__cdecl*)(void))0x004DBDE0)();
+           ((void(__cdecl*)(void))0x004DD390)();
+
+           });
+       BlingMenuAddFunc("Reload table", "reload camera_shake.xtbl", []() {((void(__cdecl*)(void))0x004A0870)(); });
+       BlingMenuAddFunc("Reload table", "reload lightning.xtbl", []() {((void(__cdecl*)(void))0x004CA220)(); });
+       BlingMenuAddFunc("Reload table", "reload motion_blur.xtbl", []() {((void(__cdecl*)(void))0x004CB850)(); });
+       BlingMenuAddFunc("Reload table", "reload rain.xtbl", []() {((void(__cdecl*)(void))0x004CD230)(); });
+       BlingMenuAddFunc("Reload table", "reload time_of_day & lens_flares.xtbl", []() {callconsolecommand(0x004D2610); });
+       BlingMenuAddFunc("Reload table", "reload wind.xtbl", []() {((void(__cdecl*)(void))0x004E51A0)(); });
+       // doesn't work, crashes.
+       //BlingMenuAddFunc("Reload table", "reload effects", []() {callconsolecommand(0x0050CA70); });
+       BlingMenuAddFunc("Reload table", "reload player_image_data.xtbl", []() {((void(__cdecl*)(void))0x00530AA0)(); });
+       BlingMenuAddFunc("Reload table", "reload fraud_globals.xtbl foley", []() {((void(__cdecl*)(void))0x00649A30)(); });
+       BlingMenuAddFunc("Reload table", "reload fraud_globals.xtbl adrenaline", []() {((void(__cdecl*)(void))0x00649B20)(); });
+       BlingMenuAddFunc("Reload table", "reload fraud_globals.xtbl globals", []() {((void(__cdecl*)(void))0x00650570)(); });
+       BlingMenuAddFunc("Reload table", "reload melee.xtbl", []() {callconsolecommand(0x00982450); });
+       BlingMenuAddFunc("Reload table", "reload distant_ped_spawn_parameters.xtbl", []() {((void(__cdecl*)(void))0x00B7BFF0)(); });
+       BlingMenuAddFunc("Reload table", "reload distant_vehicles xtbls", []() {callconsolecommand(0x00B7EF20); });
+
+       // Custom loading, that are not leftover in the game or from SR1.
+
+       BlingMenuAddFunc("Reload table", "reload weapons.xtbl", []() {
+           //This works but buffer doesn't scale up for some reason.
+           load_weapons_xtbl("weapons.xtbl", 1);
+           });
 
        }
     }
