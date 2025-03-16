@@ -35,7 +35,12 @@ struct mouse {
     inline int32_t getWheeldelta() const {
         return *reinterpret_cast<const int32_t*>(scroll_delta_address);
     }
-
+    inline float getMouseX_sens() const {
+        return *reinterpret_cast<const float*>(0x025F5C98);
+    }
+    inline float getMouseY_sens() const {
+        return *reinterpret_cast<const float*>(0x025F5C9C);
+    }
 };
 
 template <typename T>
