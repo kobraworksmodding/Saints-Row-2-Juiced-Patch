@@ -79,6 +79,7 @@ namespace Render2D
 		}
 #else
 		if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
+			Sleep(1);
 			ChangeTextColor(160, 160, 160, 128);
 			__asm pushad
 			InGamePrint(("JUICED " + std::string(UtilsGlobal::juicedversion)).c_str(), 680, processtextwidth(1120), 2);

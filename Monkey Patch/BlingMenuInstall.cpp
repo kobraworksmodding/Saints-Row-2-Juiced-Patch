@@ -325,6 +325,42 @@ namespace BlingMenuInstall
         }
         return ERROR_MESSAGE;
     }
+    const char* BM_ClippyTextureExceptionHandle(void* userdata, int action) {
+        using namespace Render3D;
+        if (action != -1) {
+            General::CMPatches_TervelTextureCrashWorkaround_be_as_pe.Restore();
+            if (CMPatches_ClippysIdiotTextureCrashExceptionHandle.IsApplied())
+                CMPatches_ClippysIdiotTextureCrashExceptionHandle.Restore();
+            else
+                CMPatches_ClippysIdiotTextureCrashExceptionHandle.Apply();
+        }
+        switch (CMPatches_ClippysIdiotTextureCrashExceptionHandle.IsApplied()) {
+        case false: return "OFF";
+            break;
+        case true: return "ON ";
+            break;
+        }
+        return ERROR_MESSAGE;
+    }
+
+    const char* BM_TervelCrashWorkAround(void* userdata, int action) {
+        using namespace General;
+
+        if (Render3D::CMPatches_ClippysIdiotTextureCrashExceptionHandle.IsApplied()) {
+            return "EXCEPTION-ish HANDLER HOOKED";
+        }
+        if (action != -1 && !Render3D::CMPatches_ClippysIdiotTextureCrashExceptionHandle.IsApplied()) {
+            if (CMPatches_TervelTextureCrashWorkaround_be_as_pe.IsApplied()) {
+                CMPatches_TervelTextureCrashWorkaround_be_as_pe.Restore();
+            }
+            else {
+                CMPatches_TervelTextureCrashWorkaround_be_as_pe.Apply();
+            }
+        }
+        return CMPatches_TervelTextureCrashWorkaround_be_as_pe.IsApplied() ? "ON " : "OFF";
+    }
+
+
 
     void BM_restoreHavok() {
         if(!Debug::fixFrametime)
@@ -372,6 +408,7 @@ namespace BlingMenuInstall
            AspectRatioFix();
            GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
            }, 0.01, 0.1, 5.0);
+       BlingMenuAddInt("Juiced","Vehicle Auto Center Modifer",&Behavior::sticky_cam_timer_add,NULL,250,0, INT_MAX - 1500);
        BlingMenuAddFuncCustom("Juiced", "Better Drive-by Cam", NULL, &BM_DBC, NULL);
        BlingMenuAddFuncCustom("Juiced", "Better Handbrake Cam", NULL, &BM_HBC, NULL);
        BlingMenuAddFuncCustom("Juiced", "Fix Horizontal Mouse Sensitivity", NULL, &BM_FixHorizontalMouseSensitivity, NULL);
@@ -444,6 +481,9 @@ namespace BlingMenuInstall
            //This works but buffer doesn't scale up for some reason.
            load_weapons_xtbl("weapons.xtbl", 1);
            });
+       //BlingMenuAddBool("Juiced Debug", "simulate a add_to_entry crash(only works when below handler is hooked)", &Render3D::crash, NULL);
+       BlingMenuAddFuncCustom("Juiced Debug", "Hook a (eh) exception-ish handler to stop add_to_entry crash", NULL, &BM_ClippyTextureExceptionHandle, NULL);
+       BlingMenuAddFuncCustom("Juiced Debug", "Hook / make add_to_entry(bitmap_entry *be,peg_entry *pe) to just use pe as both args", NULL, &BM_TervelCrashWorkAround, NULL);
 
        }
     }

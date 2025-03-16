@@ -12,6 +12,7 @@
 #include "../Shaders.h"
 #include "../BlingMenu_public.h"
 #include "Render3D.h"
+#include <mutex>
 namespace Render3D
 {
 	const char FPSCam[] = "camera_fpss.xtbl";
@@ -130,7 +131,7 @@ namespace Render3D
 
 		void* old_proc;
 
-		if (PatchIat(main_handle, "Kernel32.dll", "Sleep", (void*)SleepDetour, &old_proc) == S_OK) {
+		if (PatchIat(main_handle, (char*)"Kernel32.dll", (char*)"Sleep", (void*)SleepDetour, &old_proc) == S_OK) {
 			OriginalSleep = (SleepFn)old_proc;
 			IsSleepHooked = true;
 		}
@@ -143,7 +144,7 @@ namespace Render3D
 
 		void* old_proc;
 
-		if (PatchIat(main_handle, "Kernel32.dll", "Sleep", OriginalSleep, NULL) == S_OK) {
+		if (PatchIat(main_handle, (char*)"Kernel32.dll", (char*)"Sleep", OriginalSleep, NULL) == S_OK) {
 			IsSleepHooked = false;
 		}
 	}
@@ -420,6 +421,129 @@ namespace Render3D
 		}
 
 	}
+
+	class MemoryAccessCache {
+	private:
+		std::unordered_map<uintptr_t, bool> cache;
+		std::mutex cacheMutex;
+
+		static const size_t PAGE_SIZE = 4096;
+		static const size_t CACHE_MAX_SIZE = 1024;
+
+	public:
+		static uintptr_t GetPageBase(void* address) {
+			return reinterpret_cast<uintptr_t>(address) & ~(PAGE_SIZE - 1);
+		}
+
+		bool IsMemoryReadable(void* address) {
+			if (!address) return false;
+
+			uintptr_t pageBase = GetPageBase(address);
+
+			{
+				std::lock_guard<std::mutex> lock(cacheMutex);
+				auto it = cache.find(pageBase);
+				if (it != cache.end()) {
+					return it->second;
+				}
+			}
+
+			MEMORY_BASIC_INFORMATION mbi;
+			bool isReadable = false;
+
+			if (VirtualQuery(address, &mbi, sizeof(mbi))) {
+				isReadable = (mbi.State == MEM_COMMIT) &&
+					((mbi.Protect & PAGE_READONLY) ||
+						(mbi.Protect & PAGE_READWRITE) ||
+						(mbi.Protect & PAGE_EXECUTE_READ) ||
+						(mbi.Protect & PAGE_EXECUTE_READWRITE));
+			}
+
+			{
+				std::lock_guard<std::mutex> lock(cacheMutex);
+
+
+				if (cache.size() >= CACHE_MAX_SIZE) {
+					cache.clear();
+				}
+
+				cache[pageBase] = isReadable;
+			}
+
+			return isReadable;
+		}
+
+
+		static MemoryAccessCache& GetInstance() {
+			static MemoryAccessCache instance;
+			return instance;
+		}
+	};
+	bool IsMemoryReadable(void* address) {
+		return MemoryAccessCache::GetInstance().IsMemoryReadable(address);
+	}
+	bool crash;
+
+	constexpr uintptr_t add_to_entry_func_addr = 0xC080C0;
+	__declspec(naked) int __cdecl add_to_entry_func(void* be, void* pe) {
+		__asm {
+
+			mov edi, dword ptr[esp + 4]  // be
+			mov esi, dword ptr[esp + 8]  // pe
+
+			call dword ptr[add_to_entry_func_addr]
+
+			ret
+		}
+	}
+
+// This whole thing might have a performance hit.
+ int __stdcall SafeAddToEntry(void* be, void* pe) {
+	 /*if (crash) {
+		 Logger::TypedLog(CHN_DEBUG, "CRASH TEST: Forcing invalid memory access\n");
+		 be = reinterpret_cast<void*>(0xDEADBEEF);
+		 crash = false;
+	 }*/
+		if (!IsMemoryReadable(be)) {
+			for(int i = 0; i<11; i++)
+			Logger::TypedLog("add_to_entry hook", "!!!Invalid be pointer: %p\n", be);
+			return 0;
+		}
+
+
+		if (!IsMemoryReadable(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(be) + 4))) {
+			for (int i = 0; i < 11; i++)
+			Logger::TypedLog("add_to_entry hook","!!!Invalid memory at be->current_peg_entry: %p\n", reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(be) + 4));
+			return 0;
+		}
+
+		if (pe && !IsMemoryReadable(pe)) {
+			for (int i = 0; i < 11; i++)
+			Logger::TypedLog("add_to_entry hook", "!!!Invalid pe pointer: %p\n", pe);
+			return 0;
+		}
+			return add_to_entry_func(be, pe);
+
+	}
+
+
+	__declspec(naked) void PatchAddToEntryPoint() {
+		__asm {
+			push ebx
+			push ecx
+			push edx
+
+			push esi    // pe
+			push edi    // be
+			call SafeAddToEntry
+
+			pop edx
+			pop ecx
+			pop ebx
+
+			ret
+		}
+	}
 #if !JLITE
 	CMultiPatch CMPatches_ClassicGTAIdleCam = {
 
@@ -432,11 +556,23 @@ namespace Render3D
 		},
 	};
 #endif
+	// This whole thing might have a performance hit.
+	CMultiPatch CMPatches_ClippysIdiotTextureCrashExceptionHandle = {
+
+		[](CMultiPatch& mp) {
+			mp.AddWriteRelCall(0x00C08493,(uintptr_t)&PatchAddToEntryPoint);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddWriteRelCall(0x00C0900D,(uintptr_t)&PatchAddToEntryPoint);
+		},
+	};
+
+
 	void Init()
 	{
 
 #if !JLITE
-		
 		if (GameConfig::GetValue("Graphics", "RemoveVignette", 0))
 		{
 			Render3D::RemoveVignette();

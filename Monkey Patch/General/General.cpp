@@ -12,6 +12,7 @@ and / or run completely on startup or after we check everything else.*/
 #include "../SafeWrite.h"
 #include "General.h"
 
+#include "../Render/Render3D.h"
 namespace General {
 	bool DeletionMode;
 	const wchar_t* SaveMessage = L"Are you sure you want to delete this save?"; // ultimately, if we get extra strings to load, we should use a string label and request the string instead of hardcoding it
@@ -670,7 +671,16 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			ret
 		}
 	}
+	CMultiPatch CMPatches_TervelTextureCrashWorkaround_be_as_pe = {
 
+		[](CMultiPatch& mp) {
+			mp.AddWriteRelCall(0x00C0900D,(uintptr_t)TextureCrashFix);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddWriteRelCall(0x00C08493,(uintptr_t)TextureCrashFix);
+		},
+	};
 	void TopWinMain() {
 #if !JLITE
 		WriteRelJump(0x007F46EB, (UInt32)&AddStrings); // add custom string loading - the game automatically appends the string so it will load the right string file based on your language, eg - juiced_us.le_strings
@@ -708,9 +718,13 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		patchNop((BYTE*)0x0073C01B, 6); // remove the command check from the level function
 		patchCall((void*)0x00458646, (void*)IdleFix); // prevents you from being able to use the scroll wheel when idling
 		patchCall((void*)0x009A3D8E, (void*)IdleFix);
-		if (GameConfig::GetValue("Debug", "TextureCrashFix", 1)) { // cause i want to disable it for reasons -- Clippy95, dont include in config?
-			patchCall((void*)0x00C0900D, (void*)TextureCrashFix); // WIP (unknown if it fixes it or not just yet)
-			patchCall((void*)0x00C08493, (void*)TextureCrashFix);
+		if (GameConfig::GetValue("Debug", "TervelTextureCrashWorkaround_be_as_pe", 1)) { // cause i want to disable it for reasons -- Clippy95, dont include in config?
+			if(!GameConfig::GetValue("Debug", "ClippyTextureCrashExceptionHandle", 1))
+			CMPatches_TervelTextureCrashWorkaround_be_as_pe.Apply(); // incorrect behaviour
+
+		}
+		if (GameConfig::GetValue("Debug", "ClippyTextureCrashExceptionHandle", 1)) { 
+			Render3D::CMPatches_ClippysIdiotTextureCrashExceptionHandle.Apply(); // also not ideal, might have perfomance impact, implementation in Render3D.cpp
 		}
 #if !JLITE
 #if !RELOADED

@@ -10,7 +10,10 @@
 #include "../GameConfig.h"
 #include "../Patcher/CPatch.h"
 #include "../Patcher/CMultiPatch.h"
+#include <safetyhook.hpp>
 #include "../BlingMenu_public.h"
+#include "../UtilsGlobal.h"
+#include "..\Game\Game.h"
 // Use me to store garbagedata when NOP doesn't work.
 static float garbagedata = 0;
 double bogusPi = 2.90;
@@ -19,7 +22,7 @@ double animBlend = 3.0;
 
 namespace Behavior
 {
-
+	int sticky_cam_timer_add = 0;
 	void BetterMovement()
 	{
 		// Majority of the SR2 movement sluggishness is due to the fact that certain walking anims add an
@@ -173,6 +176,41 @@ CMultiPatch CMPatches_SR1Reloading = {
 		//SafeWrite32(0x0049BD9C + 2, (UInt32)&garbagedata); // Y-Axis
 		CMPatches_DisableLockedClimbCam.Apply();
 	}
+	SafetyHookMid cf_do_control_mode_sticky_MIDASMHOOK;
+
+	// This is modifiable in the game's xtbl, they're called `Default_Time` and `Stopped_Time`, 
+	// same effect could probably be achieved with modifying the 1000's ms doubles at 0049EA59+ but this is just to showcase safetyhook and I guess to seperate Stopped_Time
+	void sticky_cam_modifier(safetyhook::Context32& ctx) {
+		if (sticky_cam_timer_add > 0) {
+			// eax = return of LTO'd?? compiled timestamp:set which seems to have made a custom usercall function just for vehicles, not complaining lol.
+			// if Default_Time (assuming default xtbl values)
+			if(ctx.eax > 500)
+			ctx.eax += sticky_cam_timer_add;
+			// else it's Stopped_Time
+			else
+			ctx.eax += (sticky_cam_timer_add / 2);
+		}
+		//printf("Sticky cam timestamp %d \n", ctx.eax);
+	}
+	SafetyHookMid slewmode_mousefix_rewrite;
+
+	 SAFETYHOOK_NOINLINE void slewmode_control_rewrite(safetyhook::Context32& ctx) {
+		using namespace UtilsGlobal;
+		mouse mouse;
+		float mouse_x = mouse.getXdelta() / 30.f;
+		// re-inverted because Tervel inverted it somewhere.
+		float mouse_y = -mouse.getYdelta() / 30.f;
+		float* rs_x = (float*)(0x023485B4);
+		float* rs_y = (float*)(0x023485B8);
+
+		mouse_x *= Game::Timer::Get33msOverFrameTime_Fix();
+
+		mouse_y *= Game::Timer::Get33msOverFrameTime_Fix();
+
+		ctx.xmm1.f32[0] = mouse_x + *rs_x;
+		ctx.xmm0.f32[0] = mouse_y + *rs_y;
+	}
+
 #if !JLITE
 	CPatch CAnimBlend = CPatch::SafeWrite32(0x006F1CA6 + 2, (uint32_t)&animBlend);
 #endif
@@ -240,6 +278,13 @@ CMultiPatch CMPatches_SR1Reloading = {
 		{
 			BetterMovement();
 		}
+			slewmode_mousefix_rewrite = safetyhook::create_mid(0x00C011FB, &slewmode_control_rewrite);
+			cf_do_control_mode_sticky_MIDASMHOOK = safetyhook::create_mid(0x0049C102, &sticky_cam_modifier);
+			// it's expecting time in ms, so 1000 = 1 second
+			if (int user_cam_modifier = GameConfig::GetValue("Gameplay", "VehicleAutoCenterModifer", 0); user_cam_modifier > 0) {
+				sticky_cam_timer_add = user_cam_modifier;
+			}
+
 #endif
 	}
 }

@@ -98,7 +98,7 @@ are called. Fortunately by this time Steam has decrypted the program data. We th
 WinMain entry point.
 */
 
-		if(PatchIat(main_handle,"Kernel32.dll", "GetVersionExA", (void *)Hook_GetVersionExA, &old_proc)==S_OK)
+		if(PatchIat(main_handle,(char*)"Kernel32.dll", (char*)"GetVersionExA", (void *)Hook_GetVersionExA, &old_proc)==S_OK)
 			Logger::TypedLog(CHN_DLL, "Patched Kernel32.GetVersionExA.\n");
 		else
 			Logger::TypedLog(CHN_DLL, "Patching Kernel32.GetVersionExA failed.\n");
@@ -180,7 +180,7 @@ void set_up_billboard_stuff()
 
 int	CDFObjectInstance::GetAbsoluteFilename(void* that, wchar_t* filenamepath_out, int param_3)
 {
-	wchar_t* default_ad_dir = L"\\data\\DFEngine\\cache\\data\\Default\\Default.tga";
+	wchar_t* default_ad_dir = (wchar_t*)L"\\data\\DFEngine\\cache\\data\\Default\\Default.tga";
 
 	wchar_t game_directory[MAX_PATH];
 	int path_size;

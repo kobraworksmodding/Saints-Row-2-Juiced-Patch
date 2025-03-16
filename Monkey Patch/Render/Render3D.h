@@ -23,4 +23,6 @@ namespace Render3D
     extern CPatch CUncapFPS;
     extern CPatch CBetterAO;
     extern CPatch CRemoveBlackBars;
+    extern CMultiPatch CMPatches_ClippysIdiotTextureCrashExceptionHandle;
+    extern bool crash;
 }

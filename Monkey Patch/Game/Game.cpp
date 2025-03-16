@@ -3,8 +3,66 @@
 #include "../SafeWrite.h"
 #include "../GameConfig.h"
 #include "Game.h"
+#include <safetyhook.hpp>
 namespace Game
 {
+	namespace Timer {
+		// Returns game's frametime in ms
+		float GetFrameTime() {
+			return *(float*)0xE84380;
+		}
+		// Returns frametime / 33 ms,
+		// use this to fix calculations that are calculated FASTER than they should when game is running at a higher FPS.
+		float GetFrameTimeOver33ms_Fix() {
+			return GetFrameTime() / (1.f / 30.f);
+		}
+		// Returns 33 ms / frametime,
+		// use this to fix calculations that are calculated SLOWER than they should when game is running at a higher FPS.
+		float Get33msOverFrameTime_Fix() {
+			return  (1.f / 30.f) / GetFrameTime();
+		}
+		// Returns Havok's frametime, by default this is stuck to 16.6ms but with Havok ticker it'll tick correctly.
+		float GetHavokFrameTime() {
+			return *(float*)0x02527DA4;
+		}
+		// Returns havok frametime / 16.6 ms,
+		// use this to fix calculations that are calculated FASTER than they should when game is running at a higher HAVOK FPS.
+		float GetHavokFrameTimeOver16ms_Fix() {
+			return GetHavokFrameTime() / (1.f / 60.f);
+		}
+		havok_get_time_this_frameT havok_get_time_this_frame = (havok_get_time_this_frameT)0x6FF860;
+	}
+	namespace Physical {
+		using namespace Timer;
+		
+		// Maybe should figure out how GTA modders use makeinline from ThirtneenAG's fork of injector which uses SafetyHook? I'm happy with this though.
+
+		SafetyHookMid motorcycle_should_eject_passengers_MIDASMHOOK;
+		// improves/fixes bike ejection when Havok Frametime is being ticked.
+		void motorcycle_should_eject_passengers_asmhook(safetyhook::Context32& ctx) {
+
+			float* delta_velocity_vector = (float*)ctx.ebp;
+
+			delta_velocity_vector[0] *= GetHavokFrameTimeOver16ms_Fix();
+			delta_velocity_vector[1] *= GetHavokFrameTimeOver16ms_Fix();
+			delta_velocity_vector[2] *= GetHavokFrameTimeOver16ms_Fix();
+			/*printf("motorcycle delta_velocity ebp: 0x%X\n x: %f\n y: %f\n z: %f\n mag3-thisframe: %f \n",
+				reinterpret_cast<uintptr_t>(delta_velocity_vector),
+				delta_velocity_vector[0],
+				delta_velocity_vector[1],
+				delta_velocity_vector[2],
+				std::sqrtf(
+					delta_velocity_vector[0] * delta_velocity_vector[0] +
+					delta_velocity_vector[1] * delta_velocity_vector[1] +
+					delta_velocity_vector[2] * delta_velocity_vector[2]
+				) 
+			) / (float)havok_get_time_this_frame();*/
+		}
+	}
+	void CreateSafetyHooks() {
+		using namespace Physical;
+		motorcycle_should_eject_passengers_MIDASMHOOK = safetyhook::create_mid(0x00AB599F, &motorcycle_should_eject_passengers_asmhook);
+	}
 	namespace HUD
 	{
 		int __declspec(naked) vint_message(wchar_t* message_text, vint_message_struct* a2) {

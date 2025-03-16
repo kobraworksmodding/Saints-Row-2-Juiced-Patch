@@ -27,7 +27,7 @@ namespace Debug
 	};
 
 	void PatchDatafiles() {
-		if (CreateCache("loose.txt"))
+		if (CreateCache((char*)"loose.txt"))
 		{
 			CacheConflicts();
 			patchJmp((void*)0x0051DAC0, (void*)hook_loose_files);						// Allow the loading of loose files

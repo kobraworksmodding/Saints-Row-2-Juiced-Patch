@@ -32,6 +32,17 @@ struct xtbl_node
 
 namespace Game
 {
+	extern void CreateSafetyHooks();
+	namespace Timer {
+		typedef double (*havok_get_time_this_frameT)();
+		extern havok_get_time_this_frameT havok_get_time_this_frame;
+
+		extern float GetFrameTime();
+		extern float GetFrameTimeOver33ms_Fix();
+		extern float Get33msOverFrameTime_Fix();
+		extern float GetHavokFrameTime();
+		extern float GetHavokFrameTimeOver16ms_Fix();
+	}
 	namespace HUD {
 		extern int vint_message(wchar_t* message_text, vint_message_struct *a2);
 	};

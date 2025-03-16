@@ -52,12 +52,12 @@ void PatchQueryPerformance()
 	
 	HMODULE main_handle=GetModuleHandleA(NULL);
 
-	if(PatchIat(main_handle,"Kernel32.dll", "QueryPerformanceFrequency", (void *)hook_QueryPerformanceFrequency, &old_proc)==S_OK)
+	if(PatchIat(main_handle, (char*)"Kernel32.dll", (char*)"QueryPerformanceFrequency", (void *)hook_QueryPerformanceFrequency, &old_proc)==S_OK)
 		Logger::TypedLog(CHN_DLL, "Patched Kernel32.QueryPerformanceFrequency.\n");
 	else
 		Logger::TypedLog(CHN_DLL, "Patching Kernel32.QueryPerformanceFrequency failed.\n");
 	
-	if(PatchIat(main_handle,"Kernel32.dll", "QueryPerformanceCounter", (void *)hook_QueryPerformanceCounter, &old_proc)==S_OK)
+	if(PatchIat(main_handle, (char*)"Kernel32.dll", (char*)"QueryPerformanceCounter", (void *)hook_QueryPerformanceCounter, &old_proc)==S_OK)
 		Logger::TypedLog(CHN_DLL, "Patched Kernel32.QueryPerformanceCounter.\n");
 	else
 		Logger::TypedLog(CHN_DLL, "Patching Kernel32.QueryPerformanceCounter failed.\n");

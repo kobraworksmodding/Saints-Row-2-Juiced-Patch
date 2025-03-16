@@ -917,7 +917,8 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_TAB, false) && InCutscene && !isCoop()) {
 		CutscenePaused = !CutscenePaused;
-		CutscenePaused ? ShowPauseDialog(true, false, false, false) : RemovePauseDialog();
+		CutscenePaused ? ShowPauseDialog(true, false, false, false) : 1;
+		RemovePauseDialog();
 	}
 
 	if (IsKeyPressed(VK_F5, false)) { // F5
@@ -1611,7 +1612,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 #if !JLITE
 	General::BottomWinMain();
 #endif
-
+	Game::CreateSafetyHooks();
 	// Continue to the program's WinMain.
 
 	WinMain_Type OldWinMain = (WinMain_Type)offset_addr(0x00520ba0);

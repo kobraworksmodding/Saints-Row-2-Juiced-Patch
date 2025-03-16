@@ -4,6 +4,7 @@
 
 namespace Behavior
 {
+	extern int sticky_cam_timer_add;
 	extern void Init();
 	extern void BetterMovement();
 	extern CPatch CBetterDBC;
