@@ -32,7 +32,8 @@
 #define CHN_ASSET                    "ASSET"
  
 extern HWND ConsoleWindow;
-
+extern FILE* f_logger;
+extern FILE* f_tracer;
 namespace Logger
 {
 	void Log(const char* Format, ...);
@@ -45,5 +46,8 @@ namespace Logger
 	void Initialize();
 	void PatchCFuncs();
 	void PatchLogger();
+
+	bool SaveDebugLogCopy(const char* destPath);
+
 
 }
