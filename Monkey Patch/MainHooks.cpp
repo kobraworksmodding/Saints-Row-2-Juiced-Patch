@@ -121,7 +121,7 @@ uintptr_t ReadPointer(uintptr_t baseAddress, const std::vector<uintptr_t>& offse
 	return address;
 }
 
-bool IsKeyPressed(unsigned char Key, bool Hold) // USE THIS FROM NOW ON
+__declspec(noinline) bool IsKeyPressed(unsigned char Key, bool Hold) // USE THIS FROM NOW ON
 {
 	if (General::IsSRFocused())
 	{
