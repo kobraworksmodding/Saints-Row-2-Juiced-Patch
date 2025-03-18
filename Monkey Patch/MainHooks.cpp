@@ -189,9 +189,17 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	}
 #if !RELOADED
 	#if JLITE
-	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " + std::string(UtilsGlobal::juicedversion) + " ---\n").c_str());
+	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " +
+		std::string(UtilsGlobal::juicedversion) +
+		" (commit: " + UtilsGlobal::getShortCommitHash() +
+		", built: " + BUILD_TIME_UTC +
+		") ---\n").c_str());
     #else
-	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED Version: " + std::string(UtilsGlobal::juicedversion) + " ---\n").c_str());
+	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED Version: " +
+		std::string(UtilsGlobal::juicedversion) +
+		" (commit: " + UtilsGlobal::getShortCommitHash() +
+		", built: " + BUILD_TIME_UTC +
+		") ---\n").c_str());
     #endif
 #else
 	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 RELOADED ---\n");

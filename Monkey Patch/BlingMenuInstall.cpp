@@ -27,22 +27,29 @@ extern bool NoclipEnabled;
 namespace BlingMenuInstall
 {
 
-    bool BM_Juiced_Kobra_Toggle = false;
+    BYTE BM_Juiced_Kobra_Toggle = false;
     // YOU NEED USERDATA AND ACTION!
     const char* BM_ReportVersion(void* userdata, int action) {
-        if (action != -1)
-            BM_Juiced_Kobra_Toggle = !BM_Juiced_Kobra_Toggle;
+        if (action == 1) {
+            BM_Juiced_Kobra_Toggle = (BM_Juiced_Kobra_Toggle + 1) % 3;
+        }
+        else if (action == 0) {
+            BM_Juiced_Kobra_Toggle = (BM_Juiced_Kobra_Toggle + 2) % 3;
+        }
+
+        static std::string commitStr;
+
         switch (BM_Juiced_Kobra_Toggle) {
-        case false: {
-            static std::string versionStr;
-            versionStr = std::string(UtilsGlobal::juicedversion);
-            return versionStr.c_str();
+        case 0:
+            return UtilsGlobal::juicedversion;
+        case 1:
+            commitStr = std::string(UtilsGlobal::getShortCommitHash()) + ", " + BUILD_TIME_UTC;
+            return commitStr.c_str();
+        case 2:
+            return "By Kobraworks";
+        default:
+            return UtilsGlobal::juicedversion;
         }
-                  break;
-        case true: return "By Kobraworks"; break;
-
-        }
-
     }
     static BYTE BM_sleephack = 0; // Default to 0, but actual state is determined dynamically
 
