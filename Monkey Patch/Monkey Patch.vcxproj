@@ -132,6 +132,9 @@
       </Command>
     </PreLinkEvent>
     <PostBuildEvent />
+    <PreBuildEvent>
+      <Command>call "$(ProjectDir)prebuild.bat" "$(ProjectDir)"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -160,6 +163,9 @@ copy /Y "$(TargetDir)DFEngine.dll" "Z:\Games\Saints Row 2\DFEngine.dll" ||  ^
 copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2"
 </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>call "$(ProjectDir)prebuild.bat" "$(ProjectDir)"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug - LITE|Win32'">
     <ClCompile>
@@ -187,6 +193,9 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
 copy /Y "$(TargetDir)DFEngine.dll" "Z:\Games\Saints Row 2\DFEngine.dll"
 </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>call "$(ProjectDir)prebuild.bat" "$(ProjectDir)"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RELOADED|Win32'">
     <ClCompile>
@@ -212,6 +221,9 @@ copy /Y "$(TargetDir)DFEngine.dll" "Z:\Games\Saints Row 2\DFEngine.dll"
       <Command>copy /Y "$(TargetDir)RLEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\RLEngine.dll"
 </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>call "$(ProjectDir)prebuild.bat" "$(ProjectDir)"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Reloaded Debug|Win32'">
     <ClCompile>
@@ -239,6 +251,9 @@ copy /Y "$(TargetDir)DFEngine.dll" "C:\Program Files (x86)\Steam\steamapps\commo
 copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEngine.dll"
 </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>call "$(ProjectDir)prebuild.bat" "$(ProjectDir)"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Audio\Audio.cpp" />

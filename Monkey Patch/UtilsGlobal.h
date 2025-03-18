@@ -1,5 +1,6 @@
 #pragma once
 #include <corecrt_math_defines.h>
+#include "..\Generated\BuildInfo.h"
 namespace UtilsGlobal {
 
 inline uintptr_t getplayer(bool provideaddress = false) {
@@ -18,6 +19,10 @@ inline const char* juicedversion = "1.1.1";
 #else
 inline const char* juicedversion = "7.3.3";
 #endif
+
+inline std::string getShortCommitHash(size_t length = 7) {
+    return std::string(GIT_COMMIT_HASH).substr(0, length);
+}
 
 struct mouse {
     static constexpr uintptr_t x_delta_address = 0x234F45C;
