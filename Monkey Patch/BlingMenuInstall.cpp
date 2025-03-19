@@ -110,186 +110,19 @@ namespace BlingMenuInstall
         }
         return "OFF"; // Fallback (should never reach here)
     }
-
-    const char* BM_ClassicGTAIdleCam(void* userdata, int action) {
+    const char* BM_VFXPlus(void* userdata, int action) {
         using namespace Render3D;
         if (action != -1) {
-            if (CMPatches_ClassicGTAIdleCam.IsApplied())
-                CMPatches_ClassicGTAIdleCam.Restore();
-            else
-                CMPatches_ClassicGTAIdleCam.Apply();
+            if (CMPatches_VFXPlus.IsApplied())
+                CMPatches_VFXPlus.Restore();
+            else {
+                #define HDR_toggle *(bool*)0x00E97882
+                if(!HDR_toggle)
+                HDR_toggle = true;
+                CMPatches_VFXPlus.Apply();
+            }
         }
-        switch (CMPatches_ClassicGTAIdleCam.IsApplied()) {
-        case false: return "OFF";
-            break;
-        case true: return "ON ";
-            break;
-        }
-        return ERROR_MESSAGE;
- }
-
-    const char* BM_UncapFPS(void* userdata, int action) {
-        using namespace Render3D;
-        if (action != -1) {
-            if (CUncapFPS.IsApplied())
-                CUncapFPS.Restore();
-            else
-                CUncapFPS.Apply();
-        }
-        switch (CUncapFPS.IsApplied()) {
-        case false: return "OFF";
-            break;
-        case true: return "ON ";
-            break;
-        }
-        return ERROR_MESSAGE;
- }
-
-    const char* BM_BetterAO(void* userdata, int action) {
-        using namespace Render3D;
-        if (action != -1) {
-            if (CBetterAO.IsApplied())
-                CBetterAO.Restore();
-            else
-                CBetterAO.Apply();
-        }
-        switch (CBetterAO.IsApplied()) {
-        case false: return "OFF";
-            break;
-        case true: return "ON ";
-            break;
-        }
-        return ERROR_MESSAGE;
-    }
-
-    const char* BM_DisableFog(void* userdata, int action) {
-        using namespace Render3D;
-        if (action != -1) {
-            if (CMPatches_DisableFog.IsApplied())
-                CMPatches_DisableFog.Restore();
-            else
-                CMPatches_DisableFog.Apply();
-        }
-        switch (CMPatches_DisableFog.IsApplied()) {
-        case false: return "OFF";
-            break;
-        case true: return "ON ";
-            break;
-        }
-        return ERROR_MESSAGE;
-    }
-
-    const char* BM_DisableCutSceneBlackBars(void* userdata, int action) {
-        using namespace Render3D;
-        if (action != -1) {
-            if (CRemoveBlackBars.IsApplied())
-                CRemoveBlackBars.Restore();
-            else
-                CRemoveBlackBars.Apply();
-            // Just showing that you can save with BM.
-            GameConfig::SetValue("Graphics", "RemoveBlackBars", (uint32_t)CRemoveBlackBars.IsApplied());
-        }
-        switch (CRemoveBlackBars.IsApplied()) {
-        case false: return "OFF";
-            break;
-        case true: return "ON ";
-            break;
-        }
-        return ERROR_MESSAGE;
-    }
-
-    const char* BM_DBC(void* userdata, int action) {
-        using namespace Behavior;
-        if (action != -1) {
-            if (CBetterDBC.IsApplied())
-                CBetterDBC.Restore();
-            else
-                CBetterDBC.Apply();
-        }
-        switch (CBetterDBC.IsApplied()) {
-        case false: return "OFF";
-            break;
-        case true: return "ON ";
-            break;
-        }
-        return ERROR_MESSAGE;
-}
-    const char* BM_HBC(void* userdata, int action) {
-        using namespace Behavior;
-        if (action != -1) {
-            if (CBetterHBC.IsApplied())
-                CBetterHBC.Restore();
-            else
-                CBetterHBC.Apply();
-        }
-        switch (CBetterHBC.IsApplied()) {
-        case false: return "OFF";
-            break;
-        case true: return "ON ";
-            break;
-        }
-        return ERROR_MESSAGE;
-}
-    const char* BM_AnimBlend(void* userdata, int action) {
-        using namespace Behavior;
-        if (action != -1) {
-            if (CAnimBlend.IsApplied())
-                CAnimBlend.Restore();
-            else
-                CAnimBlend.Apply();
-        }
-        switch (CAnimBlend.IsApplied()) {
-        case false: return "OFF";
-            break;
-        case true: return "ON ";
-            break;
-        }
-        return ERROR_MESSAGE;
-}
-
-    const char* BM_SR1QuickSwitch(void* userdata, int action) {
-        using namespace Behavior;
-        if (action != -1) {
-            if (CMPatches_SR1QuickSwitch.IsApplied())
-                CMPatches_SR1QuickSwitch.Restore();
-            else
-                CMPatches_SR1QuickSwitch.Apply();
-        }
-        switch (CMPatches_SR1QuickSwitch.IsApplied()) {
-        case false: return "OFF";
-            break;
-        case true: return "ON ";
-            break;
-        }
-        return ERROR_MESSAGE;
-    }
-
-    const char* BM_SR1Reloading(void* userdata, int action) {
-        using namespace Behavior;
-        if (action != -1) {
-            if (CMPatches_SR1Reloading.IsApplied())
-                CMPatches_SR1Reloading.Restore();
-            else
-                CMPatches_SR1Reloading.Apply();
-        }
-        switch (CMPatches_SR1Reloading.IsApplied()) {
-        case false: return "OFF";
-            break;
-        case true: return "ON ";
-            break;
-        }
-        return ERROR_MESSAGE;
-    }
-
-    const char* BM_FixHorizontalMouseSensitivity(void* userdata, int action) {
-        using namespace General;
-        if (action != -1) {
-            if (CFixHorizontalMouseSensitivity.IsApplied())
-                CFixHorizontalMouseSensitivity.Restore();
-            else
-                CFixHorizontalMouseSensitivity.Apply();
-        }
-        switch (CFixHorizontalMouseSensitivity.IsApplied()) {
+        switch (CMPatches_VFXPlus.IsApplied()) {
         case false: return "OFF";
             break;
         case true: return "ON ";
@@ -367,7 +200,18 @@ namespace BlingMenuInstall
         return CMPatches_TervelTextureCrashWorkaround_be_as_pe.IsApplied() ? "ON " : "OFF";
     }
 
-
+        BM_MakeCPatchFunction(ClassicGTAIdleCam, CMPatches_ClassicGTAIdleCam, Render3D)
+        BM_MakeCPatchFunction(UncapFPS, CUncapFPS, Render3D)
+        BM_MakeCPatchFunction(BetterAO, CBetterAO, Render3D)
+        BM_MakeCPatchFunction(DisableSkyRefl, CMPatches_DisableSkyRefl, Render3D)
+        BM_MakeCPatchFunction(DisableFog, CMPatches_DisableFog, Render3D)
+        BM_MakeCPatchFunction(DBC, CBetterDBC, Behavior)
+        BM_MakeCPatchFunction(HBC, CBetterHBC, Behavior)
+        BM_MakeCPatchFunction(AnimBlend, CAnimBlend, Behavior)
+        BM_MakeCPatchFunction(FixHorizontalMouseSensitivity, CFixHorizontalMouseSensitivity, General)
+        BM_MakeCPatchFunction(SR1Reloading, CMPatches_SR1Reloading, Behavior)
+        BM_MakeCPatchFunction(SR1QuickSwitch, CMPatches_SR1QuickSwitch, Behavior)
+        BM_MakeCPatchFunctionSaveConfig(DisableCutSceneBlackBars, CRemoveBlackBars, Render3D, "Graphics", "RemoveBlackBars")
 
     void BM_restoreHavok() {
         if(!Debug::fixFrametime)
@@ -408,6 +252,8 @@ namespace BlingMenuInstall
        BlingMenuAddBool("Juiced", "Fix Havok Frametime",&Debug::fixFrametime, BM_restoreHavok);
        BlingMenuAddFuncCustom("Juiced", "Uncap FPS", NULL, &BM_UncapFPS, NULL);
        BlingMenuAddInt8("Juiced", "OSD", (signed char*)&useJuicedOSD, NULL, 1, 0, 3);
+       BlingMenuAddFuncCustom("Juiced", "VanillaFXPlus", NULL, &BM_VFXPlus, NULL);
+       BlingMenuAddFuncCustom("Juiced", "Disable Sky Reflections", NULL, &BM_DisableSkyRefl, NULL);
        BlingMenuAddFuncCustom("Juiced", "Better Ambient Occlusion", NULL, &BM_BetterAO, NULL);
        BlingMenuAddFuncCustom("Juiced", "Disable Cutscene black-bars", NULL, &BM_DisableCutSceneBlackBars, NULL);
        BlingMenuAddFuncCustom("Juiced", "Disable Fog", NULL, &BM_DisableFog, NULL);
@@ -415,7 +261,9 @@ namespace BlingMenuInstall
            AspectRatioFix();
            GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
            }, 0.01, 0.1, 5.0);
-       BlingMenuAddInt("Juiced","Vehicle Auto Center Modifer",&Behavior::sticky_cam_timer_add,NULL,250,0, INT_MAX - 1500);
+       BlingMenuAddInt("Juiced", "Vehicle Auto Center Modifer", &Behavior::sticky_cam_timer_add, []() {
+           GameConfig::SetValue("Gameplay", "VehicleAutoCenterModifer", Behavior::sticky_cam_timer_add);
+           }, 250, 0, INT_MAX - 1500);
        BlingMenuAddFuncCustom("Juiced", "Better Drive-by Cam", NULL, &BM_DBC, NULL);
        BlingMenuAddFuncCustom("Juiced", "Better Handbrake Cam", NULL, &BM_HBC, NULL);
        BlingMenuAddFuncCustom("Juiced", "Fix Horizontal Mouse Sensitivity", NULL, &BM_FixHorizontalMouseSensitivity, NULL);

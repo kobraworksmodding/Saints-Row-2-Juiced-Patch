@@ -19,6 +19,8 @@ namespace Render3D
     extern CMultiPatch CMPatches_PatchLowSleepHack;
     extern CMultiPatch CMPatches_ClassicGTAIdleCam;
     extern CMultiPatch CMPatches_DisableFog;
+    extern CMultiPatch CMPatches_VFXPlus;
+    extern CMultiPatch CMPatches_DisableSkyRefl;
     extern CPatch CPatches_MediumSleepHack;
     extern CPatch CUncapFPS;
     extern CPatch CBetterAO;
