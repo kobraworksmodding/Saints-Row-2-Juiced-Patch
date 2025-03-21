@@ -12,10 +12,23 @@
 
 #include "Input.h"
 #include "../UtilsGlobal.h"
-
+#include "../SafeWrite.h"
+#include <safetyhook.hpp>
+extern bool IsKeyPressed(unsigned char Key, bool Hold);
 namespace Input {
-
-
+	GAME_LAST_INPUT g_lastInput = UNKNOWN;
+	GAME_LAST_INPUT LastInput() {
+		using namespace UtilsGlobal;
+		float LeftStickX = *(float*)0x23485F4;
+		float LeftStickY = *(float*)0x23485F8;
+		if (LeftStickX != 0.f || LeftStickY != 0.f)
+			g_lastInput = CONTROLLER;
+	
+		if(mouse().getXdelta() || mouse().getYdelta())
+			g_lastInput = MOUSE;
+		return g_lastInput;
+	
+	}
 	typedef int(__stdcall* XInputEnableT)(bool Enable); // this is a deprecated feature and I couldn't get it to register through the XInput lib
 	XInputEnableT XInputEnable = (XInputEnableT)0x00CCD4F8;
 
@@ -113,7 +126,6 @@ namespace Input {
 		// Only current issue as of now is that the tickrate of the function we're replacing is quite low so it doesn't detect small mouse movements, 
 		// not an issue of the mouse struct as if we move this to the main game loop it's actually quite smooth! also it's pretty slow that it can't even detect scroll wheel :(
 
-
 		int8_t& busy = *(int8_t*)(0x00E8D57F);
 		UtilsGlobal::mouse mouse;
 		//float wheeldelta = mouse.getWheeldelta() * 7.5f;
@@ -151,7 +163,147 @@ namespace Input {
 
 	}
 
+	typedef char(*CDBP_mouse_poolT)();
+	CDBP_mouse_poolT CDBP_mouse_pool = (CDBP_mouse_poolT)0xC13660;
+	static float wheel_x = 0.0f;
+	static float wheel_y = 0.0f;
+	volatile char KEY_inventory_up = 'W';
+	volatile char KEY_inventory_down = 'S';
+	volatile char KEY_inventory_left = 'A';
+	volatile char KEY_inventory_right = 'D';
+	void reset_weapon_wheel_mousefix_pos() {
+		wheel_x = 0.f;
+		wheel_y = 0.f;
+	}
+#pragma optimize("", off)
+	static bool was_up_pressed = false;
+	static bool was_down_pressed = false;
+	static bool was_left_pressed = false;
+	static bool was_right_pressed = false;
+	__declspec(noinline) char CDBP_mouse_poll_hook() {
+		using namespace UtilsGlobal;
+		char result = CDBP_mouse_pool();
+		byte* invopen = (byte*)0x00E863C8;
+		float* inventory_x = (float*)0x2348574;
+		float* inventory_y = (float*)0x2348578;
+
+		if (*invopen == 36) {
+			// Get mouse movement deltas
+			int dx = mouse().getXdelta();
+			int dy = mouse().getYdelta();
+
+			// Convert to float and apply sensitivity factor (adjust as needed)
+			const float sensitivity = 0.5f;
+			float fdx = dx * sensitivity;
+			float fdy = dy * sensitivity;
+
+
+			wheel_x += fdx;
+			wheel_y += fdy;
+
+			SafeWrite8(0x23494E0, IsKeyPressed('W', true));
+
+			// Normalize to keep within -1.0 to 1.0 circle
+			float length = sqrt(wheel_x * wheel_x + wheel_y * wheel_y);
+			if (length > 1.0f) {
+				wheel_x /= length;
+				wheel_y /= length;
+			}
+			printf("wheel_x %f, wheel_y %f \n", wheel_x, wheel_y);
+			// Only update the game's inventory position when inventory is open
+
+
+			if (IsKeyPressed(KEY_inventory_up, true) || IsKeyPressed(KEY_inventory_down, true) || IsKeyPressed(KEY_inventory_right, true) || IsKeyPressed(KEY_inventory_left, true))
+				reset_weapon_wheel_mousefix_pos();
+
+			if (LastInput() == MOUSE) {
+				*inventory_x = wheel_x;
+				*inventory_y = -wheel_y;
+			}
+		}
+		return result;
+	}
+#pragma optimize("", on)
+
+	typedef int(*Input_LoopT)();
+	Input_LoopT input_loop = (Input_LoopT)0x00C11710;
+
+	int input_loop_hook() {
+#define ARROW_UP (bool*)0x23494E0
+#define ARROW_DOWN (bool*)0x2349540
+#define ARROW_RIGHT (bool*)0x0234951C 
+#define ARROW_LEFT (bool*)0x02349504
+
+		int result = input_loop();
+
+		if ((*(byte*)0x00E863C8 == 36)) {
+			// Handle UP key
+			bool is_up_pressed_now = IsKeyPressed(KEY_inventory_up, true);
+			if (is_up_pressed_now) {
+				reset_weapon_wheel_mousefix_pos();
+				*ARROW_UP = 1;
+				was_up_pressed = true;
+			}
+			else if (was_up_pressed) {
+				*ARROW_UP = 0;
+				was_up_pressed = false;
+			}
+
+
+			bool is_down_pressed_now = IsKeyPressed(KEY_inventory_down, true);
+			if (is_down_pressed_now) {
+				reset_weapon_wheel_mousefix_pos();
+				*ARROW_DOWN = 1;
+				was_down_pressed = true;
+			}
+			else if (was_down_pressed) {
+				*ARROW_DOWN = 0;
+				was_down_pressed = false;
+			}
+
+
+			bool is_left_pressed_now = IsKeyPressed(KEY_inventory_left, true);
+			if (is_left_pressed_now) {
+				reset_weapon_wheel_mousefix_pos();
+				*ARROW_LEFT = 1;
+				was_left_pressed = true;
+			}
+			else if (was_left_pressed) {
+				*ARROW_LEFT = 0;
+				was_left_pressed = false;
+			}
+
+
+			bool is_right_pressed_now = IsKeyPressed(KEY_inventory_right, true);
+			if (is_right_pressed_now) {
+				reset_weapon_wheel_mousefix_pos();
+				*ARROW_RIGHT = 1;
+				was_right_pressed = true;
+			}
+			else if (was_right_pressed) {
+				*ARROW_RIGHT = 0;
+				was_right_pressed = false;
+			}
+		}
+
+		return result;
+	}
+	SafetyHookMid NoMixedInput;
+	SAFETYHOOK_NOINLINE void NoMixedInput_mid(safetyhook::Context32& ctx) {
+#define CONTROLLER_STATUS_ADDR (int*)0x23486FC
+		if (*CONTROLLER_STATUS_ADDR == 3);
+
+	}
 	void Init() {
+
+		//WriteRelCall(0x00C147A5, (UInt32)&CDBP_mouse_poll_hook);
+		KEY_inventory_up = (char)GameConfig::GetValue("Input", "KEY_inventory_up", 'W');
+		KEY_inventory_down = (char)GameConfig::GetValue("Input", "KEY_inventory_down", 'S');
+		KEY_inventory_left = (char)GameConfig::GetValue("Input", "KEY_inventory_left", 'A');
+		KEY_inventory_right = (char)GameConfig::GetValue("Input", "KEY_inventory_right", 'D');
+		patchCall((void*)0x00758C03, input_loop_hook);
+		patchCall((void*)0x00758C15, input_loop_hook);
+		patchCall((void*)0x00C1478E, input_loop_hook);
 		betterTags = 0;
 
 		DisableXInput();

@@ -4,3 +4,8 @@ namespace Input {
     
 	inline bool betterTags;
 }
+enum GAME_LAST_INPUT: BYTE{
+	UNKNOWN,
+	MOUSE,
+	CONTROLLER,
+};

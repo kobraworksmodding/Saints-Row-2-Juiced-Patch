@@ -1,6 +1,7 @@
 #if !RELOADED && !JLITE
 #include "GameConfig.h"
 #include "Patcher/CPatch.h"
+#include "SafeWrite.h"
 #include "BlingMenu_public.h"
 #include "BlingMenuInstall.h"
 #include "InternalNameLists.h"
@@ -339,6 +340,12 @@ namespace BlingMenuInstall
        //BlingMenuAddBool("Juiced Debug", "simulate a add_to_entry crash(only works when below handler is hooked)", &Render3D::crash, NULL);
        BlingMenuAddFuncCustom("Juiced Debug", "Hook a (eh) exception-ish handler to stop add_to_entry crash", NULL, &BM_ClippyTextureExceptionHandle, NULL);
        BlingMenuAddFuncCustom("Juiced Debug", "Hook / make add_to_entry(bitmap_entry *be,peg_entry *pe) to just use pe as both args", NULL, &BM_TervelCrashWorkAround, NULL);
+       BlingMenuAddFunc("Juiced Debug", "inventory_left", []() {
+           SafeWrite8(0x2347A1B, 1);
+           SafeWrite8(0x2348BEF, 1);
+           SafeWrite8(0x2348027, 1);
+           SafeWrite8(0x23494E0, 1);
+           });
 
        }
     }

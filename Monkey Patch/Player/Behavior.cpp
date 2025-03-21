@@ -19,7 +19,7 @@ static float garbagedata = 0;
 double bogusPi = 2.90;
 double bogusRagForce = 2.5;
 double animBlend = 3.0;
-
+extern bool IsKeyPressed(unsigned char Key, bool Hold);
 namespace Behavior
 {
 	int sticky_cam_timer_add = 0;
@@ -210,7 +210,6 @@ CMultiPatch CMPatches_SR1Reloading = {
 		ctx.xmm1.f32[0] = mouse_x + *rs_x;
 		ctx.xmm0.f32[0] = mouse_y + *rs_y;
 	}
-
 #if !JLITE
 	CPatch CAnimBlend = CPatch::SafeWrite32(0x006F1CA6 + 2, (uint32_t)&animBlend);
 #endif
