@@ -1,0 +1,317 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Patches">
+      <UniqueIdentifier>{4356b998-3ad7-4d14-b7a3-502fa5b049cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Patcher">
+      <UniqueIdentifier>{9c03fad6-fb9a-4d97-ba74-09c7dc40c409}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ext">
+      <UniqueIdentifier>{8c8ecee8-da82-4a5d-9e2e-2361e7539a78}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Player">
+      <UniqueIdentifier>{da19ed40-d773-4be3-8fa8-442d99b40775}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Mem">
+      <UniqueIdentifier>{55e17dfc-2649-4e9d-91b0-fe14fc538fd5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UGC">
+      <UniqueIdentifier>{f70d8519-889c-4acb-9e6a-786423e952b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Render">
+      <UniqueIdentifier>{1db8fbec-b793-42cf-8eb4-30fa4534eca0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Network">
+      <UniqueIdentifier>{b83cb043-6055-419b-bd10-3bb44452f49e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math">
+      <UniqueIdentifier>{a786af15-dedf-4030-9d0f-45c55817223e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\LUA">
+      <UniqueIdentifier>{fe08247a-9082-4937-ac9a-58374eab3d71}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Audio">
+      <UniqueIdentifier>{8c98ceaa-92e4-4cc1-91ea-49e7664570e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\General">
+      <UniqueIdentifier>{b9eb4fc8-8780-4b98-afe3-b1178953a01c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DFEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FileLogger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="iat_functions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MainHooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SafeWrite.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\QueryPerformance Fix.cpp">
+      <Filter>Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="Patcher\patch.cpp">
+      <Filter>Patcher</Filter>
+    </ClCompile>
+    <ClCompile Include="GameConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\OpenSpy.cpp">
+      <Filter>Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\GOG No FPS limiter.cpp">
+      <Filter>Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="RPCHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ErrorManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LAAPatcher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Player\Behavior.cpp">
+      <Filter>Source Files\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Mem\Memory.cpp">
+      <Filter>Source Files\Mem</Filter>
+    </ClCompile>
+    <ClCompile Include="UGC\Reloaded.cpp">
+      <Filter>Source Files\UGC</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\Render3D.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="loose files.cpp">
+      <Filter>Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="metrics dump.cpp">
+      <Filter>Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="UGC\InternalPrint.cpp">
+      <Filter>Source Files\UGC</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetPlayer.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Math.cpp">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="LUA\GLua.cpp">
+      <Filter>Source Files\LUA</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Ext\Hooking.Patterns.cpp">
+      <Filter>Ext</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\XACT.cpp">
+      <Filter>Source Files\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\Audio.cpp">
+      <Filter>Source Files\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="General\General.cpp">
+      <Filter>Source Files\General</Filter>
+    </ClCompile>
+    <ClCompile Include="Player\Input.cpp">
+      <Filter>Source Files\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\Render2D.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\Gamespy.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="UGC\Debug.cpp">
+      <Filter>Source Files\UGC</Filter>
+    </ClCompile>
+    <ClCompile Include="Patcher\CPatch.cpp">
+      <Filter>Patcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Patcher\CMultiPatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BlingMenuInstall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Ext\Zydis.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Ext\safetyhook.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DFEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileLogger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="iat_functions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MainHooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SafeWrite.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Patches\All Patches.h">
+      <Filter>Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="Patches\QueryPerformance Fix.h">
+      <Filter>Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="Patcher\patch.h">
+      <Filter>Patcher</Filter>
+    </ClInclude>
+    <ClInclude Include="GameConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Patches\OpenSpy.h">
+      <Filter>Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="Patches\GOG No FPS limiter.h">
+      <Filter>Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="RPCHandler.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorManager.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\inc\lua\lauxlib.h">
+      <Filter>Ext</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\inc\lua\lua.h">
+      <Filter>Ext</Filter>
+    </ClInclude>
+    <ClInclude Include="ext\inc\lua\lualib.h">
+      <Filter>Ext</Filter>
+    </ClInclude>
+    <ClInclude Include="LAAPatcher.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Player\Behavior.h">
+      <Filter>Source Files\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Mem\Memory.h">
+      <Filter>Source Files\Mem</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Render3D.h">
+      <Filter>Source Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="loose files.h">
+      <Filter>Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="metrics dump.h">
+      <Filter>Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="UGC\InternalPrint.h">
+      <Filter>Source Files\UGC</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\NetPlayer.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Math.h">
+      <Filter>Source Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="LUA\GLua.h">
+      <Filter>Source Files\LUA</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UGC\Reloaded.h">
+      <Filter>Source Files\UGC</Filter>
+    </ClInclude>
+    <ClInclude Include="Ext\Hooking.Patterns.h">
+      <Filter>Ext</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UtilsGlobal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\XACT.h">
+      <Filter>Source Files\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\Audio.h">
+      <Filter>Source Files\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="General\General.h">
+      <Filter>Source Files\General</Filter>
+    </ClInclude>
+    <ClInclude Include="Player\Input.h">
+      <Filter>Source Files\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\Render2D.h">
+      <Filter>Source Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Gamespy.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="UGC\Debug.h">
+      <Filter>Source Files\UGC</Filter>
+    </ClInclude>
+    <ClInclude Include="BlingMenu_public.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Patcher\CPatch.h">
+      <Filter>Patcher</Filter>
+    </ClInclude>
+    <ClInclude Include="Patcher\CMultiPatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BlingMenuInstall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InternalNameLists.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ext\safetyhook.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ext\Zydis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Properties.rc" />
+  </ItemGroup>
+</Project>
