@@ -196,10 +196,10 @@ CMultiPatch CMPatches_SR1Reloading = {
 
 	 SAFETYHOOK_NOINLINE void slewmode_control_rewrite(safetyhook::Context32& ctx) {
 		using namespace UtilsGlobal;
-		mouse mouse;
-		float mouse_x = mouse.getXdelta() / 30.f;
+
+		float mouse_x = (mouse().getXdelta() / 30.f) * mouse().getMouseX_sens();
 		// re-inverted because Tervel inverted it somewhere.
-		float mouse_y = -mouse.getYdelta() / 30.f;
+		float mouse_y = (-mouse().getYdelta() / 30.f) * mouse().getMouseY_sens();
 		float* rs_x = (float*)(0x023485B4);
 		float* rs_y = (float*)(0x023485B8);
 

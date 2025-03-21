@@ -183,8 +183,69 @@ namespace Render3D
 		patchBytesM((BYTE*)0x0068C714, (BYTE*)"\x6A\x0F", 2); // this is a sleep call for first load/legal disclaimers, its set to 30 by default, halfing increases fps to 60 and makes loading faster.
 	}
 
+	CMultiPatch CMPatches_VFXPlus = {
+
+		[](CMultiPatch& mp) {
+			mp.AddPatchNop(0x00773797,5); // prevent the game from disabling/enabling the tint.
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWriteBuf(0x0051A952, "\xD9\x05\x7F\x2C\x7B\x02", 6);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWriteBuf(0x0051A997, "\xD9\x05\x83\x2C\x7B\x02", 6);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWriteBuf(0x0051A980, "\xD9\x05\x87\x2C\x7B\x02", 6);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite8(0x00E9787F,0x1);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddPatchNop(0x00773792,5);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite8(0x00517051,0x8B);
+		},
+
+		[](CMultiPatch& mp) {
+		if (GameConfig::GetValue("Graphics", "X360Gamma", 1)) {
+			mp.AddSafeWrite<float>(0x027B2C7F,1.32f);
+			mp.AddSafeWrite<float>(0x027B2C83, 0.8f);
+			mp.AddSafeWrite<float>(0x027B2C87, 1.58f);
+			}
+		else {
+			mp.AddSafeWrite<float>(0x027B2C7F,1.26f);
+			mp.AddSafeWrite<float>(0x027B2C83, 0.8f);
+			mp.AddSafeWrite<float>(0x027B2C87, 1.62f);
+}
+		},
+		[](CMultiPatch& mp) {
+		mp.AddSafeWriteBuf(0x00524BA4, (BYTE*)"\xD9\x05\xBA\x2C\x7B\x02", 6);
+		mp.AddSafeWriteBuf(0x00D1A333, (BYTE*)"\xD9\x05\xBA\x2C\x7B\x02", 6);
+		mp.AddSafeWriteBuf(0x00524BB0, (BYTE*)"\xD9\x05\xBE\x2C\x7B\x02", 6);
+		mp.AddSafeWriteBuf(0x00D1A3A3, (BYTE*)"\xD9\x05\xBE\x2C\x7B\x02", 6);
+		},
+
+		[](CMultiPatch& mp) {
+		// lol
+		mp.AddSafeWrite8((uintptr_t)&VFXP_fixFog,1);
+		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) == 0) {
+			mp.AddSafeWriteBuf(0x005170EF, (BYTE*)"\x75", 1); // prevent bloom from appearing without breaking glow
+		}
+		}
+	};
+
 	void VFXPlus()
 	{
+		Logger::TypedLog(CHN_DEBUG, "Patching VanillaFXPlus...\n");
+		CMPatches_VFXPlus.Apply();
+		return;
 		Logger::TypedLog(CHN_DEBUG, "Patching VanillaFXPlus...\n");
 		patchNop((BYTE*)0x00773797, 5); // prevent the game from disabling/enabling the tint.
 		patchBytesM((BYTE*)0x0051A952, (BYTE*)"\xD9\x05\x7F\x2C\x7B\x02", 6); // new brightness address
@@ -216,11 +277,18 @@ namespace Render3D
 			patchBytesM((BYTE*)0x005170EF, (BYTE*)"\x75", 1); // prevent bloom from appearing without breaking glow
 		}
 	}
-
+	CMultiPatch CMPatches_DisableSkyRefl = {
+	[](CMultiPatch& mp) {
+			mp.AddPatchNop(0x00532A4F,6); // nop for whatever the fuck
+			mp.AddSafeWriteBuf(0x00532992, "\xDD\x05\xAA\x2C\x7B\x02", 6); // new opacity address for sky reflections
+			mp.AddSafeWrite<double>(0x027B2CAA, 128.0);
+		},
+	};
 	void DisableSkyRefl() {
-		patchNop((BYTE*)0x00532A4F, 6); // nop for whatever the fuck
-		patchBytesM((BYTE*)0x00532992, (BYTE*)"\xDD\x05\xAA\x2C\x7B\x02", 6); // new opacity address for sky reflections
-		patchDouble((BYTE*)0x027B2CAA, 128.0);
+		CMPatches_DisableSkyRefl.Apply();
+		//patchNop((BYTE*)0x00532A4F, 6); // nop for whatever the fuck
+		//patchBytesM((BYTE*)0x00532992, (BYTE*)"\xDD\x05\xAA\x2C\x7B\x02", 6); // new opacity address for sky reflections
+		//patchDouble((BYTE*)0x027B2CAA, 128.0);
 	}
 
 	CMultiPatch CMPatches_DisableFog = {
@@ -499,11 +567,11 @@ namespace Render3D
 
 // This whole thing might have a performance hit.
  int __stdcall SafeAddToEntry(void* be, void* pe) {
-	 if (crash) {
+	 /*if (crash) {
 		 Logger::TypedLog(CHN_DEBUG, "CRASH TEST: Forcing invalid memory access\n");
 		 be = reinterpret_cast<void*>(0xDEADBEEF);
 		 crash = false;
-	 }
+	 }*/
 		if (!IsMemoryReadable(be)) {
 			for(int i = 0; i<11; i++)
 			Logger::TypedLog("add_to_entry hook", "!!!Invalid be pointer: %p\n", be);

@@ -20,13 +20,13 @@ char dump_name[] = "dump";
 
 HWND ConsoleWindow = nullptr;
 
-// Code reused from reTHAWed.
-// Special thanks to Zedek
 namespace Logger
 {
 	bool ConsoleAllowed() { return l_UseConsole; }
 	bool OutputAllowed() { return l_DebugOutput; }
 
+	// Ported from WTDE, fix this in the future if desired
+	// (For now, we'll just spit all logs to console)
 	bool ChannelAllowed(const char* category) { return true; }
 
 	//------------------------
@@ -73,6 +73,37 @@ namespace Logger
 			if (!f_tracer)
 				Log("Failed to create trace.txt file.\n");
 		}
+	}
+
+	//------------------------
+	// Save a copy of the debug log at time of crash
+	//------------------------
+
+	bool SaveDebugLogCopy(const char* destPath)
+	{
+		bool success = false;
+
+		// Make sure all current logs are written to disk
+		if (f_logger) {
+			fflush(f_logger);
+		}
+
+		// Close the current debug.txt file temporarily
+		FILE* tempLogger = f_logger;
+		f_logger = nullptr;
+
+		if (tempLogger) {
+			fclose(tempLogger);
+		}
+
+		if (CopyFileA("debug.txt", destPath, FALSE)) {
+			success = true;
+		}
+
+		// Reopen the debug.txt file for append
+		fopen_s(&f_logger, "debug.txt", "a");
+
+		return success;
 	}
 
 	//------------------------

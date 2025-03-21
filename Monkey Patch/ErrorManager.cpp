@@ -4,6 +4,8 @@
 #include <windows.h>
 #include <dbghelp.h>
 #pragma comment (lib, "dbghelp.lib")
+#include <time.h>
+#include <direct.h>
 #include "GameConfig.h"
 #include "FileLogger.h"
 #include "ErrorManager.h"
@@ -12,8 +14,6 @@
 #define NUM_ERRORCODES 19
 #define ERR_LENGTH 4096
 
-// Code reused from reTHAWed.
-// Special thanks to Zedek
 namespace ErrorManager
 {
     bool b_Enabled = false;
@@ -45,6 +45,70 @@ namespace ErrorManager
         {0x80000004, "EXCEPTION_SINGLE_STEP", EHR_CONTINUE},
         {0xC00000FD, "EXCEPTION_STACK_OVERFLOW", EHR_TERMINATE}
     };
+
+    // Function to create a backup of the error information and debug log
+    void BackupErrorLog(const char* errorMessage)
+    {
+        if (_mkdir("Juiced") != 0 && errno != EEXIST) {
+            Logger::TypedLog(CHN_DLL, "Failed to create Juiced directory\n");
+            return;
+        }
+
+        if (_mkdir("Juiced\\logs") != 0 && errno != EEXIST) {
+            Logger::TypedLog(CHN_DLL, "Failed to create logs directory\n");
+            return;
+        }
+
+        // Get current time for filename
+        time_t currentTime;
+        struct tm timeinfo;
+        char timeBuffer[80];
+
+        time(&currentTime);
+        localtime_s(&timeinfo, &currentTime);
+        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d_%H-%M-%S", &timeinfo);
+
+        // Create filenames with timestamp
+        char errorFilename[256];
+        char debugCopyFilename[256];
+        snprintf(errorFilename, sizeof(errorFilename), "Juiced\\logs\\crash_%s.log", timeBuffer);
+        snprintf(debugCopyFilename, sizeof(debugCopyFilename), "Juiced\\logs\\debug_%s.txt", timeBuffer);
+
+        // First, save a copy of the debug.txt file
+        bool debugCopySuccess = Logger::SaveDebugLogCopy(debugCopyFilename);
+
+        // Then create a crash log file with error details
+        FILE* crashLog;
+        if (fopen_s(&crashLog, errorFilename, "w") != 0 || !crashLog) {
+            Logger::TypedLog(CHN_DLL, "Failed to create crash log file: %s\n", errorFilename);
+            return;
+        }
+
+        // Write the crash information to the file
+        fprintf(crashLog, "=== CRASH LOG ===\n");
+        fprintf(crashLog, "Time: %s\n\n", timeBuffer);
+        fprintf(crashLog, "%s\n\n", errorMessage);
+
+        if (debugCopySuccess) {
+            fprintf(crashLog, "=== DEBUG INFO ===\n");
+            fprintf(crashLog, "A full debug log is available at: %s\n", debugCopyFilename);
+        }
+        else {
+            fprintf(crashLog, "=== DEBUG INFO ===\n");
+            fprintf(crashLog, "Attempted to save debug log to %s but the operation failed.\n", debugCopyFilename);
+        }
+
+        // Close the crash log file
+        fclose(crashLog);
+
+        Logger::TypedLog(CHN_DLL, "Created crash log: %s\n", errorFilename);
+        if (debugCopySuccess) {
+            Logger::TypedLog(CHN_DLL, "Created debug log copy: %s\n", debugCopyFilename);
+        }
+        else {
+            Logger::TypedLog(CHN_DLL, "Failed to create debug log copy\n");
+        }
+    }
 
     // ------------------------------------
 
@@ -151,7 +215,7 @@ namespace ErrorManager
             if (gameHasBrokeCounter <= 65000) { //Check for an absurbly high number to rule out this error EVER happening during regular gameplay. incase someone gets breakpoint spam.
                 if (!b_IgnoreVectoredExceptions)
                     gameHasBrokeCounter++; // Tick once every time EHR_CONTINUE has been checked.
-                    Logger::TypedLog(CHN_DEBUG, "Non-fatal exception %s occurred at 0x%08x. Continuing.\n", exceptionString, ExceptionInfo->ContextRecord->Eip);
+                Logger::TypedLog(CHN_DEBUG, "Non-fatal exception %s occurred at 0x%08x. Continuing.\n", exceptionString, ExceptionInfo->ContextRecord->Eip);
             }
             else { // Throw message telling user game will restart without ExceptionHandler.
                 GameConfig::SetValue("Logger", "ExceptionHandler", 0); // Turn off ExceptionHandler, Sadly.
@@ -211,19 +275,28 @@ namespace ErrorManager
         case 0x00c14a8d:
             strcat_s(errorBuffer, ERR_LENGTH, "\n\nCorrupted Input Driver.\n\nA corrupted input driver has tried to access vibration and caused the game to crash.\n\nTo fix this, turn \"ForceDisableVibration\" in reloaded.ini to 1.\n\nIf that doesn't work, vjoy is a device driver known to be problematic to SR2. If you have that installed it is recommended that you uninstall it.");
             break;
-
         }
 
         // ------------------
        // if (!crashAddr == 0x00ce59ac) {
-            FormatExceptionRecords(ExceptionInfo->ContextRecord, errorBuffer);
+        FormatExceptionRecords(ExceptionInfo->ContextRecord, errorBuffer);
        // }
         // ------------------
 
         strcat_s(errorBuffer, ERR_LENGTH, "\n\nShow this error message to someone who understands disassemblers/debuggers!");
 
-
         Logger::TypedLog(CHN_DLL, "  Wanting to show error...\n");
+
+        // Add the error to the debug log before creating the backup
+        Logger::TypedLog(CHN_DLL, "FATAL ERROR: %s\n", errorBuffer);
+
+        // Make sure all debug logs are written before creating the backup
+        if (f_logger) {
+            fflush(f_logger);
+        }
+
+        // Create backup of the error log with full debug information
+        BackupErrorLog(errorBuffer);
 
         // Show the error
         Logger::Error(errorBuffer);
@@ -332,6 +405,10 @@ namespace ErrorManager
             b_Enabled = true;
             SymInitialize(GetCurrentProcess(), NULL, TRUE); // To load module names
 
+            // Create the log directory structure
+            _mkdir("Juiced");
+            _mkdir("Juiced\\logs");
+
             if (GameConfig::GetValue("Logger", "ImmediateExceptionHandler", 0))
                 AssignHandler();
         }
@@ -339,5 +416,5 @@ namespace ErrorManager
             Logger::TypedLog(CHN_DLL, "Not using ExceptionHandler.\n");
     }
 
-    void IgnoreVectoredExceptions(bool ignored) { b_IgnoreVectoredExceptions = ignored; } 
+    void IgnoreVectoredExceptions(bool ignored) { b_IgnoreVectoredExceptions = ignored; }
 }

@@ -744,7 +744,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			//WriteRelJump(0x00C1371A, (UInt32)&WorkAroundHorizontalMouseSensitivityASMHelper); // attempt to fix Horizontal sens being 3x faster compared to vertical while on foot
 			CFixHorizontalMouseSensitivity.Apply();
 		}
-		//FixandImproveSlewMouseRuntimePatch();
 		WriteRelJump(0x0098E493, (UInt32)&StoreNPCPointer);
 		WriteRelJump(0x0098EE0B, (UInt32)&SpawningCheck);
 		if (!dirExists("./shaderoverride")) {

@@ -123,7 +123,7 @@ uintptr_t ReadPointer(uintptr_t baseAddress, const std::vector<uintptr_t>& offse
 	return address;
 }
 
-bool IsKeyPressed(unsigned char Key, bool Hold) // USE THIS FROM NOW ON
+__declspec(noinline) bool IsKeyPressed(unsigned char Key, bool Hold) // USE THIS FROM NOW ON
 {
 	if (General::IsSRFocused())
 	{
@@ -189,9 +189,17 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	}
 #if !RELOADED
 	#if JLITE
-	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " + std::string(UtilsGlobal::juicedversion) + " ---\n").c_str());
+	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " +
+		std::string(UtilsGlobal::juicedversion) +
+		" (commit: " + UtilsGlobal::getShortCommitHash() +
+		", built: " + BUILD_TIME_UTC +
+		") ---\n").c_str());
     #else
-	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED Version: " + std::string(UtilsGlobal::juicedversion) + " ---\n").c_str());
+	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED Version: " +
+		std::string(UtilsGlobal::juicedversion) +
+		" (commit: " + UtilsGlobal::getShortCommitHash() +
+		", built: " + BUILD_TIME_UTC +
+		") ---\n").c_str());
     #endif
 #else
 	Logger::TypedLog(CHN_DLL, " --- Welcome to Saints Row 2 RELOADED ---\n");
@@ -458,43 +466,6 @@ void Slew() {
 		}
 
 	}
-}
-
-void SlewScrollWheelSmoothing() {
-	UtilsGlobal::mouse mouse;
-	int wheel_delta = mouse.getWheeldelta();
-		if (wheel_delta) {
-			float* smoothing = (float*)(0x00E83E1C);
-			*smoothing = UtilsGlobal::clamp(*smoothing + ( (float)wheel_delta / 2850.f), 0.f, 1.3f);
-			//Logger::TypedLog(CHN_DEBUG, "Mouse slew smoothing: %f,\n", *smoothing);
-		}
-}
-
-void __declspec(naked) SlewScrollWheelSmoothingASMHelp() {
-	static int jmp_continue = 0x00C013E8;
-	__asm {
-		pushad
-		pushfd
-	}
-	__asm {
-		call SlewScrollWheelSmoothing
-	}
-	__asm {
-		popfd
-		popad
-		mov eax,edi
-		cdq
-		mov ecx,eax
-
-		jmp jmp_continue
-	}
-
-}
-
- void FixandImproveSlewMouseRuntimePatch() {
-	patchNop((BYTE*)0x0051FEA4, 6); // Allow mouse mode to be toggled by default.
-	patchFloat((BYTE*)0x00E83E1C, 0.3f); // Increase smoothing a bit by default for mouse.
-	WriteRelJump(0x00C013E3, (UInt32)&SlewScrollWheelSmoothingASMHelp);
 }
 
 void havokFrameTicker() { // Proper Frametime ticker by Tervel
