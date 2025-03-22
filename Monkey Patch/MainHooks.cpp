@@ -1570,7 +1570,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	Debug::Init();
 
 #if RELOADED
-	Reloaded::PatchTables();
 	Reloaded::Init();
 	Behavior::BetterMovement();
 #else
