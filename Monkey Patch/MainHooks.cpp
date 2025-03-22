@@ -11,8 +11,9 @@
 #include "LuaHandler.h"
 #include "DFEngine.h"
 #include "Mem/Memory.h"
-
+#if RELOADED
 #include "UGC/Reloaded.h"
+#endif
 #include "UGC/InternalPrint.h"
 
 #include "Player/Input.h"

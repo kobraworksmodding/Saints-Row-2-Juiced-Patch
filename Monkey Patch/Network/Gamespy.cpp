@@ -6,7 +6,6 @@
 #include "../Patcher/patch.h"
 #include "../GameConfig.h"
 #include "../SafeWrite.h"
-#include "../UGC/Reloaded.h"
 #include "Gamespy.h"
 
 namespace Gamespy
@@ -34,6 +33,11 @@ namespace Gamespy
 		//patchCall((BYTE*)0x008E7681, bindWrapper);
 	}
 
+	char* lobby_list[2] = {
+		const_cast<char*>("sr2_mp_lobby02"),
+		const_cast<char*>("sr2_mp_lobby03")
+	};
+
 	void Init() {
 		coopPausePatch = 0;
 		if (GameConfig::GetValue("Multiplayer", "FixNetworkBinding", 1))
@@ -54,18 +58,18 @@ namespace Gamespy
 
 			Logger::TypedLog(CHN_DEBUG, "Lobby Map 1 Found: %s\n", newLobby1);
 			Logger::TypedLog(CHN_DEBUG, "Lobby Map 2 Found: %s\n", newLobby2);
-			Reloaded::lobby_list[0] = newLobby1;
-			Reloaded::lobby_list[1] = newLobby2;
+			lobby_list[0] = newLobby1;
+			lobby_list[1] = newLobby2;
 
-			patchDWord((void*)(0x0073EABA + 3), (int)&Reloaded::lobby_list);
-			patchDWord((void*)(0x0073EA0B + 3), (int)&Reloaded::lobby_list);
-			patchDWord((void*)(0x007E131A + 3), (int)&Reloaded::lobby_list);
-			patchDWord((void*)(0x007E161E + 3), (int)&Reloaded::lobby_list);
-			patchDWord((void*)(0x007E7670 + 3), (int)&Reloaded::lobby_list);
-			patchDWord((void*)(0x007E774F + 3), (int)&Reloaded::lobby_list);
-			patchDWord((void*)(0x0082F2E9 + 3), (int)&Reloaded::lobby_list);
-			patchDWord((void*)(0x0082F4CC + 3), (int)&Reloaded::lobby_list);
-			patchDWord((void*)(0x00842497 + 3), (int)&Reloaded::lobby_list);
+			patchDWord((void*)(0x0073EABA + 3), (int)&lobby_list);
+			patchDWord((void*)(0x0073EA0B + 3), (int)&lobby_list);
+			patchDWord((void*)(0x007E131A + 3), (int)&lobby_list);
+			patchDWord((void*)(0x007E161E + 3), (int)&lobby_list);
+			patchDWord((void*)(0x007E7670 + 3), (int)&lobby_list);
+			patchDWord((void*)(0x007E774F + 3), (int)&lobby_list);
+			patchDWord((void*)(0x0082F2E9 + 3), (int)&lobby_list);
+			patchDWord((void*)(0x0082F4CC + 3), (int)&lobby_list);
+			patchDWord((void*)(0x00842497 + 3), (int)&lobby_list);
 		}
 
 		if (GameConfig::GetValue("Multiplayer", "FreeMPClothing", 1))

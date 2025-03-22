@@ -294,7 +294,6 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="UGC\Debug.cpp" />
     <ClCompile Include="UGC\InternalPrint.cpp" />
-    <ClCompile Include="UGC\Reloaded.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Audio\Audio.h" />
@@ -343,7 +342,6 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UGC\Debug.h" />
     <ClInclude Include="UGC\InternalPrint.h" />
-    <ClInclude Include="UGC\Reloaded.h" />
     <ClInclude Include="UtilsGlobal.h" />
   </ItemGroup>
   <ItemGroup>
