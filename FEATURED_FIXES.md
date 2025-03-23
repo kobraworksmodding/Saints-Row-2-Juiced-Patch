@@ -1,6 +1,6 @@
 # Featured fixes
 
-The following are just featued fixes and doesn't encompass all of Juiced's fixes/additions.
+The following are just featured fixes and doesn't encompass all of Juiced's fixes/additions.
 
 Fixes marked with ⚙️ can be configured/toggled via the INI file / BlingMenu
 
