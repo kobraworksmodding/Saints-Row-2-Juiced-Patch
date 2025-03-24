@@ -202,13 +202,13 @@ CMultiPatch CMPatches_SR1Reloading = {
 		float mouse_y = (-mouse().getYdelta() / 30.f) * mouse().getMouseY_sens();
 		float* rs_x = (float*)(0x023485B4);
 		float* rs_y = (float*)(0x023485B8);
-
+		float& FOV = *(float*)0x25F5BA8;
 		mouse_x *= Game::Timer::Get33msOverFrameTime_Fix();
 
 		mouse_y *= Game::Timer::Get33msOverFrameTime_Fix();
 
-		ctx.xmm1.f32[0] = mouse_x + *rs_x;
-		ctx.xmm0.f32[0] = mouse_y + *rs_y;
+		ctx.xmm1.f32[0] = (mouse_x + *rs_x) * (FOV / 58.f);
+		ctx.xmm0.f32[0] = (mouse_y + *rs_y) * (FOV / 58.f);
 	}
 
 #if !JLITE
