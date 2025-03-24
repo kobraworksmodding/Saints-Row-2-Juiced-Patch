@@ -15,9 +15,9 @@ inline bool invert;
 inline bool isPaused;
 
 #if JLITE
-inline const char* juicedversion = "1.1.1";
+inline const char* juicedversion = "1.2.0";
 #else
-inline const char* juicedversion = "7.3.3";
+inline const char* juicedversion = "7.4.0";
 #endif
 
 inline std::string getShortCommitHash(size_t length = 7) {
