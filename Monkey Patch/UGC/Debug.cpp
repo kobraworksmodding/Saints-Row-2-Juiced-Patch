@@ -75,12 +75,5 @@ namespace Debug
 			Logger::TypedLog(CHN_DEBUG, "Fixing Frametime issues...\n");
 			fixFrametime = 1;
 		}
-
-		if (GameConfig::GetValue("Gameplay", "DisableAimAssist", 0))
-		{
-			Logger::TypedLog(CHN_MOD, "Disabling Aim Assist...\n");
-			patchNop((BYTE*)0x00E3CC80, 16); // nop aim_assist.xtbl
-		}
-
 	}
 }

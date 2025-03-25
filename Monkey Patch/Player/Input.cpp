@@ -12,9 +12,22 @@
 
 #include "Input.h"
 #include "../UtilsGlobal.h"
+#include <safetyhook.hpp>
 
 namespace Input {
+	GAME_LAST_INPUT g_lastInput = UNKNOWN;
+	GAME_LAST_INPUT LastInput() {
+		using namespace UtilsGlobal;
+		float LeftStickX = *(float*)0x23485F4;
+		float LeftStickY = *(float*)0x23485F8;
+		if (LeftStickX != 0.f || LeftStickY != 0.f)
+			g_lastInput = CONTROLLER;
 
+		if (mouse().getXdelta() || mouse().getYdelta())
+			g_lastInput = MOUSE;
+		return g_lastInput;
+
+	}
 
 	typedef int(__stdcall* XInputEnableT)(bool Enable); // this is a deprecated feature and I couldn't get it to register through the XInput lib
 	XInputEnableT XInputEnable = (XInputEnableT)0x00CCD4F8;
@@ -150,8 +163,25 @@ namespace Input {
 
 
 	}
+	// If we need an empty global buffer we could use that, but it has to be 0.
+	volatile float aim_assist_empty_buffer[18]{};
+	SafetyHookMid player_autoaim_do_assisted_aiming_midhook;
+	SAFETYHOOK_NOINLINE void player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse(safetyhook::Context32& ctx) {
+		if(LastInput() == GAME_LAST_INPUT::MOUSE)
+		ctx.esi = (uintptr_t)&aim_assist_empty_buffer;
+	}
 
 	void Init() {
+		if (GameConfig::GetValue("Gameplay", "DisableAimAssist", 1) == 1)
+		{
+			player_autoaim_do_assisted_aiming_midhook = safetyhook::create_mid(0x009E28B3, &player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse);
+			Logger::TypedLog(CHN_MOD, "Disabling Aim Assist while using mouse...\n");
+		}
+		else if (GameConfig::GetValue("Gameplay", "DisableAimAssist", 1) >= 2) {
+			Logger::TypedLog(CHN_MOD, "Disabling Aim Assist completely...\n");
+			patchNop((BYTE*)0x00E3CC80, 16); // nop aim_assist.xtbl
+		}
+		
 		betterTags = 0;
 
 		DisableXInput();
