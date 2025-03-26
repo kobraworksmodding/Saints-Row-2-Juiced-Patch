@@ -8,18 +8,59 @@
 #include "../SafeWrite.h"
 #include "../UtilsGlobal.h"
 #include "Render2D.h"
-
+#include <safetyhook.hpp>
+#include "..\General\General.h"
 namespace Render2D
 {
-
+	float* currentAR = (float*)0x022FD8EC;
+	const float widescreenvalue = 1.777777791f;
 	bool BetterChatTest = 0;
 
 	ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
+	// What I use in BlingMenu to clamp mouse cursor, maybe a bit too much for Ultrawide? who's going to have an ultrawide under 720p?
+	void get_vint_res_limit(float* x, float* y) {
+		if (!x || !y) return;
+
+		float currentX = (float)(*(unsigned int*)0x022F63F8);
+		float currentY = (float)(*(unsigned int*)0x022F63FC);
+
+		if (currentX <= 0 || currentY <= 0) return;
+
+		float aspect_ratio = currentX / currentY;
+		float targetX = 1280.0f;
+		float targetY = 720.0f;
+
+		if (currentX > targetX || currentY > targetY) {
+			targetX = currentY * aspect_ratio;
+			if (targetX > currentX) {
+				targetX = currentX;
+				targetY = currentX / aspect_ratio;
+			}
+		}
+		else {
+			targetX = currentX;
+			targetY = currentY;
+		}
+		if (targetX < 1280.0f) targetX = 1280.0f;
+		if (targetY < 720.0f) targetY = 720.0f;
+
+		if (currentX < 1280.0f || currentY < 720.0f) {
+			targetX = currentX;
+			targetY = currentY;
+		}
+
+		*x = targetX;
+		*y = targetY;
+	}
 
 	int processtextwidth(int width) {
-		float currentAR = *(float*)0x022FD8EC;
-		return width * (currentAR / 1.77777777778f);
+		return width * (*currentAR / 1.77777777778f);
 
+	}
+
+	float get_vint_x_resolution() {
+		
+		return *currentAR * 720;
 	}
 
 	void __declspec(naked) InGamePrintASM(const char* Text, int x, int y, int font) {
@@ -131,7 +172,54 @@ namespace Render2D
 		patchDWord((void*)(0x00BFA35A + 4), windowed_style);
 	}
 
+	SafetyHookMid vint_document_create_empty;
+	void create_empty_hook(safetyhook::Context32& ctx) {
+		const char* document = (const char*)ctx.eax;
+		vint_variant *test;
+		test->type = VINT_PROP_TYPE_VECTOR2F;
+		test->values.x = 0.5;
+		test->values.x = 0.2;
+		printf("%s \n", document);
+	}
+	SafetyHookMid vint_create_process_hook;
+	void create_process_hook(safetyhook::Context32& ctx) {
+		const char* target_str = "safe_frame";
+		uintptr_t* vint_document = (uintptr_t*)ctx.esi;
+		const char* possible_str = reinterpret_cast<const char*>(&vint_document[10]);
+		char cached_str[64];
+		strncpy(cached_str, possible_str, sizeof(cached_str) - 1);
+		cached_str[sizeof(cached_str) - 1] = '\0';
+		char buffer[256];
+		const char* lua_command = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %f, %f)";
+		snprintf(buffer, sizeof(buffer), lua_command,"safe_frame", cached_str,"anchor", (get_vint_x_resolution() - 1280) / 2.f,0.f);
+		//Logger::TypedLog(CHN_DEBUG, "%s \n", possible_str);
+		General::VintExecute(buffer);
+
+		if (strcmp(cached_str, "hud") == 0) {
+
+			snprintf(buffer, sizeof(buffer), lua_command, "extra_homie", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			General::VintExecute(buffer);
+
+			snprintf(buffer, sizeof(buffer), lua_command, "mp_snatch_john", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			General::VintExecute(buffer);
+
+			snprintf(buffer, sizeof(buffer), lua_command, "health_mini_grp", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			General::VintExecute(buffer);
+
+
+			snprintf(buffer, sizeof(buffer), lua_command, "health_large_grp", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			General::VintExecute(buffer);
+			snprintf(buffer, sizeof(buffer), lua_command, "mayhem_grp", "hud", "anchor", -((get_vint_x_resolution() - 1280) / 2.f), 0.f);
+			General::VintExecute(buffer);
+
+			float weirdscale = 1.f / (widescreenvalue / *currentAR);
+			snprintf(buffer, sizeof(buffer), lua_command, "mayhem_grp", "hud", "scale", weirdscale, 1.f);
+			General::VintExecute(buffer);
+		}
+	}
 	void Init() {
+		vint_document_create_empty = safetyhook::create_mid(0x00B8B5E0, &create_empty_hook);
+		vint_create_process_hook = safetyhook::create_mid(0x00B8BCC6, &create_process_hook);
 		if (GameConfig::GetValue("Graphics", "Borderless", 0))
 		{
 			SetupBorderless();

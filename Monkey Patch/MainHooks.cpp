@@ -1275,6 +1275,7 @@ static bool modpackread = 0;
 #endif
 int RenderLoopStuff_Hacked()
 {
+	
 #if !JLITE
 	if (useJuicedOSD) {
 		PrintFrametime();
