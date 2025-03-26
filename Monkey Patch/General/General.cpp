@@ -13,6 +13,7 @@ and / or run completely on startup or after we check everything else.*/
 #include "General.h"
 #include <safetyhook.hpp>
 #include "../Render/Render3D.h"
+#include "../Render/Render2D.h"
 namespace General {
 	bool DeletionMode;
 	const wchar_t* SaveMessage = L"Are you sure you want to delete this save?"; // ultimately, if we get extra strings to load, we should use a string label and request the string instead of hardcoding it
@@ -332,12 +333,15 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		buf.append(s, prevPos, s.size() - prevPos);
 		s.swap(buf);
 	}
+	char* currentModifiedBuffer = nullptr;
 
+
+	SafetyHookMid luaLoadBuffHook;
 	void VINT_DOC_luaLoadBuff(safetyhook::Context32& ctx) {
 		const char* buff = (const char*)ctx.ebp;
-		//const char* filename = (const char*)(ctx.esp + 0x14);
+		const char* filename = (const char*)(ctx.esp + 0x14);
 		size_t& sz = ctx.ecx;
-
+#if !JLITE
 		std::string convertedBuff(buff);
 
 		int* resX = (int*)(0xE8DF14);
@@ -388,8 +392,94 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
 			const_cast<char*>(buff)[sz] = '\0';
 		}
-	}
+#endif
+		if (Render2D::UltrawideFix) {
+			// Clean up previous buffer if it exists (regardless of which file it was for)
+			if (currentModifiedBuffer != nullptr) {
+				delete[] currentModifiedBuffer;
+				currentModifiedBuffer = nullptr;
+			}
 
+			// remove .lua
+			std::string cached_str = filename;
+			size_t dotPosition = cached_str.find(".lua");
+			if (dotPosition != std::string::npos) {
+				cached_str = cached_str.substr(0, dotPosition);
+			}
+
+			std::string customCode = "";
+			const char* lua_command = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %f, %f)";
+
+			// re-center the HUD.
+			char buffer[512];
+			snprintf(buffer, sizeof(buffer), lua_command, "safe_frame", cached_str.c_str(), "anchor",
+				(Render2D::get_vint_x_resolution() - 1280) / 2.f, 0.f);
+			customCode += "\n";
+			customCode += buffer;
+
+			// Weird stuff on the screen you have to remove, also mayhem is re-stretched back.
+			if (cached_str == "hud") {
+				using namespace Render2D;
+				char extraBuffer[512];
+
+				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "extra_homie", "hud", "anchor",
+					(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+				customCode += "\n";
+				customCode += extraBuffer;
+
+				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mp_snatch_john", "hud", "anchor",
+					(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+				customCode += "\n";
+				customCode += extraBuffer;
+
+				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "health_mini_grp", "hud", "anchor",
+					(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+				customCode += "\n";
+				customCode += extraBuffer;
+
+				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "health_large_grp", "hud", "anchor",
+					(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+				customCode += "\n";
+				customCode += extraBuffer;
+
+				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "anchor",
+					-((get_vint_x_resolution() - 1280) / 2.f), 0.f);
+				customCode += "\n";
+				customCode += extraBuffer;
+
+				float weirdscale = 1.f / (Render2D::widescreenvalue / *Render2D::currentAR);
+				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "scale",
+					weirdscale, 1.f);
+				customCode += "\n";
+				customCode += extraBuffer;
+			}
+
+			// If we have code to add
+			if (!customCode.empty()) {
+				// Create a new buffer
+				size_t customCodeLen = customCode.length();
+				size_t newSize = sz + customCodeLen + 1; // +1 for null terminator
+
+				currentModifiedBuffer = new char[newSize];
+				memcpy(currentModifiedBuffer, buff, sz);
+				memcpy(currentModifiedBuffer + sz, customCode.c_str(), customCodeLen + 1);
+
+				// Update the context
+				ctx.ebp = (DWORD)currentModifiedBuffer;
+				sz = newSize - 1;
+
+				//printf("Modified %s with custom code\n", filename);
+			}
+		}
+
+	}
+	SafetyHookMid cleanupBufferHook;
+	void CleanupModifiedScript() {
+		if (currentModifiedBuffer != nullptr) {
+			delete[] currentModifiedBuffer;
+			currentModifiedBuffer = nullptr;
+		}
+	}
 	bool __declspec(naked) VintGetGlobalBool(const char* Name)
 	{
 		_asm {
@@ -721,16 +811,38 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			Render3D::CMPatches_ClippysIdiotTextureCrashExceptionHandle.Apply(); // also not ideal, might have perfomance impact, implementation in Render3D.cpp
 		}
 #if !JLITE
-#if !RELOADED
-		if (GameConfig::GetValue("Debug", "PatchPauseMenuLua", 1)) {
-			static SafetyHookMid luaLoadBuffHook = safetyhook::create_mid(0x00CDE379, &VINT_DOC_luaLoadBuff);
+		if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1)) {
+#endif
+			cleanupBufferHook = safetyhook::create_mid(0x00CDE388, [](safetyhook::Context32& ctx) {
+				General::CleanupModifiedScript();
+				},safetyhook::MidHook::StartDisabled);
+			luaLoadBuffHook = safetyhook::create_mid(0x00CDE379, &VINT_DOC_luaLoadBuff
+#if JLITE
+				,safetyhook::MidHook::StartDisabled
+#endif
+);
+			if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1) {
+				Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 1);
+				using namespace Render2D;
+				//SR2Ultrawide_hook = safetyhook::create_inline(0xD1C910, &SR2Ultrawide_HUDScale);
+				WriteRelCall(0x00D1EF2F, (UInt32)&SR2Ultrawide_HUDScale);
+				WriteRelCall(0x00D1F944, (UInt32)&SR2Ultrawide_HUDScale);
+			}
+#if !JLITE
 		}
 #endif
+		Render2D::vint_create_process_hook = safetyhook::create_mid(0x00B8BCC6, &Render2D::create_process_hook,safetyhook::MidHook::StartDisabled);
+		if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) >= 2) {
+			Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 2);
+			using namespace Render2D;
+			WriteRelCall(0x00D1EF2F, (UInt32)&SR2Ultrawide_HUDScale);
+			WriteRelCall(0x00D1F944, (UInt32)&SR2Ultrawide_HUDScale);
+			vint_create_process_hook.enable();
+		}
 		// LUA EXECUTE
 		patchBytesM((BYTE*)0x0075D5D6, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
 		patchBytesM((BYTE*)0x0075D5B5, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
 
-#endif 
 		WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
 		WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
 		WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out

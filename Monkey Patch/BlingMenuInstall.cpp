@@ -16,7 +16,6 @@
 const char* ERROR_MESSAGE = "ERROR";
 // MainHooks.cpp
 void ToggleNoclip();
-void AspectRatioFix();
 void SlewModeToggle();
 void TeleportToWaypoint();
 void VehicleSpawner(const char* Name, const char* Var);
@@ -263,7 +262,7 @@ namespace BlingMenuInstall
        BlingMenuAddFuncCustom("Juiced", "Disable Cutscene black-bars", NULL, &BM_DisableCutSceneBlackBars, NULL);
        BlingMenuAddFuncCustom("Juiced", "Disable Fog", NULL, &BM_DisableFog, NULL);
        BlingMenuAddDouble("Juiced", "FOV Multiplier", &Render3D::FOVMultiplier, []() {
-           AspectRatioFix();
+           Render3D::AspectRatioFix();
            GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
            }, 0.01, 0.1, 5.0);
        BlingMenuAddInt("Juiced", "Vehicle Auto Center Modifer", &Behavior::sticky_cam_timer_add, []() {

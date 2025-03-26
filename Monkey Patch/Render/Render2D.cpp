@@ -8,18 +8,60 @@
 #include "../SafeWrite.h"
 #include "../UtilsGlobal.h"
 #include "Render2D.h"
-
+#include <safetyhook.hpp>
+#include "..\General\General.h"
+#include "Render3D.h"
 namespace Render2D
 {
-
+	float* currentAR = (float*)0x022FD8EC;
+	const float widescreenvalue = 1.777777791f;
 	bool BetterChatTest = 0;
 
 	ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
+	// What I use in BlingMenu to clamp mouse cursor, maybe a bit too much for Ultrawide? who's going to have an ultrawide under 720p?
+	void get_vint_res_limit(float* x, float* y) {
+		if (!x || !y) return;
+
+		float currentX = (float)(*(unsigned int*)0x022F63F8);
+		float currentY = (float)(*(unsigned int*)0x022F63FC);
+
+		if (currentX <= 0 || currentY <= 0) return;
+
+		float aspect_ratio = currentX / currentY;
+		float targetX = 1280.0f;
+		float targetY = 720.0f;
+
+		if (currentX > targetX || currentY > targetY) {
+			targetX = currentY * aspect_ratio;
+			if (targetX > currentX) {
+				targetX = currentX;
+				targetY = currentX / aspect_ratio;
+			}
+		}
+		else {
+			targetX = currentX;
+			targetY = currentY;
+		}
+		if (targetX < 1280.0f) targetX = 1280.0f;
+		if (targetY < 720.0f) targetY = 720.0f;
+
+		if (currentX < 1280.0f || currentY < 720.0f) {
+			targetX = currentX;
+			targetY = currentY;
+		}
+
+		*x = targetX;
+		*y = targetY;
+	}
 
 	int processtextwidth(int width) {
-		float currentAR = *(float*)0x022FD8EC;
-		return width * (currentAR / 1.77777777778f);
+		return width * (*currentAR / 1.77777777778f);
 
+	}
+
+	float get_vint_x_resolution() {
+		
+		return *currentAR * 720;
 	}
 
 	void __declspec(naked) InGamePrintASM(const char* Text, int x, int y, int font) {
@@ -131,6 +173,126 @@ namespace Render2D
 		patchDWord((void*)(0x00BFA35A + 4), windowed_style);
 	}
 
+	SafetyHookMid vint_create_process_hook;
+	void create_process_hook(safetyhook::Context32& ctx) {
+		const char* target_str = "safe_frame";
+		uintptr_t* vint_document = (uintptr_t*)ctx.esi;
+		const char* possible_str = reinterpret_cast<const char*>(&vint_document[10]);
+		char cached_str[64];
+		strncpy(cached_str, possible_str, sizeof(cached_str) - 1);
+		cached_str[sizeof(cached_str) - 1] = '\0';
+		char buffer[256];
+		const char* lua_command = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %f, %f)";
+		snprintf(buffer, sizeof(buffer), lua_command,"safe_frame", cached_str,"anchor", (get_vint_x_resolution() - 1280) / 2.f,0.f);
+		//Logger::TypedLog(CHN_DEBUG, "%s \n", possible_str);
+		General::VintExecute(buffer);
+
+		if (strcmp(cached_str, "hud") == 0) {
+
+			snprintf(buffer, sizeof(buffer), lua_command, "extra_homie", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			General::VintExecute(buffer);
+
+			snprintf(buffer, sizeof(buffer), lua_command, "mp_snatch_john", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			General::VintExecute(buffer);
+
+			snprintf(buffer, sizeof(buffer), lua_command, "health_mini_grp", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			General::VintExecute(buffer);
+
+
+			snprintf(buffer, sizeof(buffer), lua_command, "health_large_grp", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			General::VintExecute(buffer);
+			snprintf(buffer, sizeof(buffer), lua_command, "mayhem_grp", "hud", "anchor", -((get_vint_x_resolution() - 1280) / 2.f), 0.f);
+			General::VintExecute(buffer);
+
+			float weirdscale = 1.f / (widescreenvalue / *currentAR);
+			snprintf(buffer, sizeof(buffer), lua_command, "mayhem_grp", "hud", "scale", weirdscale, 1.f);
+			General::VintExecute(buffer);
+		}
+	}
+
+bool UltrawideFix = false;
+// Clippy TODO, maybe handle 16:10?
+std::thread RefreshHUD_thread;
+void RefreshHUD_loop() {
+	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n",2);
+	vint_create_process_hook.enable();
+	std::this_thread::sleep_for(std::chrono::seconds(4));
+	vint_create_process_hook.disable();
+}
+
+char SR2Ultrawide_HUDScale() {
+	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 1);
+	float currentX = (float)(*(unsigned int*)0x022f63f8);
+	float currentY = (float)(*(unsigned int*)0x022f63fc);
+	char result;
+
+	float aspectRatio = currentX / currentY;
+
+	// Fucking tagging system cause yeah lets hard code the anchor for it?
+
+	int var = (int)(aspectRatio * 720.f);
+	static int var2;
+	 var2 = (int)(aspectRatio * 360.f);
+	SafeWrite32(0x00622571 + 1, var);
+	SafeWrite32(0x00625A2B + 2, var);
+	//SafeWrite32(0x00625F70 + 1, var);
+	//SafeWrite32(0x00755A21 + 1, var);
+	//SafeWrite32(0x00755C49 + 1, var);
+	//SafeWrite32(0x00B87313 + 1, var2);
+	//SafeWrite32(0x00B87313 + 1, var2);
+	SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
+	SafeWrite32(0x0062597F + 2, (UInt32)&var2);
+
+	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 3);
+		RefreshHUD_thread = std::thread(RefreshHUD_loop);
+		RefreshHUD_thread.detach();
+
+	if (aspectRatio >= 1.79777777778f) {
+		Render3D::AspectRatioFix(true);
+	}
+	if ((GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1)) {
+		if (aspectRatio <= 1.79777777778f) {
+#if JLITE
+			General::luaLoadBuffHook.disable();
+#endif
+			UltrawideFix = false;
+			General::cleanupBufferHook.disable();
+			General::CleanupModifiedScript();
+			return ((char(*)())0xD1C910)(); // Original HUD scale function.
+			
+		}
+		else {
+#if JLITE
+			General::luaLoadBuffHook.enable();
+#endif
+			Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 4);
+			General::cleanupBufferHook.enable();
+			UltrawideFix = true;
+		}
+	}
+
+	float correctionFactor = 1.777777777777778f / aspectRatio;
+
+	float stretchedX = currentX / 1280.0f;
+	float adjustedX = stretchedX * correctionFactor;
+
+	if (aspectRatio <= 1.45f) {
+		result = 0;
+		*(uint8_t*)0x0213c383 = 0;
+		*(uint8_t*)0x025272dd = 0;
+		*(float*)0x022fdcc0 = adjustedX;
+		*(float*)0x022fdcbc = currentY / 480.0f;
+	}
+	else {
+		result = 1;
+		*(uint8_t*)0x0213c383 = 1;
+		*(uint8_t*)0x025272dd = 1;
+		*(float*)0x022fdcc0 = adjustedX;
+		*(float*)0x022fdcbc = currentY / 720.0f;
+	}
+	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: %f Y: %f bool: %d \n", adjustedX, currentY / 720.0f, UltrawideFix);
+	return result;
+}
 	void Init() {
 		if (GameConfig::GetValue("Graphics", "Borderless", 0))
 		{

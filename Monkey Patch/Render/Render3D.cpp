@@ -27,6 +27,40 @@ namespace Render3D
 	double FOVMultiplier = 1;
 	const double fourbythreeAR = 1.333333373069763;
 
+	void AspectRatioFix(bool update_aspect_ratio) {
+		float currentAR = *(float*)0x022FD8EC;
+		const float a169 = 1.777777791;
+		const double defaultFOV = 1.33333337306976;
+		//double currentFOV = *(double*)0x0E5C808;
+		double correctFOV = (defaultFOV * ((double)currentAR / (double)a169));
+		correctFOV *= Render3D::FOVMultiplier;
+		if (currentAR > a169 && Render3D::ARfov && update_aspect_ratio) { // otherwise causes issues for odd ARs like 16:10/5:4 and the common 4:3.
+			patchDouble((BYTE*)0x00E5C808, correctFOV);
+			patchNop((BYTE*)0x00797181, 6); // Crosshair location that is read from FOV, we'll replace with our own logic below.
+			patchFloat((BYTE*)0x00EC2614, correctFOV);
+			Logger::TypedLog(CHN_DEBUG, "Aspect Ratio FOV fixed...\n");
+
+			if (Render3D::ARCutscene) {
+				static double correctCFOV = 57.2957795131 * ((double)currentAR / (double)a169);
+				if (correctCFOV > 125) {
+					correctCFOV = 125; // arbiratry number close to 32:9 CFOV, 
+					//this will stop most scenes from going upside down in 48:9, we need a beter address for cutscenes similiar to world FOV.
+				}
+				patchDWord((BYTE*)0x00494DE8 + 2, (uint32_t)&correctCFOV);
+				Logger::TypedLog(CHN_DEBUG, "Aspect Ratio Cutscenes (might break above 21:9) hack...\n");
+				Render3D::ARCutscene = 0;
+
+			}
+		}
+
+			double multipliedFOV = correctFOV * Render3D::FOVMultiplier;
+			patchDouble((BYTE*)0x00E5C808, multipliedFOV);
+			patchNop((BYTE*)0x00797181, 6);
+			patchFloat((BYTE*)0x00EC2614, (float)multipliedFOV);
+		
+		return;
+
+	}
 	void __declspec(naked) LoadShadersHook() {
 		static int Continue = 0x00D1B7D3;
 		static int* ShaderPointer;
