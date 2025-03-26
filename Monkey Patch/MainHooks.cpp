@@ -1297,9 +1297,6 @@ int RenderLoopStuff_Hacked()
 		RPCHandler::UpdateDiscordParams();
 	}
 
-	if (!ErrorManager::b_HandlerAssigned)
-		ErrorManager::AssignHandler();
-
 	if (Debug::addBindToggles)
 		UpdateKeys();
 	    cus_FrameToggles();
@@ -1348,6 +1345,9 @@ int RenderLoopStuff_Hacked()
 		FirstBootFlag();
 	}
 #endif
+	if (!ErrorManager::b_HandlerAssigned)
+		ErrorManager::AssignHandler();
+
 	if (Debug::fixFrametime)
 	    havokFrameTicker();
 
@@ -1553,7 +1553,6 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 #if !RELOADED
 	BlingMenuInstall::AddOptions();
-	Debug::PatchDatafiles();
 #endif
 
 #endif
@@ -1573,6 +1572,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	Behavior::BetterMovement();
 #else
 	Render2D::InitMenVerNum();
+	Debug::PatchDatafiles();
 #endif
 
 	SetDefaultGameSettings(); // Set SR2 Reloaded Modernized Default Settings
