@@ -333,14 +333,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		s.swap(buf);
 	}
 
-	// ASSUMING ADDRESS is 0x00CDCFB5, we can use this to hook entire of lua_load like before. - Clippy 
-	/*
-	void lua_load_hook(safetyhook::Context32& ctx) {
-		const char* buffer = (const char*)*(uintptr_t*)(ctx.esp + 0x1C);
-		const char* filename = (const char*)(ctx.eax);
-		size_t* size = (size_t*)(ctx.edx + 4);
-	}
-	*/
 	void VINT_DOC_luaLoadBuff(safetyhook::Context32& ctx) {
 		const char* buff = (const char*)ctx.ebp;
 		//const char* filename = (const char*)(ctx.esp + 0x14);
