@@ -11,7 +11,7 @@ and / or run completely on startup or after we check everything else.*/
 #include "../GameConfig.h"
 #include "../SafeWrite.h"
 #include "General.h"
-
+#include <safetyhook.hpp>
 #include "../Render/Render3D.h"
 namespace General {
 	bool DeletionMode;
@@ -333,12 +333,18 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		s.swap(buf);
 	}
 
-	typedef int __cdecl luaLoadBufferOrig_T(void* L, const char* buff, size_t sz, const char* name);
-	luaLoadBufferOrig_T* luaLoadBufferOrig = (luaLoadBufferOrig_T*)(0xCDCFB0);
+	void luaLoadBufftest(safetyhook::Context32& ctx) {
+		const char* buffer = (const char*)ctx.ebp;
+		const char* filename = (const char*)(ctx.esp + 0x14);
+		printf(filename);
+		size_t& size = ctx.ecx;
 
-	int luaLoadBuff(void* L, const char* buff, size_t sz, const char* name) {
+	}
 
-		__asm pushad
+	void VINT_DOC_luaLoadBuff(safetyhook::Context32& ctx) {
+		const char* buff = (const char*)ctx.ebp;
+		//const char* filename = (const char*)(ctx.esp + 0x14);
+		size_t& sz = ctx.ecx;
 
 		std::string convertedBuff(buff);
 
@@ -384,15 +390,11 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				replace_all(convertedBuff, "MENU_VSYNC\",\t\t\t\t\t\t", "Fullscreen VSync\",");
 				replace_all(convertedBuff, "Shadow_Maps", "Shadows    ");
 			}
-
+			size_t &sz = ctx.edx;
 			sz = convertedBuff.length();
 
 			strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
 			const_cast<char*>(buff)[sz] = '\0';
-
-			__asm popad
-
-			return luaLoadBufferOrig(L, buff, sz, name);
 		}
 	}
 
@@ -729,7 +731,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #if !JLITE
 #if !RELOADED
 		if (GameConfig::GetValue("Debug", "PatchPauseMenuLua", 1)) {
-			patchCall((void*)0x00CD9FE8, (void*)luaLoadBuff); // used to intercept the pause menu lua before compiled, needed for full 8x MSAA support + custom res
+			static SafetyHookMid luaLoadBuffHook = safetyhook::create_mid(0x00CDE379, &VINT_DOC_luaLoadBuff);
 		}
 #endif
 		// LUA EXECUTE
