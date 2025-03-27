@@ -2,6 +2,8 @@
 #include "../Patcher/CMultiPatch.h"
 #include "../Patcher/CPatch.h"
 
+#include <safetyhook.hpp>
+
 namespace Render3D
 {
     extern void Init();
@@ -27,4 +29,5 @@ namespace Render3D
     extern CPatch CRemoveBlackBars;
     extern CMultiPatch CMPatches_ClippysIdiotTextureCrashExceptionHandle;
     extern bool crash;
+    extern SafetyHookMid add_to_entry_test;
 }

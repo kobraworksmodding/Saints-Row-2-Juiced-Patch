@@ -13,6 +13,9 @@
 #include "../BlingMenu_public.h"
 #include "Render3D.h"
 #include <mutex>
+
+#include <safetyhook.hpp>
+
 namespace Render3D
 {
 	const char FPSCam[] = "camera_fpss.xtbl";
@@ -564,9 +567,55 @@ namespace Render3D
 			ret
 		}
 	}
+	struct peg_entry
+	{
+		unsigned __int8* data;
+		unsigned __int16 width;
+		unsigned __int16 height;
+		unsigned __int16 bm_fmt;
+		unsigned __int16 pal_fmt;
+		unsigned int mip_filter_value;
+		unsigned __int16 num_frames;
+		unsigned __int16 flags;
+		char* filename;
+		unsigned __int16 pal_size;
+		unsigned __int8 fps;
+		unsigned __int8 mip_levels;
+		unsigned int frame_size;
+		peg_entry* next;
+		peg_entry* prev;
+		unsigned int cache[2];
+	};
+
+	struct bitmap_entry
+	{
+		BYTE gap0[4];
+		peg_entry* current_peg_entry;
+		WORD word8;
+		WORD wordA;
+	};
 
 // This whole thing might have a performance hit.
- int __stdcall SafeAddToEntry(void* be, void* pe) {
+// SafeAddToEntry might be a bit redundant? since it seems to have not worked at all. but I'll keep it.
+	SafetyHookMid add_to_entry_test;
+
+	void add_to_entry_crashaddr_hook(safetyhook::Context32& ctx) {
+		/*
+		if (crash) {
+			printf("lol crash attempt");
+			ctx.eax = 0xDEADBEEF;
+			crash = false;
+		}*/
+		uint16_t* width = (uint16_t*)(ctx.eax + 0x4);
+		// gtfo out of function
+		if (!IsMemoryReadable(width)) {
+			Logger::TypedLog("the other add_to_entry hook", "!!!Invalid result->width: %p\n", width);
+			ctx.eip = 0x00C08101;
+		}
+		
+
+	}
+ int __stdcall SafeAddToEntry(bitmap_entry* be, peg_entry* pe) {
 	 /*if (crash) {
 		 Logger::TypedLog(CHN_DEBUG, "CRASH TEST: Forcing invalid memory access\n");
 		 be = reinterpret_cast<void*>(0xDEADBEEF);
@@ -577,14 +626,22 @@ namespace Render3D
 			Logger::TypedLog("add_to_entry hook", "!!!Invalid be pointer: %p\n", be);
 			return 0;
 		}
+		
 
-
-		if (!IsMemoryReadable(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(be) + 4))) {
+		peg_entry* result = be->current_peg_entry;
+		if (!IsMemoryReadable(&result)) {
 			for (int i = 0; i < 11; i++)
 			Logger::TypedLog("add_to_entry hook","!!!Invalid memory at be->current_peg_entry: %p\n", reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(be) + 4));
 			return 0;
 		}
-
+		if (result) {
+			//printf("width 0x%X \n", &result->width);
+			if (pe && !IsMemoryReadable(&result->width)) {
+				for (int i = 0; i < 11; i++)
+					Logger::TypedLog("add_to_entry hook", "!!!Invalid pe pointer: %p\n", pe);
+				return 0;
+			}
+		}
 		if (pe && !IsMemoryReadable(pe)) {
 			for (int i = 0; i < 11; i++)
 			Logger::TypedLog("add_to_entry hook", "!!!Invalid pe pointer: %p\n", pe);
@@ -636,10 +693,9 @@ namespace Render3D
 		},
 	};
 
-
 	void Init()
 	{
-
+		add_to_entry_test = safetyhook::create_mid(0x00C080EC, &add_to_entry_crashaddr_hook);
 #if !JLITE
 		if (GameConfig::GetValue("Graphics", "RemoveVignette", 0))
 		{

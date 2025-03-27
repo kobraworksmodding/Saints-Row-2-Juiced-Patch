@@ -170,10 +170,14 @@ namespace BlingMenuInstall
         using namespace Render3D;
         if (action != -1) {
             General::CMPatches_TervelTextureCrashWorkaround_be_as_pe.Restore();
-            if (CMPatches_ClippysIdiotTextureCrashExceptionHandle.IsApplied())
+            if (CMPatches_ClippysIdiotTextureCrashExceptionHandle.IsApplied()) {
+                add_to_entry_test.disable();
                 CMPatches_ClippysIdiotTextureCrashExceptionHandle.Restore();
-            else
+            }
+            else {
                 CMPatches_ClippysIdiotTextureCrashExceptionHandle.Apply();
+                add_to_entry_test.enable();
+            }
         }
         switch (CMPatches_ClippysIdiotTextureCrashExceptionHandle.IsApplied()) {
         case false: return "OFF";
