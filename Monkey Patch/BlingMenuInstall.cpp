@@ -20,6 +20,7 @@ void AspectRatioFix();
 void SlewModeToggle();
 void TeleportToWaypoint();
 void VehicleSpawner(const char* Name, const char* Var);
+void tpCoords(float x, float y, float z);
 extern bool NoclipEnabled;
 // MainHooks.cpp
 
@@ -276,6 +277,10 @@ namespace BlingMenuInstall
        BlingMenuAddFuncCustom("Juiced Cheats", "Noclip", NULL, &BM_ToggleNoclip, NULL);
        BlingMenuAddFuncCustom("Juiced Cheats", "Toggle Cheats flagging saves", NULL, &BM_AllowCheatFlagging, NULL);
        BlingMenuAddFunc("Juiced Cheats", "Teleport to Waypoint", TeleportToWaypoint);
+       BlingMenuAddFunc("Juiced Cheats", "Teleport to Camera's current position", []() {
+           float* camera_pos = (float*)0x025F5B14;
+           tpCoords(camera_pos[0], camera_pos[1], camera_pos[2]);
+           });
        BlingMenuAddFunc("Juiced Cheats", "Toggle Slew Mode", SlewModeToggle);
        BlingMenuAddFunc("Juiced play_as", "RESTORE PLAYER", []() {
            if (!UtilsGlobal::getplayer())
