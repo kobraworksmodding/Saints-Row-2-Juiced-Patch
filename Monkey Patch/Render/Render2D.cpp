@@ -17,121 +17,125 @@ namespace Render2D
 	float* currentAR = (float*)0x022FD8EC;
 	const float widescreenvalue = 1.777777791f;
 	bool BetterChatTest = 0;
+	bool IVRadarScaling = true;
+	float RadarScale = 0.87272727272f;
 	void RadarScaling() {
-		 static float scale = 0.87272727272f;
+		if (!IVRadarScaling)
+			return;
+
 		// vint scale
 		auto pattern = hook::make_range_pattern(0x7A2C30, 0x007A37D2, "AC BF 2D 02");
 		Logger::TypedLog(CHN_DEBUG,"Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG,"Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 		// Height scale
 		pattern = hook::make_range_pattern(0x7A2C30, 0x007A37D2, "A8 BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// vint scale
 		pattern = hook::make_range_pattern(0x79E970, 0x0079EB0A, "AC BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG, "Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// Height scale
 		pattern = hook::make_range_pattern(0x79E970, 0x0079EB0A, "A8 BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG, "Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 		// vint scale
 		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "AC BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG, "Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// Height scale
 		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "A8 BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG, "Count of vint %d \n", pattern.size());
+
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// vint scale
 		pattern = hook::make_range_pattern(0x00B877B0, 0x00B877D7, "AC BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG, "Count of vint %d \n", pattern.size());
+
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// height scale
 		pattern = hook::make_range_pattern(0x00B877B0, 0x00B877D7, "A8 BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG, "Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// vint scale
 		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "AC BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG, "Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// height scale
 		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "A8 BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG, "Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// vint scale
 		pattern = hook::make_range_pattern(0x79FEB0, 0x0079FFE5, "AC BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG, "Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// vint scale
 		pattern = hook::make_range_pattern(0x79FEB0, 0x0079FFE5, "A8 BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG, "Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		pattern = hook::make_range_pattern(0x5489F0, 0x00548C5C, "A? BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG, "Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
-			SafeWrite32((UInt32)addr, (UInt32)&scale);
-			Logger::TypedLog(CHN_DEBUG, "Match found at address: %p \n", addr);
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
+		pattern = hook::make_range_pattern(0x7A37E0, 0x007A3D2F, "AC BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		pattern = hook::make_range_pattern(0x7A37E0, 0x007A3D2F, "A8 BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		pattern = hook::make_range_pattern(0x0079FC92, 0x0079FD92, "AC BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+		pattern = hook::make_range_pattern(0x0079FC92, 0x0079FD92, "A8 BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
 	}
 	ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
 	// What I use in BlingMenu to clamp mouse cursor, maybe a bit too much for Ultrawide? who's going to have an ultrawide under 720p?
