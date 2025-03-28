@@ -242,13 +242,13 @@ char SR2Ultrawide_HUDScale() {
 	//SafeWrite32(0x00B87313 + 1, var2);
 	SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
 	SafeWrite32(0x0062597F + 2, (UInt32)&var2);
+	Render3D::AspectRatioFix(true);
 
-	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 3);
+
+	if (aspectRatio >= 1.77) {
+		Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 3);
 		RefreshHUD_thread = std::thread(RefreshHUD_loop);
 		RefreshHUD_thread.detach();
-
-	if (aspectRatio >= 1.79777777778f) {
-		Render3D::AspectRatioFix(true);
 	}
 	if ((GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1)) {
 		if (aspectRatio <= 1.79777777778f) {
