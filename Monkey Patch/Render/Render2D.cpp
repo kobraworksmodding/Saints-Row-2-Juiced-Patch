@@ -17,7 +17,7 @@ namespace Render2D
 	float* currentAR = (float*)0x022FD8EC;
 	const float widescreenvalue = 1.777777791f;
 	bool BetterChatTest = 0;
-	bool IVRadarScaling = true;
+	bool IVRadarScaling = false;
 	float RadarScale = 0.87272727272f;
 	void RadarScaling() {
 		if (!IVRadarScaling)
@@ -347,9 +347,15 @@ char SR2Ultrawide_HUDScale() {
 	char result;
 
 	float aspectRatio = currentX / currentY;
+	Render3D::AspectRatioFix(true);
+	
+	if (aspectRatio >= 1.77) {
+		if (GameConfig::GetValue("Graphics", "IVRadarScaling", 0)) {
+			IVRadarScaling = true;
+			RadarScaling();
+		}
 
-	// Fucking tagging system cause yeah lets hard code the anchor for it?
-
+		// Fucking tagging system cause yeah lets hard code the anchor for it?
 	int var = (int)(aspectRatio * 720.f);
 	static int var2;
 	 var2 = (int)(aspectRatio * 360.f);
@@ -362,10 +368,7 @@ char SR2Ultrawide_HUDScale() {
 	//SafeWrite32(0x00B87313 + 1, var2);
 	SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
 	SafeWrite32(0x0062597F + 2, (UInt32)&var2);
-	Render3D::AspectRatioFix(true);
-
-
-	if (aspectRatio >= 1.77) {
+	
 		Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 3);
 		RefreshHUD_thread = std::thread(RefreshHUD_loop);
 		RefreshHUD_thread.detach();
@@ -414,7 +417,6 @@ char SR2Ultrawide_HUDScale() {
 	return result;
 }
 	void Init() {
-		RadarScaling();
 		if (GameConfig::GetValue("Graphics", "Borderless", 0))
 		{
 			SetupBorderless();
