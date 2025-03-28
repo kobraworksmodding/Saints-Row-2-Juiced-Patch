@@ -172,15 +172,6 @@ namespace Render2D
 		patchDWord((void*)(0x00BFA35A + 4), windowed_style);
 	}
 
-	SafetyHookMid vint_document_create_empty;
-	void create_empty_hook(safetyhook::Context32& ctx) {
-		const char* document = (const char*)ctx.eax;
-		vint_variant *test;
-		test->type = VINT_PROP_TYPE_VECTOR2F;
-		test->values.x = 0.5;
-		test->values.x = 0.2;
-		printf("%s \n", document);
-	}
 	SafetyHookMid vint_create_process_hook;
 	void create_process_hook(safetyhook::Context32& ctx) {
 		const char* target_str = "safe_frame";
@@ -217,9 +208,64 @@ namespace Render2D
 			General::VintExecute(buffer);
 		}
 	}
+
+bool UltrawideFix = false;
+
+char SR2Ultrawide_HUDScale() {
+	
+	float currentX = (float)(*(unsigned int*)0x022f63f8);
+	float currentY = (float)(*(unsigned int*)0x022f63fc);
+	char result;
+
+	float aspectRatio = currentX / currentY;
+	if (!vint_create_process_hook.enabled()) {
+		if (aspectRatio <= 1.79777777778) {
+			UltrawideFix = false;
+			return ((char(*)())0xD1C910)(); // Original HUD scale function.
+		}
+		else {
+			static SafetyHookMid cleanupBufferHook = safetyhook::create_mid(0x00CDE388, [](safetyhook::Context32& ctx) {
+				General::CleanupModifiedScript();
+				});
+			UltrawideFix = true;
+		}
+	}
+	printf("Bruh %d \n", UltrawideFix);
+	int var = (int)(aspectRatio * 720.f);
+	int var2 = (int)(aspectRatio * 360.f);
+	SafeWrite32(0x00622571 + 1, var);
+	SafeWrite32(0x00625A2B + 2, var);
+	SafeWrite32(0x00625F70 + 1, var);
+	SafeWrite32(0x00755A21 + 1, var);
+	SafeWrite32(0x00755C49 + 1, var);
+	SafeWrite32(0x00B87313 + 1, var2);
+	SafeWrite32(0x00B87313 + 1, var2);
+
+	printf("var1: %d, var2: %d \n", var, var2);
+
+	float correctionFactor = 1.777777777777778f / aspectRatio;
+
+	float stretchedX = currentX / 1280.0f;
+	float adjustedX = stretchedX * correctionFactor;
+
+	if (aspectRatio <= 1.45f) {
+		result = 0;
+		*(uint8_t*)0x0213c383 = 0;
+		*(uint8_t*)0x025272dd = 0;
+		*(float*)0x022fdcc0 = adjustedX;
+		*(float*)0x022fdcbc = currentY / 480.0f;
+	}
+	else {
+		result = 1;
+		*(uint8_t*)0x0213c383 = 1;
+		*(uint8_t*)0x025272dd = 1;
+		*(float*)0x022fdcc0 = adjustedX;
+		*(float*)0x022fdcbc = currentY / 720.0f;
+	}
+
+	return result;
+}
 	void Init() {
-		vint_document_create_empty = safetyhook::create_mid(0x00B8B5E0, &create_empty_hook);
-		vint_create_process_hook = safetyhook::create_mid(0x00B8BCC6, &create_process_hook);
 		if (GameConfig::GetValue("Graphics", "Borderless", 0))
 		{
 			SetupBorderless();

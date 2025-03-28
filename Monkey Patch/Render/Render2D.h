@@ -1,4 +1,5 @@
 #pragma once
+#include <safetyhook.hpp>
 namespace Render2D
 {
     typedef float(__cdecl* ChangeTextColorT)(int R, int G, int B, int Alpha);
@@ -42,4 +43,11 @@ namespace Render2D
 		vint_variant_type type;
 		vint_variant_values values;
 	};
+	extern const float widescreenvalue;
+	extern float* currentAR;
+	extern bool UltrawideFix;
+	extern float get_vint_x_resolution();
+	extern char SR2Ultrawide_HUDScale();
+	extern SafetyHookMid vint_create_process_hook;
+	extern void create_process_hook(safetyhook::Context32& ctx);
 }

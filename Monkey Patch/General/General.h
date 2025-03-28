@@ -30,4 +30,5 @@ namespace General {
 	int VintExecute(const char* Command);
 	wchar_t* RequestString(const wchar_t* Dest, const char* Label);
 	extern CMultiPatch CMPatches_TervelTextureCrashWorkaround_be_as_pe;
+	extern void CleanupModifiedScript();
 }
