@@ -1,6 +1,7 @@
 #pragma once
 #include "../Patcher/CPatch.h"
 #include "../Patcher/CMultiPatch.h"
+#include <safetyhook.hpp>
 namespace General {
 	void TopWinMain();
 	void BottomWinMain();
@@ -31,4 +32,5 @@ namespace General {
 	wchar_t* RequestString(const wchar_t* Dest, const char* Label);
 	extern CMultiPatch CMPatches_TervelTextureCrashWorkaround_be_as_pe;
 	extern void CleanupModifiedScript();
+	extern SafetyHookMid cleanupBufferHook;
 }

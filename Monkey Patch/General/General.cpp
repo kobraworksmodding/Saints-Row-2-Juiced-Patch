@@ -340,6 +340,57 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		const char* filename = (const char*)(ctx.esp + 0x14);
 		size_t& sz = ctx.ecx;
 
+		std::string convertedBuff(buff);
+
+		int* resX = (int*)(0xE8DF14);
+		int* resY = (int*)(0xE8DF4C);
+
+		patchedRes = std::to_string(resX[13]) + "x" + std::to_string(resY[13]);
+		std::string searchAA = "adv_antiali_slider_values \t\t\t= { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"2x\" },\t\t\t\t[2] = { label = \"4x\" },\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tnum_values = 3, cur_value = 0 }";
+		std::string newAA = "adv_antiali_slider_values = { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"2x\" }, [2] = { label = \"4x\" }, [3] = { label = \"8x\" }, num_values = 4, cur_value = 0 }";
+		// removed unnecessary tabs and spaces to make the extra label fit in without breaking the buffer
+		std::string sLibSuperUI =
+			"audio_play(\"SYS_RACE_FAIL\")\n\t"
+			"local error_message = \"attempted to read undefined global variable '\"..k..\"'\"\n\t"
+			"debug_print(error_message..\"\\n\")\n\t"
+			"mission_help_table(\"[format][color:red]\"..tostring(error_message)..\"[/format]\")\n\t"
+			"error(error_message)";
+
+		std::string blankLib(sLibSuperUI.length(), ' ');
+
+		if (buff) {
+			for (int i = 0; i < 14; ++i) { // parses the hardcoded array to check if your current resolution exists in it
+				if (userResX == resX[i] && userResY == resY[i]) {
+					resFound = true;
+					break;
+				}
+			}
+
+			if (!resFound) {
+				resX[13] = userResX;
+				resY[13] = userResY;
+			}
+
+			replace_all(convertedBuff, searchAA, newAA);
+			replace_all(convertedBuff, "Fullscreen_Antialiasing", "MSAA                   "); // extra spaces for padding otherwise it'll break the buffer
+			replace_all(convertedBuff, "2048x1536", patchedRes); // easier to do it this way than to only patch if the user's res isn't found
+			replace_all(convertedBuff, sLibSuperUI, blankLib); // fixes the error logger from SuperUI in system_lib.lua from crashing our executor, if nclok fixes it we'll get rid of this
+
+			if (*(BYTE*)(0xE8C470) == 0) { // only patch these if the game's running in English
+				replace_all(convertedBuff, "MENU_BLUR\",\t\t", "Pause Blur\",\t");
+				replace_all(convertedBuff, "MENU_DEPTH_OF_FIELD", "Depth of Field     ");
+				replace_all(convertedBuff, "ANISOTROPY_FILTERING\",\t\t", "Anisotropic Filtering\",\t");
+				replace_all(convertedBuff, "CONTROLS_MINIMAP_VIEW", "Minimap View         ");
+				replace_all(convertedBuff, "MENU_VSYNC\",\t\t\t\t\t\t", "Fullscreen VSync\",");
+				replace_all(convertedBuff, "Shadow_Maps", "Shadows    ");
+			}
+			size_t &sz = ctx.edx;
+			sz = convertedBuff.length();
+
+			strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
+			const_cast<char*>(buff)[sz] = '\0';
+		}
+
 		if (Render2D::UltrawideFix) {
 			// Clean up previous buffer if it exists (regardless of which file it was for)
 			if (currentModifiedBuffer != nullptr) {
@@ -415,60 +466,12 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				ctx.ebp = (DWORD)currentModifiedBuffer;
 				sz = newSize - 1;
 
-				printf("Modified %s with custom code\n", filename);
+				//printf("Modified %s with custom code\n", filename);
 			}
 		}
-		std::string convertedBuff(buff);
 
-		int* resX = (int*)(0xE8DF14);
-		int* resY = (int*)(0xE8DF4C);
-
-		patchedRes = std::to_string(resX[13]) + "x" + std::to_string(resY[13]);
-		std::string searchAA = "adv_antiali_slider_values \t\t\t= { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"2x\" },\t\t\t\t[2] = { label = \"4x\" },\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tnum_values = 3, cur_value = 0 }";
-		std::string newAA = "adv_antiali_slider_values = { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"2x\" }, [2] = { label = \"4x\" }, [3] = { label = \"8x\" }, num_values = 4, cur_value = 0 }";
-		// removed unnecessary tabs and spaces to make the extra label fit in without breaking the buffer
-		std::string sLibSuperUI =
-			"audio_play(\"SYS_RACE_FAIL\")\n\t"
-			"local error_message = \"attempted to read undefined global variable '\"..k..\"'\"\n\t"
-			"debug_print(error_message..\"\\n\")\n\t"
-			"mission_help_table(\"[format][color:red]\"..tostring(error_message)..\"[/format]\")\n\t"
-			"error(error_message)";
-
-		std::string blankLib(sLibSuperUI.length(), ' ');
-
-		if (buff) {
-			for (int i = 0; i < 14; ++i) { // parses the hardcoded array to check if your current resolution exists in it
-				if (userResX == resX[i] && userResY == resY[i]) {
-					resFound = true;
-					break;
-				}
-			}
-
-			if (!resFound) {
-				resX[13] = userResX;
-				resY[13] = userResY;
-			}
-
-			replace_all(convertedBuff, searchAA, newAA);
-			replace_all(convertedBuff, "Fullscreen_Antialiasing", "MSAA                   "); // extra spaces for padding otherwise it'll break the buffer
-			replace_all(convertedBuff, "2048x1536", patchedRes); // easier to do it this way than to only patch if the user's res isn't found
-			replace_all(convertedBuff, sLibSuperUI, blankLib); // fixes the error logger from SuperUI in system_lib.lua from crashing our executor, if nclok fixes it we'll get rid of this
-
-			if (*(BYTE*)(0xE8C470) == 0) { // only patch these if the game's running in English
-				replace_all(convertedBuff, "MENU_BLUR\",\t\t", "Pause Blur\",\t");
-				replace_all(convertedBuff, "MENU_DEPTH_OF_FIELD", "Depth of Field     ");
-				replace_all(convertedBuff, "ANISOTROPY_FILTERING\",\t\t", "Anisotropic Filtering\",\t");
-				replace_all(convertedBuff, "CONTROLS_MINIMAP_VIEW", "Minimap View         ");
-				replace_all(convertedBuff, "MENU_VSYNC\",\t\t\t\t\t\t", "Fullscreen VSync\",");
-				replace_all(convertedBuff, "Shadow_Maps", "Shadows    ");
-			}
-			size_t &sz = ctx.edx;
-			sz = convertedBuff.length();
-
-			strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
-			const_cast<char*>(buff)[sz] = '\0';
-		}
 	}
+	SafetyHookMid cleanupBufferHook;
 	void CleanupModifiedScript() {
 		if (currentModifiedBuffer != nullptr) {
 			delete[] currentModifiedBuffer;
@@ -808,8 +811,12 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #if !JLITE
 
 		if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1)) {
+			cleanupBufferHook = safetyhook::create_mid(0x00CDE388, [](safetyhook::Context32& ctx) {
+				General::CleanupModifiedScript();
+				},safetyhook::MidHook::StartDisabled);
 			static SafetyHookMid luaLoadBuffHook = safetyhook::create_mid(0x00CDE379, &VINT_DOC_luaLoadBuff);
 			if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1) {
+				Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 1);
 				using namespace Render2D;
 				//SR2Ultrawide_hook = safetyhook::create_inline(0xD1C910, &SR2Ultrawide_HUDScale);
 				WriteRelCall(0x00D1EF2F, (UInt32)&SR2Ultrawide_HUDScale);
@@ -817,6 +824,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			}
 		}
 		if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) >= 2) {
+			Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 2);
 			using namespace Render2D;
 			WriteRelCall(0x00D1EF2F, (UInt32)&SR2Ultrawide_HUDScale);
 			WriteRelCall(0x00D1F944, (UInt32)&SR2Ultrawide_HUDScale);

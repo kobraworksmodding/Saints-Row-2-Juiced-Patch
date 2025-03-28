@@ -210,7 +210,7 @@ namespace Render2D
 	}
 
 bool UltrawideFix = false;
-
+// Clippy TODO, maybe handle 16:10?
 char SR2Ultrawide_HUDScale() {
 	
 	float currentX = (float)(*(unsigned int*)0x022f63f8);
@@ -221,16 +221,19 @@ char SR2Ultrawide_HUDScale() {
 	if (!vint_create_process_hook.enabled()) {
 		if (aspectRatio <= 1.79777777778) {
 			UltrawideFix = false;
+			General::cleanupBufferHook.disable();
+			General::CleanupModifiedScript();
 			return ((char(*)())0xD1C910)(); // Original HUD scale function.
+			
 		}
 		else {
-			static SafetyHookMid cleanupBufferHook = safetyhook::create_mid(0x00CDE388, [](safetyhook::Context32& ctx) {
-				General::CleanupModifiedScript();
-				});
+			General::cleanupBufferHook.enable();
 			UltrawideFix = true;
 		}
 	}
-	printf("Bruh %d \n", UltrawideFix);
+
+	// Fucking tagging system cause yeah lets hard code the anchor for it?
+
 	int var = (int)(aspectRatio * 720.f);
 	int var2 = (int)(aspectRatio * 360.f);
 	SafeWrite32(0x00622571 + 1, var);
@@ -241,7 +244,7 @@ char SR2Ultrawide_HUDScale() {
 	SafeWrite32(0x00B87313 + 1, var2);
 	SafeWrite32(0x00B87313 + 1, var2);
 
-	printf("var1: %d, var2: %d \n", var, var2);
+
 
 	float correctionFactor = 1.777777777777778f / aspectRatio;
 
@@ -262,7 +265,7 @@ char SR2Ultrawide_HUDScale() {
 		*(float*)0x022fdcc0 = adjustedX;
 		*(float*)0x022fdcbc = currentY / 720.0f;
 	}
-
+	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: %f Y: %f bool: %d \n", adjustedX, currentY / 720.0f, UltrawideFix);
 	return result;
 }
 	void Init() {
