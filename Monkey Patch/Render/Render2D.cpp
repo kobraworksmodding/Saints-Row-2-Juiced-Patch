@@ -219,11 +219,11 @@ char SR2Ultrawide_HUDScale() {
 	char result;
 
 	float aspectRatio = currentX / currentY;
-	if (aspectRatio >= 1.79777777778) {
-		Render3D::AspectRatioFix(aspectRatio,true);
+	if (aspectRatio >= 1.79777777778f) {
+		Render3D::AspectRatioFix(true);
 	}
 	if (!vint_create_process_hook.enabled()) {
-		if (aspectRatio <= 1.79777777778) {
+		if (aspectRatio <= 1.79777777778f) {
 #if JLITE
 			General::luaLoadBuffHook.disable();
 #endif

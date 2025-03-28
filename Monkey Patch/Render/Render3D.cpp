@@ -27,7 +27,8 @@ namespace Render3D
 	double FOVMultiplier = 1;
 	const double fourbythreeAR = 1.333333373069763;
 
-	void AspectRatioFix(float currentAR, bool update_aspect_ratio) {
+	void AspectRatioFix(bool update_aspect_ratio) {
+		float currentAR = *(float*)0x022FD8EC;
 		const float a169 = 1.777777791;
 		const double defaultFOV = 1.33333337306976;
 		//double currentFOV = *(double*)0x0E5C808;
