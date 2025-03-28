@@ -831,12 +831,13 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #if !JLITE
 		}
 #endif
+		Render2D::vint_create_process_hook = safetyhook::create_mid(0x00B8BCC6, &Render2D::create_process_hook,safetyhook::MidHook::StartDisabled);
 		if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) >= 2) {
 			Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 2);
 			using namespace Render2D;
 			WriteRelCall(0x00D1EF2F, (UInt32)&SR2Ultrawide_HUDScale);
 			WriteRelCall(0x00D1F944, (UInt32)&SR2Ultrawide_HUDScale);
-			vint_create_process_hook = safetyhook::create_mid(0x00B8BCC6, &create_process_hook);
+			vint_create_process_hook.enable();
 		}
 		// LUA EXECUTE
 		patchBytesM((BYTE*)0x0075D5D6, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
