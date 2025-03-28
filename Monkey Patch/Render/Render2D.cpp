@@ -219,6 +219,21 @@ char SR2Ultrawide_HUDScale() {
 	char result;
 
 	float aspectRatio = currentX / currentY;
+
+	// Fucking tagging system cause yeah lets hard code the anchor for it?
+
+	int var = (int)(aspectRatio * 720.f);
+	static int var2;
+	 var2 = (int)(aspectRatio * 360.f);
+	SafeWrite32(0x00622571 + 1, var);
+	SafeWrite32(0x00625A2B + 2, var);
+	//SafeWrite32(0x00625F70 + 1, var);
+	//SafeWrite32(0x00755A21 + 1, var);
+	//SafeWrite32(0x00755C49 + 1, var);
+	//SafeWrite32(0x00B87313 + 1, var2);
+	//SafeWrite32(0x00B87313 + 1, var2);
+	SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
+	SafeWrite32(0x0062597F + 2, (UInt32)&var2);
 	if (aspectRatio >= 1.79777777778f) {
 		Render3D::AspectRatioFix(true);
 	}
@@ -241,20 +256,6 @@ char SR2Ultrawide_HUDScale() {
 			UltrawideFix = true;
 		}
 	}
-
-	// Fucking tagging system cause yeah lets hard code the anchor for it?
-
-	int var = (int)(aspectRatio * 720.f);
-	int var2 = (int)(aspectRatio * 360.f);
-	SafeWrite32(0x00622571 + 1, var);
-	SafeWrite32(0x00625A2B + 2, var);
-	SafeWrite32(0x00625F70 + 1, var);
-	SafeWrite32(0x00755A21 + 1, var);
-	SafeWrite32(0x00755C49 + 1, var);
-	SafeWrite32(0x00B87313 + 1, var2);
-	SafeWrite32(0x00B87313 + 1, var2);
-
-
 
 	float correctionFactor = 1.777777777777778f / aspectRatio;
 
