@@ -342,47 +342,6 @@ void RawTags() {
 	*(uint16_t*)0x027A3F68 = static_cast<uint16_t>(newXTag);
 }
 
-void AspectRatioFix() {
-	float currentAR = *(float*)0x022FD8EC;
-		const float a169 = 1.777777791;
-		const double defaultFOV = 1.33333337306976;
-		//double currentFOV = *(double*)0x0E5C808;
-		double correctFOV = (defaultFOV * ((double)currentAR / (double)a169));
-		if (currentAR > a169 && Render3D::ARfov) { // otherwise causes issues for odd ARs like 16:10/5:4 and the common 4:3.
-			patchDouble((BYTE*)0x00E5C808, correctFOV);
-			patchNop((BYTE*)0x00797181, 6); // Crosshair location that is read from FOV, we'll replace with our own logic below.
-			patchFloat((BYTE*)0x00EC2614, correctFOV);
-			Logger::TypedLog(CHN_DEBUG, "Aspect Ratio FOV fixed...\n");
-			//ARfov = 0;// stop this thread 
-
-			if (Render3D::ARCutscene) {
-				const double currentCFOV = *(double*)0x00e5c3f0; // default 57.2957795131, this is (180 / pi).
-				double correctCFOV = currentCFOV * ((double)currentAR / (double)a169);
-				if (correctCFOV > 125) {
-					correctCFOV = 125; // arbiratry number close to 32:9 CFOV, 
-					//this will stop most scenes from going upside down in 48:9, we need a beter address for cutscenes similiar to world FOV.
-				}
-				patchDouble((BYTE*)0x00e5c3f0, correctCFOV);
-				Logger::TypedLog(CHN_DEBUG, "Aspect Ratio Cutscenes (might break above 21:9) hack...\n");
-				Render3D::ARCutscene = 0;
-
-			}
-		}
-		if (Render3D::FOVMultiplier >= 1.01 || !Render3D::ARfov) { // Not mixed above due to 16:10 and 4:3
-			double multipliedFOV = (currentAR > a169) ? correctFOV * Render3D::FOVMultiplier : defaultFOV * Render3D::FOVMultiplier;
-			patchDouble((BYTE*)0x00E5C808, multipliedFOV);
-			patchNop((BYTE*)0x00797181, 6);
-			patchFloat((BYTE*)0x00EC2614, (float)multipliedFOV);
-			Render3D::ARfov = 0;
-		}
-		else {
-			Render3D::ARfov = 0;
-			Render3D::ARCutscene = 0;
-		}
-		return;
-
-}
-
 void getDeltaTime() {
 	static LARGE_INTEGER tpsFreq;
 	static LARGE_INTEGER lastTickCount;
@@ -874,14 +833,14 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_F9, false)) { // F9
 		Render3D::FOVMultiplier += 0.1;
-		AspectRatioFix();
+		Render3D::AspectRatioFix();
 		Logger::TypedLog(CHN_DEBUG, "+FOV Multiplier: %f,\n", Render3D::FOVMultiplier);
 		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
 	}
 
 	if (IsKeyPressed(VK_F8, false)) { // F8
 		Render3D::FOVMultiplier -= 0.1;
-		AspectRatioFix();
+		Render3D::AspectRatioFix();
 		Logger::TypedLog(CHN_DEBUG, "-FOV Multiplier: %f,\n", Render3D::FOVMultiplier);
 		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
 
@@ -1351,9 +1310,6 @@ int RenderLoopStuff_Hacked()
 
 	if (Debug::fixFrametime)
 	    havokFrameTicker();
-
-	if (Render3D::ARfov)
-		AspectRatioFix();
 
 	if (*(uint8_t*)(0x00E87B4F) == 0 && Input::betterTags)
 		RawTags();

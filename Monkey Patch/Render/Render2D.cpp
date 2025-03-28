@@ -10,6 +10,7 @@
 #include "Render2D.h"
 #include <safetyhook.hpp>
 #include "..\General\General.h"
+#include "Render3D.h"
 namespace Render2D
 {
 	float* currentAR = (float*)0x022FD8EC;
@@ -218,6 +219,9 @@ char SR2Ultrawide_HUDScale() {
 	char result;
 
 	float aspectRatio = currentX / currentY;
+	if (aspectRatio >= 1.79777777778) {
+		Render3D::AspectRatioFix(aspectRatio,true);
+	}
 	if (!vint_create_process_hook.enabled()) {
 		if (aspectRatio <= 1.79777777778) {
 #if JLITE
