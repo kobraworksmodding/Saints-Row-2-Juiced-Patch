@@ -33,4 +33,5 @@ namespace General {
 	extern CMultiPatch CMPatches_TervelTextureCrashWorkaround_be_as_pe;
 	extern void CleanupModifiedScript();
 	extern SafetyHookMid cleanupBufferHook;
+	extern SafetyHookMid luaLoadBuffHook;
 }

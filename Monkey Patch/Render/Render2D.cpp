@@ -220,6 +220,9 @@ char SR2Ultrawide_HUDScale() {
 	float aspectRatio = currentX / currentY;
 	if (!vint_create_process_hook.enabled()) {
 		if (aspectRatio <= 1.79777777778) {
+#if JLITE
+			General::luaLoadBuffHook.disable();
+#endif
 			UltrawideFix = false;
 			General::cleanupBufferHook.disable();
 			General::CleanupModifiedScript();
@@ -227,6 +230,9 @@ char SR2Ultrawide_HUDScale() {
 			
 		}
 		else {
+#if JLITE
+			General::luaLoadBuffHook.enable();
+#endif
 			General::cleanupBufferHook.enable();
 			UltrawideFix = true;
 		}

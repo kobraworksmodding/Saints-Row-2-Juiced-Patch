@@ -335,11 +335,13 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	}
 	char* currentModifiedBuffer = nullptr;
 
+
+	SafetyHookMid luaLoadBuffHook;
 	void VINT_DOC_luaLoadBuff(safetyhook::Context32& ctx) {
 		const char* buff = (const char*)ctx.ebp;
 		const char* filename = (const char*)(ctx.esp + 0x14);
 		size_t& sz = ctx.ecx;
-
+#if !JLITE
 		std::string convertedBuff(buff);
 
 		int* resX = (int*)(0xE8DF14);
@@ -390,7 +392,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
 			const_cast<char*>(buff)[sz] = '\0';
 		}
-
+#endif
 		if (Render2D::UltrawideFix) {
 			// Clean up previous buffer if it exists (regardless of which file it was for)
 			if (currentModifiedBuffer != nullptr) {
@@ -809,12 +811,16 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			Render3D::CMPatches_ClippysIdiotTextureCrashExceptionHandle.Apply(); // also not ideal, might have perfomance impact, implementation in Render3D.cpp
 		}
 #if !JLITE
-
 		if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1)) {
+#endif
 			cleanupBufferHook = safetyhook::create_mid(0x00CDE388, [](safetyhook::Context32& ctx) {
 				General::CleanupModifiedScript();
 				},safetyhook::MidHook::StartDisabled);
-			static SafetyHookMid luaLoadBuffHook = safetyhook::create_mid(0x00CDE379, &VINT_DOC_luaLoadBuff);
+			luaLoadBuffHook = safetyhook::create_mid(0x00CDE379, &VINT_DOC_luaLoadBuff
+#if JLITE
+				,safetyhook::MidHook::StartDisabled
+#endif
+);
 			if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1) {
 				Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 1);
 				using namespace Render2D;
@@ -822,7 +828,9 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				WriteRelCall(0x00D1EF2F, (UInt32)&SR2Ultrawide_HUDScale);
 				WriteRelCall(0x00D1F944, (UInt32)&SR2Ultrawide_HUDScale);
 			}
+#if !JLITE
 		}
+#endif
 		if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) >= 2) {
 			Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 2);
 			using namespace Render2D;
@@ -834,7 +842,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		patchBytesM((BYTE*)0x0075D5D6, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
 		patchBytesM((BYTE*)0x0075D5B5, (BYTE*)"\x68\x3A\x30\x7B\x02", 5);
 
-#endif 
 		WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
 		WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
 		WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out
