@@ -14,6 +14,7 @@ and / or run completely on startup or after we check everything else.*/
 #include <safetyhook.hpp>
 #include "../Render/Render3D.h"
 #include "../Render/Render2D.h"
+#include "..\LUA\InGameConfig.h"
 namespace General {
 	bool DeletionMode;
 	const wchar_t* SaveMessage = L"Are you sure you want to delete this save?"; // ultimately, if we get extra strings to load, we should use a string label and request the string instead of hardcoding it
@@ -343,7 +344,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		size_t& sz = ctx.ecx;
 #if !JLITE
 		std::string convertedBuff(buff);
-
 		int* resX = (int*)(0xE8DF14);
 		int* resY = (int*)(0xE8DF4C);
 
@@ -386,6 +386,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				replace_all(convertedBuff, "MENU_VSYNC\",\t\t\t\t\t\t", "Fullscreen VSync\",");
 				replace_all(convertedBuff, "Shadow_Maps", "Shadows    ");
 			}
+
 			size_t& sz = ctx.edx;
 			sz = convertedBuff.length();
 
@@ -393,54 +394,69 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			const_cast<char*>(buff)[sz] = '\0';
 		}
 #endif
-		if (Render2D::UltrawideFix
+		bool needBufferMod = Render2D::UltrawideFix
 #if !JLITE
-|| Render2D::IVRadarScaling
+			|| Render2D::IVRadarScaling
 #endif
-) {
+			|| (strcmp(filename, "pause_menu.lua") == 0 && !InGameConfig::g_boolSliders.empty());
+		{
 			// Clean up previous buffer if it exists (regardless of which file it was for)
-			if (currentModifiedBuffer != nullptr) {
-				delete[] currentModifiedBuffer;
-				currentModifiedBuffer = nullptr;
-			}
+			if (needBufferMod) {
+				// Clean up previous buffer
+				if (currentModifiedBuffer != nullptr) {
+					delete[] currentModifiedBuffer;
+					currentModifiedBuffer = nullptr;
+				}
+				// Start with the current buffer state
+				const char* currentBuff = buff;
+				size_t currentSize = ctx.edx; // Use existing size
+				bool modified = false;
 
-			// remove .lua
-			std::string cached_str = filename;
-			size_t dotPosition = cached_str.find(".lua");
-			if (dotPosition != std::string::npos) {
-				cached_str = cached_str.substr(0, dotPosition);
-			}
 
-			std::string customCode = "";
-			const char* lua_command = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %f, %f)";
+				std::string finalContent;
+				finalContent = std::string(currentBuff, currentSize);
 
-			// re-center the HUD.
-			char buffer[512];
+				// Your existing UltrawideFix code to generate customCode
+				std::string customCode = "";
+				// remove .lua
+				std::string cached_str = filename;
+				size_t dotPosition = cached_str.find(".lua");
+				if (dotPosition != std::string::npos) {
+					cached_str = cached_str.substr(0, dotPosition);
+				}
+
+				const char* lua_command = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %f, %f)";
+				char buffer[512];
 #if !JLITE
-			if (Render2D::IVRadarScaling) {
-				if (cached_str == "hud") {
-					snprintf(buffer, sizeof(buffer), lua_command, "map_grp", cached_str.c_str(), "scale",
-						Render2D::RadarScale, Render2D::RadarScale);
-					customCode += "\n";
-					customCode += buffer;
+				if (Render2D::IVRadarScaling) {
+					if (cached_str == "hud") {
+						snprintf(buffer, sizeof(buffer), lua_command, "map_grp", cached_str.c_str(), "scale",
+							Render2D::RadarScale, Render2D::RadarScale);
+						customCode += "\n";
+						customCode += buffer;
 
-					snprintf(buffer, sizeof(buffer), lua_command, "map_grp", cached_str.c_str(), "anchor",
-						50.f, 710.f);
-					customCode += "\n";
-					customCode += buffer;
-				}
-				else if (cached_str == "hud_msg") {
-					snprintf(buffer, sizeof(buffer), lua_command, "msg_diversion_anchor", cached_str.c_str(), "scale",
-						Render2D::RadarScale, Render2D::RadarScale);
-					customCode += "\n";
-					customCode += buffer;
+						snprintf(buffer, sizeof(buffer), lua_command, "map_grp", cached_str.c_str(), "anchor",
+							50.f, 710.f);
+						customCode += "\n";
+						customCode += buffer;
+					}
+					else if (cached_str == "hud_msg") {
+						snprintf(buffer, sizeof(buffer), lua_command, "msg_diversion_anchor", cached_str.c_str(), "scale",
+							Render2D::RadarScale, Render2D::RadarScale);
+						customCode += "\n";
+						customCode += buffer;
 
-					snprintf(buffer, sizeof(buffer), lua_command, "msg_diversion_anchor", cached_str.c_str(), "anchor",
-						75.f, 520.f);
-					customCode += "\n";
-					customCode += buffer;
+						snprintf(buffer, sizeof(buffer), lua_command, "msg_diversion_anchor", cached_str.c_str(), "anchor",
+							75.f, 520.f);
+						customCode += "\n";
+						customCode += buffer;
+					}
+					if (!customCode.empty()) {
+						finalContent += customCode;
+						modified = true;
+					}
 				}
-			}
+
 #endif
 				if (Render2D::UltrawideFix) {
 					snprintf(buffer, sizeof(buffer), lua_command, "safe_frame", cached_str.c_str(), "anchor",
@@ -497,23 +513,40 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				}
 				// If we have code to add
 				if (!customCode.empty()) {
-					// Create a new buffer
-					size_t customCodeLen = customCode.length();
-					size_t newSize = sz + customCodeLen + 1; // +1 for null terminator
+					finalContent += customCode;
+					modified = true;
+				}
+				// Check if we need to apply slider patches
+				if (strcmp(filename, "pause_menu.lua") == 0 && !InGameConfig::g_boolSliders.empty()) {
+					if (!modified) {
+						// If we haven't created finalContent yet, do it now
+						finalContent = std::string(currentBuff, currentSize);
+					}
 
-					currentModifiedBuffer = new char[newSize];
-					memcpy(currentModifiedBuffer, buff, sz);
-					memcpy(currentModifiedBuffer + sz, customCode.c_str(), customCodeLen + 1);
+					// Apply slider patches directly to finalContent
+					bool sliderModified = InGameConfig::PatchSliderContent(finalContent, filename);
+					if (sliderModified) {
+						modified = true;
+					}
+				}
+
+				// If any modifications were made, create a new buffer
+				if (modified) {
+					size_t newSize = finalContent.length();
+					currentModifiedBuffer = new char[newSize + 1]; // +1 for null terminator
+					memcpy(currentModifiedBuffer, finalContent.c_str(), newSize);
+					currentModifiedBuffer[newSize] = '\0';
 
 					// Update the context
 					ctx.ebp = (DWORD)currentModifiedBuffer;
-					sz = newSize - 1;
+					ctx.edx = newSize;
+					ctx.ecx = newSize;
 
-					//printf("Modified %s with custom code\n", filename);
+					Logger::TypedLog(CHN_LUA, "Applied combined modifications to %s", filename);
 				}
 			}
-
 		}
+	}
 	
 	SafetyHookMid cleanupBufferHook;
 	void CleanupModifiedScript() {

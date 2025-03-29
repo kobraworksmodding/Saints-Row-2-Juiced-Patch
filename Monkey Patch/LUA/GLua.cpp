@@ -9,6 +9,8 @@
 
 #include <safetyhook.hpp>
 
+#include "InGameConfig.h"
+
 typedef void(__stdcall* NeverDieT)(int character,uint8_t status);
 NeverDieT NeverDie = (NeverDieT)0x00966720;
 
@@ -33,6 +35,7 @@ namespace GLua
         return 0; 
     }
     int __cdecl lua_func_vint_get_avg_processing_time(lua_State* L) {
+        using namespace InGameConfig;
         if (L == NULL) {
             return 0;
         }
@@ -60,11 +63,14 @@ namespace GLua
             if (varName == NULL) {
                 lua_pushnil(L);
                 return 1;
-            }  
-            if (strcmp(varName, "VFXPlus") == 0) {
-                int value = Render3D::CMPatches_VFXPlus.IsApplied();
-                lua_pushnumber(L, value);
             }
+            PatchEntry* entry = FindPatchEntry(varName);
+            int value = 0;
+            if (entry->singlePatch)
+                value = entry->singlePatch->IsApplied();
+            else if (entry->multiPatch)
+                value = entry->multiPatch->IsApplied();
+            lua_pushnumber(L, value);
             return 1;
         }
         else if (strcmp(cmd, "WriteJuiced") == 0) {
@@ -76,12 +82,17 @@ namespace GLua
                 return 1;
             }
 
-            if (strcmp(varName, "VFXPlus") == 0) {
-                value ? Render3D::CMPatches_VFXPlus.Apply() : Render3D::CMPatches_VFXPlus.Restore();
-            }
-
+            PatchEntry* entry = FindPatchEntry(varName);
+            if (entry) {
+                if (entry->singlePatch)
+                    value ? entry->singlePatch->Apply() : entry->singlePatch->Restore();
+                else if (entry->multiPatch)
+                    value ? entry->multiPatch->Apply() : entry->multiPatch->Restore();
+                GameConfig::SetValue(entry->configApp, entry->configKey, value);
+            
             lua_pushboolean(L, 1); // Success
             return 1;
+            }
         }
 
         lua_pushnil(L);
