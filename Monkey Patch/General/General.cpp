@@ -393,7 +393,11 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			const_cast<char*>(buff)[sz] = '\0';
 		}
 #endif
-		if (Render2D::UltrawideFix || Render2D::IVRadarScaling) {
+		if (Render2D::UltrawideFix
+#if !JLITE
+|| Render2D::IVRadarScaling
+#endif
+) {
 			// Clean up previous buffer if it exists (regardless of which file it was for)
 			if (currentModifiedBuffer != nullptr) {
 				delete[] currentModifiedBuffer;
@@ -412,6 +416,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 			// re-center the HUD.
 			char buffer[512];
+#if !JLITE
 			if (Render2D::IVRadarScaling) {
 				if (cached_str == "hud") {
 					snprintf(buffer, sizeof(buffer), lua_command, "map_grp", cached_str.c_str(), "scale",
@@ -435,6 +440,8 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 					customCode += "\n";
 					customCode += buffer;
 				}
+			}
+#endif
 				if (Render2D::UltrawideFix) {
 					snprintf(buffer, sizeof(buffer), lua_command, "safe_frame", cached_str.c_str(), "anchor",
 						(Render2D::get_vint_x_resolution() - 1280) / 2.f, 0.f);
@@ -497,7 +504,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			}
 
 		}
-	}
+	
 	SafetyHookMid cleanupBufferHook;
 	void CleanupModifiedScript() {
 		if (currentModifiedBuffer != nullptr) {

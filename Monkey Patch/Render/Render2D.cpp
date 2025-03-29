@@ -17,7 +17,9 @@ namespace Render2D
 	float* currentAR = (float*)0x022FD8EC;
 	const float widescreenvalue = 1.777777791f;
 	bool BetterChatTest = 0;
+#if !JLITE
 	bool IVRadarScaling = false;
+
 	float RadarScale = 0.87272727272f;
 	void RadarScaling() {
 		if (!IVRadarScaling)
@@ -137,6 +139,7 @@ namespace Render2D
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 	}
+#endif
 	ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
 	// What I use in BlingMenu to clamp mouse cursor, maybe a bit too much for Ultrawide? who's going to have an ultrawide under 720p?
 	void get_vint_res_limit(float* x, float* y) {
@@ -348,12 +351,14 @@ char SR2Ultrawide_HUDScale() {
 
 	float aspectRatio = currentX / currentY;
 	Render3D::AspectRatioFix(true);
-	
+
 	if (aspectRatio >= 1.77) {
+#if !JLITE
 		if (GameConfig::GetValue("Graphics", "IVRadarScaling", 0)) {
 			IVRadarScaling = true;
 			RadarScaling();
 		}
+#endif
 
 		// Fucking tagging system cause yeah lets hard code the anchor for it?
 	int var = (int)(aspectRatio * 720.f);
