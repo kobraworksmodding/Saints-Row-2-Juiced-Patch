@@ -47,7 +47,7 @@ namespace Logger
 	void PatchCFuncs();
 	void PatchLogger();
 
-	bool SaveDebugLogCopy(const char* destPath);
+	bool SaveDebugLogCopy(const wchar_t* destPath);
 
 
 }

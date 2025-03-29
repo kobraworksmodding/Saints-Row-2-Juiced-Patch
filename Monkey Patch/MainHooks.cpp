@@ -43,6 +43,9 @@
 #include "BlingMenuInstall.h"
 #include <shellapi.h>
 #include "General/General.h"
+
+#include "exception.hpp"
+
 using namespace General;
 const char ServerNameSR2[] = "[Saints Row 2]";
 
@@ -1305,8 +1308,7 @@ int RenderLoopStuff_Hacked()
 		FirstBootFlag();
 	}
 #endif
-	if (!ErrorManager::b_HandlerAssigned)
-		ErrorManager::AssignHandler();
+
 
 	if (Debug::fixFrametime)
 	    havokFrameTicker();
@@ -1459,11 +1461,9 @@ bool FileExists(const char* fileName) {
 	}
 	return found;
 }
-
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	General::TopWinMain();
-	ErrorManager::Initialize();
 
 	char NameBuffer[260];
 	PIMAGE_DOS_HEADER dos_header;

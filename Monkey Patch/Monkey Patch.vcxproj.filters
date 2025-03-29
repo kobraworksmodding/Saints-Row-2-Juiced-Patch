@@ -98,9 +98,6 @@
     <ClCompile Include="Mem\Memory.cpp">
       <Filter>Source Files\Mem</Filter>
     </ClCompile>
-    <ClCompile Include="UGC\Reloaded.cpp">
-      <Filter>Source Files\UGC</Filter>
-    </ClCompile>
     <ClCompile Include="Render\Render3D.cpp">
       <Filter>Source Files\Render</Filter>
     </ClCompile>
@@ -255,9 +252,6 @@
     </ClInclude>
     <ClInclude Include="Game\Game.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UGC\Reloaded.h">
-      <Filter>Source Files\UGC</Filter>
     </ClInclude>
     <ClInclude Include="Ext\Hooking.Patterns.h">
       <Filter>Ext</Filter>
