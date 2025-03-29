@@ -253,12 +253,13 @@ void ExceptionTracer::LeaveScope()
  *  PrintUnhandledException
  *      Prints the well known "Unhandled exception at ..." into the logging buffer
  */
+uint32_t myCrashAddress;
 void ExceptionTracer::PrintUnhandledException()
 {
     char module_name[MAX_PATH];
     auto dwExceptionCode = record.ExceptionCode;
     uintptr_t address = (uintptr_t)record.ExceptionAddress;
-
+    myCrashAddress = address;
     // Find out our module name for logging
     if (!this->module || !GetModuleFileNameA(this->module, module_name, sizeof(module_name)))
         strcpy(module_name, "unknown");
@@ -752,6 +753,36 @@ LONG WINAPI CustomUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
         {
             Log(buffer, max_logsize_ever, true, true, true);
             free(buffer);
+
+            wchar_t     errorPopup[999];
+            wchar_t     errorTitle[MAX_PATH] = L"Saints Row 2";
+
+            swprintf(errorPopup, L"-- Ran into an error at 0x%p --\n\n", myCrashAddress);
+            switch (myCrashAddress) {
+            case 0x00ce59ac:
+                wcscat_s(errorPopup, L"Details:\nSomething has gone wrong with your preload (.tbl) files!\nPlease check to see if they exist, have invalid items or have gone over the preload limit.\n\n");
+                break;
+
+            case 0x00ca0c1f:
+                wcscat_s(errorPopup, L"Details:\nSaints Row 2 has run out of memory.\nLAA Patch your sr2_pc.exe to prevent this crash.\n\n");
+                break;
+
+            case 0x00C080EC:
+                wcscat_s(errorPopup, L"Details:\nInvalid Bitmap Error\nA texture failed to load properly and caused the game to crash.\n\n");
+                break;
+
+            case 0x00703E7C:
+                wcscat_s(errorPopup, L"Details:\nSave file could not be loaded due to corruption or this saved game was saved using mods that are no longer installed.\n\n");
+                break;
+
+            case 0x00c14a8d:
+                wcscat_s(errorPopup, L"Details:\nCorrupted Input Driver.\n\nA corrupted input driver has tried to access vibration and caused the game to crash.\n\nTo fix this, turn \"ForceDisableVibration\" in reloaded.ini to 1.\n\nIf that doesn't work, vjoy is a device driver known to be problematic to SR2. If you have that installed it is recommended that you uninstall it.\n\n");
+                break;
+            }
+            wcscat_s(errorPopup, L"Please send this logging file:\n\n");
+            wcscat_s(errorPopup, filename);
+            wcscat_s(errorPopup, L"\n\nto someone who understands debuggers / reverse engineering.");
+            MessageBoxW(NULL, errorPopup, errorTitle, MB_ICONERROR | MB_OK);
         }
         else
         {
