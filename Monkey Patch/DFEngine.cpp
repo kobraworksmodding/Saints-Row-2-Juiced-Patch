@@ -12,6 +12,7 @@
 #include <vector>
 #include "Ext/Hooking.Patterns.h"
 #include <Windows.h>
+#include <direct.h>
 
 static CDFEngine DFEngine;
 static CDFObjectInstance fake_CDFObject;
@@ -48,7 +49,7 @@ VOID startup(LPCTSTR lpApplicationName)
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
 }
-
+LONG WINAPI CustomUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo);
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -56,6 +57,23 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 {
 	if(ul_reason_for_call==DLL_PROCESS_ATTACH)
 	{
+		if (GameConfig::GetValue("Logger", "ExceptionHandler", 1))
+		{
+			Logger::TypedLog(CHN_DLL, "Enabling ExceptionHandler.\n");
+			_mkdir("Juiced");
+			_mkdir("Juiced\\CrashDumps");
+			_mkdir("Juiced\\logs");
+			SetUnhandledExceptionFilter(CustomUnhandledExceptionFilter);
+			uint32_t ret = 0x900004C2; //ret4
+			DWORD protect[2];
+			VirtualProtect(&SetUnhandledExceptionFilter, sizeof(ret), PAGE_EXECUTE_READWRITE, &protect[0]);
+			memcpy(&SetUnhandledExceptionFilter, &ret, sizeof(ret));
+			VirtualProtect(&SetUnhandledExceptionFilter, sizeof(ret), protect[0], &protect[1]);
+			// Create the log directory structure
+
+		}
+
+
 		void * old_proc;
 		GameConfig::Initialize();
 		Logger::Initialize();

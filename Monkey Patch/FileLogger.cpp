@@ -79,7 +79,7 @@ namespace Logger
 	// Save a copy of the debug log at time of crash
 	//------------------------
 
-	bool SaveDebugLogCopy(const char* destPath)
+	bool SaveDebugLogCopy(const wchar_t* destPath)
 	{
 		bool success = false;
 
@@ -96,15 +96,16 @@ namespace Logger
 			fclose(tempLogger);
 		}
 
-		if (CopyFileA("debug.txt", destPath, FALSE)) {
+		if (CopyFileW(L"debug.txt", destPath, FALSE)) {
 			success = true;
 		}
 
 		// Reopen the debug.txt file for append
-		fopen_s(&f_logger, "debug.txt", "a");
+		_wfopen_s(&f_logger, L"debug.txt", L"a");
 
 		return success;
 	}
+
 
 	//------------------------
 	// Prints message to console and log!

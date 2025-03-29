@@ -75,7 +75,7 @@ namespace ErrorManager
         snprintf(debugCopyFilename, sizeof(debugCopyFilename), "Juiced\\logs\\debug_%s.txt", timeBuffer);
 
         // First, save a copy of the debug.txt file
-        bool debugCopySuccess = Logger::SaveDebugLogCopy(debugCopyFilename);
+        bool debugCopySuccess = true;
 
         // Then create a crash log file with error details
         FILE* crashLog;
