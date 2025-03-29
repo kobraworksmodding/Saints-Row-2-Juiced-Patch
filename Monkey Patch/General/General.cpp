@@ -386,14 +386,18 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				replace_all(convertedBuff, "MENU_VSYNC\",\t\t\t\t\t\t", "Fullscreen VSync\",");
 				replace_all(convertedBuff, "Shadow_Maps", "Shadows    ");
 			}
-			size_t &sz = ctx.edx;
+			size_t& sz = ctx.edx;
 			sz = convertedBuff.length();
 
 			strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
 			const_cast<char*>(buff)[sz] = '\0';
 		}
 #endif
-		if (Render2D::UltrawideFix) {
+		if (Render2D::UltrawideFix
+#if !JLITE
+|| Render2D::IVRadarScaling
+#endif
+) {
 			// Clean up previous buffer if it exists (regardless of which file it was for)
 			if (currentModifiedBuffer != nullptr) {
 				delete[] currentModifiedBuffer;
@@ -412,67 +416,95 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 			// re-center the HUD.
 			char buffer[512];
-			snprintf(buffer, sizeof(buffer), lua_command, "safe_frame", cached_str.c_str(), "anchor",
-				(Render2D::get_vint_x_resolution() - 1280) / 2.f, 0.f);
-			customCode += "\n";
-			customCode += buffer;
+#if !JLITE
+			if (Render2D::IVRadarScaling) {
+				if (cached_str == "hud") {
+					snprintf(buffer, sizeof(buffer), lua_command, "map_grp", cached_str.c_str(), "scale",
+						Render2D::RadarScale, Render2D::RadarScale);
+					customCode += "\n";
+					customCode += buffer;
 
-			// Weird stuff on the screen you have to remove, also mayhem is re-stretched back.
-			if (cached_str == "hud") {
-				using namespace Render2D;
-				char extraBuffer[512];
+					snprintf(buffer, sizeof(buffer), lua_command, "map_grp", cached_str.c_str(), "anchor",
+						50.f, 710.f);
+					customCode += "\n";
+					customCode += buffer;
+				}
+				else if (cached_str == "hud_msg") {
+					snprintf(buffer, sizeof(buffer), lua_command, "msg_diversion_anchor", cached_str.c_str(), "scale",
+						Render2D::RadarScale, Render2D::RadarScale);
+					customCode += "\n";
+					customCode += buffer;
 
-				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "extra_homie", "hud", "anchor",
-					(get_vint_x_resolution() - 1280) / 2.f, -500.f);
-				customCode += "\n";
-				customCode += extraBuffer;
+					snprintf(buffer, sizeof(buffer), lua_command, "msg_diversion_anchor", cached_str.c_str(), "anchor",
+						75.f, 520.f);
+					customCode += "\n";
+					customCode += buffer;
+				}
+			}
+#endif
+				if (Render2D::UltrawideFix) {
+					snprintf(buffer, sizeof(buffer), lua_command, "safe_frame", cached_str.c_str(), "anchor",
+						(Render2D::get_vint_x_resolution() - 1280) / 2.f, 0.f);
+					customCode += "\n";
+					customCode += buffer;
 
-				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mp_snatch_john", "hud", "anchor",
-					(get_vint_x_resolution() - 1280) / 2.f, -500.f);
-				customCode += "\n";
-				customCode += extraBuffer;
+					// Weird stuff on the screen you have to remove, also mayhem is re-stretched back.
+					if (cached_str == "hud") {
+						using namespace Render2D;
+						char extraBuffer[512];
 
-				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "health_mini_grp", "hud", "anchor",
-					(get_vint_x_resolution() - 1280) / 2.f, -500.f);
-				customCode += "\n";
-				customCode += extraBuffer;
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "extra_homie", "hud", "anchor",
+							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+						customCode += "\n";
+						customCode += extraBuffer;
 
-				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "health_large_grp", "hud", "anchor",
-					(get_vint_x_resolution() - 1280) / 2.f, -500.f);
-				customCode += "\n";
-				customCode += extraBuffer;
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mp_snatch_john", "hud", "anchor",
+							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+						customCode += "\n";
+						customCode += extraBuffer;
 
-				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "anchor",
-					-((get_vint_x_resolution() - 1280) / 2.f), 0.f);
-				customCode += "\n";
-				customCode += extraBuffer;
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "health_mini_grp", "hud", "anchor",
+							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+						customCode += "\n";
+						customCode += extraBuffer;
 
-				float weirdscale = 1.f / (Render2D::widescreenvalue / *Render2D::currentAR);
-				snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "scale",
-					weirdscale, 1.f);
-				customCode += "\n";
-				customCode += extraBuffer;
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "health_large_grp", "hud", "anchor",
+							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+						customCode += "\n";
+						customCode += extraBuffer;
+
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "anchor",
+							-((get_vint_x_resolution() - 1280) / 2.f), 0.f);
+						customCode += "\n";
+						customCode += extraBuffer;
+
+						float weirdscale = 1.f / (Render2D::widescreenvalue / *Render2D::currentAR);
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "scale",
+							weirdscale, 1.f);
+						customCode += "\n";
+						customCode += extraBuffer;
+					}
+				}
+				// If we have code to add
+				if (!customCode.empty()) {
+					// Create a new buffer
+					size_t customCodeLen = customCode.length();
+					size_t newSize = sz + customCodeLen + 1; // +1 for null terminator
+
+					currentModifiedBuffer = new char[newSize];
+					memcpy(currentModifiedBuffer, buff, sz);
+					memcpy(currentModifiedBuffer + sz, customCode.c_str(), customCodeLen + 1);
+
+					// Update the context
+					ctx.ebp = (DWORD)currentModifiedBuffer;
+					sz = newSize - 1;
+
+					//printf("Modified %s with custom code\n", filename);
+				}
 			}
 
-			// If we have code to add
-			if (!customCode.empty()) {
-				// Create a new buffer
-				size_t customCodeLen = customCode.length();
-				size_t newSize = sz + customCodeLen + 1; // +1 for null terminator
-
-				currentModifiedBuffer = new char[newSize];
-				memcpy(currentModifiedBuffer, buff, sz);
-				memcpy(currentModifiedBuffer + sz, customCode.c_str(), customCodeLen + 1);
-
-				// Update the context
-				ctx.ebp = (DWORD)currentModifiedBuffer;
-				sz = newSize - 1;
-
-				//printf("Modified %s with custom code\n", filename);
-			}
 		}
-
-	}
+	
 	SafetyHookMid cleanupBufferHook;
 	void CleanupModifiedScript() {
 		if (currentModifiedBuffer != nullptr) {

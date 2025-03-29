@@ -11,12 +11,135 @@
 #include <safetyhook.hpp>
 #include "..\General\General.h"
 #include "Render3D.h"
+#include "..\Ext\Hooking.Patterns.h"
 namespace Render2D
 {
 	float* currentAR = (float*)0x022FD8EC;
 	const float widescreenvalue = 1.777777791f;
 	bool BetterChatTest = 0;
+#if !JLITE
+	bool IVRadarScaling = false;
 
+	float RadarScale = 0.87272727272f;
+	void RadarScaling() {
+		if (!IVRadarScaling)
+			return;
+
+		// vint scale
+		auto pattern = hook::make_range_pattern(0x7A2C30, 0x007A37D2, "AC BF 2D 02");
+		Logger::TypedLog(CHN_DEBUG,"Count of vint %d \n", pattern.size());
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+		// Height scale
+		pattern = hook::make_range_pattern(0x7A2C30, 0x007A37D2, "A8 BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		// vint scale
+		pattern = hook::make_range_pattern(0x79E970, 0x0079EB0A, "AC BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		// Height scale
+		pattern = hook::make_range_pattern(0x79E970, 0x0079EB0A, "A8 BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+		// vint scale
+		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "AC BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		// Height scale
+		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "A8 BF 2D 02");
+
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		// vint scale
+		pattern = hook::make_range_pattern(0x00B877B0, 0x00B877D7, "AC BF 2D 02");
+
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		// height scale
+		pattern = hook::make_range_pattern(0x00B877B0, 0x00B877D7, "A8 BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		// vint scale
+		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "AC BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		// height scale
+		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "A8 BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		// vint scale
+		pattern = hook::make_range_pattern(0x79FEB0, 0x0079FFE5, "AC BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		// vint scale
+		pattern = hook::make_range_pattern(0x79FEB0, 0x0079FFE5, "A8 BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		pattern = hook::make_range_pattern(0x5489F0, 0x00548C5C, "A? BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		pattern = hook::make_range_pattern(0x7A37E0, 0x007A3D2F, "AC BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		pattern = hook::make_range_pattern(0x7A37E0, 0x007A3D2F, "A8 BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+
+		pattern = hook::make_range_pattern(0x0079FC92, 0x0079FD92, "AC BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+		pattern = hook::make_range_pattern(0x0079FC92, 0x0079FD92, "A8 BF 2D 02");
+		pattern.for_each_result([](hook::pattern_match match) {
+			void* addr = match.get<void*>();
+			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
+			});
+	}
+#endif
 	ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
 	// What I use in BlingMenu to clamp mouse cursor, maybe a bit too much for Ultrawide? who's going to have an ultrawide under 720p?
 	void get_vint_res_limit(float* x, float* y) {
@@ -227,9 +350,17 @@ char SR2Ultrawide_HUDScale() {
 	char result;
 
 	float aspectRatio = currentX / currentY;
+	Render3D::AspectRatioFix(true);
 
-	// Fucking tagging system cause yeah lets hard code the anchor for it?
+	if (aspectRatio >= 1.77) {
+#if !JLITE
+		if (GameConfig::GetValue("Graphics", "IVRadarScaling", 0)) {
+			IVRadarScaling = true;
+			RadarScaling();
+		}
+#endif
 
+		// Fucking tagging system cause yeah lets hard code the anchor for it?
 	int var = (int)(aspectRatio * 720.f);
 	static int var2;
 	 var2 = (int)(aspectRatio * 360.f);
@@ -242,10 +373,7 @@ char SR2Ultrawide_HUDScale() {
 	//SafeWrite32(0x00B87313 + 1, var2);
 	SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
 	SafeWrite32(0x0062597F + 2, (UInt32)&var2);
-	Render3D::AspectRatioFix(true);
-
-
-	if (aspectRatio >= 1.77) {
+	
 		Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 3);
 		RefreshHUD_thread = std::thread(RefreshHUD_loop);
 		RefreshHUD_thread.detach();

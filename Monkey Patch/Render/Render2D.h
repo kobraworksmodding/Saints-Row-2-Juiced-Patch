@@ -11,7 +11,8 @@ namespace Render2D
     extern void InGamePrint(const char* Text, int x, int y, int font);
 
     extern bool BetterChatTest;
-
+	extern bool IVRadarScaling;
+	extern float RadarScale;
 	enum vint_variant_type : __int32
 	{
 		VINT_PROP_TYPE_NONE = 0x0,
