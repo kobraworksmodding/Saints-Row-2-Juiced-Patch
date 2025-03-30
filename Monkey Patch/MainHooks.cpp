@@ -1466,6 +1466,8 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 {
 	InGameConfig::RegisterBoolSlider("VFXPlus", "VanillaFXPlus");
 	InGameConfig::RegisterBoolSlider("BetterAO", "Better Ambient Occlusion");
+	InGameConfig::RegisterBoolSlider("DisableBlueRefl", "Disable Sky Reflection on Windows");
+	InGameConfig::RegisterBoolSlider("DisableBlueRefl", "Disable Sky Reflection on Windows");
 	//InGameConfig::RegisterSlider("BetterAO", "Better Ambient Occlusion", {"FUCK OFF ", "fucked off"}, 50);
 	InGameConfig::RegisterSlider("SleepHack", "Sleep Hack", { "CONTROL_NO","QUALITY_LOW_TEXT","QUALITY_MEDIUM_TEXT","QUALITY_HIGH_TEXT" });
 	General::TopWinMain();
