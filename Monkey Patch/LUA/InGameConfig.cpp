@@ -434,6 +434,111 @@ namespace InGameConfig {
             }
         }
 
+        // 8. Add the new Juiced support functions and menu
+        // Find a good insertion point - look for Pause_display_menu_PC
+        std::string displayMenuStr = "Pause_display_menu_PC = {";
+        size_t displayMenuPos = buffer.find(displayMenuStr);
+        if (displayMenuPos != std::string::npos) {
+            // First add the supporting functions before the menu
+            std::string juicedFunctions = "function juiced_menu_build_display_options_menu_PC(menu_data)\n";
+
+            // Initialize all sliders (both display and control)
+            for (const auto& slider : g_sliders) {
+                juicedFunctions += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
+                    slider.name + "\")\n";
+            }
+
+            juicedFunctions += "end\n\n";
+
+            // Add update function for juiced menu
+            juicedFunctions += "function juiced_menu_display_options_update_value(menu_label, menu_data)\n";
+            juicedFunctions += "\tlocal idx = menu_data.id\n";
+
+            // Add conditions for all sliders
+            for (const auto& slider : g_sliders) {
+                juicedFunctions += "\tif idx == " + std::to_string(slider.id) + " then\n" +
+                    "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider.name +
+                    "\", menu_data.text_slider_values.cur_value)\n" +
+                    "\tend\n";
+            }
+
+            juicedFunctions += "end\n\n";
+
+            // Add back function
+            juicedFunctions += "function juiced_back_workaround()\n";
+            juicedFunctions += "\t\tmenu_show(Pause_options_menu, MENU_TRANSITION_SWEEP_RIGHT)\n";
+            juicedFunctions += "\t\taudio_play(Menu_sound_back)\n";
+            juicedFunctions += "end\n\n";
+
+            // Now add the Juiced_options menu after the functions
+            std::string juicedOptionsMenu = juicedFunctions + "Juiced_options = {\n";
+            juicedOptionsMenu += "\theader_label_str\t= \"Juiced Options\",\n";
+            juicedOptionsMenu += "\tmax_height = 530,\t-- Default: 375 [nclok1405]\n";
+            juicedOptionsMenu += "\ton_show \t\t\t= juiced_menu_build_display_options_menu_PC,\n";
+            juicedOptionsMenu += "\ton_alt_select \t\t= juiced_back_workaround,\n";
+            juicedOptionsMenu += "\ton_back \t\t\t= juiced_back_workaround,\n";
+            juicedOptionsMenu += "\ton_pause\t\t\t= pause_menu_options_exit_confirm,\n";
+            juicedOptionsMenu += "\ton_map \t\t\t\t= pause_menu_options_swap_confirm,\n";
+            juicedOptionsMenu += "\ton_nav\t\t\t\t= pause_menu_display_options_nav,\n";
+            juicedOptionsMenu += "\ton_horz_show \t\t= pause_menu_option_accept_horz,\n";
+
+            // Calculate num_items based on all sliders (both display and control)
+            int totalItems = displaySliders.size() + controlSliders.size();
+
+            // If we have both types, we need two headers
+            if (!displaySliders.empty() && !controlSliders.empty()) {
+                totalItems += 2; // Two headers (one for display, one for controls)
+            }
+            // If we have only one type, we need just one header
+            else if (!displaySliders.empty() || !controlSliders.empty()) {
+                totalItems += 1; // One header
+            }
+
+            juicedOptionsMenu += "\tnum_items = " + std::to_string(totalItems) + ",\n\n";
+
+            // Add entries for all sliders
+            int entryIndex = 0;
+
+            // Add display sliders if we have any
+            if (!displaySliders.empty()) {
+                // Add display header
+                juicedOptionsMenu += "\t[" + std::to_string(entryIndex++) +
+                    "] = { label = \"Display Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
+
+                // Add display sliders
+                for (const auto& slider : displaySliders) {
+                    juicedOptionsMenu += "\t[" + std::to_string(entryIndex++) +
+                        "] = { label = \"" + slider.display_name +
+                        "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
+                        slider.name + "_slider_values,\t\t\ton_value_update = juiced_menu_display_options_update_value,\tid =" +
+                        std::to_string(slider.id) + ",\t\ton_select = pause_menu_options_submenu_exit_confirm },\n";
+                }
+            }
+
+            // Add control sliders if we have any
+            if (!controlSliders.empty()) {
+                // Add control header
+                juicedOptionsMenu += "\t[" + std::to_string(entryIndex++) +
+                    "] = { label = \"Control Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
+
+                // Add control sliders
+                for (const auto& slider : controlSliders) {
+                    juicedOptionsMenu += "\t[" + std::to_string(entryIndex++) +
+                        "] = { label = \"" + slider.display_name +
+                        "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
+                        slider.name + "_slider_values,\t\t\ton_value_update = juiced_menu_display_options_update_value,\tid =" +
+                        std::to_string(slider.id) + ",\t\ton_select = pause_menu_options_submenu_exit_confirm },\n";
+                }
+            }
+
+            juicedOptionsMenu += "\tbtn_tips = Pause_options_btn_tips,\n";
+            juicedOptionsMenu += "}\n\n";
+            // No need to add functions here as they were already added before the menu definition
+
+            buffer.insert(displayMenuPos, juicedOptionsMenu);
+            modified = true;
+        }
+
         return modified;
     }
 }
