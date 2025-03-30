@@ -208,14 +208,15 @@ namespace InGameConfig {
                 std::string currentNumStr = buffer.substr(numValuePos, numValueEnd - numValuePos);
                 int currentNumItems = std::stoi(currentNumStr);
 
-                // Update num_items to account for our new sliders
+                // Update num_items to account for our new sliders plus the header
+                int additionalItems = g_sliders.empty() ? 0 : g_sliders.size() + 1; // +1 for the header
                 buffer.replace(numValuePos, numValueEnd - numValuePos,
-                    std::to_string(currentNumItems + g_sliders.size()));
+                    std::to_string(currentNumItems + additionalItems));
 
                 // Find the end of the array entries
                 std::string btnTipsStr = "btn_tips = Pause_options_btn_tips,";
                 size_t btnTipsPos = buffer.find(btnTipsStr, menuPos);
-                if (btnTipsPos != std::string::npos) {
+                if (btnTipsPos != std::string::npos && !g_sliders.empty()) {
                     // Find the last entry bracket to insert after
                     size_t lastBracketPos = buffer.rfind("},", btnTipsPos);
                     if (lastBracketPos != std::string::npos) {
@@ -223,10 +224,17 @@ namespace InGameConfig {
                         lastBracketPos = buffer.find("\n", lastBracketPos) + 1;
 
                         std::string menuEntries;
+
+                        // First add the "Juiced Options" header
+                        int headerIndex = currentNumItems;
+                        menuEntries += "\t[" + std::to_string(headerIndex) +
+                            "] = { label = \"Juiced Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
+
+                        // Then add all sliders
                         for (size_t i = 0; i < g_sliders.size(); i++) {
                             const auto& slider = g_sliders[i];
                             // Create new menu entry with the same format as existing entries
-                            menuEntries += "\t[" + std::to_string(currentNumItems + i) +
+                            menuEntries += "\t[" + std::to_string(headerIndex + 1 + i) +
                                 "] = { label = \"" + slider.display_name +
                                 "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
                                 slider.name + "_slider_values,\t\t\ton_value_update = pause_menu_display_options_update_value,\tid =" +
