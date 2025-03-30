@@ -1,9 +1,11 @@
 #include "InGameConfig.h"
 #include "..\Render\Render3D.h"
+#include "..\Render\Render2D.h"
 #include <unordered_set>
 #include <regex>
 #include "../FileLogger.h"
 #include "../Player/Behavior.h"
+#include "../GameConfig.h"
 namespace InGameConfig {
     static PatchEntry patch_registry[] = {
     { "VFXPlus", &Render3D::CMPatches_VFXPlus,nullptr ,"Graphics", "VanillaFXPlus" },
@@ -11,17 +13,43 @@ namespace InGameConfig {
     {"DisableBlueRefl",&Render3D::CMPatches_DisableSkyRefl,nullptr,"Graphics","DisableSkyRefl"},
     {"DisableCutSceneBlackBars",nullptr,&Render3D::CRemoveBlackBars,"Graphics","RemoveBlackBars"},
     {"BetterDriveByCam",nullptr,&Behavior::CBetterDBC,"Gameplay","BetterDriveByCam"},
-    {"UncapFPS",nullptr,&Render3D::CUncapFPS,"Debug","UncapFPS"}
+    {"BetterHandbrakeCam",nullptr,&Behavior::CBetterHBC,"Gameplay","Better Handbrake Cam"},
+    {"UncapFPS",nullptr,&Render3D::CUncapFPS,"Debug","UncapFPS"},
+    {"DisableFog",&Render3D::CMPatches_DisableFog,nullptr,"Graphics","DisableFog"},
+    {"SR1Reloading",&Behavior::CMPatches_SR1Reloading,nullptr,"Gameplay","SR1Reloading"},
+    {"SR1QuickSwitch",&Behavior::CMPatches_SR1QuickSwitch,nullptr,"Gameplay","SR1QuickSwitch"}
     };
     void AddOptions() {
         InGameConfig::RegisterBoolSlider("UncapFPS", "UncapFPS");
         InGameConfig::RegisterBoolSlider("VFXPlus", "VanillaFXPlus");
         InGameConfig::RegisterBoolSlider("BetterAO", "Better Ambient Occlusion");
-        InGameConfig::RegisterBoolSlider("DisableBlueRefl", "Disable Sky Reflection on Windows");
+        InGameConfig::RegisterBoolSlider("DisableFog", "Disable Fog");
+        InGameConfig::RegisterBoolSlider("DisableBlueRefl", "Disable Sky Reflections");
+        InGameConfig::RegisterSlider("IVRadarScaling", "IV Radar Scaling",{"CONTROL_NO","YES (Untoggleable)","Widescreen only"});
         InGameConfig::RegisterSlider("DisableAimAssist", "Disable Aim Assist", { "CONTROL_NO","On Mouse only","Always"}, MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("BetterDriveByCam", "Better Drive-by Cam", InGameConfig::MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("BetterHandbrakeCam", "Better Handbrake Cam", InGameConfig::MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("SR1Reloading", "SR1Reloading", InGameConfig::MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("SR1QuickSwitch", "SR1QuickSwitch", InGameConfig::MenuType::CONTROLS);
         //InGameConfig::RegisterSlider("BetterAO", "Better Ambient Occlusion", {"FUCK OFF ", "fucked off"}, 50);
         InGameConfig::RegisterSlider("SleepHack", "Sleep Hack", { "CONTROL_NO","QUALITY_LOW_TEXT","QUALITY_MEDIUM_TEXT","QUALITY_HIGH_TEXT" });
+    }
+
+    void GLuaWrapper(const char* var, int* value, bool write) {
+        if (strcmp(var, "IVRadarScaling") == 0) {
+            if (!write) {
+                if (*Render2D::currentAR <= 1.77)
+                    *value = 2;
+                *value = Render2D::IVRadarScaling;
+            }
+            else if(*Render2D::currentAR >= 1.77) {
+                Render2D::IVRadarScaling = true;
+                Render2D::RadarScaling();
+                Render2D::VintScaleIV();
+                GameConfig::SetValue("Graphics", "IVRadarScaling", 1);
+            }
+        }
+
     }
     PatchEntry* FindPatchEntry(const char* name) {
         for (auto& entry : patch_registry) {

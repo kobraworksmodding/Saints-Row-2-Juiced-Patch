@@ -22,7 +22,11 @@ namespace Render2D
 
 	float RadarScale = 0.87272727272f;
 	void RadarScaling() {
-		if (!IVRadarScaling)
+		float currentX = (float)(*(unsigned int*)0x022f63f8);
+		float currentY = (float)(*(unsigned int*)0x022f63fc);
+
+		float aspect = currentX / currentY;
+		if (!IVRadarScaling && aspect < 1.77)
 			return;
 
 		// vint scale
@@ -139,6 +143,24 @@ namespace Render2D
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 	}
+
+	void VintScaleIV() {
+		char buffer[256]{};
+		const char* lua_command = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %f, %f)";
+		snprintf(buffer, sizeof(buffer), lua_command, "map_grp", "hud", "scale",
+			Render2D::RadarScale, Render2D::RadarScale);
+		General::VintExecute(buffer);
+		snprintf(buffer, sizeof(buffer), lua_command, "map_grp", "hud", "anchor",
+			50.f, 710.f);
+		General::VintExecute(buffer);
+		snprintf(buffer, sizeof(buffer), lua_command, "msg_diversion_anchor", "hud_msg", "scale",
+			Render2D::RadarScale, Render2D::RadarScale);
+		General::VintExecute(buffer);
+		snprintf(buffer, sizeof(buffer), lua_command, "msg_diversion_anchor", "hud_msg", "anchor",
+			75.f, 520.f);
+		General::VintExecute(buffer);
+	}
+
 #endif
 	ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
 	// What I use in BlingMenu to clamp mouse cursor, maybe a bit too much for Ultrawide? who's going to have an ultrawide under 720p?

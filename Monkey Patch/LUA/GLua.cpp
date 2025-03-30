@@ -115,7 +115,13 @@ namespace GLua
                     value = entry->singlePatch->IsApplied();
                 else if (entry->multiPatch)
                     value = entry->multiPatch->IsApplied();
+
+                lua_pushnumber(L, value);
+                return 1;
             }
+            if(&value)
+            InGameConfig::GLuaWrapper(varName, &value, false);
+
             lua_pushnumber(L, value);
             return 1;
         }
@@ -156,6 +162,10 @@ namespace GLua
             lua_pushboolean(L, 1); // Success
             return 1;
             }
+            if (&value)
+                InGameConfig::GLuaWrapper(varName, &value, true);
+            lua_pushboolean(L, 1);
+            return 1;
         }
 
         lua_pushnil(L);

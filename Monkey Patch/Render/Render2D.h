@@ -51,4 +51,6 @@ namespace Render2D
 	extern char SR2Ultrawide_HUDScale();
 	extern SafetyHookMid vint_create_process_hook;
 	extern void create_process_hook(safetyhook::Context32& ctx);
+	extern void RadarScaling();
+	extern void VintScaleIV();
 }

@@ -28,5 +28,6 @@ namespace InGameConfig {
     extern std::vector<Slider> g_sliders;
     extern bool RegisterSlider(const char* name, const char* display_name, const std::vector<std::string>& labels, MenuType menuType = MenuType::DISPLAY, int startingId = -1);
     extern bool RegisterBoolSlider(const char* name, const char* display_name, MenuType type = MenuType::DISPLAY, int startingId = -1);
+    extern void GLuaWrapper(const char* var, int* value, bool write);
     void AddOptions();
 }
