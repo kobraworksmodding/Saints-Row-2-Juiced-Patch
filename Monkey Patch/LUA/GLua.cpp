@@ -34,6 +34,32 @@ namespace GLua
 
         return 0; 
     }
+    void PatchSleepHack(int value) {
+        if (value == 0) {
+            if(Render3D::IsSleepHooked)
+            Render3D::UnHookSleep();
+            Render3D::CMPatches_PatchLowSleepHack.Restore();
+            Render3D::CPatches_MediumSleepHack.Restore();
+        }
+        else if (value == 1) {
+            if (Render3D::IsSleepHooked)
+            Render3D::UnHookSleep();
+            Render3D::CMPatches_PatchLowSleepHack.Apply();
+            Render3D::CPatches_MediumSleepHack.Restore();
+        }
+        else if (value == 2) {
+            if (Render3D::IsSleepHooked)
+            Render3D::UnHookSleep();
+            Render3D::CMPatches_PatchLowSleepHack.Apply();
+            Render3D::CPatches_MediumSleepHack.Apply();
+        }
+        else if (value == 3) {
+            Render3D::HookSleep();
+            Render3D::CMPatches_PatchLowSleepHack.Apply();
+            Render3D::CPatches_MediumSleepHack.Apply();
+        }
+
+    }
     int __cdecl lua_func_vint_get_avg_processing_time(lua_State* L) {
         using namespace InGameConfig;
         if (L == NULL) {
@@ -64,12 +90,25 @@ namespace GLua
                 lua_pushnil(L);
                 return 1;
             }
-            PatchEntry* entry = FindPatchEntry(varName);
             int value = 0;
-            if (entry->singlePatch)
-                value = entry->singlePatch->IsApplied();
-            else if (entry->multiPatch)
-                value = entry->multiPatch->IsApplied();
+            if (strcmp(varName, "SleepHack") == 0) {
+                if (Render3D::IsSleepHooked)
+                    value = 3;
+                else if (Render3D::CPatches_MediumSleepHack.IsApplied() && Render3D::CMPatches_PatchLowSleepHack.IsApplied())
+                    value = 2;
+                else if (Render3D::CMPatches_PatchLowSleepHack.IsApplied() && !Render3D::CPatches_MediumSleepHack.IsApplied())
+                    value = 1;
+                lua_pushnumber(L, value);
+                return 1;
+            }
+
+            PatchEntry* entry = FindPatchEntry(varName);
+            if (entry) {
+                if (entry->singlePatch)
+                    value = entry->singlePatch->IsApplied();
+                else if (entry->multiPatch)
+                    value = entry->multiPatch->IsApplied();
+            }
             lua_pushnumber(L, value);
             return 1;
         }
@@ -81,7 +120,12 @@ namespace GLua
                 lua_pushboolean(L, 0); // Failure
                 return 1;
             }
-
+            if (strcmp(varName, "SleepHack") == 0) {
+                PatchSleepHack(value);
+                GameConfig::SetValue("Debug", "SleepHack", value);
+                lua_pushboolean(L, 1); // Success
+                return 1;
+            }
             PatchEntry* entry = FindPatchEntry(varName);
             if (entry) {
                 if (entry->singlePatch)

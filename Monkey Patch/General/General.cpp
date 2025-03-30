@@ -398,7 +398,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #if !JLITE
 			|| Render2D::IVRadarScaling
 #endif
-			|| (strcmp(filename, "pause_menu.lua") == 0 && !InGameConfig::g_boolSliders.empty());
+			|| (strcmp(filename, "pause_menu.lua") == 0 && !InGameConfig::g_sliders.empty());
 		{
 			// Clean up previous buffer if it exists (regardless of which file it was for)
 			if (needBufferMod) {
@@ -517,7 +517,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 					modified = true;
 				}
 				// Check if we need to apply slider patches
-				if (strcmp(filename, "pause_menu.lua") == 0 && !InGameConfig::g_boolSliders.empty()) {
+				if (strcmp(filename, "pause_menu.lua") == 0 && !InGameConfig::g_sliders.empty()) {
 					if (!modified) {
 						// If we haven't created finalContent yet, do it now
 						finalContent = std::string(currentBuff, currentSize);

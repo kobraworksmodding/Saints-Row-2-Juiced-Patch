@@ -20,259 +20,273 @@ namespace InGameConfig {
 
 
 
-	static std::unordered_map<std::string, int> g_juicedVars;
-	static std::unordered_set<int> g_usedIds;
+    static std::unordered_map<std::string, int> g_juicedVars;
+    static std::unordered_set<int> g_usedIds;
 
-	int FindNextAvailableId(const char* original_buffer, size_t original_size) {
-		// Parse the lua buffer to find used IDs in the menu
-		std::string buffer(original_buffer, original_size);
+    int FindNextAvailableId(const char* original_buffer, size_t original_size) {
+        // Parse the lua buffer to find used IDs in the menu
+        std::string buffer(original_buffer, original_size);
 
-		// Keep track of all found IDs to avoid duplicates
-		std::unordered_set<int> foundIds;
+        // Keep track of all found IDs to avoid duplicates
+        std::unordered_set<int> foundIds;
 
-		// First, find the display menu section
-		std::string menuStart = "Pause_display_menu_PC = {";
-		size_t menuStartPos = buffer.find(menuStart);
-		if (menuStartPos == std::string::npos) {
-			// Menu not found, use default starting ID
-			return 17;
-		}
+        // First, find the display menu section
+        std::string menuStart = "Pause_display_menu_PC = {";
+        size_t menuStartPos = buffer.find(menuStart);
+        if (menuStartPos == std::string::npos) {
+            // Menu not found, use default starting ID
+            return 17;
+        }
 
-		// Find where the menu entries start
-		size_t menuEntryPos = buffer.find("[", menuStartPos);
-		if (menuEntryPos == std::string::npos) {
-			return 17;
-		}
+        // Find where the menu entries start
+        size_t menuEntryPos = buffer.find("[", menuStartPos);
+        if (menuEntryPos == std::string::npos) {
+            return 17;
+        }
 
-		// Now scan through all menu entries looking for id = X patterns
-		size_t currentPos = menuEntryPos;
-		size_t btnTipsPos = buffer.find("btn_tips = ", menuStartPos);
+        // Now scan through all menu entries looking for id = X patterns
+        size_t currentPos = menuEntryPos;
+        size_t btnTipsPos = buffer.find("btn_tips = ", menuStartPos);
 
-		if (btnTipsPos == std::string::npos) {
-			// Can't find the end of the menu, use a different marker
-			btnTipsPos = buffer.find("num_items = ", menuStartPos);
-			if (btnTipsPos == std::string::npos) {
-				return 17;
-			}
-		}
+        if (btnTipsPos == std::string::npos) {
+            // Can't find the end of the menu, use a different marker
+            btnTipsPos = buffer.find("num_items = ", menuStartPos);
+            if (btnTipsPos == std::string::npos) {
+                return 17;
+            }
+        }
 
-		// Extract the menu section
-		std::string menuSection = buffer.substr(menuStartPos, btnTipsPos - menuStartPos);
+        // Extract the menu section
+        std::string menuSection = buffer.substr(menuStartPos, btnTipsPos - menuStartPos);
 
-		// Now use regex to find all IDs
-		const std::regex idPattern("id\\s*=\\s*(\\d+)");
+        // Now use regex to find all IDs
+        const std::regex idPattern("id\\s*=\\s*(\\d+)");
 
-		// Find all occurrences
-		std::sregex_iterator it(menuSection.begin(), menuSection.end(), idPattern);
-		std::sregex_iterator end;
+        // Find all occurrences
+        std::sregex_iterator it(menuSection.begin(), menuSection.end(), idPattern);
+        std::sregex_iterator end;
 
-		while (it != end) {
-			std::smatch match = *it;
-			if (match.size() > 1) {
-				// Extract the ID number
-				int id = std::stoi(match[1].str());
-				foundIds.insert(id);
-				Logger::TypedLog(CHN_LUA, "Found menu ID: %d", id);
-			}
-			++it;
-		}
+        while (it != end) {
+            std::smatch match = *it;
+            if (match.size() > 1) {
+                // Extract the ID number
+                int id = std::stoi(match[1].str());
+                foundIds.insert(id);
+                Logger::TypedLog(CHN_LUA, "Found menu ID: %d", id);
+            }
+            ++it;
+        }
 
-		// Combine with our already tracked IDs
-		std::unordered_set<int> allUsedIds = foundIds;
-		allUsedIds.insert(g_usedIds.begin(), g_usedIds.end());
+        // Combine with our already tracked IDs
+        std::unordered_set<int> allUsedIds = foundIds;
+        allUsedIds.insert(g_usedIds.begin(), g_usedIds.end());
 
-		// Find the first unused ID starting from a reasonable minimum
-		// Based on your menu, it looks like IDs start from 1
-		int nextId = 1;
+        // Find the first unused ID starting from a reasonable minimum
+        // Based on your menu, it looks like IDs start from 1
+        int nextId = 1;
 
-		// Find the highest used ID first
-		int highestId = 0;
-		for (int id : allUsedIds) {
-			if (id > highestId) {
-				highestId = id;
-			}
-		}
+        // Find the highest used ID first
+        int highestId = 0;
+        for (int id : allUsedIds) {
+            if (id > highestId) {
+                highestId = id;
+            }
+        }
 
-		// Simply use the next ID after the highest one
-		nextId = highestId + 1;
+        // Simply use the next ID after the highest one
+        nextId = highestId + 1;
 
-		// Add this ID to our used set
-		g_usedIds.insert(nextId);
+        // Add this ID to our used set
+        g_usedIds.insert(nextId);
 
-		Logger::TypedLog(CHN_LUA, "Assigned new menu ID: %d", nextId);
+        Logger::TypedLog(CHN_LUA, "Assigned new menu ID: %d", nextId);
 
-		return nextId;
-	}
-	std::vector<BoolSlider> g_boolSliders;
-	static char* g_sliderModifiedBuffer = nullptr;
-	bool PatchSliderContent(std::string& buffer, const char* filename) {
-		// Only process pause_menu.lua
-		if (strcmp(filename, "pause_menu.lua") != 0 || g_boolSliders.empty()) {
-			return false; // Nothing to patch
-		}
+        return nextId;
+    }
+    std::vector<Slider> g_sliders;
+    bool RegisterSlider(const char* name, const char* display_name, const std::vector<std::string>& labels, int startingId) {
+        // If a starting ID is provided, try to use it first
+        int id = startingId;
 
-		// For any sliders that don't have an ID yet, assign one now
-		bool needsIdAssignment = false;
-		for (auto& slider : g_boolSliders) {
-			if (slider.id == -1) {
-				needsIdAssignment = true;
-				break;
-			}
-		}
+        // If no ID provided or the provided ID is already used, find one automatically
+        if (id == -1 || g_usedIds.find(id) != g_usedIds.end()) {
+            // Need to find a free ID when we have access to the buffer
+            // For now, just mark that we need to assign an ID later
+            id = -1;
+        }
+        else {
+            g_usedIds.insert(id);
+        }
 
-		if (needsIdAssignment) {
-			// Find the next available ID
-			int nextId = FindNextAvailableId(buffer.c_str(), buffer.length());
+        // Store the slider information with custom labels
+        g_sliders.push_back({ name, display_name, id, labels });
 
-			// Assign IDs to any sliders that need them
-			for (auto& slider : g_boolSliders) {
-				if (slider.id == -1) {
-					slider.id = nextId++;
-					g_usedIds.insert(slider.id);
-				}
-			}
-		}
+        // Initialize the variable if it doesn't exist yet
+        if (g_juicedVars.find(name) == g_juicedVars.end()) {
+            g_juicedVars[name] = 0;
+        }
 
-		bool modified = false;
+        return true;
+    }
+    bool RegisterBoolSlider(const char* name, const char* display_name, int startingId) {
+        // Create a bool slider with default Yes/No labels
+        return RegisterSlider(name, display_name, { "CONTROL_NO", "CONTROL_YES" }, startingId);
+    }
+    static char* g_sliderModifiedBuffer = nullptr;
+    bool PatchSliderContent(std::string& buffer, const char* filename) {
+        // Only process pause_menu.lua
+        if (strcmp(filename, "pause_menu.lua") != 0 || g_sliders.empty()) {
+            return false; // Nothing to patch
+        }
 
-		// Rest of your existing PatchLuaBufferForSliders function...
+        // For any sliders that don't have an ID yet, assign one now
+        bool needsIdAssignment = false;
+        for (auto& slider : g_sliders) {
+            if (slider.id == -1) {
+                needsIdAssignment = true;
+                break;
+            }
+        }
 
+        if (needsIdAssignment) {
+            // Find the next available ID
+            int nextId = FindNextAvailableId(buffer.c_str(), buffer.length());
 
-		// 1. Find and add slider values definitions
-		std::string sliderSection = "----[ Sliders for the Menus ]----";
-		size_t sliderPos = buffer.find(sliderSection);
-		if (sliderPos != std::string::npos) {
-			// Move past the section header to find insertion point
-			sliderPos = buffer.find("\n", sliderPos) + 1;
+            // Assign IDs to any sliders that need them
+            for (auto& slider : g_sliders) {
+                if (slider.id == -1) {
+                    slider.id = nextId++;
+                    g_usedIds.insert(slider.id);
+                }
+            }
+        }
 
-			std::string sliderAdditions;
-			for (const auto& slider : g_boolSliders) {
-				// Create slider definition using the same format as existing ones in the file
-				sliderAdditions += slider.name + "_slider_values = { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"CONTROL_YES\" }, num_values = 2, cur_value = 0 }\n";
-			}
+        bool modified = false;
 
-			buffer.insert(sliderPos, sliderAdditions);
-			modified = true;
-		}
+        // 1. Find and add slider values definitions
+        std::string sliderSection = "----[ Sliders for the Menus ]----";
+        size_t sliderPos = buffer.find(sliderSection);
+        if (sliderPos != std::string::npos) {
+            // Move past the section header to find insertion point
+            sliderPos = buffer.find("\n", sliderPos) + 1;
 
-		// 2. Find and update the display menu array
-		std::string menuArrayStart = "Pause_display_menu_PC = {";
-		std::string numItemsStr = "num_items = ";
+            std::string sliderAdditions;
+            for (const auto& slider : g_sliders) {
+                // Create slider definition with custom labels
+                std::string sliderValuesStr = slider.name + "_slider_values = { ";
 
-		size_t menuPos = buffer.find(menuArrayStart);
-		if (menuPos != std::string::npos) {
-			// Find num_items line
-			size_t numItemsPos = buffer.find(numItemsStr, menuPos);
-			if (numItemsPos != std::string::npos) {
-				// Extract current num_items value
-				size_t numValuePos = numItemsPos + numItemsStr.length();
-				size_t numValueEnd = buffer.find(",", numValuePos);
-				std::string currentNumStr = buffer.substr(numValuePos, numValueEnd - numValuePos);
-				int currentNumItems = std::stoi(currentNumStr);
+                // Add each label
+                for (size_t i = 0; i < slider.labels.size(); i++) {
+                    sliderValuesStr += "[" + std::to_string(i) + "] = { label = \"" + slider.labels[i] + "\" }";
+                    if (i < slider.labels.size() - 1) {
+                        sliderValuesStr += ", ";
+                    }
+                }
 
-				// Update num_items to account for our new sliders
-				buffer.replace(numValuePos, numValueEnd - numValuePos,
-					std::to_string(currentNumItems + g_boolSliders.size()));
+                // Add num_values and cur_value
+                sliderValuesStr += ", num_values = " + std::to_string(slider.labels.size()) + ", cur_value = 0 }\n";
 
-				// Find the end of the array entries
-				std::string btnTipsStr = "btn_tips = Pause_options_btn_tips,";
-				size_t btnTipsPos = buffer.find(btnTipsStr, menuPos);
-				if (btnTipsPos != std::string::npos) {
-					// Find the last entry bracket to insert after
-					size_t lastBracketPos = buffer.rfind("},", btnTipsPos);
-					if (lastBracketPos != std::string::npos) {
-						// Move to the next line after the last entry
-						lastBracketPos = buffer.find("\n", lastBracketPos) + 1;
+                sliderAdditions += sliderValuesStr;
+            }
 
-						std::string menuEntries;
-						for (size_t i = 0; i < g_boolSliders.size(); i++) {
-							const auto& slider = g_boolSliders[i];
-							// Create new menu entry with the same format as existing entries
-							menuEntries += "\t[" + std::to_string(currentNumItems + i) +
-								"] = { label = \"" + slider.display_name +
-								"\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
-								slider.name + "_slider_values,\t\t\ton_value_update = pause_menu_display_options_update_value,\tid =" +
-								std::to_string(slider.id) + ",\t\ton_select = pause_menu_options_submenu_exit_confirm },\n";
-						}
+            buffer.insert(sliderPos, sliderAdditions);
+            modified = true;
+        }
 
-						buffer.insert(lastBracketPos, menuEntries);
-						modified = true;
-					}
-				}
-			}
-		}
+        // 2. Find and update the display menu array
+        std::string menuArrayStart = "Pause_display_menu_PC = {";
+        std::string numItemsStr = "num_items = ";
 
-		// 3. Update the value initialization function
-		std::string initFunction = "function pause_menu_populate_display(";
-		size_t initFuncPos = buffer.find(initFunction);
-		if (initFuncPos != std::string::npos) {
-			// Find the end of the function parameters
-			size_t initFuncEnd = buffer.find(")", initFuncPos);
-			if (initFuncEnd != std::string::npos) {
-				// Find the function body start
-				size_t functionBodyStart = buffer.find("\n", initFuncEnd) + 1;
+        size_t menuPos = buffer.find(menuArrayStart);
+        if (menuPos != std::string::npos) {
+            // Find num_items line
+            size_t numItemsPos = buffer.find(numItemsStr, menuPos);
+            if (numItemsPos != std::string::npos) {
+                // Extract current num_items value
+                size_t numValuePos = numItemsPos + numItemsStr.length();
+                size_t numValueEnd = buffer.find(",", numValuePos);
+                std::string currentNumStr = buffer.substr(numValuePos, numValueEnd - numValuePos);
+                int currentNumItems = std::stoi(currentNumStr);
 
-				std::string initLines;
-				for (const auto& slider : g_boolSliders) {
-					// Create initialization lines
-					initLines += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
-						slider.name + "\")\n";
-				}
+                // Update num_items to account for our new sliders
+                buffer.replace(numValuePos, numValueEnd - numValuePos,
+                    std::to_string(currentNumItems + g_sliders.size()));
 
-				buffer.insert(functionBodyStart, initLines);
-				modified = true;
-			}
-		}
+                // Find the end of the array entries
+                std::string btnTipsStr = "btn_tips = Pause_options_btn_tips,";
+                size_t btnTipsPos = buffer.find(btnTipsStr, menuPos);
+                if (btnTipsPos != std::string::npos) {
+                    // Find the last entry bracket to insert after
+                    size_t lastBracketPos = buffer.rfind("},", btnTipsPos);
+                    if (lastBracketPos != std::string::npos) {
+                        // Move to the next line after the last entry
+                        lastBracketPos = buffer.find("\n", lastBracketPos) + 1;
 
-		// 4. Update the options update function to write values
-		std::string updateFunction = "function pause_menu_display_options_update_value(menu_label, menu_data)";
-		size_t updateFuncPos = buffer.find(updateFunction);
-		if (updateFuncPos != std::string::npos) {
-			// Find the local idx line
-			std::string idxLine = "\tlocal idx = menu_data.id";
-			size_t idxLinePos = buffer.find(idxLine, updateFuncPos);
-			if (idxLinePos != std::string::npos) {
-				// Find the point to insert our condition
-				size_t insertPos = buffer.find("\n", idxLinePos) + 1;
+                        std::string menuEntries;
+                        for (size_t i = 0; i < g_sliders.size(); i++) {
+                            const auto& slider = g_sliders[i];
+                            // Create new menu entry with the same format as existing entries
+                            menuEntries += "\t[" + std::to_string(currentNumItems + i) +
+                                "] = { label = \"" + slider.display_name +
+                                "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
+                                slider.name + "_slider_values,\t\t\ton_value_update = pause_menu_display_options_update_value,\tid =" +
+                                std::to_string(slider.id) + ",\t\ton_select = pause_menu_options_submenu_exit_confirm },\n";
+                        }
 
-				std::string conditions;
-				for (const auto& slider : g_boolSliders) {
-					// Create condition for each slider
-					conditions += "\tif idx == " + std::to_string(slider.id) + " then\n" +
-						"\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider.name +
-						"\", menu_data.text_slider_values.cur_value)\n" +
-						"\tend\n";
-				}
+                        buffer.insert(lastBracketPos, menuEntries);
+                        modified = true;
+                    }
+                }
+            }
+        }
 
-				buffer.insert(insertPos, conditions);
-				modified = true;
-			}
-		}
+        // 3. Update the value initialization function
+        std::string initFunction = "function pause_menu_populate_display(";
+        size_t initFuncPos = buffer.find(initFunction);
+        if (initFuncPos != std::string::npos) {
+            // Find the end of the function parameters
+            size_t initFuncEnd = buffer.find(")", initFuncPos);
+            if (initFuncEnd != std::string::npos) {
+                // Find the function body start
+                size_t functionBodyStart = buffer.find("\n", initFuncEnd) + 1;
 
-		return modified;
-	}
-	bool RegisterBoolSlider(const char* name, const char* display_name, int startingId) {
-		// If a starting ID is provided, try to use it first
-		int id = startingId;
+                std::string initLines;
+                for (const auto& slider : g_sliders) {
+                    // Create initialization lines
+                    initLines += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
+                        slider.name + "\")\n";
+                }
 
-		// If no ID provided or the provided ID is already used, find one automatically
-		if (id == -1 || g_usedIds.find(id) != g_usedIds.end()) {
-			// Need to find a free ID when we have access to the buffer
-			// For now, just mark that we need to assign an ID later
-			id = -1;
-		}
-		else {
-			g_usedIds.insert(id);
-		}
+                buffer.insert(functionBodyStart, initLines);
+                modified = true;
+            }
+        }
 
-		// Store the slider information
-		g_boolSliders.push_back({ name, display_name, id });
+        // 4. Update the options update function to write values
+        std::string updateFunction = "function pause_menu_display_options_update_value(menu_label, menu_data)";
+        size_t updateFuncPos = buffer.find(updateFunction);
+        if (updateFuncPos != std::string::npos) {
+            // Find the local idx line
+            std::string idxLine = "\tlocal idx = menu_data.id";
+            size_t idxLinePos = buffer.find(idxLine, updateFuncPos);
+            if (idxLinePos != std::string::npos) {
+                // Find the point to insert our condition
+                size_t insertPos = buffer.find("\n", idxLinePos) + 1;
 
-		// Initialize the variable if it doesn't exist yet
-		if (g_juicedVars.find(name) == g_juicedVars.end()) {
-			g_juicedVars[name] = 0;
-		}
+                std::string conditions;
+                for (const auto& slider : g_sliders) {
+                    // Create condition for each slider
+                    conditions += "\tif idx == " + std::to_string(slider.id) + " then\n" +
+                        "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider.name +
+                        "\", menu_data.text_slider_values.cur_value)\n" +
+                        "\tend\n";
+                }
 
-		return true;
-	}
+                buffer.insert(insertPos, conditions);
+                modified = true;
+            }
+        }
+
+        return modified;
+    }
 }
