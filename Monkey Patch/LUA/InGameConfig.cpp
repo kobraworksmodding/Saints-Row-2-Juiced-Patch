@@ -3,13 +3,23 @@
 #include <unordered_set>
 #include <regex>
 #include "../FileLogger.h"
+#include "../Player/Behavior.h"
 namespace InGameConfig {
     static PatchEntry patch_registry[] = {
     { "VFXPlus", &Render3D::CMPatches_VFXPlus,nullptr ,"Graphics", "VanillaFXPlus" },
     { "BetterAO", nullptr,&Render3D::CBetterAO, "Graphics", "BetterAmbientOcclusion"},
     {"DisableBlueRefl",&Render3D::CMPatches_DisableSkyRefl,nullptr,"Graphics","DisableSkyRefl"},
-    {"DisableCutSceneBlackBars",nullptr,&Render3D::CRemoveBlackBars,"Graphics","RemoveBlackBars"}
+    {"DisableCutSceneBlackBars",nullptr,&Render3D::CRemoveBlackBars,"Graphics","RemoveBlackBars"},
+    {"BetterDriveByCam",nullptr,&Behavior::CBetterDBC,"Gameplay","BetterDriveByCam"}
     };
+    void AddOptions() {
+        InGameConfig::RegisterBoolSlider("VFXPlus", "VanillaFXPlus");
+        InGameConfig::RegisterBoolSlider("BetterAO", "Better Ambient Occlusion");
+        InGameConfig::RegisterBoolSlider("DisableBlueRefl", "Disable Sky Reflection on Windows");
+        InGameConfig::RegisterBoolSlider("BetterDriveByCam", "Better Drive-by Cam", InGameConfig::MenuType::CONTROLS);
+        //InGameConfig::RegisterSlider("BetterAO", "Better Ambient Occlusion", {"FUCK OFF ", "fucked off"}, 50);
+        InGameConfig::RegisterSlider("SleepHack", "Sleep Hack", { "CONTROL_NO","QUALITY_LOW_TEXT","QUALITY_MEDIUM_TEXT","QUALITY_HIGH_TEXT" });
+    }
     PatchEntry* FindPatchEntry(const char* name) {
         for (auto& entry : patch_registry) {
             if (strcmp(entry.name, name) == 0) {
@@ -106,7 +116,7 @@ namespace InGameConfig {
         return nextId;
     }
     std::vector<Slider> g_sliders;
-    bool RegisterSlider(const char* name, const char* display_name, const std::vector<std::string>& labels, int startingId) {
+    bool RegisterSlider(const char* name, const char* display_name, const std::vector<std::string>& labels, MenuType menuType, int startingId) {
         // If a starting ID is provided, try to use it first
         int id = startingId;
 
@@ -121,7 +131,7 @@ namespace InGameConfig {
         }
 
         // Store the slider information with custom labels
-        g_sliders.push_back({ name, display_name, id, labels });
+        g_sliders.push_back({ name, display_name, id, labels, menuType });
 
         // Initialize the variable if it doesn't exist yet
         if (g_juicedVars.find(name) == g_juicedVars.end()) {
@@ -130,9 +140,9 @@ namespace InGameConfig {
 
         return true;
     }
-    bool RegisterBoolSlider(const char* name, const char* display_name, int startingId) {
+    bool RegisterBoolSlider(const char* name, const char* display_name, MenuType type ,int startingId) {
         // Create a bool slider with default Yes/No labels
-        return RegisterSlider(name, display_name, { "CONTROL_NO", "CONTROL_YES" }, startingId);
+        return RegisterSlider(name, display_name, { "CONTROL_NO", "CONTROL_YES" }, type, startingId);
     }
     static char* g_sliderModifiedBuffer = nullptr;
     bool PatchSliderContent(std::string& buffer, const char* filename) {
@@ -195,105 +205,229 @@ namespace InGameConfig {
             modified = true;
         }
 
-        // 2. Find and update the display menu array
-        std::string menuArrayStart = "Pause_display_menu_PC = {";
-        std::string numItemsStr = "num_items = ";
+        // Count sliders for each menu type
+        std::vector<Slider> displaySliders;
+        std::vector<Slider> controlSliders;
 
-        size_t menuPos = buffer.find(menuArrayStart);
-        if (menuPos != std::string::npos) {
-            // Find num_items line
-            size_t numItemsPos = buffer.find(numItemsStr, menuPos);
-            if (numItemsPos != std::string::npos) {
-                // Extract current num_items value
-                size_t numValuePos = numItemsPos + numItemsStr.length();
-                size_t numValueEnd = buffer.find(",", numValuePos);
-                std::string currentNumStr = buffer.substr(numValuePos, numValueEnd - numValuePos);
-                int currentNumItems = std::stoi(currentNumStr);
+        for (const auto& slider : g_sliders) {
+            if (slider.menuType == MenuType::DISPLAY) {
+                displaySliders.push_back(slider);
+            }
+            else if (slider.menuType == MenuType::CONTROLS) {
+                controlSliders.push_back(slider);
+            }
+        }
 
-                // Update num_items to account for our new sliders plus the header
-                int additionalItems = g_sliders.empty() ? 0 : g_sliders.size() + 1; // +1 for the header
-                buffer.replace(numValuePos, numValueEnd - numValuePos,
-                    std::to_string(currentNumItems + additionalItems));
+        // 2. Find and update the display menu array (if we have display sliders)
+        if (!displaySliders.empty()) {
+            std::string menuArrayStart = "Pause_display_menu_PC = {";
+            std::string numItemsStr = "num_items = ";
 
-                // Find the end of the array entries
-                std::string btnTipsStr = "btn_tips = Pause_options_btn_tips,";
-                size_t btnTipsPos = buffer.find(btnTipsStr, menuPos);
-                if (btnTipsPos != std::string::npos && !g_sliders.empty()) {
-                    // Find the last entry bracket to insert after
-                    size_t lastBracketPos = buffer.rfind("},", btnTipsPos);
-                    if (lastBracketPos != std::string::npos) {
-                        // Move to the next line after the last entry
-                        lastBracketPos = buffer.find("\n", lastBracketPos) + 1;
+            size_t menuPos = buffer.find(menuArrayStart);
+            if (menuPos != std::string::npos) {
+                // Find num_items line
+                size_t numItemsPos = buffer.find(numItemsStr, menuPos);
+                if (numItemsPos != std::string::npos) {
+                    // Extract current num_items value
+                    size_t numValuePos = numItemsPos + numItemsStr.length();
+                    size_t numValueEnd = buffer.find(",", numValuePos);
+                    std::string currentNumStr = buffer.substr(numValuePos, numValueEnd - numValuePos);
+                    int currentNumItems = std::stoi(currentNumStr);
 
-                        std::string menuEntries;
+                    // Update num_items to account for our new sliders plus the header
+                    int additionalItems = displaySliders.size() + 1; // +1 for the header
+                    buffer.replace(numValuePos, numValueEnd - numValuePos,
+                        std::to_string(currentNumItems + additionalItems));
 
-                        // First add the "Juiced Options" header
-                        int headerIndex = currentNumItems;
-                        menuEntries += "\t[" + std::to_string(headerIndex) +
-                            "] = { label = \"Juiced Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
+                    // Find the end of the array entries
+                    std::string btnTipsStr = "btn_tips = Pause_options_btn_tips,";
+                    size_t btnTipsPos = buffer.find(btnTipsStr, menuPos);
+                    if (btnTipsPos != std::string::npos) {
+                        // Find the last entry bracket to insert after
+                        size_t lastBracketPos = buffer.rfind("},", btnTipsPos);
+                        if (lastBracketPos != std::string::npos) {
+                            // Move to the next line after the last entry
+                            lastBracketPos = buffer.find("\n", lastBracketPos) + 1;
 
-                        // Then add all sliders
-                        for (size_t i = 0; i < g_sliders.size(); i++) {
-                            const auto& slider = g_sliders[i];
-                            // Create new menu entry with the same format as existing entries
-                            menuEntries += "\t[" + std::to_string(headerIndex + 1 + i) +
-                                "] = { label = \"" + slider.display_name +
-                                "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
-                                slider.name + "_slider_values,\t\t\ton_value_update = pause_menu_display_options_update_value,\tid =" +
-                                std::to_string(slider.id) + ",\t\ton_select = pause_menu_options_submenu_exit_confirm },\n";
+                            std::string menuEntries;
+
+                            // First add the "Juiced Options" header
+                            int headerIndex = currentNumItems;
+                            menuEntries += "\t[" + std::to_string(headerIndex) +
+                                "] = { label = \"Juiced Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
+
+                            // Then add all display sliders
+                            for (size_t i = 0; i < displaySliders.size(); i++) {
+                                const auto& slider = displaySliders[i];
+                                // Create new menu entry with the same format as existing entries
+                                menuEntries += "\t[" + std::to_string(headerIndex + 1 + i) +
+                                    "] = { label = \"" + slider.display_name +
+                                    "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
+                                    slider.name + "_slider_values,\t\t\ton_value_update = pause_menu_display_options_update_value,\tid =" +
+                                    std::to_string(slider.id) + ",\t\ton_select = pause_menu_options_submenu_exit_confirm },\n";
+                            }
+
+                            buffer.insert(lastBracketPos, menuEntries);
+                            modified = true;
                         }
-
-                        buffer.insert(lastBracketPos, menuEntries);
-                        modified = true;
                     }
                 }
             }
-        }
 
-        // 3. Update the value initialization function
-        std::string initFunction = "function pause_menu_populate_display(";
-        size_t initFuncPos = buffer.find(initFunction);
-        if (initFuncPos != std::string::npos) {
-            // Find the end of the function parameters
-            size_t initFuncEnd = buffer.find(")", initFuncPos);
-            if (initFuncEnd != std::string::npos) {
-                // Find the function body start
-                size_t functionBodyStart = buffer.find("\n", initFuncEnd) + 1;
+            // 3. Update the display value initialization function
+            std::string initFunction = "function pause_menu_populate_display(";
+            size_t initFuncPos = buffer.find(initFunction);
+            if (initFuncPos != std::string::npos) {
+                // Find the end of the function parameters
+                size_t initFuncEnd = buffer.find(")", initFuncPos);
+                if (initFuncEnd != std::string::npos) {
+                    // Find the function body start
+                    size_t functionBodyStart = buffer.find("\n", initFuncEnd) + 1;
 
-                std::string initLines;
-                for (const auto& slider : g_sliders) {
-                    // Create initialization lines
-                    initLines += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
-                        slider.name + "\")\n";
+                    std::string initLines;
+                    for (const auto& slider : displaySliders) {
+                        // Create initialization lines
+                        initLines += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
+                            slider.name + "\")\n";
+                    }
+
+                    buffer.insert(functionBodyStart, initLines);
+                    modified = true;
                 }
+            }
 
-                buffer.insert(functionBodyStart, initLines);
-                modified = true;
+            // 4. Update the display options update function to write values
+            std::string updateFunction = "function pause_menu_display_options_update_value(menu_label, menu_data)";
+            size_t updateFuncPos = buffer.find(updateFunction);
+            if (updateFuncPos != std::string::npos) {
+                // Find the local idx line
+                std::string idxLine = "\tlocal idx = menu_data.id";
+                size_t idxLinePos = buffer.find(idxLine, updateFuncPos);
+                if (idxLinePos != std::string::npos) {
+                    // Find the point to insert our condition
+                    size_t insertPos = buffer.find("\n", idxLinePos) + 1;
+
+                    std::string conditions;
+                    for (const auto& slider : displaySliders) {
+                        // Create condition for each slider
+                        conditions += "\tif idx == " + std::to_string(slider.id) + " then\n" +
+                            "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider.name +
+                            "\", menu_data.text_slider_values.cur_value)\n" +
+                            "\tend\n";
+                    }
+
+                    buffer.insert(insertPos, conditions);
+                    modified = true;
+                }
             }
         }
 
-        // 4. Update the options update function to write values
-        std::string updateFunction = "function pause_menu_display_options_update_value(menu_label, menu_data)";
-        size_t updateFuncPos = buffer.find(updateFunction);
-        if (updateFuncPos != std::string::npos) {
-            // Find the local idx line
-            std::string idxLine = "\tlocal idx = menu_data.id";
-            size_t idxLinePos = buffer.find(idxLine, updateFuncPos);
-            if (idxLinePos != std::string::npos) {
-                // Find the point to insert our condition
-                size_t insertPos = buffer.find("\n", idxLinePos) + 1;
+        // 5. Find and update the controls menu array (if we have control sliders)
+        if (!controlSliders.empty()) {
+            std::string controlMenuStart = "Pause_control_menu_PC = {";
+            std::string controlHeaderStr = "header_label_str	= \"MENU_OPTIONS_CONTROLS\",";
+            std::string controlNumItemsStr = "num_items = ";
 
-                std::string conditions;
-                for (const auto& slider : g_sliders) {
-                    // Create condition for each slider
-                    conditions += "\tif idx == " + std::to_string(slider.id) + " then\n" +
-                        "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider.name +
-                        "\", menu_data.text_slider_values.cur_value)\n" +
-                        "\tend\n";
+            size_t controlMenuPos = buffer.find(controlMenuStart);
+            if (controlMenuPos != std::string::npos) {
+                // Verify we found the right menu
+                size_t controlHeaderPos = buffer.find(controlHeaderStr, controlMenuPos);
+                if (controlHeaderPos != std::string::npos && controlHeaderPos < controlMenuPos + 200) { // Check if header is close to the start
+                    // Find num_items line
+                    size_t numItemsPos = buffer.find(controlNumItemsStr, controlMenuPos);
+                    if (numItemsPos != std::string::npos) {
+                        // Extract current num_items value
+                        size_t numValuePos = numItemsPos + controlNumItemsStr.length();
+                        size_t numValueEnd = buffer.find(",", numValuePos);
+                        std::string currentNumStr = buffer.substr(numValuePos, numValueEnd - numValuePos);
+                        int currentNumItems = std::stoi(currentNumStr);
+
+                        // Update num_items to account for our new control sliders plus the header
+                        int additionalItems = controlSliders.size() + 1; // +1 for the header
+                        buffer.replace(numValuePos, numValueEnd - numValuePos,
+                            std::to_string(currentNumItems + additionalItems));
+
+                        // Find the end of the array entries
+                        std::string btnTipsStr = "btn_tips = Pause_options_btn_tips,";
+                        size_t btnTipsPos = buffer.find(btnTipsStr, controlMenuPos);
+                        if (btnTipsPos != std::string::npos) {
+                            // Find the last entry bracket to insert after
+                            size_t lastBracketPos = buffer.rfind("},", btnTipsPos);
+                            if (lastBracketPos != std::string::npos) {
+                                // Move to the next line after the last entry
+                                lastBracketPos = buffer.find("\n", lastBracketPos) + 1;
+
+                                std::string menuEntries;
+
+                                // First add the "Juiced Options" header
+                                int headerIndex = currentNumItems;
+                                menuEntries += "\t[" + std::to_string(headerIndex) +
+                                    "] = { label = \"Juiced Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
+
+                                // Then add all control sliders
+                                for (size_t i = 0; i < controlSliders.size(); i++) {
+                                    const auto& slider = controlSliders[i];
+                                    // Create new menu entry with the same format as existing entries
+                                    menuEntries += "\t[" + std::to_string(headerIndex + 1 + i) +
+                                        "] = { label = \"" + slider.display_name +
+                                        "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
+                                        slider.name + "_slider_values,\t\t\ton_value_update = pause_menu_control_options_update_value,\tid =" +
+                                        std::to_string(slider.id) + ",\t\ton_select = pause_menu_option_accept },\n";
+                                }
+
+                                buffer.insert(lastBracketPos, menuEntries);
+                                modified = true;
+                            }
+                        }
+                    }
                 }
+            }
 
-                buffer.insert(insertPos, conditions);
-                modified = true;
+            // 6. Update the control value initialization function
+            std::string controlInitFunction = "function pause_menu_populate_control_options(";
+            size_t controlInitFuncPos = buffer.find(controlInitFunction);
+            if (controlInitFuncPos != std::string::npos) {
+                // Find the end of the function parameters
+                size_t initFuncEnd = buffer.find(")", controlInitFuncPos);
+                if (initFuncEnd != std::string::npos) {
+                    // Find the function body start
+                    size_t functionBodyStart = buffer.find("\n", initFuncEnd) + 1;
+
+                    std::string initLines;
+                    for (const auto& slider : controlSliders) {
+                        // Create initialization lines
+                        initLines += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
+                            slider.name + "\")\n";
+                    }
+
+                    buffer.insert(functionBodyStart, initLines);
+                    modified = true;
+                }
+            }
+
+            // 7. Update the control options update function to write values
+            std::string controlUpdateFunction = "function pause_menu_control_options_update_value(menu_label, menu_data)";
+            size_t controlUpdateFuncPos = buffer.find(controlUpdateFunction);
+            if (controlUpdateFuncPos != std::string::npos) {
+                // Find the local idx line
+                std::string idxLine = "\tlocal idx = menu_data.id";
+                size_t idxLinePos = buffer.find(idxLine, controlUpdateFuncPos);
+                if (idxLinePos != std::string::npos) {
+                    // Find the point to insert our condition
+                    size_t insertPos = buffer.find("\n", idxLinePos) + 1;
+
+                    std::string conditions;
+                    for (const auto& slider : controlSliders) {
+                        // Create condition for each slider
+                        conditions += "\tif idx == " + std::to_string(slider.id) + " then\n" +
+                            "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider.name +
+                            "\", menu_data.text_slider_values.cur_value)\n" +
+                            "\tend\n";
+                    }
+
+                    buffer.insert(insertPos, conditions);
+                    modified = true;
+                }
             }
         }
 
