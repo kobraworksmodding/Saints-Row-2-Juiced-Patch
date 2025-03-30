@@ -434,7 +434,6 @@ namespace InGameConfig {
             }
         }
 
-        // 8. Add the new Juiced support functions and menu
         // Find a good insertion point - look for Pause_display_menu_PC
         std::string displayMenuStr = "Pause_display_menu_PC = {";
         size_t displayMenuPos = buffer.find(displayMenuStr);
@@ -475,7 +474,7 @@ namespace InGameConfig {
             juicedOptionsMenu += "\theader_label_str\t= \"Juiced Options\",\n";
             juicedOptionsMenu += "\tmax_height = 530,\t-- Default: 375 [nclok1405]\n";
             juicedOptionsMenu += "\ton_show \t\t\t= juiced_menu_build_display_options_menu_PC,\n";
-            juicedOptionsMenu += "\ton_alt_select \t\t= juiced_back_workaround,\n";
+            juicedOptionsMenu += "\ton_alt_select \t\t= pause_menu_options_restore_defaults,\n";
             juicedOptionsMenu += "\ton_back \t\t\t= juiced_back_workaround,\n";
             juicedOptionsMenu += "\ton_pause\t\t\t= pause_menu_options_exit_confirm,\n";
             juicedOptionsMenu += "\ton_map \t\t\t\t= pause_menu_options_swap_confirm,\n";
@@ -537,6 +536,249 @@ namespace InGameConfig {
 
             buffer.insert(displayMenuPos, juicedOptionsMenu);
             modified = true;
+        }
+
+        // 9. Update Pause_options_menu to include Juiced_options
+        std::string pauseOptionsMenu = "Pause_options_menu = {";
+        size_t pauseOptionsPos = buffer.find(pauseOptionsMenu);
+        if (pauseOptionsPos != std::string::npos) {
+            // Find the num_items line
+            std::string numItemsStr = "num_items = ";
+            size_t numItemsPos = buffer.find(numItemsStr, pauseOptionsPos);
+            if (numItemsPos != std::string::npos) {
+                // Extract current num_items value
+                size_t numValuePos = numItemsPos + numItemsStr.length();
+                size_t numValueEnd = buffer.find(",", numValuePos);
+                std::string currentNumStr = buffer.substr(numValuePos, numValueEnd - numValuePos);
+                int currentNumItems = std::stoi(currentNumStr);
+
+                // Update num_items to account for our new Juiced_options menu
+                buffer.replace(numValuePos, numValueEnd - numValuePos, std::to_string(currentNumItems + 1));
+
+                // Find MENU_OPTIONS_AUDIO entry to insert after
+                std::string audioStr = "MENU_OPTIONS_AUDIO";
+                size_t audioPos = buffer.find(audioStr, pauseOptionsPos);
+                if (audioPos != std::string::npos) {
+                    // Find the end of this entry
+                    size_t entryEnd = buffer.find("},", audioPos);
+                    if (entryEnd != std::string::npos) {
+                        // Move to the next line after this entry
+                        entryEnd += 2;
+
+                        // Find the index of the AUDIO menu item
+                        std::string audioIndexStr = "[";
+                        size_t audioIndexStart = buffer.rfind(audioIndexStr, audioPos);
+                        if (audioIndexStart != std::string::npos) {
+                            // Extract the audio index number
+                            size_t indexNumStart = audioIndexStart + 1;
+                            size_t indexNumEnd = buffer.find("]", indexNumStart);
+                            if (indexNumEnd != std::string::npos) {
+                                std::string audioIndexNum = buffer.substr(indexNumStart, indexNumEnd - indexNumStart);
+                                int audioIndex = std::stoi(audioIndexNum);
+
+                                // The next index for Juiced Options will be audioIndex + 1
+                                int juicedIndex = audioIndex + 1;
+
+                                // Find the item that comes after AUDIO (should be QUIT_GAME)
+                                std::string quitGameStr = "MENU_OPTIONS_QUIT_GAME";
+                                size_t quitGamePos = buffer.find(quitGameStr, entryEnd);
+                                if (quitGamePos != std::string::npos) {
+                                    // Find the index of QUIT_GAME
+                                    std::string quitIndexStr = "[";
+                                    size_t quitIndexStart = buffer.rfind(quitIndexStr, quitGamePos);
+                                    if (quitIndexStart != std::string::npos) {
+                                        // Update all subsequent indices
+                                        for (int i = currentNumItems - 1; i > audioIndex; i--) {
+                                            std::string oldIndex = "[" + std::to_string(i) + "]";
+                                            std::string newIndex = "[" + std::to_string(i + 1) + "]";
+
+                                            // Find this index after the audioPos
+                                            size_t oldIndexPos = buffer.find(oldIndex, audioPos);
+                                            if (oldIndexPos != std::string::npos) {
+                                                buffer.replace(oldIndexPos, oldIndex.length(), newIndex);
+                                            }
+                                        }
+
+                                        // Insert Juiced_options entry
+                                        std::string juicedEntry = "\t[" + std::to_string(juicedIndex) +
+                                            "] = { label = \"Juiced Options\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";
+                                        buffer.insert(entryEnd, juicedEntry);
+                                        modified = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 10. Update Pause_options_menu_no_difficulty to include Juiced_options
+        std::string pauseOptionsNoDifficulty = "Pause_options_menu_no_difficulty = {";
+        size_t pauseOptionsNoDiffPos = buffer.find(pauseOptionsNoDifficulty);
+        if (pauseOptionsNoDiffPos != std::string::npos) {
+            // Find the num_items line
+            std::string numItemsStr = "num_items = ";
+            size_t numItemsPos = buffer.find(numItemsStr, pauseOptionsNoDiffPos);
+            if (numItemsPos != std::string::npos) {
+                // Extract current num_items value
+                size_t numValuePos = numItemsPos + numItemsStr.length();
+                size_t numValueEnd = buffer.find(",", numValuePos);
+                std::string currentNumStr = buffer.substr(numValuePos, numValueEnd - numValuePos);
+                int currentNumItems = std::stoi(currentNumStr);
+
+                // Update num_items to account for our new Juiced_options menu
+                buffer.replace(numValuePos, numValueEnd - numValuePos, std::to_string(currentNumItems + 1));
+
+                // Find MENU_OPTIONS_AUDIO entry to insert after
+                std::string audioStr = "MENU_OPTIONS_AUDIO";
+                size_t audioPos = buffer.find(audioStr, pauseOptionsNoDiffPos);
+                if (audioPos != std::string::npos) {
+                    // Find the end of this entry
+                    size_t entryEnd = buffer.find("},", audioPos);
+                    if (entryEnd != std::string::npos) {
+                        // Move to the next line after this entry
+                        entryEnd += 2;
+
+                        // Find the index of the AUDIO menu item
+                        std::string audioIndexStr = "[";
+                        size_t audioIndexStart = buffer.rfind(audioIndexStr, audioPos);
+                        if (audioIndexStart != std::string::npos) {
+                            // Extract the audio index number
+                            size_t indexNumStart = audioIndexStart + 1;
+                            size_t indexNumEnd = buffer.find("]", indexNumStart);
+                            if (indexNumEnd != std::string::npos) {
+                                std::string audioIndexNum = buffer.substr(indexNumStart, indexNumEnd - indexNumStart);
+                                int audioIndex = std::stoi(audioIndexNum);
+
+                                // The next index for Juiced Options will be audioIndex + 1
+                                int juicedIndex = audioIndex + 1;
+
+                                // Find the item that comes after AUDIO (should be QUIT_GAME)
+                                std::string quitGameStr = "MENU_OPTIONS_QUIT_GAME";
+                                size_t quitGamePos = buffer.find(quitGameStr, entryEnd);
+                                if (quitGamePos != std::string::npos) {
+                                    // Find the index of QUIT_GAME
+                                    std::string quitIndexStr = "[";
+                                    size_t quitIndexStart = buffer.rfind(quitIndexStr, quitGamePos);
+                                    if (quitIndexStart != std::string::npos) {
+                                        // Update all subsequent indices
+                                        for (int i = currentNumItems - 1; i > audioIndex; i--) {
+                                            std::string oldIndex = "[" + std::to_string(i) + "]";
+                                            std::string newIndex = "[" + std::to_string(i + 1) + "]";
+
+                                            // Find this index after the audioPos
+                                            size_t oldIndexPos = buffer.find(oldIndex, audioPos);
+                                            if (oldIndexPos != std::string::npos) {
+                                                buffer.replace(oldIndexPos, oldIndex.length(), newIndex);
+                                            }
+                                        }
+
+                                        // Insert Juiced_options entry
+                                        std::string juicedEntry = "\t[" + std::to_string(juicedIndex) +
+                                            "] = { label = \"Juiced Options\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";
+                                        buffer.insert(entryEnd, juicedEntry);
+                                        modified = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 11. Update pause_menu_option_menu_init to account for additional menu item
+        std::string initFunc = "function pause_menu_option_menu_init(menu_format)";
+        size_t initFuncPos = buffer.find(initFunc);
+        if (initFuncPos != std::string::npos) {
+            // Find the menu_format checks
+            std::string format0Check = "if menu_format == 0 then";
+            std::string format1Check = "elseif menu_format == 1 then";
+            std::string format2Check = "elseif menu_format == 2 then";
+
+            // For standard format (0) and multiplayer (2), just increase num_items
+            std::vector<std::pair<std::string, std::string>> formatChecks = {
+                {format0Check, "Pause_options_menu.num_items = 5"},
+                {format2Check, "Pause_options_menu.num_items = 4"}
+            };
+
+            for (const auto& check : formatChecks) {
+                size_t checkPos = buffer.find(check.first, initFuncPos);
+                if (checkPos != std::string::npos) {
+                    // Find the num_items assignment
+                    size_t assignPos = buffer.find(check.second, checkPos);
+                    if (assignPos != std::string::npos) {
+                        // Extract current value
+                        size_t valuePos = assignPos + std::string("Pause_options_menu.num_items = ").length();
+                        std::string currentValue = buffer.substr(valuePos, 1); // Should be a single digit
+                        int newValue = std::stoi(currentValue) + 1;
+
+                        // Replace with new value
+                        buffer.replace(valuePos, 1, std::to_string(newValue));
+                        modified = true;
+                    }
+                }
+            }
+
+            // For main menu format (1), we need a special approach to avoid the duplicate Controls issue
+            size_t format1Pos = buffer.find(format1Check, initFuncPos);
+            if (format1Pos != std::string::npos) {
+                // Find the num_items assignment for format 1
+                std::string format1NumItems = "Pause_options_menu.num_items = 3";
+                size_t assignPos = buffer.find(format1NumItems, format1Pos);
+                if (assignPos != std::string::npos) {
+                    // Increase num_items by 1 (from 3 to 4)
+                    size_t valuePos = assignPos + std::string("Pause_options_menu.num_items = ").length();
+                    buffer.replace(valuePos, 1, "4");
+                    modified = true;
+
+                    // We need to insert additional code to properly arrange the main menu options
+                    size_t endOfFormat1 = buffer.find("end", format1Pos);
+                    if (endOfFormat1 != std::string::npos) {
+                        // Insert code to set up the menu items correctly for format 1
+                        std::string mainMenuFix = "\n\t\t-- Set up Juiced Options in position 2 (after Display, before Audio)\n";
+                        mainMenuFix += "\t\tPause_options_menu[2] = { label = \"Juiced Options\", type = MENU_ITEM_TYPE_SUB_MENU, sub_menu = Juiced_options }\n";
+
+                        buffer.insert(endOfFormat1, mainMenuFix);
+                        modified = true;
+                    }
+                }
+            }
+
+            // Also need to update the circular swapping logic if it exists
+            // Find lines that swap menu items
+            std::vector<std::string> swapPatterns = {
+                "Pause_options_menu[0] = Pause_options_menu[1]",
+                "Pause_options_menu[1] = Pause_options_menu[2]",
+                "Pause_options_menu[2] = Pause_options_menu[3]",
+                "Pause_options_menu[3] = Pause_options_menu[4]",
+                "Pause_options_menu[4] = Pause_options_menu[0]"
+            };
+
+            // If there's a 5th line to add (for the new item)
+            bool foundSwap = false;
+            for (const auto& pattern : swapPatterns) {
+                if (buffer.find(pattern, initFuncPos) != std::string::npos) {
+                    foundSwap = true;
+                    break;
+                }
+            }
+
+            if (foundSwap) {
+                // Find the last swap line
+                size_t lastSwapPos = buffer.find("Pause_options_menu[4] = Pause_options_menu[0]", initFuncPos);
+                if (lastSwapPos != std::string::npos) {
+                    // Find the end of this line
+                    size_t lineEnd = buffer.find("\n", lastSwapPos);
+                    if (lineEnd != std::string::npos) {
+                        // Add a new swap line for index 5
+                        std::string newSwapLine = "\n\tPause_options_menu[5] = Pause_options_menu[1]";
+                        buffer.insert(lineEnd, newSwapLine);
+                        modified = true;
+                    }
+                }
+            }
         }
 
         return modified;
