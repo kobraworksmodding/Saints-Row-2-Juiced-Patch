@@ -10,12 +10,15 @@ namespace InGameConfig {
     { "BetterAO", nullptr,&Render3D::CBetterAO, "Graphics", "BetterAmbientOcclusion"},
     {"DisableBlueRefl",&Render3D::CMPatches_DisableSkyRefl,nullptr,"Graphics","DisableSkyRefl"},
     {"DisableCutSceneBlackBars",nullptr,&Render3D::CRemoveBlackBars,"Graphics","RemoveBlackBars"},
-    {"BetterDriveByCam",nullptr,&Behavior::CBetterDBC,"Gameplay","BetterDriveByCam"}
+    {"BetterDriveByCam",nullptr,&Behavior::CBetterDBC,"Gameplay","BetterDriveByCam"},
+    {"UncapFPS",nullptr,&Render3D::CUncapFPS,"Debug","UncapFPS"}
     };
     void AddOptions() {
+        InGameConfig::RegisterBoolSlider("UncapFPS", "UncapFPS");
         InGameConfig::RegisterBoolSlider("VFXPlus", "VanillaFXPlus");
         InGameConfig::RegisterBoolSlider("BetterAO", "Better Ambient Occlusion");
         InGameConfig::RegisterBoolSlider("DisableBlueRefl", "Disable Sky Reflection on Windows");
+        InGameConfig::RegisterSlider("DisableAimAssist", "Disable Aim Assist", { "CONTROL_NO","On Mouse only","Always"}, MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("BetterDriveByCam", "Better Drive-by Cam", InGameConfig::MenuType::CONTROLS);
         //InGameConfig::RegisterSlider("BetterAO", "Better Ambient Occlusion", {"FUCK OFF ", "fucked off"}, 50);
         InGameConfig::RegisterSlider("SleepHack", "Sleep Hack", { "CONTROL_NO","QUALITY_LOW_TEXT","QUALITY_MEDIUM_TEXT","QUALITY_HIGH_TEXT" });

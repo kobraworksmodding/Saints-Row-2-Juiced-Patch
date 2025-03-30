@@ -7,4 +7,6 @@ namespace Input {
 		CONTROLLER,
 	};
 	inline bool betterTags;
+	extern BYTE disable_aim_assist_noMatterInput;
+	extern SafetyHookMid player_autoaim_do_assisted_aiming_midhook;
 }

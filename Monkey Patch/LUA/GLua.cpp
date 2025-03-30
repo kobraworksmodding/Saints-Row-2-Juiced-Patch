@@ -10,7 +10,7 @@
 #include <safetyhook.hpp>
 
 #include "InGameConfig.h"
-
+#include "../Player/Input.h"
 typedef void(__stdcall* NeverDieT)(int character,uint8_t status);
 NeverDieT NeverDie = (NeverDieT)0x00966720;
 
@@ -91,6 +91,13 @@ namespace GLua
                 return 1;
             }
             int value = 0;
+
+            if (strcmp(varName, "DisableAimAssist") == 0) {
+                value = Input::disable_aim_assist_noMatterInput;
+                lua_pushnumber(L, value);
+                return 1;
+            }
+
             if (strcmp(varName, "SleepHack") == 0) {
                 if (Render3D::IsSleepHooked)
                     value = 3;
@@ -120,6 +127,18 @@ namespace GLua
                 lua_pushboolean(L, 0); // Failure
                 return 1;
             }
+
+            if (strcmp(varName, "DisableAimAssist") == 0) {
+                if (Input::disable_aim_assist_noMatterInput == 3) {
+                    lua_pushboolean(L, 0); // Success
+                    return 1;
+                }
+                if (Input::disable_aim_assist_noMatterInput >= 1)
+                    Input::player_autoaim_do_assisted_aiming_midhook.enable();
+                else Input::player_autoaim_do_assisted_aiming_midhook.disable();
+                Input::disable_aim_assist_noMatterInput = value;
+            }
+
             if (strcmp(varName, "SleepHack") == 0) {
                 PatchSleepHack(value);
                 GameConfig::SetValue("Debug", "SleepHack", value);

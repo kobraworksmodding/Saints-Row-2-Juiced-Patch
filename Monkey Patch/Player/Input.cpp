@@ -166,8 +166,9 @@ namespace Input {
 	// If we need an empty global buffer we could use that, but it has to be 0.
 	volatile float aim_assist_empty_buffer[18]{};
 	SafetyHookMid player_autoaim_do_assisted_aiming_midhook;
+	BYTE disable_aim_assist_noMatterInput;
 	SAFETYHOOK_NOINLINE void player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse(safetyhook::Context32& ctx) {
-		if(LastInput() == GAME_LAST_INPUT::MOUSE)
+		if(disable_aim_assist_noMatterInput == 2 ||LastInput() == GAME_LAST_INPUT::MOUSE)
 		ctx.esi = (uintptr_t)&aim_assist_empty_buffer;
 	}
 
@@ -178,6 +179,7 @@ namespace Input {
 			Logger::TypedLog(CHN_MOD, "Disabling Aim Assist while using mouse...\n");
 		}
 		else if (GameConfig::GetValue("Gameplay", "DisableAimAssist", 1) >= 2) {
+			disable_aim_assist_noMatterInput = 3; // can't use hook.
 			Logger::TypedLog(CHN_MOD, "Disabling Aim Assist completely...\n");
 			patchNop((BYTE*)0x00E3CC80, 16); // nop aim_assist.xtbl
 		}
