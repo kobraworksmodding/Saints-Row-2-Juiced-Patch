@@ -13,14 +13,16 @@ namespace InGameConfig {
     {"DisableBlueRefl",&Render3D::CMPatches_DisableSkyRefl,nullptr,"Graphics","DisableSkyRefl"},
     {"DisableCutSceneBlackBars",nullptr,&Render3D::CRemoveBlackBars,"Graphics","RemoveBlackBars"},
     {"BetterDriveByCam",nullptr,&Behavior::CBetterDBC,"Gameplay","BetterDriveByCam"},
-    {"BetterHandbrakeCam",nullptr,&Behavior::CBetterHBC,"Gameplay","Better Handbrake Cam"},
+    {"BetterHandbrakeCam",nullptr,&Behavior::CBetterHBC,"Gameplay","BetterHandbrakeCam"},
     {"UncapFPS",nullptr,&Render3D::CUncapFPS,"Debug","UncapFPS"},
     {"DisableFog",&Render3D::CMPatches_DisableFog,nullptr,"Graphics","DisableFog"},
     {"SR1Reloading",&Behavior::CMPatches_SR1Reloading,nullptr,"Gameplay","SR1Reloading"},
-    {"SR1QuickSwitch",&Behavior::CMPatches_SR1QuickSwitch,nullptr,"Gameplay","SR1QuickSwitch"}
+    {"SR1QuickSwitch",&Behavior::CMPatches_SR1QuickSwitch,nullptr,"Gameplay","SR1QuickSwitch"},
+    {"BetterAnimBlend",nullptr,&Behavior::CAnimBlend,"Gameplay","BetterAnimBlend"}
     };
     void AddOptions() {
         InGameConfig::RegisterBoolSlider("UncapFPS", "UncapFPS");
+        InGameConfig::RegisterBoolSlider("X360Gamma", "Xbox 360 Gamma");
         InGameConfig::RegisterBoolSlider("VFXPlus", "VanillaFXPlus");
         InGameConfig::RegisterBoolSlider("BetterAO", "Better Ambient Occlusion");
         InGameConfig::RegisterBoolSlider("DisableFog", "Disable Fog");
@@ -31,13 +33,14 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("BetterHandbrakeCam", "Better Handbrake Cam", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("SR1Reloading", "SR1Reloading", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("SR1QuickSwitch", "SR1QuickSwitch", InGameConfig::MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("BetterAnimBlend", "Better Anim Blend", InGameConfig::MenuType::CONTROLS);
         //InGameConfig::RegisterSlider("BetterAO", "Better Ambient Occlusion", {"FUCK OFF ", "fucked off"}, 50);
         InGameConfig::RegisterSlider("SleepHack", "Sleep Hack", { "CONTROL_NO","QUALITY_LOW_TEXT","QUALITY_MEDIUM_TEXT","QUALITY_HIGH_TEXT" });
     }
 
     void GLuaWrapper(const char* var, int* value, bool write) {
         if (strcmp(var, "IVRadarScaling") == 0) {
-            if (!write) {
+            if (!write && value) {
                 if (*Render2D::currentAR <= 1.77)
                     *value = 2;
                 *value = Render2D::IVRadarScaling;
@@ -49,6 +52,17 @@ namespace InGameConfig {
                 GameConfig::SetValue("Graphics", "IVRadarScaling", 1);
             }
         }
+        else if (strcmp(var, "X360Gamma") == 0) {
+            if (!write) {
+                *value = (Render3D::ShaderOptions & (1 << 0)) ? 1 : 0;
+            }
+            else {
+                Render3D::ShaderOptions = (*value) ? (Render3D::ShaderOptions | SHADER_X360_GAMMA) : (Render3D::ShaderOptions & ~SHADER_X360_GAMMA);
+                Render3D::ChangeShaderOptions();
+                GameConfig::SetValue("Graphics", "X360Gamma", *value);
+            }
+        }
+
 
     }
     PatchEntry* FindPatchEntry(const char* name) {

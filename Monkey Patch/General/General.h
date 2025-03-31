@@ -2,6 +2,7 @@
 #include "../Patcher/CPatch.h"
 #include "../Patcher/CMultiPatch.h"
 #include <safetyhook.hpp>
+#include <functional>
 namespace General {
 	void TopWinMain();
 	void BottomWinMain();
@@ -34,4 +35,5 @@ namespace General {
 	extern void CleanupModifiedScript();
 	extern SafetyHookMid cleanupBufferHook;
 	extern SafetyHookMid luaLoadBuffHook;
+	extern std::function<void()> D3D9_create;
 }

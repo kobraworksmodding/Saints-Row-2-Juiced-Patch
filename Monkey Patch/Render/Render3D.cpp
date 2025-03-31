@@ -16,6 +16,9 @@
 
 #include <safetyhook.hpp>
 
+#include "d3d9.h"
+#include "../General/General.h"
+
 namespace Render3D
 {
 	const char FPSCam[] = "camera_fpss.xtbl";
@@ -72,11 +75,11 @@ namespace Render3D
 		}
 
 		__asm pushad
-		if (GameConfig::GetValue("Graphics", "X360Gamma", 1)) {
+
 			if (_stricmp(ShaderName, "distortion_tint_desat") == 0) {
 				SafeWriteBuf((UInt32)ShaderPointer, X360GammaShader, sizeof(X360GammaShader));
 			}
-		}
+		
 
 		if (GameConfig::GetValue("Graphics", "ShadowMapFiltering", 0)) {
 			if (_stricmp(ShaderName, "shadow_combiner_xxxx") == 0) {
@@ -726,9 +729,27 @@ namespace Render3D
 			mp.AddWriteRelCall(0x00C0900D,(uintptr_t)&PatchAddToEntryPoint);
 		},
 	};
-
+	int ShaderOptions;
+	 
+	void ChangeShaderOptions() {
+		IDirect3DDevice9* pDevice = *reinterpret_cast<IDirect3DDevice9**>(0x0252A2D0);
+		float arr4[4];
+		arr4[0] = (ShaderOptions & SHADER_X360_GAMMA) != 0 ? 0.0f : 1.0f;
+		arr4[1] = 0.f;
+		arr4[2] = 0.f;
+		arr4[3] = 0.f;
+		// distortion_juicedsettings for Gamma.
+		if(pDevice)
+		pDevice->SetPixelShaderConstantF(187, &arr4[0], 1);
+	}
 	void Init()
 	{
+		if (GameConfig::GetValue("Graphics", "X360Gamma", 1)) {
+			ShaderOptions |= SHADER_X360_GAMMA;
+		}
+		if (GameConfig::GetValue("Graphics", "ShadowMapFiltering", 1)) {
+			ShaderOptions |= SHADER_SHADOW_FILTER;
+		}
 		add_to_entry_test = safetyhook::create_mid(0x00C080EC, &add_to_entry_crashaddr_hook);
 #if !JLITE
 		if (GameConfig::GetValue("Graphics", "RemoveVignette", 0))
