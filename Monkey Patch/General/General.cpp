@@ -523,13 +523,13 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 						finalContent = std::string(currentBuff, currentSize);
 					}
 
-					// Apply slider patches directly to finalContent
-					bool sliderModified = InGameConfig::PatchSliderContent(finalContent, filename);
-					if (sliderModified) {
-						modified = true;
+					if (GameConfig::GetValue("Debug", "PopulateInGameOptions", 1)) {
+						bool sliderModified = InGameConfig::PatchSliderContent(finalContent, filename);
+						if (sliderModified) {
+							modified = true;
+						}
 					}
 				}
-
 				// If any modifications were made, create a new buffer
 				if (modified) {
 					size_t newSize = finalContent.length();
