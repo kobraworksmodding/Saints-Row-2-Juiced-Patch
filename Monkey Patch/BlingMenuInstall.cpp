@@ -266,6 +266,10 @@ namespace BlingMenuInstall
            GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
            }, 0.01, 0.1, 5.0);
        BlingMenuAddInt("Juiced", "Vehicle Auto Center Modifer", &Behavior::sticky_cam_timer_add, []() {
+           if (Behavior::sticky_cam_timer_add != 0)
+               Behavior::cf_do_control_mode_sticky_MIDASMHOOK.enable();
+           else Behavior::cf_do_control_mode_sticky_MIDASMHOOK.disable();
+           
            GameConfig::SetValue("Gameplay", "VehicleAutoCenterModifer", Behavior::sticky_cam_timer_add);
            }, 250, 0, INT_MAX - 1500);
        BlingMenuAddFuncCustom("Juiced", "Better Drive-by Cam", NULL, &BM_DBC, NULL);

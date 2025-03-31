@@ -70,6 +70,12 @@ namespace GLua
             lua_pushnil(L);
             return 0;
         }
+        if (strcmp(cmd, "JuicedCall") == 0) {
+            int value = (int)lua_tonumber(L, 2);
+            GLuaWrapper(cmd, &value, false);
+            lua_pushboolean(L, 1);
+            return 1;
+        }
         if (strcmp(cmd, "ReadInt") == 0) {
             unsigned int address = (unsigned int)lua_tonumber(L, 2);
             int value = *(int*)address;
@@ -163,7 +169,6 @@ namespace GLua
                         Render3D::VFXBrightnesstoggle();
                 }
                 GameConfig::SetValue(entry->configApp, entry->configKey, value);
-            
             lua_pushboolean(L, 1); // Success
             return 1;
             }

@@ -1,7 +1,7 @@
 #pragma once
 #include "../Patcher/CMultiPatch.h"
 #include "../Patcher/CPatch.h"
-
+#include <safetyhook.hpp>
 namespace Behavior
 {
 	extern int sticky_cam_timer_add;
@@ -13,4 +13,7 @@ namespace Behavior
 	extern CMultiPatch CMPatches_DisableLockedClimbCam;
 	extern CMultiPatch CMPatches_SR1QuickSwitch;
 	extern CMultiPatch CMPatches_SR1Reloading;
+	extern CMultiPatch CMPatches_UseWeaponAfterEmpty;
+	extern CMultiPatch CMPatches_TauntCancelling;
+	extern SafetyHookMid cf_do_control_mode_sticky_MIDASMHOOK;
 }

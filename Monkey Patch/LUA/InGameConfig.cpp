@@ -6,7 +6,10 @@
 #include "../FileLogger.h"
 #include "../Player/Behavior.h"
 #include "../GameConfig.h"
+#include <iomanip>
+#include <sstream>
 int AddMessage(const wchar_t* Title, const wchar_t* Desc);
+int AddMessageCustomized(const wchar_t* Title, const wchar_t* Desc, const wchar_t* Options[], int OptionCount);
 namespace InGameConfig {
     static PatchEntry patch_registry[] = {
     { "VFXPlus", &Render3D::CMPatches_VFXPlus,nullptr ,"Graphics", "VanillaFXPlus" },
@@ -19,7 +22,9 @@ namespace InGameConfig {
     {"DisableFog",&Render3D::CMPatches_DisableFog,nullptr,"Graphics","DisableFog"},
     {"SR1Reloading",&Behavior::CMPatches_SR1Reloading,nullptr,"Gameplay","SR1Reloading"},
     {"SR1QuickSwitch",&Behavior::CMPatches_SR1QuickSwitch,nullptr,"Gameplay","SR1QuickSwitch"},
-    {"BetterAnimBlend",nullptr,&Behavior::CAnimBlend,"Gameplay","BetterAnimBlend"}
+    {"BetterAnimBlend",nullptr,&Behavior::CAnimBlend,"Gameplay","BetterAnimBlend"},
+    {"UseWeaponAfterEmpty",&Behavior::CMPatches_UseWeaponAfterEmpty,nullptr,"Gameplay","Keep Weapon After Empty"},
+    {"TauntCancelling",&Behavior::CMPatches_UseWeaponAfterEmpty,nullptr,"Gameplay","TauntCancelling"}
     };
     void AddOptions() {
         InGameConfig::RegisterBoolSlider("UncapFPS", "UncapFPS");
@@ -30,6 +35,23 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("DisableBlueRefl", "Disable Sky Reflections");
         InGameConfig::RegisterBoolSlider("IVRadarScaling", "IV Radar Scaling");
         InGameConfig::RegisterSlider("DisableAimAssist", "Disable Aim Assist", { "CONTROL_NO","On Mouse only","Always"}, MenuType::CONTROLS);
+        InGameConfig::RegisterSlider(
+            "VehicleAutoCenterModifer",
+            "Vehicle Auto Center Modifer",
+            []() -> std::vector<std::string> {
+                std::vector<std::string> result;
+                std::ostringstream oss;
+                for (double i = 0.0; i <= 10.0; i += 0.5) {
+                    oss.str("");
+                    oss.clear();
+                    oss << std::fixed << std::setprecision(1) << i;
+                    result.push_back(oss.str());
+                }
+                return result;
+            }(),
+                MenuType::CONTROLS
+                );
+
         InGameConfig::RegisterBoolSlider("BetterDriveByCam", "Better Drive-by Cam", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("BetterHandbrakeCam", "Better Handbrake Cam", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("SR1Reloading", "SR1Reloading", InGameConfig::MenuType::CONTROLS);
@@ -38,11 +60,26 @@ namespace InGameConfig {
         //InGameConfig::RegisterSlider("BetterAO", "Better Ambient Occlusion", {"FUCK OFF ", "fucked off"}, 50);
         InGameConfig::RegisterSlider("SleepHack", "Sleep Hack", { "CONTROL_NO","QUALITY_LOW_TEXT","QUALITY_MEDIUM_TEXT","QUALITY_HIGH_TEXT" });
     }
+    void __cdecl UserUnderstands(int Unk, int SelectedOption, int Action) {
 
+        if (Action == 2 && SelectedOption == 1) {
+            GameConfig::SetValue("Debug", "ReadJuicedWarning", 1);
+        }
+    }
     void GLuaWrapper(const char* var, int* value, bool write) {
+        if (!write && strcmp(var,"JuicedCall") == 0 && !GameConfig::GetValue("Debug", "ReadJuicedWarning", 0) && *value == 1) {
+            const wchar_t* JuicedWelcome =
+                L"[format][color:#B200FF]Juiced[/format] options and the options available in display & controls\n"
+                L"is not representative of all the options that are available to change.\n"
+                L"refer to Juiced.ini for more options.\n"
+                L"- [format][color:#B200FF]Juiced Team[/format]"
+                L"[format][scale:1.0][image:ui_hud_inv_d_ginjuice][/format]";
+            const wchar_t* Options[] = { L"OK", L"[format][color:#D41111]Do not repeat this pop-up[/format]\n\n" };
+            int Result = AddMessageCustomized(L"Juiced", JuicedWelcome, Options, _countof(Options));
+            *(void**)(Result + 0x930) = &UserUnderstands;
+        }
         if (strcmp(var, "IVRadarScaling") == 0) {
             if (!write) {
-                printf("reading\n");
                 *value = Render2D::IVRadarScaling;
             }
             else if(write) {
@@ -67,6 +104,16 @@ namespace InGameConfig {
                 Render3D::ChangeShaderOptions();
                 GameConfig::SetValue("Graphics", "X360Gamma", *value);
 
+            }
+        } else if (strcmp(var, "VehicleAutoCenterModifer") == 0) {
+            if(!write)
+            *value = std::clamp(Behavior::sticky_cam_timer_add / 500, 0, 20);
+            else {
+                Behavior::sticky_cam_timer_add = (*value * 500);
+                GameConfig::SetValue("Gameplay", "VehicleAutoCenterModifer", Behavior::sticky_cam_timer_add);
+                if (Behavior::sticky_cam_timer_add != 0)
+                    Behavior::cf_do_control_mode_sticky_MIDASMHOOK.enable();
+                else Behavior::cf_do_control_mode_sticky_MIDASMHOOK.disable();
             }
         }
 
@@ -136,11 +183,11 @@ namespace InGameConfig {
                 // Extract the ID number
                 int id = std::stoi(match[1].str());
                 foundIds.insert(id);
-                Logger::TypedLog(CHN_LUA, "Found menu ID: %d", id);
+                Logger::TypedLog(CHN_LUA, "Found menu ID: %d \n", id);
             }
             ++it;
         }
-
+        
         // Combine with our already tracked IDs
         std::unordered_set<int> allUsedIds = foundIds;
         allUsedIds.insert(g_usedIds.begin(), g_usedIds.end());
@@ -337,6 +384,7 @@ namespace InGameConfig {
                     size_t functionBodyStart = buffer.find("\n", initFuncEnd) + 1;
 
                     std::string initLines;
+                    initLines += "vint_get_avg_processing_time(\"JuicedCall\",1)";
                     for (const auto& slider : displaySliders) {
                         // Create initialization lines
                         initLines += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
@@ -446,6 +494,7 @@ namespace InGameConfig {
                     size_t functionBodyStart = buffer.find("\n", initFuncEnd) + 1;
 
                     std::string initLines;
+                    initLines += "vint_get_avg_processing_time(\"JuicedCall\",1)";
                     for (const auto& slider : controlSliders) {
                         // Create initialization lines
                         initLines += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
@@ -489,7 +538,7 @@ namespace InGameConfig {
         if (displayMenuPos != std::string::npos) {
             // First add the supporting functions before the menu
             std::string juicedFunctions = "function juiced_menu_build_display_options_menu_PC(menu_data)\n";
-
+            juicedFunctions += "vint_get_avg_processing_time(\"JuicedCall\",1)";
             // Initialize all sliders (both display and control)
             for (const auto& slider : g_sliders) {
                 juicedFunctions += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
@@ -501,15 +550,21 @@ namespace InGameConfig {
             // Add update function for juiced menu
             juicedFunctions += "function juiced_menu_display_options_update_value(menu_label, menu_data)\n";
             juicedFunctions += "\tlocal idx = menu_data.id\n";
-
+            juicedFunctions += "if menu_data.type == MENU_ITEM_TYPE_NUM_SLIDER then\n";
+            juicedFunctions += "local h = vint_object_find(\"value_text\", menu_label.control.grp_h)\n";
+            juicedFunctions += "vint_set_property(h, \"text_tag\", floor(menu_data.cur_value * 100) .. \" % %\")\n";
+            juicedFunctions += "end\n\n";
             // Add conditions for all sliders
+
+            juicedFunctions += "if menu_data.type == MENU_ITEM_TYPE_TEXT_SLIDER then\n";
+
             for (const auto& slider : g_sliders) {
                 juicedFunctions += "\tif idx == " + std::to_string(slider.id) + " then\n" +
                     "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider.name +
                     "\", menu_data.text_slider_values.cur_value)\n" +
                     "\tend\n";
             }
-
+            juicedFunctions += "end\n\n";
             juicedFunctions += "end\n\n";
 
             // Add back function

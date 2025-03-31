@@ -121,21 +121,40 @@ CMultiPatch CMPatches_SR1Reloading = {
 			jmp jmp_continue
 		}
 	}
+	CMultiPatch CMPatches_TauntCancelling = {
 
+	[](CMultiPatch& mp) {
+		mp.AddWriteRelJump(0x004F8315, (UInt32)&TauntLeft);
+	},
+
+	[](CMultiPatch& mp) {
+		mp.AddWriteRelJump(0x004F8332, (UInt32)&TauntRight);
+	},
+
+	[](CMultiPatch& mp) {
+		mp.AddSafeWriteBuf(0x00964F77 + 1, "\x00\x00",2);
+	},
+	};
 	void TauntCancelling()
 	{
 		// Makes it so you can cancel out Taunts. 
 		Logger::TypedLog(CHN_MOD, "Patching In TauntCancelling...\n");
-		WriteRelJump(0x004F8315, (UInt32)&TauntLeft);
-		WriteRelJump(0x004F8332, (UInt32)&TauntRight);
-		patchBytesM((BYTE*)0x00964F77 + 1, (BYTE*)"\x00\x00", 2);
+		CMPatches_TauntCancelling.Apply();
 	}
+	CMultiPatch CMPatches_UseWeaponAfterEmpty = {
 
+	[](CMultiPatch& mp) {
+		mp.AddSafeWrite8(0x9D95F0, 0xC3);
+	},
+
+	[](CMultiPatch& mp) {
+		mp.AddPatchNop(0x0055B496, 2);
+	},
+	};
 	void WeaponJam()
 	{
 		Logger::TypedLog(CHN_MOD, "Patching In UseWeaponAfterEmpty...\n");
-		patchByte((BYTE*)0x9D95F0, 0xC3);
-		patchNop((BYTE*)0x0055B496, 2);
+		CMPatches_UseWeaponAfterEmpty.Apply();
 	}
 
 	void FasterDoors()
@@ -279,9 +298,10 @@ CMultiPatch CMPatches_SR1Reloading = {
 			BetterMovement();
 		}
 			slewmode_mousefix_rewrite = safetyhook::create_mid(0x00C011FB, &slewmode_control_rewrite);
-			cf_do_control_mode_sticky_MIDASMHOOK = safetyhook::create_mid(0x0049C102, &sticky_cam_modifier);
+			cf_do_control_mode_sticky_MIDASMHOOK = safetyhook::create_mid(0x0049C102, &sticky_cam_modifier,safetyhook::MidHook::StartDisabled);
 			// it's expecting time in ms, so 1000 = 1 second
 			if (int user_cam_modifier = GameConfig::GetValue("Gameplay", "VehicleAutoCenterModifer", 0); user_cam_modifier > 0) {
+				cf_do_control_mode_sticky_MIDASMHOOK.enable();
 				sticky_cam_timer_add = user_cam_modifier;
 			}
 
