@@ -40,12 +40,14 @@ namespace InGameConfig {
 
     void GLuaWrapper(const char* var, int* value, bool write) {
         if (strcmp(var, "IVRadarScaling") == 0) {
-            if (!write && value) {
-                if (*Render2D::currentAR <= 1.77)
+            if (!write) {
+                if (*Render2D::currentAR <= 1.45f) {
                     *value = 2;
+                    return;
+                }
                 *value = Render2D::IVRadarScaling;
             }
-            else if(*Render2D::currentAR >= 1.77) {
+            else if(write && *Render2D::currentAR >= 1.45f) {
                 Render2D::IVRadarScaling = true;
                 Render2D::RadarScaling();
                 Render2D::VintScaleIV();

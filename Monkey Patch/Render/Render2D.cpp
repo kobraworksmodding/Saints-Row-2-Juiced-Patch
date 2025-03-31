@@ -26,7 +26,7 @@ namespace Render2D
 		float currentY = (float)(*(unsigned int*)0x022f63fc);
 
 		float aspect = currentX / currentY;
-		if (!IVRadarScaling && aspect < 1.77)
+		if (!IVRadarScaling && aspect < 1.45f)
 			return;
 
 		// vint scale
