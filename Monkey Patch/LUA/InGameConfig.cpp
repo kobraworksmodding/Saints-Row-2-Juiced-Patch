@@ -58,6 +58,7 @@ namespace InGameConfig {
             }
             else {
                 Render3D::ShaderOptions = (*value) ? (Render3D::ShaderOptions | SHADER_X360_GAMMA) : (Render3D::ShaderOptions & ~SHADER_X360_GAMMA);
+                Render3D::VFXBrightnesstoggle();
                 Render3D::ChangeShaderOptions();
                 GameConfig::SetValue("Graphics", "X360Gamma", *value);
             }

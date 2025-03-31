@@ -34,4 +34,5 @@ namespace Render3D
     extern void AspectRatioFix(bool update_aspect_ratio = false);
     extern int ShaderOptions;
     extern void ChangeShaderOptions();
+    extern void VFXBrightnesstoggle();
 }

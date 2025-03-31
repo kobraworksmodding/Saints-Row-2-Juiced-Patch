@@ -156,8 +156,12 @@ namespace GLua
             if (entry) {
                 if (entry->singlePatch)
                     value ? entry->singlePatch->Apply() : entry->singlePatch->Restore();
-                else if (entry->multiPatch)
+                else if (entry->multiPatch) {
                     value ? entry->multiPatch->Apply() : entry->multiPatch->Restore();
+                    // Hard coded fix for X360 Gamma toggle, would implement a callback system into CMultiPatch but feels too much.
+                    if (strcmp(entry->name, "VFXPlus") == 0)
+                        Render3D::VFXBrightnesstoggle();
+                }
                 GameConfig::SetValue(entry->configApp, entry->configKey, value);
             
             lua_pushboolean(L, 1); // Success

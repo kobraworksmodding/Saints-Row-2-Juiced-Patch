@@ -222,7 +222,22 @@ namespace Render3D
 		Logger::TypedLog(CHN_MOD, "Making loading screens slightly faster.\n");
 		patchBytesM((BYTE*)0x0068C714, (BYTE*)"\x6A\x0F", 2); // this is a sleep call for first load/legal disclaimers, its set to 30 by default, halfing increases fps to 60 and makes loading faster.
 	}
-
+	volatile float Brightness = 1.32f;
+	volatile float Saturation = 0.8f;
+	volatile float Contrast = 1.58f;
+	inline void VFXBrightnesstoggle() {
+		if ((ShaderOptions & SHADER_X360_GAMMA)) {
+			  Brightness = 1.32f;
+			  Saturation = 0.8f;
+			  Contrast = 1.58f;
+		}
+		else {
+			Brightness = 1.26f;
+			Saturation = 0.8f;
+			Contrast = 1.62f;
+		}
+		//printf("Brit %f Satur %f Cont %f \n", Brightness, Saturation, Contrast);
+	}
 	CMultiPatch CMPatches_VFXPlus = {
 
 		[](CMultiPatch& mp) {
@@ -230,15 +245,15 @@ namespace Render3D
 		},
 
 		[](CMultiPatch& mp) {
-			mp.AddSafeWriteBuf(0x0051A952, "\xD9\x05\x7F\x2C\x7B\x02", 6);
+			mp.AddSafeWrite32(0x0051A952 + 2, (uint32_t)&Brightness);
 		},
 
 		[](CMultiPatch& mp) {
-			mp.AddSafeWriteBuf(0x0051A997, "\xD9\x05\x83\x2C\x7B\x02", 6);
+			mp.AddSafeWrite32(0x0051A997 + 2, (uint32_t)&Saturation);
 		},
 
 		[](CMultiPatch& mp) {
-			mp.AddSafeWriteBuf(0x0051A980, "\xD9\x05\x87\x2C\x7B\x02", 6);
+			mp.AddSafeWrite32(0x0051A980 + 2, (uint32_t)&Contrast);
 		},
 
 		[](CMultiPatch& mp) {
@@ -251,19 +266,6 @@ namespace Render3D
 
 		[](CMultiPatch& mp) {
 			mp.AddSafeWrite8(0x00517051,0x8B);
-		},
-
-		[](CMultiPatch& mp) {
-		if (GameConfig::GetValue("Graphics", "X360Gamma", 1)) {
-			mp.AddSafeWrite<float>(0x027B2C7F,1.32f);
-			mp.AddSafeWrite<float>(0x027B2C83, 0.8f);
-			mp.AddSafeWrite<float>(0x027B2C87, 1.58f);
-			}
-		else {
-			mp.AddSafeWrite<float>(0x027B2C7F,1.26f);
-			mp.AddSafeWrite<float>(0x027B2C83, 0.8f);
-			mp.AddSafeWrite<float>(0x027B2C87, 1.62f);
-}
 		},
 		[](CMultiPatch& mp) {
 		mp.AddSafeWriteBuf(0x00524BA4, (BYTE*)"\xD9\x05\xBA\x2C\x7B\x02", 6);
