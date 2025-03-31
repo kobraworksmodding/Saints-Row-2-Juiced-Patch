@@ -31,7 +31,7 @@ namespace Render2D
 
 		// vint scale
 		auto pattern = hook::make_range_pattern(0x7A2C30, 0x007A37D2, "AC BF 2D 02");
-		Logger::TypedLog(CHN_DEBUG,"Count of vint %d \n", pattern.size());
+		//Logger::TypedLog(CHN_DEBUG,"Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);

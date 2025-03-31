@@ -6,6 +6,7 @@
 #include "../FileLogger.h"
 #include "../Player/Behavior.h"
 #include "../GameConfig.h"
+int AddMessage(const wchar_t* Title, const wchar_t* Desc);
 namespace InGameConfig {
     static PatchEntry patch_registry[] = {
     { "VFXPlus", &Render3D::CMPatches_VFXPlus,nullptr ,"Graphics", "VanillaFXPlus" },
@@ -27,7 +28,7 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("BetterAO", "Better Ambient Occlusion");
         InGameConfig::RegisterBoolSlider("DisableFog", "Disable Fog");
         InGameConfig::RegisterBoolSlider("DisableBlueRefl", "Disable Sky Reflections");
-        InGameConfig::RegisterSlider("IVRadarScaling", "IV Radar Scaling",{"CONTROL_NO","YES (Untoggleable)","Widescreen only"});
+        InGameConfig::RegisterBoolSlider("IVRadarScaling", "IV Radar Scaling");
         InGameConfig::RegisterSlider("DisableAimAssist", "Disable Aim Assist", { "CONTROL_NO","On Mouse only","Always"}, MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("BetterDriveByCam", "Better Drive-by Cam", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("BetterHandbrakeCam", "Better Handbrake Cam", InGameConfig::MenuType::CONTROLS);
@@ -41,17 +42,19 @@ namespace InGameConfig {
     void GLuaWrapper(const char* var, int* value, bool write) {
         if (strcmp(var, "IVRadarScaling") == 0) {
             if (!write) {
-                if (*Render2D::currentAR <= 1.45f) {
-                    *value = 2;
-                    return;
-                }
+                printf("reading\n");
                 *value = Render2D::IVRadarScaling;
             }
-            else if(write && *Render2D::currentAR >= 1.45f) {
+            else if(write) {
                 Render2D::IVRadarScaling = true;
                 Render2D::RadarScaling();
                 Render2D::VintScaleIV();
-                GameConfig::SetValue("Graphics", "IVRadarScaling", 1);
+                GameConfig::SetValue("Graphics", "IVRadarScaling", *value);
+               
+                    const wchar_t* IVRadarScaleWarning =
+                        L"Toggling IVRadarScale OFF while the game is running doesn't apply the changes in real time only when applying, restart to disable it if off.\n";
+                    AddMessage(L"Juiced", IVRadarScaleWarning);
+                
             }
         }
         else if (strcmp(var, "X360Gamma") == 0) {
@@ -63,6 +66,7 @@ namespace InGameConfig {
                 Render3D::VFXBrightnesstoggle();
                 Render3D::ChangeShaderOptions();
                 GameConfig::SetValue("Graphics", "X360Gamma", *value);
+
             }
         }
 
@@ -517,7 +521,7 @@ namespace InGameConfig {
             // Now add the Juiced_options menu after the functions
             std::string juicedOptionsMenu = juicedFunctions + "Juiced_options = {\n";
             juicedOptionsMenu += "\theader_label_str\t= \"Juiced Options\",\n";
-            juicedOptionsMenu += "\tmax_height = 530,\t-- Default: 375 [nclok1405]\n";
+            juicedOptionsMenu += "\tmax_height = 450,\t-- Default: 375 [nclok1405]\n";
             juicedOptionsMenu += "\ton_show \t\t\t= juiced_menu_build_display_options_menu_PC,\n";
             juicedOptionsMenu += "\ton_alt_select \t\t= pause_menu_options_restore_defaults,\n";
             juicedOptionsMenu += "\ton_back \t\t\t= juiced_back_workaround,\n";
