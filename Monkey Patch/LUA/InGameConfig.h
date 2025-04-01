@@ -16,6 +16,12 @@ namespace InGameConfig {
         DISPLAY,
         CONTROLS
     };
+    struct non_live_options {
+        const char* appname;
+        const char* keyname;
+        MenuType type = MenuType::DISPLAY;
+    };
+    extern non_live_options* Find_option_restart(const char* name);
     struct Slider {
         std::string name;                     // Variable name
         std::string display_name;             // Display name shown in menu

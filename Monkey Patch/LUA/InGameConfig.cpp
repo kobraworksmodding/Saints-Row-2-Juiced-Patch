@@ -11,6 +11,12 @@
 int AddMessage(const wchar_t* Title, const wchar_t* Desc);
 int AddMessageCustomized(const wchar_t* Title, const wchar_t* Desc, const wchar_t* Options[], int OptionCount);
 namespace InGameConfig {
+    static non_live_options restart_option[] = {
+    { "Debug", "DisableXInput",MenuType::CONTROLS },
+    { "Graphics", "ShadowMapFiltering" },
+    { "Graphics", "UHQScreenEffects" },
+    { "Graphics", "Borderless" },
+    };
     static PatchEntry patch_registry[] = {
     { "VFXPlus", &Render3D::CMPatches_VFXPlus,nullptr ,"Graphics", "VanillaFXPlus" },
     { "BetterAO", nullptr,&Render3D::CBetterAO, "Graphics", "BetterAmbientOcclusion"},
@@ -59,6 +65,15 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("BetterAnimBlend", "Better Anim Blend", InGameConfig::MenuType::CONTROLS);
         //InGameConfig::RegisterSlider("BetterAO", "Better Ambient Occlusion", {"FUCK OFF ", "fucked off"}, 50);
         InGameConfig::RegisterSlider("SleepHack", "Sleep Hack", { "CONTROL_NO","QUALITY_LOW_TEXT","QUALITY_MEDIUM_TEXT","QUALITY_HIGH_TEXT" });
+        InGameConfig::RegisterBoolSlider("BetterAnimBlend", "Better Anim Blend");
+
+        for (const auto& opt : restart_option) {
+            std::string label = std::string(opt.keyname) + " (R)";
+            InGameConfig::RegisterBoolSlider(opt.keyname, label.c_str(),opt.type);
+        }
+
+
+
     }
     void __cdecl UserUnderstands(int Unk, int SelectedOption, int Action) {
 
@@ -116,8 +131,23 @@ namespace InGameConfig {
                 else Behavior::cf_do_control_mode_sticky_MIDASMHOOK.disable();
             }
         }
+        else {
+            non_live_options* require_restart = Find_option_restart(var);
+            if (require_restart && !write) {
+                *value = GameConfig::GetValue(require_restart->appname, require_restart->keyname,0);
+            }
+            else if (require_restart && write) {
 
-
+                const wchar_t* Requires_Restart_message =
+                    L"Options that have the (R) tag next to them require a restart to apply.\n";
+                static bool read_require_message_bool = false;
+                if (!read_require_message_bool) {
+                    AddMessage(L"Juiced", Requires_Restart_message);
+                    read_require_message_bool = true;
+                }
+                GameConfig::SetValue(require_restart->appname, require_restart->keyname, *value);
+            }
+        }
     }
     PatchEntry* FindPatchEntry(const char* name) {
         for (auto& entry : patch_registry) {
@@ -128,6 +158,14 @@ namespace InGameConfig {
         return nullptr;
     }
 
+    non_live_options* Find_option_restart(const char* name) {
+        for (auto& entry : restart_option) {
+            if (strcmp(entry.keyname, name) == 0) {
+                return &entry;
+            }
+        }
+        return nullptr;
+    }
 
 
 
