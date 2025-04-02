@@ -74,21 +74,21 @@ namespace GLua
             int value = (int)lua_tonumber(L, 2);
             GLuaWrapper(cmd, &value, false);
             lua_pushboolean(L, 1);
-            return 1;
+            return 0;
         }
         if (strcmp(cmd, "ReadInt") == 0) {
             unsigned int address = (unsigned int)lua_tonumber(L, 2);
             int value = *(int*)address;
             lua_pushnumber(L, value);
             Logger::TypedLog(CHN_LUA, "game called %s it read 0x%X and got %d", "ReadInt", address, value);
-            return 1;
+            return 0;
         }
         else if (strcmp(cmd, "WriteInt") == 0) {
             unsigned int address = (unsigned int)lua_tonumber(L, 2);
             int value = (int)lua_tonumber(L, 3);
             *(int*)address = value;
             lua_pushboolean(L, 1); // Success
-            return 1;
+            return 0;
         }
         else if (strcmp(cmd, "ReadJuiced") == 0) {
             const char* varName = lua_tostring(L, 2);
@@ -101,7 +101,7 @@ namespace GLua
             if (strcmp(varName, "DisableAimAssist") == 0) {
                 value = Input::disable_aim_assist_noMatterInput;
                 lua_pushnumber(L, value);
-                return 1;
+                return 0;
             }
 
             if (strcmp(varName, "SleepHack") == 0) {
@@ -112,7 +112,7 @@ namespace GLua
                 else if (Render3D::CMPatches_PatchLowSleepHack.IsApplied() && !Render3D::CPatches_MediumSleepHack.IsApplied())
                     value = 1;
                 lua_pushnumber(L, value);
-                return 1;
+                return 0;
             }
 
             PatchEntry* entry = FindPatchEntry(varName);
@@ -123,13 +123,13 @@ namespace GLua
                     value = entry->multiPatch->IsApplied();
 
                 lua_pushnumber(L, value);
-                return 1;
+                return 0;
             }
             if(&value)
             InGameConfig::GLuaWrapper(varName, &value, false);
 
             lua_pushnumber(L, value);
-            return 1;
+            return 0;
         }
         else if (strcmp(cmd, "WriteJuiced") == 0) {
             const char* varName = lua_tostring(L, 2);
@@ -137,7 +137,7 @@ namespace GLua
 
             if (varName == NULL) {
                 lua_pushboolean(L, 0); // Failure
-                return 1;
+                return 0;
             }
 
             if (strcmp(varName, "DisableAimAssist") == 0) {
@@ -156,7 +156,7 @@ namespace GLua
                 PatchSleepHack(value);
                 GameConfig::SetValue("Debug", "SleepHack", value);
                 lua_pushboolean(L, 1); // Success
-                return 1;
+                return 0;
             }
             PatchEntry* entry = FindPatchEntry(varName);
             if (entry) {
@@ -170,12 +170,12 @@ namespace GLua
                 }
                 GameConfig::SetValue(entry->configApp, entry->configKey, value);
             lua_pushboolean(L, 1); // Success
-            return 1;
+            return 0;
             }
             if (&value)
                 InGameConfig::GLuaWrapper(varName, &value, true);
             lua_pushboolean(L, 1);
-            return 1;
+            return 0;
         }
 
         lua_pushnil(L);
