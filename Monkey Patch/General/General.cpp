@@ -542,7 +542,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 					ctx.edx = newSize;
 					ctx.ecx = newSize;
 
-					Logger::TypedLog(CHN_LUA, "Applied combined modifications to %s", filename);
+					//Logger::TypedLog(CHN_LUA, "Applied combined modifications to %s", filename);
 				}
 			}
 		}

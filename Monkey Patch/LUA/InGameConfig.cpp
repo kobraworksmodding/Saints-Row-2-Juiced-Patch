@@ -221,7 +221,7 @@ namespace InGameConfig {
                 // Extract the ID number
                 int id = std::stoi(match[1].str());
                 foundIds.insert(id);
-                Logger::TypedLog(CHN_LUA, "Found menu ID: %d \n", id);
+                //Logger::TypedLog(CHN_LUA, "Found menu ID: %d \n", id);
             }
             ++it;
         }
