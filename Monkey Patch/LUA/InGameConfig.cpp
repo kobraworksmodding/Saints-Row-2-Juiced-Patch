@@ -863,7 +863,6 @@ namespace InGameConfig {
                 }
             }
 
-            // For main menu format (1), we need a special approach to avoid the duplicate Controls issue
             size_t format1Pos = buffer.find(format1Check, initFuncPos);
             if (format1Pos != std::string::npos) {
                 // Find the num_items assignment for format 1
@@ -885,6 +884,24 @@ namespace InGameConfig {
                         buffer.insert(endOfFormat1, mainMenuFix);
                         modified = true;
                     }
+                }
+            }
+
+            // Find Pause_options_menu[2] = Pause_options_menu[7] and add the new line below it
+            std::string targetLine = "Pause_options_menu[2] = Pause_options_menu[7]";
+            size_t targetLinePos = buffer.find(targetLine, initFuncPos);
+            if (targetLinePos != std::string::npos) {
+                size_t lineEndPos = buffer.find('\n', targetLinePos);
+                if (lineEndPos != std::string::npos) {
+                    size_t indentStart = targetLinePos;
+                    while (indentStart > 0 && (buffer[indentStart - 1] == ' ' || buffer[indentStart - 1] == '\t')) {
+                        indentStart--;
+                    }
+                    std::string indentation = buffer.substr(indentStart, targetLinePos - indentStart);
+                    std::string newLine = "\n" + indentation + "Pause_options_menu[3] = Pause_options_menu[8]";
+
+                    buffer.insert(lineEndPos, newLine);
+                    modified = true;
                 }
             }
 
