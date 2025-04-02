@@ -11,6 +11,8 @@
 int AddMessage(const wchar_t* Title, const wchar_t* Desc);
 int AddMessageCustomized(const wchar_t* Title, const wchar_t* Desc, const wchar_t* Options[], int OptionCount);
 namespace InGameConfig {
+    typedef bool(*isCoopT)();
+    isCoopT isCoop = (isCoopT)0x007F7AD0;
     static non_live_options restart_option[] = {
     { "Debug", "DisableXInput",MenuType::CONTROLS },
     { "Graphics", "ShadowMapFiltering" },
@@ -570,7 +572,7 @@ namespace InGameConfig {
             }
         }
         int MP_game_mode = *(int*)0x00E8B210;
-        if (MP_game_mode == -1) {
+        if (isCoop() || MP_game_mode == -1) {
             // Find a good insertion point - look for Pause_display_menu_PC
             std::string displayMenuStr = "Pause_display_menu_PC = {";
             size_t displayMenuPos = buffer.find(displayMenuStr);
