@@ -897,7 +897,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #endif
 			cleanupBufferHook = safetyhook::create_mid(0x00CDE388, [](safetyhook::Context32& ctx) {
 				General::CleanupModifiedScript();
-				},safetyhook::MidHook::StartDisabled);
+				},safetyhook::MidHook::Default);
 			luaLoadBuffHook = safetyhook::create_mid(0x00CDE379, &VINT_DOC_luaLoadBuff
 #if JLITE
 				,safetyhook::MidHook::StartDisabled
