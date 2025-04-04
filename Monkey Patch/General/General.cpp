@@ -342,8 +342,9 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		const char* buff = (const char*)ctx.ebp;
 		const char* filename = (const char*)(ctx.esp + 0x14);
 		size_t& sz = ctx.ecx;
-#if !JLITE
+
 		std::string convertedBuff(buff);
+#if !JLITE
 		int* resX = (int*)(0xE8DF14);
 		int* resY = (int*)(0xE8DF4C);
 
@@ -414,7 +415,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 
 				std::string finalContent;
-				finalContent = std::string(currentBuff, currentSize);
+				finalContent = std::string(currentBuff, sz);
 
 				// Your existing UltrawideFix code to generate customCode
 				std::string customCode = "";
@@ -899,9 +900,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				General::CleanupModifiedScript();
 				},safetyhook::MidHook::Default);
 			luaLoadBuffHook = safetyhook::create_mid(0x00CDE379, &VINT_DOC_luaLoadBuff
-#if JLITE
-				,safetyhook::MidHook::StartDisabled
-#endif
 );
 			if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1) {
 				Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 1);
