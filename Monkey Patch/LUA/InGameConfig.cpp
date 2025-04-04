@@ -33,7 +33,9 @@ namespace InGameConfig {
     {"DisableFog",&Render3D::CMPatches_DisableFog,nullptr,"Graphics","DisableFog"},
     {"SR1Reloading",&Behavior::CMPatches_SR1Reloading,nullptr,"Gameplay","SR1Reloading"},
     {"SR1QuickSwitch",&Behavior::CMPatches_SR1QuickSwitch,nullptr,"Gameplay","SR1QuickSwitch"},
+#if !JLITE
     {"BetterAnimBlend",nullptr,&Behavior::CAnimBlend,"Gameplay","BetterAnimBlend"},
+#endif
     {"UseWeaponAfterEmpty",&Behavior::CMPatches_UseWeaponAfterEmpty,nullptr,"Gameplay","Keep Weapon After Empty"},
     {"TauntCancelling",&Behavior::CMPatches_UseWeaponAfterEmpty,nullptr,"Gameplay","TauntCancelling"}
     };
@@ -45,7 +47,9 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("BetterAO", "Better Ambient Occlusion");
         InGameConfig::RegisterBoolSlider("DisableFog", "Disable Fog");
         InGameConfig::RegisterBoolSlider("DisableBlueRefl", "Disable Sky Reflections");
+#if !JLITE
         InGameConfig::RegisterBoolSlider("IVRadarScaling", "IV Radar Scaling");
+#endif
         InGameConfig::RegisterSlider("DisableAimAssist", "Disable Aim Assist", { "CONTROL_NO","On Mouse only","Always"}, MenuType::CONTROLS);
         InGameConfig::RegisterSlider(
             "VehicleAutoCenterModifer",
@@ -69,8 +73,9 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("SR1Reloading", "SR1Reloading", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("SR1QuickSwitch", "SR1QuickSwitch", InGameConfig::MenuType::CONTROLS);
         //InGameConfig::RegisterSlider("BetterAO", "Better Ambient Occlusion", {"FUCK OFF ", "fucked off"}, 50);
+#if !JLITE
         InGameConfig::RegisterBoolSlider("BetterAnimBlend", "Better Anim Blend");
-
+#endif
         for (const auto& opt : restart_option) {
             std::string label = std::string(opt.keyname) + " (R)";
             InGameConfig::RegisterBoolSlider(opt.keyname, label.c_str(),opt.type);
@@ -97,6 +102,7 @@ namespace InGameConfig {
             int Result = AddMessageCustomized(L"Juiced", JuicedWelcome, Options, _countof(Options));
             *(void**)(Result + 0x930) = &UserUnderstands;
         }
+#if !JLITE
         if (strcmp(var, "IVRadarScaling") == 0) {
             if (!write) {
                 *value = Render2D::IVRadarScaling;
@@ -113,7 +119,10 @@ namespace InGameConfig {
                 
             }
         }
-        else if (strcmp(var, "X360Gamma") == 0) {
+
+        else
+#endif
+            if (strcmp(var, "X360Gamma") == 0) {
             if (!write) {
                 *value = (Render3D::ShaderOptions & (1 << 0)) ? 1 : 0;
             }
