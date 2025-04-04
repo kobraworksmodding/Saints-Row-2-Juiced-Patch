@@ -15,9 +15,12 @@ namespace InGameConfig {
     isCoopT isCoop = (isCoopT)0x007F7AD0;
     static non_live_options restart_option[] = {
     { "Debug", "DisableXInput",MenuType::CONTROLS },
+    { "Debug", "ForceDisableVibration",MenuType::CONTROLS },
     { "Graphics", "ShadowMapFiltering" },
     { "Graphics", "UHQScreenEffects" },
+    { "Graphics", "UHQTreeShadows" },
     { "Graphics", "Borderless" },
+    { "Audio", "UseFixedXACT" },
     };
     static PatchEntry patch_registry[] = {
     { "VFXPlus", &Render3D::CMPatches_VFXPlus,nullptr ,"Graphics", "VanillaFXPlus" },
@@ -35,6 +38,7 @@ namespace InGameConfig {
     {"TauntCancelling",&Behavior::CMPatches_UseWeaponAfterEmpty,nullptr,"Gameplay","TauntCancelling"}
     };
     void AddOptions() {
+        InGameConfig::RegisterSlider("SleepHack", "Sleep Hack", { "CONTROL_NO","QUALITY_LOW_TEXT","QUALITY_MEDIUM_TEXT","QUALITY_HIGH_TEXT" });
         InGameConfig::RegisterBoolSlider("UncapFPS", "UncapFPS");
         InGameConfig::RegisterBoolSlider("X360Gamma", "Xbox 360 Gamma");
         InGameConfig::RegisterBoolSlider("VFXPlus", "VanillaFXPlus");
@@ -64,9 +68,7 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("BetterHandbrakeCam", "Better Handbrake Cam", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("SR1Reloading", "SR1Reloading", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("SR1QuickSwitch", "SR1QuickSwitch", InGameConfig::MenuType::CONTROLS);
-        InGameConfig::RegisterBoolSlider("BetterAnimBlend", "Better Anim Blend", InGameConfig::MenuType::CONTROLS);
         //InGameConfig::RegisterSlider("BetterAO", "Better Ambient Occlusion", {"FUCK OFF ", "fucked off"}, 50);
-        InGameConfig::RegisterSlider("SleepHack", "Sleep Hack", { "CONTROL_NO","QUALITY_LOW_TEXT","QUALITY_MEDIUM_TEXT","QUALITY_HIGH_TEXT" });
         InGameConfig::RegisterBoolSlider("BetterAnimBlend", "Better Anim Blend");
 
         for (const auto& opt : restart_option) {
@@ -86,9 +88,9 @@ namespace InGameConfig {
     void GLuaWrapper(const char* var, int* value, bool write) {
         if (!write && strcmp(var,"JuicedCall") == 0 && !GameConfig::GetValue("Debug", "ReadJuicedWarning", 0) && *value == 1) {
             const wchar_t* JuicedWelcome =
-                L"[format][color:#B200FF]Juiced[/format] options and the options available in display & controls\n"
-                L"is not representative of all the options that are available to change.\n"
-                L"refer to Juiced.ini for more options.\n"
+                L"[format][color:#B200FF]Juiced[/format] options and the options available in display & controls "
+                L"is not representative of all the options that are available to change.\n\n"
+                L"Refer to Juiced.ini for the full options list.\n"
                 L"- [format][color:#B200FF]Juiced Team[/format]"
                 L"[format][scale:1.0][image:ui_hud_inv_d_ginjuice][/format]";
             const wchar_t* Options[] = { L"OK", L"[format][color:#D41111]Do not repeat this pop-up[/format]\n\n" };
@@ -647,7 +649,7 @@ namespace InGameConfig {
                 if (!displaySliders.empty()) {
                     // Add display header
                     juicedOptionsMenu += "\t[" + std::to_string(entryIndex++) +
-                        "] = { label = \"Display Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
+                        "] = { label = \"Display & Audio Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
 
                     // Add display sliders
                     for (const auto& slider : displaySliders) {
