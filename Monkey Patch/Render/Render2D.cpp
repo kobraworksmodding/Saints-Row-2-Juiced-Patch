@@ -408,21 +408,15 @@ char SR2Ultrawide_HUDScale() {
 	}
 	if ((GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1)) {
 		if (aspectRatio <= 1.79777777778f) {
-#if JLITE
-			General::luaLoadBuffHook.disable();
-#endif
+
 			UltrawideFix = false;
-			General::cleanupBufferHook.disable();
 			General::CleanupModifiedScript();
 			return ((char(*)())0xD1C910)(); // Original HUD scale function.
 			
 		}
 		else {
-#if JLITE
-			General::luaLoadBuffHook.enable();
-#endif
+
 			Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 4);
-			General::cleanupBufferHook.enable();
 			UltrawideFix = true;
 		}
 	}

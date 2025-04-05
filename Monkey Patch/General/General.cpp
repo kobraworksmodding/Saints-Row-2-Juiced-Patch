@@ -410,7 +410,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				}
 				// Start with the current buffer state
 				const char* currentBuff = buff;
-				size_t currentSize = ctx.edx; // Use existing size
 				bool modified = false;
 
 
@@ -521,7 +520,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				if (strcmp(filename, "pause_menu.lua") == 0 && !InGameConfig::g_sliders.empty()) {
 					if (!modified) {
 						// If we haven't created finalContent yet, do it now
-						finalContent = std::string(currentBuff, currentSize);
+						finalContent = std::string(currentBuff, sz);
 					}
 
 					if (GameConfig::GetValue("Debug", "PopulateInGameOptions", 1)) {
