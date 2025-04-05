@@ -499,15 +499,9 @@ namespace Render3D
 	typedef int SetGraphicsT();
 	SetGraphicsT* SetGraphics = (SetGraphicsT*)(0x7735C0);
 
-	bool halfFxQuality = false;
-
 	void ResizeEffects() {
 		int CurrentX = *(int*)0x22FD84C;
 		int CurrentY = *(int*)0x22FD850;
-		if (halfFxQuality == true) {
-			CurrentX = CurrentX / 2;
-			CurrentY = CurrentY / 2;
-		}
 		SetDOFRes(CurrentX, CurrentY);
 		SetBloomRes(CurrentX, CurrentY, (float)CurrentX, (float)CurrentY);
 		SetWaterReflRes(CurrentX, CurrentY);
@@ -522,13 +516,8 @@ namespace Render3D
 		SafeWrite32(0x005169BB + 2, (UInt32)&BloomResY);
 		patchCall((void*)0x007740D9, (void*)ResizeEffects);
 		patchCall((void*)0x007743CE, (void*)ResizeEffects);
-		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) == 1) {
-			Logger::TypedLog(CHN_MOD, "Patching UHQScreenEffects at half quality...\n");
-			halfFxQuality = true;
-		}
-		else {
-			Logger::TypedLog(CHN_MOD, "Patching UHQScreenEffects at full quality...\n");
-		}
+
+		Logger::TypedLog(CHN_MOD, "Patching UHQScreenEffects at full quality...\n");
 
 	}
 
@@ -830,7 +819,7 @@ namespace Render3D
 			Logger::TypedLog(CHN_DEBUG, "FOV Multiplier: %f,\n", FOVMultiplier);
 		}
 
-		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) > 0 && GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) < 3)
+		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 1))
 		{
 			UHQEffects();
 		}

@@ -20,37 +20,49 @@ namespace InGameConfig {
     { "Graphics", "UHQScreenEffects" },
     { "Graphics", "UHQTreeShadows" },
     { "Graphics", "Borderless" },
+#if !JLITE
+    { "Graphics", "RemoveVignette" },
+#endif
     { "Audio", "UseFixedXACT" },
     };
     static PatchEntry patch_registry[] = {
+#if !JLITE
     { "VFXPlus", &Render3D::CMPatches_VFXPlus,nullptr ,"Graphics", "VanillaFXPlus" },
+#endif
     { "BetterAO", nullptr,&Render3D::CBetterAO, "Graphics", "BetterAmbientOcclusion"},
     {"DisableBlueRefl",&Render3D::CMPatches_DisableSkyRefl,nullptr,"Graphics","DisableSkyRefl"},
     {"DisableCutSceneBlackBars",nullptr,&Render3D::CRemoveBlackBars,"Graphics","RemoveBlackBars"},
+#if !JLITE
     {"BetterDriveByCam",nullptr,&Behavior::CBetterDBC,"Gameplay","BetterDriveByCam"},
     {"BetterHandbrakeCam",nullptr,&Behavior::CBetterHBC,"Gameplay","BetterHandbrakeCam"},
+#endif
     {"UncapFPS",nullptr,&Render3D::CUncapFPS,"Debug","UncapFPS"},
+#if !JLITE
     {"DisableFog",&Render3D::CMPatches_DisableFog,nullptr,"Graphics","DisableFog"},
     {"SR1Reloading",&Behavior::CMPatches_SR1Reloading,nullptr,"Gameplay","SR1Reloading"},
     {"SR1QuickSwitch",&Behavior::CMPatches_SR1QuickSwitch,nullptr,"Gameplay","SR1QuickSwitch"},
-#if !JLITE
     {"BetterAnimBlend",nullptr,&Behavior::CAnimBlend,"Gameplay","BetterAnimBlend"},
-#endif
     {"UseWeaponAfterEmpty",&Behavior::CMPatches_UseWeaponAfterEmpty,nullptr,"Gameplay","Keep Weapon After Empty"},
     {"TauntCancelling",&Behavior::CMPatches_UseWeaponAfterEmpty,nullptr,"Gameplay","TauntCancelling"}
+#endif
     };
     void AddOptions() {
         InGameConfig::RegisterSlider("SleepHack", "Sleep Hack", { "CONTROL_NO","QUALITY_LOW_TEXT","QUALITY_MEDIUM_TEXT","QUALITY_HIGH_TEXT" });
         InGameConfig::RegisterBoolSlider("UncapFPS", "UncapFPS");
         InGameConfig::RegisterBoolSlider("X360Gamma", "Xbox 360 Gamma");
+#if !JLITE
         InGameConfig::RegisterBoolSlider("VFXPlus", "VanillaFXPlus");
+#endif
         InGameConfig::RegisterBoolSlider("BetterAO", "Better Ambient Occlusion");
+#if !JLITE
         InGameConfig::RegisterBoolSlider("DisableFog", "Disable Fog");
+#endif
         InGameConfig::RegisterBoolSlider("DisableBlueRefl", "Disable Sky Reflections");
 #if !JLITE
         InGameConfig::RegisterBoolSlider("IVRadarScaling", "IV Radar Scaling");
 #endif
         InGameConfig::RegisterSlider("DisableAimAssist", "Disable Aim Assist", { "CONTROL_NO","On Mouse only","Always"}, MenuType::CONTROLS);
+#if !JLITE
         InGameConfig::RegisterSlider(
             "VehicleAutoCenterModifer",
             "Vehicle Auto Center Modifer",
@@ -73,6 +85,7 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("SR1Reloading", "SR1Reloading", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("SR1QuickSwitch", "SR1QuickSwitch", InGameConfig::MenuType::CONTROLS);
         //InGameConfig::RegisterSlider("BetterAO", "Better Ambient Occlusion", {"FUCK OFF ", "fucked off"}, 50);
+#endif
 #if !JLITE
         InGameConfig::RegisterBoolSlider("BetterAnimBlend", "Better Anim Blend");
 #endif
