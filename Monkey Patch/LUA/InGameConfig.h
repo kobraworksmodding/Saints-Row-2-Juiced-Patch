@@ -30,7 +30,7 @@ namespace InGameConfig {
         MenuType menuType;                    // Which menu this slider belongs to
     };
 
-
+    extern int ClampSliderValue(const std::string& sliderName, int currentValue);
     extern std::vector<Slider> g_sliders;
     extern bool RegisterSlider(const char* name, const char* display_name, const std::vector<std::string>& labels, MenuType menuType = MenuType::DISPLAY, int startingId = -1);
     extern bool RegisterBoolSlider(const char* name, const char* display_name, MenuType type = MenuType::DISPLAY, int startingId = -1);

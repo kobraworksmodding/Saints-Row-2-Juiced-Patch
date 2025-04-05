@@ -174,6 +174,9 @@ namespace InGameConfig {
                 GameConfig::SetValue(require_restart->appname, require_restart->keyname, *value);
             }
         }
+        if (!write) {
+            *value = ClampSliderValue(var, *value);
+        }
     }
     PatchEntry* FindPatchEntry(const char* name) {
         for (auto& entry : patch_registry) {
@@ -306,6 +309,24 @@ namespace InGameConfig {
     bool RegisterBoolSlider(const char* name, const char* display_name, MenuType type ,int startingId) {
         // Create a bool slider with default Yes/No labels
         return RegisterSlider(name, display_name, { "CONTROL_NO", "CONTROL_YES" }, type, startingId);
+    }
+    int ClampSliderValue(const std::string& sliderName, int currentValue)
+    {
+        auto it = std::find_if(
+            g_sliders.begin(),
+            g_sliders.end(),
+            [&](const Slider& s) {
+                return s.name == sliderName;
+            }
+        );
+        if (it != g_sliders.end())
+        {
+            const int maxIndex = static_cast<int>(it->labels.size()) - 1;
+            if (currentValue < 0) currentValue = 0;
+            if (currentValue > maxIndex) currentValue = maxIndex;
+        }
+
+        return currentValue;
     }
     static char* g_sliderModifiedBuffer = nullptr;
     bool PatchSliderContent(std::string& buffer, const char* filename) {
