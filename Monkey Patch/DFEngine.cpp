@@ -13,7 +13,7 @@
 #include "Ext/Hooking.Patterns.h"
 #include <Windows.h>
 #include <direct.h>
-
+#include "Player\Input.h"
 static CDFEngine DFEngine;
 static CDFObjectInstance fake_CDFObject;
 
@@ -121,6 +121,9 @@ WinMain entry point.
 		else
 			Logger::TypedLog(CHN_DLL, "Patching Kernel32.GetVersionExA failed.\n");
 
+	}
+	else if (ul_reason_for_call == DLL_PROCESS_DETACH) {
+		Input::UnloadXInputDLL();
 	}
 	
     return TRUE;

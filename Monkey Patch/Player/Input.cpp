@@ -36,10 +36,66 @@ namespace Input {
 	bool NoControllers = false;
 	bool XInputEnabled = true;
 
+	typedef DWORD(WINAPI* XInputGetCapabilitiesFunc)(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES* pCapabilities);
+
+	typedef struct {
+		HMODULE handle;
+		XInputGetCapabilitiesFunc GetCapabilities;
+	} XInputDLL;
+
+	XInputDLL g_XInputDLL = { 0 };
+	bool LoadXInputDLL() {
+		const wchar_t* XInputLibraryNames[] = {
+			L"xinput1_4.dll",   // Windows 8+
+			L"xinput1_3.dll",   // DirectX SDK
+			L"xinput9_1_0.dll", // Windows Vista, Windows 7
+			L"xinput1_2.dll",   // DirectX SDK
+			L"xinput1_1.dll",   // DirectX SDK
+			NULL,
+		};
+
+		// Try to load each DLL in order until one succeeds
+		for (int i = 0; XInputLibraryNames[i] != NULL; i++) {
+			g_XInputDLL.handle = LoadLibraryW(XInputLibraryNames[i]);
+			if (g_XInputDLL.handle != NULL) {
+				Logger::TypedLog(CHN_DLL,"Successfully loaded XInput DLL: %ls\n", XInputLibraryNames[i]);
+				break;
+			}
+		}
+
+		if (g_XInputDLL.handle == NULL) {
+			Logger::TypedLog(CHN_DLL, "Failed to load any XInput DLL\n");
+			return false;
+		}
+
+		g_XInputDLL.GetCapabilities = (XInputGetCapabilitiesFunc)GetProcAddress(g_XInputDLL.handle, "XInputGetCapabilities");
+
+		if (g_XInputDLL.GetCapabilities == NULL) {
+			Logger::TypedLog(CHN_DLL, "Failed to load required XInput function\n");
+			FreeLibrary(g_XInputDLL.handle);
+			g_XInputDLL.handle = NULL;
+			return false;
+		}
+
+		return true;
+	}
+	void UnloadXInputDLL() {
+		if (g_XInputDLL.handle != NULL) {
+			FreeLibrary(g_XInputDLL.handle);
+			g_XInputDLL.handle = NULL;
+			g_XInputDLL.GetCapabilities = NULL;
+		}
+	}
+	DWORD XInput_GetCapabilities(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES* pCapabilities) {
+		if (g_XInputDLL.GetCapabilities) {
+			return g_XInputDLL.GetCapabilities(dwUserIndex, dwFlags, pCapabilities);
+		}
+		return ERROR_DEVICE_NOT_CONNECTED;
+	}
 	bool IsControllerConnected(int controllerIndex)
 	{
 		XINPUT_CAPABILITIES capabilities;
-		return XInputGetCapabilities(controllerIndex, 0, &capabilities); // perhaps a little more lightweight than GetState?
+		return XInput_GetCapabilities(controllerIndex, 0, &capabilities); // perhaps a little more lightweight than GetState?
 	}
 
 	DWORD WINAPI XInputCheck(LPVOID lpParameter)
@@ -173,6 +229,7 @@ namespace Input {
 	}
 
 	void Init() {
+		LoadXInputDLL();
 		if (GameConfig::GetValue("Gameplay", "DisableAimAssist", 1) == 1)
 		{
 			player_autoaim_do_assisted_aiming_midhook = safetyhook::create_mid(0x009E28B3, &player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse);
