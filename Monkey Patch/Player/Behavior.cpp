@@ -158,6 +158,12 @@ CMultiPatch CMPatches_SR1Reloading = {
 		CMPatches_UseWeaponAfterEmpty.Apply();
 	}
 
+	void HigherMaxSpeed()
+	{
+		Logger::TypedLog(CHN_MOD, "Patching Higher Max Speed...\n");
+		patchFloat((BYTE*)0x00DD0768, 446.59299);
+	}
+
 	void FasterDoors()
 	{
 		Logger::TypedLog(CHN_DEBUG, "Patching Fast Doors...\n");
@@ -289,7 +295,6 @@ CMultiPatch CMPatches_SR1Reloading = {
 		{
 			TauntCancelling();
 		}
-
 		if (GameConfig::GetValue("Gameplay", "UseWeaponAfterEmpty", 1))
 		{
 			WeaponJam();
@@ -297,6 +302,10 @@ CMultiPatch CMPatches_SR1Reloading = {
 		if (GameConfig::GetValue("Gameplay", "BetterMovementBehaviour", 0))
 		{
 			BetterMovement();
+		}
+		if (GameConfig::GetValue("Gameplay", "HigherMaxSpeed", 1))
+		{
+			HigherMaxSpeed();
 		}
 			slewmode_mousefix_rewrite = safetyhook::create_mid(0x00C011FB, &slewmode_control_rewrite);
 			cf_do_control_mode_sticky_MIDASMHOOK = safetyhook::create_mid(0x0049C102, &sticky_cam_modifier,safetyhook::MidHook::StartDisabled);
