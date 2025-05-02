@@ -161,7 +161,8 @@ CMultiPatch CMPatches_SR1Reloading = {
 	void HigherMaxSpeed()
 	{
 		Logger::TypedLog(CHN_MOD, "Patching Higher Max Speed...\n");
-		patchFloat((BYTE*)0x00DD0768, 446.59299);
+		patchNop((void*)0x00AEB541, 2);
+		patchNop((void*)(0x00AEB541 + 0x61), 2);
 	}
 
 	void FasterDoors()
