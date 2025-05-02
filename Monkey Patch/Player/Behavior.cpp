@@ -303,7 +303,7 @@ CMultiPatch CMPatches_SR1Reloading = {
 		{
 			BetterMovement();
 		}
-		if (GameConfig::GetValue("Gameplay", "HigherMaxSpeed", 1))
+		if (GameConfig::GetValue("Gameplay", "HigherMaxSpeed", 0))
 		{
 			HigherMaxSpeed();
 		}
