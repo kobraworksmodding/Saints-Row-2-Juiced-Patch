@@ -15,6 +15,7 @@ and / or run completely on startup or after we check everything else.*/
 #include "../Render/Render3D.h"
 #include "../Render/Render2D.h"
 #include "..\LUA\InGameConfig.h"
+#include "../Player/Input.h"
 namespace General {
 	bool DeletionMode;
 	const wchar_t* SaveMessage = L"Are you sure you want to delete this save?"; // ultimately, if we get extra strings to load, we should use a string label and request the string instead of hardcoding it
@@ -335,15 +336,149 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		s.swap(buf);
 	}
 	char* currentModifiedBuffer = nullptr;
+	char* currentModifiedBuffer_general_lua = nullptr;
+	void generalluaLoadBuff(safetyhook::Context32& ctx) {
+		if (!(ctx.esp + 0x14))
+			return;
+		const char* buff = (const char*)ctx.eax;
+		if (!buff)
+			return;
+		const char* filename = (const char*)*(uintptr_t*)(ctx.esp + 0x14);
+		size_t& sz = ctx.ecx;
+		std::string convertedBuff(buff, sz);
+		const char* currentBuff = buff;
+		bool modified = false;
 
 
+		std::string finalContent;
+		finalContent = std::string(currentBuff, sz);
+		if (strcmp(filename, "vint_lib.lua") == 0 || 
+			strcmp(filename, "hud_btnmash.lua") == 0 || 
+			strcmp(filename, "completion.lua") == 0 ||
+			strcmp(filename, "pause_map.lua") == 0 || 
+			strcmp(filename, "pause_menu.lua") == 0) {
+			if (!modified) {
+				// If we haven't created finalContent yet, do it now
+				finalContent = std::string(currentBuff, sz);
+			}
+			if (currentModifiedBuffer_general_lua != nullptr) {
+				delete[] currentModifiedBuffer_general_lua;
+				currentModifiedBuffer_general_lua = nullptr;
+			}
+			// Lambda function for performing simple replacements
+			auto performReplacement = [&](const std::string& searchStr, const std::string& replaceStr) -> size_t {
+				size_t count = 0;
+				size_t pos = 0;
+				while ((pos = finalContent.find(searchStr, pos)) != std::string::npos) {
+					finalContent.replace(pos, searchStr.length(), replaceStr);
+					pos += replaceStr.length(); // Move past the replacement to avoid infinite loop
+					count++;
+					modified = true;
+				}
+				//if (count > 0) {
+				//	Logger::TypedLog(CHN_LUA, "Replaced %zu instances of '%s' with '%s' in %s \n",
+				//		count, searchStr.c_str(), replaceStr.c_str(), filename);
+				//}
+				return count;
+				};
+
+			// Lambda function for platform-specific image replacements
+			auto replacePlatformImage = [&](const std::string& platform, const std::string& originalImage, const std::string& newImage) -> size_t {
+				// Pattern to match: if vint_get_avg_processing_time("INPUT") == "PLATFORM" then
+				//                   image = "original_image"
+				std::string searchPattern = "if vint_get_avg_processing_time(\"INPUT\") == \"" + platform + "\" then\n\t\timage = \"" + originalImage + "\"";
+				std::string replacePattern = "if vint_get_avg_processing_time(\"INPUT\") == \"" + platform + "\" then\n\t\timage = \"" + newImage + "\"";
+
+				size_t count = 0;
+				size_t pos = 0;
+
+				// Try the exact pattern first
+				while ((pos = finalContent.find(searchPattern, pos)) != std::string::npos) {
+					finalContent.replace(pos, searchPattern.length(), replacePattern);
+					pos += replacePattern.length();
+					count++;
+					modified = true;
+				}
+
+				// If no exact matches, try a more flexible approach
+				if (count == 0) {
+					// Look for the platform condition and then find the image assignment
+					std::string platformCondition = "vint_get_avg_processing_time(\"INPUT\") == \"" + platform + "\"";
+					pos = 0;
+
+					while ((pos = finalContent.find(platformCondition, pos)) != std::string::npos) {
+						// Look for "image = " after this condition
+						size_t imageStart = finalContent.find("image = \"", pos);
+						if (imageStart != std::string::npos) {
+							// Check if this image assignment is within reasonable distance (same if block)
+							size_t distanceCheck = imageStart - pos;
+							if (distanceCheck < 200) { // Reasonable distance for same block
+
+								size_t imageValueStart = imageStart + 9; // length of "image = \""
+								size_t imageValueEnd = finalContent.find("\"", imageValueStart);
+
+								if (imageValueEnd != std::string::npos) {
+									std::string currentImage = finalContent.substr(imageValueStart, imageValueEnd - imageValueStart);
+
+									// Check if this is the image we want to replace
+									if (currentImage == originalImage) {
+										finalContent.replace(imageValueStart, currentImage.length(), newImage);
+										count++;
+										modified = true;
+										pos = imageValueStart + newImage.length();
+									}
+									else {
+										pos = imageValueEnd;
+									}
+								}
+								else {
+									pos = imageStart + 9;
+								}
+							}
+							else {
+								pos += platformCondition.length();
+							}
+						}
+						else {
+							pos += platformCondition.length();
+						}
+					}
+				}
+
+				//if (count > 0) {
+				//	Logger::TypedLog(CHN_LUA, "Replaced %zu instances of '%s' with '%s' for platform '%s' in %s \n",
+				//		count, originalImage.c_str(), newImage.c_str(), platform.c_str(), filename);
+				//}
+
+				return count;
+				};
+
+			performReplacement("get_platform()", "vint_get_avg_processing_time(\"INPUT\")");
+			performReplacement("ui_ctrl_PC_btn_enter", "ui_ctrl_PC_key_enter");
+			performReplacement("SUI_PLATFORM ==", "vint_get_avg_processing_time(\"INPUT\") ==");
+			replacePlatformImage("PC", "ui_ctrl_360_dpad_lr", "ui_ctrl_pc_dpad_lr_juiced");
+			replacePlatformImage("PC", "ui_ctrl_360_dpad_up", "ui_ctrl_pc_dpad_up_juiced");
+		}
+		if (modified) {
+			size_t newSize = finalContent.length();
+			currentModifiedBuffer_general_lua = new char[newSize + 1]; // +1 for null terminator
+			memcpy(currentModifiedBuffer_general_lua, finalContent.c_str(), newSize);
+			currentModifiedBuffer_general_lua[newSize] = '\0';
+
+			// Update the context
+			ctx.eax = (DWORD)currentModifiedBuffer_general_lua;
+			//ctx.edx = newSize;
+			ctx.ecx = newSize;
+
+		}
+	}
 	SafetyHookMid luaLoadBuffHook;
 	void VINT_DOC_luaLoadBuff(safetyhook::Context32& ctx) {
 		const char* buff = (const char*)ctx.ebp;
 		const char* filename = (const char*)(ctx.esp + 0x14);
 		size_t& sz = ctx.ecx;
-
-		std::string convertedBuff(buff);
+	
+		std::string convertedBuff(buff,sz);
 #if !JLITE
 		int* resX = (int*)(0xE8DF14);
 		int* resY = (int*)(0xE8DF4C);
@@ -416,7 +551,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				std::string finalContent;
 				finalContent = std::string(currentBuff, sz);
 
-				// Your existing UltrawideFix code to generate customCode
 				std::string customCode = "";
 				// remove .lua
 				std::string cached_str = filename;
@@ -547,6 +681,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 						}
 					}
 				}
+
 				// If any modifications were made, create a new buffer
 				if (modified) {
 					size_t newSize = finalContent.length();
@@ -556,7 +691,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 					// Update the context
 					ctx.ebp = (DWORD)currentModifiedBuffer;
-					ctx.edx = newSize;
+					//ctx.edx = newSize;
 					ctx.ecx = newSize;
 
 					//Logger::TypedLog(CHN_LUA, "Applied combined modifications to %s", filename);
@@ -570,6 +705,12 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		if (currentModifiedBuffer != nullptr) {
 			delete[] currentModifiedBuffer;
 			currentModifiedBuffer = nullptr;
+		}
+	}
+	void CleanupModifiedScript_general() {
+		if (currentModifiedBuffer_general_lua != nullptr) {
+			delete[] currentModifiedBuffer_general_lua;
+			currentModifiedBuffer_general_lua = nullptr;
 		}
 	}
 	bool __declspec(naked) VintGetGlobalBool(const char* Name)
@@ -919,6 +1060,12 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				},safetyhook::MidHook::Default);
 			luaLoadBuffHook = safetyhook::create_mid(0x00CDE379, &VINT_DOC_luaLoadBuff
 );
+			if (Input::EnableDynamicPrompts) {
+				static auto cleanupBufferHook_general = safetyhook::create_mid(0xCD9FF7, [](safetyhook::Context32& ctx) {
+					General::CleanupModifiedScript_general();
+					}, safetyhook::MidHook::Default);
+				static auto luaLoadBuffHookGeneral = safetyhook::create_mid(0xCD9FD9, &generalluaLoadBuff);
+			}
 			if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1) {
 				Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 1);
 				using namespace Render2D;

@@ -802,6 +802,12 @@ void cus_FrameToggles() {
 		*(float*)(0xE98988) = uglyMode ? 400.0f : 20000.0f;
 	}
 
+	if (IsKeyPressed(VK_F11, false)) { // F1
+		static wchar_t test[128] = L"[format][scale:1.0][image:ui_hud_base_radial_base_ps3][/format]";
+
+		addsubtitles(test, delay, duration, whateverthefuck);
+	}
+
 	if (IsKeyPressed(VK_F4, false)) { // F4
 		SlewModeToggle();
 	}
@@ -1236,6 +1242,33 @@ inline void ModpackWarning(const wchar_t* Warning) {
 }
 #endif
 
+bool __declspec(naked) player_sniper(uintptr_t player, char zoom_state) {
+	static const DWORD player_sniper_func = 0x9DA290;
+	__asm {
+		push ebp
+		mov ebp, esp
+		sub esp, __LOCAL_SIZE
+		push zoom_state
+		mov     ecx, player
+		call player_sniper_func
+		mov esp, ebp
+		pop ebp
+		ret
+	}
+}
+
+inline void HoldForFineAim() {
+	if (!Input::HoldFineAim || !UtilsGlobal::getplayer())
+		return;
+	uint32_t flags = *(uint32_t*)(UtilsGlobal::getplayer() + 0x1160);
+	bool is_currently_fine_aim = (flags >> 27) & 1;
+	bool is_currently_sniper = (flags >> 8) & 1;
+	uint8_t* statusaim = (uint8_t*)0x02347AFA;
+	if (is_currently_fine_aim && *statusaim == 0) {
+		ExitFineAim(UtilsGlobal::getplayer());
+	} else if(is_currently_sniper && *statusaim == 0)
+		player_sniper(UtilsGlobal::getplayer(), 0);
+}
 typedef int __cdecl RenderLoopStuff_Native();
 RenderLoopStuff_Native* UpdateRenderLoopStuff = (RenderLoopStuff_Native*)(0x00C063D0); //0x00BD4A80
 #if !JLITE
@@ -1332,6 +1365,9 @@ int RenderLoopStuff_Hacked()
 	if (Render2D::BetterChatTest) {
 		LessRetardedChat();
 	}
+	HoldForFineAim();
+	if (Input::EnableDynamicPrompts >= 2)
+		Input::LastInput();
 
 #if !RELOADED
 	/*if (!modpackread && GOTR()) {

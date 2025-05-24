@@ -9,6 +9,7 @@
 #include "../Game/Game.h"
 #include <iomanip>
 #include <sstream>
+#include "../Player/Input.h"
 import OptionsManager; 
 int AddMessage(const wchar_t* Title, const wchar_t* Desc);
 int AddMessageCustomized(const wchar_t* Title, const wchar_t* Desc, const wchar_t* Options[], int OptionCount);
@@ -52,6 +53,7 @@ namespace InGameConfig {
      { "IncreaseVehicleFadeDistance",nullptr ,&Render3D::CIncreaseVehicleDespawnDistance,"Gameplay","IncreaseVehicleFadeDistance"},
     };
     void AddOptions() {
+        Input::EnableDynamicPrompts = GameConfig::GetValue("Input", "EnableDynamicPrompts", 2);
         InGameConfig::RegisterSlider("SleepHack", "Sleep Hack", { "CONTROL_NO","QUALITY_LOW_TEXT","QUALITY_MEDIUM_TEXT","QUALITY_HIGH_TEXT" });
         InGameConfig::RegisterBoolSlider("UncapFPS", "UncapFPS");
         InGameConfig::RegisterBoolSlider("X360Gamma", "Xbox 360 Gamma");
@@ -71,6 +73,11 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("IVRadarScaling", "IV Radar Scaling");
 #endif
         InGameConfig::RegisterBoolSlider("DisableTutorials", "DisableTutorials");
+        if (Input::EnableDynamicPrompts) {
+            InGameConfig::RegisterSlider("ForceInputPrompt", "ForceInputPrompt", { "Automated","Controller","Keyboard and Mouse" }, MenuType::CONTROLS);
+            InGameConfig::RegisterBoolSlider("usePS3Prompts", "usePS3Prompts", MenuType::CONTROLS);
+        }
+        InGameConfig::RegisterBoolSlider("HoldFineAim", "HoldFineAim", MenuType::CONTROLS);
         InGameConfig::RegisterSlider("DisableAimAssist", "Disable Aim Assist", { "CONTROL_NO","On Mouse only","Always"}, MenuType::CONTROLS);
 #if !JLITE
         InGameConfig::RegisterSlider(

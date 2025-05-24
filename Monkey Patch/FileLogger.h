@@ -30,6 +30,7 @@
 #define CHN_CHUNK                     "CHUNK"
 #define CHN_ANIM                    "ANIM"
 #define CHN_ASSET                    "ASSET"
+#define CHN_XTBL					"XTBL"
  
 extern HWND ConsoleWindow;
 extern FILE* f_logger;

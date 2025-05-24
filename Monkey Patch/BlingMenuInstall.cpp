@@ -16,6 +16,7 @@
 #include "General/General.h"
 #include "MainHooks.h"
 #include "Math/Math.h"
+#include "Player/Input.h"
 const char* ERROR_MESSAGE = "ERROR";
 // MainHooks.cpp
 void ToggleNoclip();
@@ -358,6 +359,8 @@ namespace BlingMenuInstall
        BlingMenuAddInt("Juiced Debug", "SHADER_LOD", (int*)&Render3D::SHADER_LOD, NULL, 1, -2, 10);
        BlingMenuAddFloat("Juiced Debug", "SHADER_DISTANCE_SQUARED_MULT", &Render3D::SHADER_DISTANCE_SQUARED_MULT, NULL, 0.1f, 1.f, 250.f);
        BlingMenuAddFuncCustom("Juiced Debug", "Math_multiplication_NAN_fix", NULL, &BM_Math_multiplication_NAN_fix, NULL);
+       BlingMenuAddBool("Juiced Debug", "useTextPrompts", &Input::useTextPrompts, NULL);
+       BlingMenuAddInt("Juiced Debug", "Use PS3 Prompts", &Input::usePS3Prompts, NULL, 1, 0, 1);
        }
     }
 }
