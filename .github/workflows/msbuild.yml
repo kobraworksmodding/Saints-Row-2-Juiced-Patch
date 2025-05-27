@@ -1,0 +1,50 @@
+name: MSBuild
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  SOLUTION_FILE_PATH: .
+  BUILD_CONFIGURATION: Debug
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Restore NuGet packages
+      working-directory: ${{ env.GITHUB_WORKSPACE }}
+      run: nuget restore ${{ env.SOLUTION_FILE_PATH }}
+
+    - name: Build solution
+      working-directory: ${{ env.GITHUB_WORKSPACE }}
+      run: msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:Platform=Win32 ${{ env.SOLUTION_FILE_PATH }}
+
+    - name: Prepare output folder
+      run: |
+        mkdir upload
+        copy Release\DFEngine.dll upload\
+        copy "Release\Reloaded Patch.pdb" upload\
+        copy Discord\discord_game_sdk.dll upload\
+        copy license.txt upload\
+        xcopy Mods upload\Mods /E /I /Y
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: SR2_JUICED
+        path: upload
