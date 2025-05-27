@@ -269,6 +269,7 @@ namespace BlingMenuInstall
            
            GameConfig::SetValue("Gameplay", "VehicleAutoCenterModifer", Behavior::sticky_cam_timer_add);
            }, 250, 0, INT_MAX - 1500);
+       BlingMenuAddFloat("Juiced", "vehicle_camera_follow_aggressiveness_modifier", &Behavior::vehicle_camera_follow_aggressiveness_modifier, &Behavior::LessAgressiveCameraVehicleFollow_hook_enable_disable, 1.25f, -100.f, 100.f);
        BlingMenuAddFuncCustom("Juiced", "Better Drive-by Cam", NULL, &BM_DBC, NULL);
        BlingMenuAddFuncCustom("Juiced", "Better Handbrake Cam", NULL, &BM_HBC, NULL);
        BlingMenuAddFuncCustom("Juiced", "Fix Horizontal Mouse Sensitivity", NULL, &BM_FixHorizontalMouseSensitivity, NULL);

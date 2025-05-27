@@ -255,8 +255,32 @@ CMultiPatch CMPatches_SR1Reloading = {
 			character_set_anim_set((DWORD*)UtilsGlobal::getplayer(false), 0, (char*)"GML1");
 		return result;
 	}
+	// Lower values = camera slower panning around car
+	float vehicle_camera_follow_aggressiveness_modifier = -49.f;
+	SafetyHookMid LessAgressiveCameraVehicleFollow{};
+	void LessAgressiveCameraVehicleFollow_hook_enable_disable() {
+		if (vehicle_camera_follow_aggressiveness_modifier < 1.f)
+			LessAgressiveCameraVehicleFollow.enable();
+		else
+			LessAgressiveCameraVehicleFollow.disable();
+		GameConfig::SetDoubleValue("Gameplay", "vehicle_camera_follow_aggressiveness_modifier", vehicle_camera_follow_aggressiveness_modifier);
+	}
 	void Init()
 	{
+		LessAgressiveCameraVehicleFollow = safetyhook::create_mid(0x498B5A, [](SafetyHookContext& ctx) {
+			float* follow_aggressiveness = (float*)(ctx.ebx + 0x5C);
+			if (*follow_aggressiveness != -1.f)
+				*follow_aggressiveness = vehicle_camera_follow_aggressiveness_modifier;
+			if (*follow_aggressiveness != -1.f) {
+				ctx.eip = 0x498B60;
+			}
+			else {
+				ctx.eip = 0x498D14;
+			}
+			},safetyhook::MidHook::StartDisabled);
+		// Lower values = camera slower panning around car
+		vehicle_camera_follow_aggressiveness_modifier = GameConfig::GetDoubleValue("Gameplay", "vehicle_camera_follow_aggressiveness_modifier", 1.f);
+		LessAgressiveCameraVehicleFollow_hook_enable_disable();
 		if (GameConfig::GetValue("Debug", "FixGFL1_for_female_playas", 1))
 			player_data_loadT = safetyhook::create_inline(0x00693EB0, &player_data_load);
 		/*patchDWord((void*)(0x00D96A50 + 2), (uint32_t)&bogusRagForce);
