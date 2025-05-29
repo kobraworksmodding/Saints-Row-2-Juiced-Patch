@@ -586,6 +586,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 				const char* lua_command = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %f, %f)";
 				const char* lua_string = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", \"%s\")";
+				const char* lua_command_visbile = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %s)";
 				char buffer[512];
 #if !JLITE
 				if (Render2D::IVRadarScaling) {
@@ -646,18 +647,15 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 						customCode += "\n";
 						customCode += extraBuffer;
 
-						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mp_snatch_john", "hud", "anchor",
-							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command_visbile, "mp_snatch_john", "hud", "visible", "false");
 						customCode += "\n";
 						customCode += extraBuffer;
 
-						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "health_mini_grp", "hud", "anchor",
-							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command_visbile, "health_mini_grp", "hud", "visible", "false");
 						customCode += "\n";
 						customCode += extraBuffer;
 
-						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "health_large_grp", "hud", "anchor",
-							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command_visbile, "health_large_grp", "hud", "visible", "false");
 						customCode += "\n";
 						customCode += extraBuffer;
 

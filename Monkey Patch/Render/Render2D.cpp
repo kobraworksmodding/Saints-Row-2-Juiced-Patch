@@ -443,17 +443,17 @@ int processtextwidth(int width) {
 
 		if (strcmp(cached_str, "hud") == 0) {
 
-			snprintf(buffer, sizeof(buffer), lua_command, "extra_homie", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			snprintf(buffer, sizeof(buffer), lua_command_visbile, "extra_homie", "hud", "visible", "false");
 			General::VintExecute(buffer);
 
-			snprintf(buffer, sizeof(buffer), lua_command, "mp_snatch_john", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			snprintf(buffer, sizeof(buffer), lua_command_visbile, "mp_snatch_john", "hud", "visible", "false");
 			General::VintExecute(buffer);
 
-			snprintf(buffer, sizeof(buffer), lua_command, "health_mini_grp", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			snprintf(buffer, sizeof(buffer), lua_command_visbile, "health_mini_grp", "hud", "visible", "false");
 			General::VintExecute(buffer);
 
 
-			snprintf(buffer, sizeof(buffer), lua_command, "health_large_grp", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			snprintf(buffer, sizeof(buffer), lua_command_visbile, "health_large_grp", "hud", "visible", "false");
 			General::VintExecute(buffer);
 
 			float weirdscale = 1.f;
