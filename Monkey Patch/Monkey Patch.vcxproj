@@ -160,7 +160,7 @@
     <PostBuildEvent>
       <Command>copy /Y "$(TargetDir)DFEngine.dll" "C:\Games\GOG\Saints Row 2\DFEngine.dll" || ^
 copy /Y "$(TargetDir)DFEngine.dll" "C:\Program Files (x86)\Steam\steamapps\common\Saints Row 2\DFEngine.dll" || ^
-copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEngine.dll" || ^
+copy /Y "$(TargetDir)DFEngine.dll" "F:\Steam\steamapps\common\Saints Row 2\DFEngine.dll" || ^
 copy /Y "$(TargetDir)DFEngine.dll" "Z:\Games\Saints Row 2\DFEngine.dll" ||  ^
 copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2"
 </Command>
