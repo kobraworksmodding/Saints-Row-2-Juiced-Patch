@@ -41,4 +41,5 @@ namespace Render2D
 		float unk2;
 	};
 	extern SafetyHookMid final_2d_render;
+	extern float get_vint_1610_hack_scale();
 }
