@@ -631,7 +631,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #endif
 				if (Render2D::UltrawideFix) {
 					snprintf(buffer, sizeof(buffer), lua_command, "safe_frame", cached_str.c_str(), "anchor",
-						(Render2D::get_vint_x_resolution() - 1280) / 2.f, 0.f);
+						(Render2D::get_vint_x_resolution() - 1280) / 2.f, Render2D::get_vint_1610_hack_scale() / 2.f);
 					customCode += "\n";
 					customCode += buffer;
 

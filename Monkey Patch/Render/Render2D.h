@@ -51,4 +51,5 @@ namespace Render2D
 
 	extern SafetyHookMid final_2d_render;
 	extern CMultiPatch CMPatches_ProperPlayerCursor;
+	extern float get_vint_1610_hack_scale();
 }
