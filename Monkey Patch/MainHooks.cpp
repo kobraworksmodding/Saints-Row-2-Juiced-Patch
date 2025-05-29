@@ -1562,11 +1562,12 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 	
 	// Instead of data being in %LOCALAPPDATA%\\THQ\\Saints Row 2, move it to current direcetory\\userdata
-	if (GameConfig::GetValue("Misc", "portable", 0) && PathAppendA(NameBuffer, "userdata")) {
+	if (GameConfig::GetValue("Misc", "portable", 0) && PathRemoveFileSpecA(NameBuffer) && PathAppendA(NameBuffer, "userdata")) {
 		CreateDirectoryA(NameBuffer, NULL);
 		Logger::TypedLog(CHN_DLL, "Final Path: %s \n", NameBuffer);
-		strcpy_s((char*)0x0144E650, MAX_PATH, NameBuffer);
+		SafeWriteBuf(0x0144E650, NameBuffer, MAX_PATH);
 		patchNop((void*)0x00520FCD, 5);
+		patchNop((void*)0x520F65, 6);
 	}
 #if !JLITE
 	InternalPrint::Init();
