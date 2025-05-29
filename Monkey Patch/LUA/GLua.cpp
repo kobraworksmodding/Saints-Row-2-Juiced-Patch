@@ -70,6 +70,16 @@ namespace GLua
             lua_pushnil(L);
             return 0;
         }
+        if (strcmp(cmd, "INPUT") == 0) {
+            if (Input::LastInputUI() == Input::GAME_LAST_INPUT::CONTROLLER) {
+                if(!Input::usePS3Prompts)
+                lua_pushstring(L, "XBOX360");
+                else lua_pushstring(L, "PS3");
+                return 1;
+            }
+                lua_pushstring(L, "PC");
+            return 1;
+        }
         if (strcmp(cmd, "JuicedCall") == 0) {
             int value = (int)lua_tonumber(L, 2);
             GLuaWrapper(cmd, &value, false);

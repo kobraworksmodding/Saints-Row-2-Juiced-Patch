@@ -1,7 +1,8 @@
-// Input.cpp (uzis, Clippy95)
+﻿// Input.cpp (uzis, Clippy95)
 // --------------------
 // Created: 22/02/2025
 
+import OptionsManager;
 #include "../FileLogger.h"
 #include "../Patcher/patch.h"
 #include "../GameConfig.h"
@@ -15,10 +16,45 @@
 #include <safetyhook.hpp>
 bool IsKeyPressed(unsigned char Key, bool Hold);
 namespace Input {
+	// DO NOT CHANGE WHILE GAME IS RUNNING, only meant to disable on runtime. if it causes any issues (hopefully none) 
+	BYTE EnableDynamicPrompts = 2;
 	bool allow_hacked_inventory_KBM;
+	int HoldFineAim = false;
+	bool __declspec(naked) key_held(int keycode) {
+		static const DWORD func_addr = 0xC111D0;
+		__asm {
+			push ebp
+			mov ebp, esp
+			sub esp, __LOCAL_SIZE
+			mov     eax, keycode
+			call func_addr
+			mov esp, ebp
+			pop ebp
+			ret
+		}
+	}
+	inline int refreshVintStrings() {
+		return ((int(*)(void))0x00BA2F90)();
+	}
+	GAME_LAST_INPUT g_lastInputPrevFrame = MOUSE;
 	GAME_LAST_INPUT g_lastInput = UNKNOWN;
+	bool* is_controller_connect = (bool*)(0x0252A58E);
 	GAME_LAST_INPUT LastInput() {
 		using namespace UtilsGlobal;
+		if (!*is_controller_connect) {
+			g_lastInput = MOUSE;
+			return g_lastInput;
+		}
+		if (*(uintptr_t*)0x2348810) {
+			for (int c = 0; c <= 19; ++c) {
+				BYTE* buttons = (BYTE*)*(uintptr_t*)0x2348810;
+				if (buttons[c] != 0) {
+					g_lastInput = CONTROLLER;
+					break;
+				}
+				
+			}
+		}
 		float LeftStickX = *(float*)0x23485F4;
 		float LeftStickY = *(float*)0x23485F8;
 		if (LeftStickX != 0.f || LeftStickY != 0.f)
@@ -26,10 +62,34 @@ namespace Input {
 
 		if (mouse().getXdelta() || mouse().getYdelta())
 			g_lastInput = MOUSE;
+
+		if (g_lastInputPrevFrame != g_lastInput)
+			refreshVintStrings();
+		if (EnableDynamicPrompts >= 2) {
+			for (int i = 0; i < 103; i++) {
+				if (key_held(i)) {
+					g_lastInput = MOUSE;
+					break;
+				}
+
+			}
+		}
+		g_lastInputPrevFrame = g_lastInput;
+
 		return g_lastInput;
 
 	}
-
+	int ForceInput = 0;
+	GAME_LAST_INPUT LastInputUI() {
+		switch (ForceInput) {
+		case 1:
+			return GAME_LAST_INPUT::CONTROLLER;
+		case 2:
+			return GAME_LAST_INPUT::MOUSE;
+		default:
+			return LastInput();
+		}
+	}
 #pragma warning( disable : 4995)
 	typedef int(__stdcall* XInputEnableT)(bool Enable); // this is a deprecated feature and I couldn't get it to register through the XInput lib
 	XInputEnableT XInputEnable = (XInputEnableT)0x00CCD4F8;
@@ -99,7 +159,14 @@ namespace Input {
 		XINPUT_CAPABILITIES capabilities;
 		return XInput_GetCapabilities(controllerIndex, 0, &capabilities); // perhaps a little more lightweight than GetState?
 	}
-
+	DWORD WINAPI LastInputCheck(LPVOID lpParameter)
+	{
+		while (true) {
+			LastInput();
+			SleepEx(33, 0);
+		}
+		return 0;
+	}
 	DWORD WINAPI XInputCheck(LPVOID lpParameter)
 	{
 		while (true) {
@@ -243,7 +310,147 @@ namespace Input {
 			}
 		}
 	}
+	struct PC_port_controller_keys
+	{
+		// idk wtf is this
+		int keyboard_button;
+		int controller_button;
+	};
+	PC_port_controller_keys* PC_port_key_for_controler_assignments = (PC_port_controller_keys*)0x234E768;
+	SafetyHookInline getpckeyboardimage_T{};
+	wchar_t prompt_image_buffer[10000]{};
+	int prompt_image_buffer_index = 0;
+	struct ControllerMapping {
+		const wchar_t* xbox;
+		const wchar_t* ps3;
+	};
+
+	std::unordered_map<int, ControllerMapping> padButtonMaps = {
+		{0, {L"ui_ctrl_360_btn_a", L"ui_ctrl_ps3_btn_cross"}},
+		{1, {L"ui_ctrl_360_btn_b", L"ui_ctrl_ps3_btn_circle"}},
+		{2, {L"ui_ctrl_360_btn_x", L"ui_ctrl_ps3_btn_square"}},
+		{3, {L"ui_ctrl_360_btn_y", L"ui_ctrl_ps3_btn_triangle"}},
+		{4, {L"ui_ctrl_360_btn_lb", L"ui_ctrl_ps3_btn_l1"}},
+		{5, {L"ui_ctrl_360_btn_rb", L"ui_ctrl_ps3_btn_r1"}},
+		{6, {L"ui_ctrl_360_btn_back", L"ui_ctrl_ps3_btn_select"}},
+		{7, {L"ui_ctrl_360_btn_start", L"ui_ctrl_ps3_btn_start"}},
+		{8, {L"ui_ctrl_360_btn_ls", L"ui_ctrl_ps3_btn_l3"}},
+		{9, {L"ui_ctrl_360_btn_rs", L"ui_ctrl_ps3_btn_r3"}},
+		{10, {L"ui_ctrl_360_btn_lt", L"ui_ctrl_ps3_btn_l2"}},
+		{11, {L"ui_ctrl_360_btn_rt", L"ui_ctrl_ps3_btn_r2"}},
+		{16, {L"ui_ctrl_360_dpad_r", L"ui_ctrl_ps3_dpad_r"}},
+		{17, {L"ui_ctrl_360_dpad_u", L"ui_ctrl_ps3_dpad_u"}},
+		{18, {L"ui_ctrl_360_dpad_l", L"ui_ctrl_ps3_dpad_l"}},
+		{19, {L"ui_ctrl_360_dpad_d", L"ui_ctrl_ps3_dpad_d"}}
+	};
+
+	std::unordered_map<int, const wchar_t*> padButtonToText = {
+	{0, L"A"},
+	{1, L"B"},
+	{2, L"X"},
+	{3, L"Y"},
+	{4, L"LB"},
+	{5, L"RB"},
+	{6, L"Back"},
+	{7, L"Start"},
+	{8, L"LS"},
+	{9, L"RS"},
+	{10, L"LT"},
+	{11, L"RT"},
+	{16, L"dPadRight"},
+	{17, L"dPadUp"},
+	{18, L"dPadLeft"},
+	{19, L"dPadDown"}
+	};
+
+	std::unordered_map<int, const wchar_t*> actionsToXbox = {
+	{2, L"ui_ctrl_360_btn_ls"},
+	{3, L"ui_ctrl_360_btn_ls"},
+	};
+
+	std::unordered_map<int, const wchar_t*> actionsToPS3 = {
+	{2, L"ui_ctrl_ps3_btn_l3"},
+	{3, L"ui_ctrl_ps3_btn_l3"},
+	};
+
+	bool useTextPrompts = false;
+	int usePS3Prompts = false;
+	wchar_t* __cdecl getpckeyboardimage_hook(uint32_t* action_index, int mouse) {
+		if (LastInputUI() == GAME_LAST_INPUT::CONTROLLER) {
+			if (prompt_image_buffer_index > 9500) {
+				prompt_image_buffer_index = 0;
+			}
+			int start_index = prompt_image_buffer_index;
+			if (!action_index) {
+				if (mouse == 1) {
+					const wchar_t* buttonImage = usePS3Prompts ? L"ui_ctrl_ps3_btn_r3" : L"ui_ctrl_360_btn_rs";
+					wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"[format][scale:1.0][image:%s][/format]", buttonImage);
+					prompt_image_buffer_index += wcslen(&prompt_image_buffer[start_index]) + 1;
+					return &prompt_image_buffer[start_index];
+				}
+				else
+					return getpckeyboardimage_T.ccall<wchar_t*>(action_index, mouse);
+			}
+			int controller_key = PC_port_key_for_controler_assignments[*action_index + 2].controller_button;
+			int keyboard_key = PC_port_key_for_controler_assignments[*action_index + 2].keyboard_button;
+
+			auto it = padButtonMaps.find(controller_key);
+			if (it != padButtonMaps.end()) {
+				const wchar_t* buttonImage = usePS3Prompts ? it->second.ps3 : it->second.xbox;
+				wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"[format][scale:1.0][image:%s][/format]", buttonImage);
+			}
+			else if (controller_key == -1) {
+				auto& actionsMap = usePS3Prompts ? actionsToPS3 : actionsToXbox;
+				auto actionfinder = actionsMap.find(*action_index);
+				if (actionfinder != actionsMap.end())
+					wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"[format][scale:1.0][image:%s][/format]", actionfinder->second);
+				else {
+					wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"[format][scale:0.7]Action %d[/format]", *action_index);
+				}
+			}
+			else {
+				wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"[format][scale:0.7]Pad %d[/format]", controller_key + 1);
+				Logger::TypedLog("ERROR", "Was supposed to give an item out! pad_button %d actions %d button %d ,mouse %d\n", controller_key, *action_index, keyboard_key, mouse);
+			}
+			prompt_image_buffer_index += wcslen(&prompt_image_buffer[start_index]) + 1;
+			return &prompt_image_buffer[start_index];
+		}
+		else {
+			return getpckeyboardimage_T.ccall<wchar_t*>(action_index, mouse);
+		}
+	}
+	SafetyHookInline pc_get_action_pad_pure_text_T{};
+	// This is wrapped around by the "pc_get_action_pad_pure_text" lua function the game has, vanilla returns Pad Button: %d and the index for it, there's a pc_get_action_key_pure_text to return keyboards.
+	// Here we'll just modify it to return Xbox buttons so it's more readable in the menus.
+	wchar_t* __cdecl pc_get_action_pad_pure_text_hook(int action_index) {
+		if (prompt_image_buffer_index > 9500) {
+			prompt_image_buffer_index = 0;
+		}
+		int start_index = prompt_image_buffer_index;
+		if (prompt_image_buffer_index > 9500) {
+			prompt_image_buffer_index = 0;
+		}
+		int pad_button = PC_port_key_for_controler_assignments[action_index + 2].controller_button; // No +1
+		auto it = padButtonToText.find(pad_button);
+		if (it != padButtonToText.end()) {
+			wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"%s : %d", it->second,pad_button + 1);
+		}
+		else {
+			pc_get_action_pad_pure_text_T.ccall<wchar_t*>(action_index);
+		}
+		prompt_image_buffer_index += wcslen(&prompt_image_buffer[start_index]) + 1;
+
+		return &prompt_image_buffer[start_index];
+	}
 	void Init() {
+		OptionsManager::registerOption("Input", "HoldFineAim", &HoldFineAim);
+		if (EnableDynamicPrompts) {
+			OptionsManager::registerOption("Input", "ForceInputPrompt", &ForceInput, 0);
+			OptionsManager::registerOption("Input", "usePS3Prompts", &usePS3Prompts, 0);
+			//SetThreadPriority(CreateThread(0, 0, LastInputCheck, 0, 0, 0),-1);
+			pc_get_action_pad_pure_text_T = safetyhook::create_inline(0xC11A90, &pc_get_action_pad_pure_text_hook);
+			getpckeyboardimage_T = safetyhook::create_inline(0xC11C00, &getpckeyboardimage_hook);
+		}
 		LoadXInputDLL();
 		if (GameConfig::GetValue("Gameplay", "DisableAimAssist", 1) == 1)
 		{
