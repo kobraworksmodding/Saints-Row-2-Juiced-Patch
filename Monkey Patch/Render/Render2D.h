@@ -42,4 +42,5 @@ namespace Render2D
 	};
 	extern SafetyHookMid final_2d_render;
 	extern float get_vint_1610_hack_scale();
+	extern inline bool is_aspect_1610();
 }
