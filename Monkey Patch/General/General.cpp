@@ -658,6 +658,13 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 						snprintf(extraBuffer, sizeof(extraBuffer), lua_command_visbile, "health_large_grp", "hud", "visible", "false");
 						customCode += "\n";
 						customCode += extraBuffer;
+						bool should_stretch = !Render2D::is_aspect_1610();
+						float weirdscale = 1.f / (Render2D::widescreenvalue / *Render2D::currentAR);
+						float weirdscale_y = 1.f;
+						if (Render2D::is_aspect_1610()) {
+							weirdscale = 1.f / (*Render2D::currentAR / Render2D::widescreenvalue);
+							weirdscale_y = weirdscale;
+						}
 
 						float weirdscale = 1.f / (Render2D::widescreenvalue / *Render2D::currentAR);
 						//snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "scale",
@@ -676,18 +683,18 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 						customCode += extraBuffer;
 
 						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "vignettes", "hud", "scale",
-							weirdscale, 1.f);
+							weirdscale, weirdscale_y);
 						customCode += "\n";
 						customCode += extraBuffer;
 
 						// This here is a LUA-less vint_document, we'll scale in hud's LUA file.
 						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "safe_frame", "vignette", "scale",
-							weirdscale, 1.f);
+							weirdscale, weirdscale_y);
 						customCode += "\n";
 						customCode += extraBuffer;
 
 						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "vignettes", "hud", "anchor",
-							-((get_vint_x_resolution() - 1280) / 2.f), 0.f);
+							-((get_vint_x_resolution() - 1280) / 2.f), Render2D::get_vint_1610_hack_scale() / 2.f);
 						customCode += "\n";
 						customCode += extraBuffer;
 					}

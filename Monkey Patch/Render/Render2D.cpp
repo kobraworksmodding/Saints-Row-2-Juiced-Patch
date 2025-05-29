@@ -468,10 +468,10 @@ int processtextwidth(int width) {
 			snprintf(buffer, sizeof(buffer), lua_command, "multiplier_txt", "hud", "scale",
 				0.f, 0.f);
 
-			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "anchor", -((get_vint_x_resolution() - 1280) / 2.f), 0.f);
+			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "anchor", -((get_vint_x_resolution() - 1280) / 2.f), -(get_vint_1610_hack_scale() / 2.f));
 			General::VintExecute(buffer);
 
-			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "scale", weirdscale, 1.f);
+			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "scale", weirdscale, weirdscale_y);
 			General::VintExecute(buffer);
 
 		}
@@ -512,17 +512,26 @@ char SR2Ultrawide_HUDScale() {
 
 		// Fucking tagging system cause yeah lets hard code the anchor for it?
 	int var = (int)(aspectRatio * 720.f);
-	int var2 = (int)(aspectRatio * 360.f);
-	SafeWrite32(0x00622571 + 1, var);
-	SafeWrite32(0x00625A2B + 2, var);
-	//SafeWrite32(0x00625F70 + 1, var);
-	//SafeWrite32(0x00755A21 + 1, var);
-	//SafeWrite32(0x00755C49 + 1, var);
-	//SafeWrite32(0x00B87313 + 1, var2);
-	//SafeWrite32(0x00B87313 + 1, var2);
-	SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
-	SafeWrite32(0x0062597F + 2, (UInt32)&var2);
-	
+	static int var2 = (int)(aspectRatio * 360.f);
+	if (aspectRatio != 1.6f) {
+		SafeWrite32(0x00622571 + 1, var);
+		SafeWrite32(0x00625A2B + 2, var);
+		SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
+		SafeWrite32(0x0062597F + 2, (UInt32)&var2);
+	}
+	SafeWrite32(0x00622555 + 2, 720);
+	SafeWrite32(0x00625A44 + 1, 720);
+
+	SafeWrite32(0x00625D5D + 2, 0x22DBF90);
+	SafeWrite32(0x006259FC + 2, 0x22DBF90);
+	if (aspectRatio == 1.6f) {
+		int aspect_1610 = 800;
+		SafeWrite32(0x00622555 + 2, aspect_1610);
+		SafeWrite32(0x00625A44 + 1, aspect_1610);
+		static int aspect_1610_width = 400;
+		SafeWrite32(0x00625D5D + 2, (UInt32)&aspect_1610_width);
+		SafeWrite32(0x006259FC + 2, (UInt32)&aspect_1610_width);
+	}
 		Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 3);
 		RefreshHUD_thread = std::thread(RefreshHUD_loop);
 		RefreshHUD_thread.detach();
