@@ -1,6 +1,10 @@
 #pragma once
 #include <corecrt_math_defines.h>
 #include "..\Generated\BuildInfo.h"
+#include "Math\Math.h"
+
+using namespace Math;
+
 namespace UtilsGlobal {
 
 inline uintptr_t getplayer(bool provideaddress = false) {
@@ -8,6 +12,14 @@ inline uintptr_t getplayer(bool provideaddress = false) {
         return *(uintptr_t*)(0x21703D4);
     else return 0x21703D4;
 
+}
+
+inline void GetPlayerXYZ(vector3* Dest) {
+    memcpy(Dest, (void*)(0x25F5BB4), sizeof(vector3));
+}
+
+inline void GetPlayerOrient(matrix* Dest) {
+    memcpy(Dest, (void*)(UtilsGlobal::getplayer() + 32), sizeof(matrix));
 }
 
 inline bool invert;

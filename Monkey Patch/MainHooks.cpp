@@ -778,7 +778,6 @@ void cus_FrameToggles() {
 	static bool DetachCam = false;
 	static bool FPSCounter = false;
 	static uint8_t ogAA;
-	bool InCutscene = *(bool*)(0x2527D14);
 	static bool CutscenePaused;
 
 
@@ -803,9 +802,7 @@ void cus_FrameToggles() {
 	}
 
 	if (IsKeyPressed(VK_F11, false)) { // F1
-		static wchar_t test[128] = L"[format][scale:1.0][image:ui_hud_base_radial_base_ps3][/format]";
-
-		addsubtitles(test, delay, duration, whateverthefuck);
+		NewSave();
 	}
 
 	if (IsKeyPressed(VK_F4, false)) { // F4
@@ -862,7 +859,7 @@ void cus_FrameToggles() {
 
 	}
 
-	if (IsKeyPressed(VK_TAB, false) && InCutscene && !isCoop()) {
+	if (IsKeyPressed(VK_TAB, false) && *InCutscene && !isCoop()) {
 		CutscenePaused = !CutscenePaused;
 		CutscenePaused ? ShowPauseDialog(true, false, false, false) : RemovePauseDialog();
 	}
@@ -1053,9 +1050,6 @@ LoadLevelT LoadLevel = (LoadLevelT)0x73C000;
 char LUA_Key = VK_INSERT;
 #if !RELOADED
 void LuaExecutor() {
-	BYTE CurrentGamemode = *(BYTE*)0x00E8B210; 
-	BYTE LobbyCheck = *(BYTE*)0x02528C14; // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.
-	BYTE AreWeLoaded = *(BYTE*)0x00E94D3E;
 	static bool OpenedByExecutor = false;
 	BOOL* IsOpen = (BOOL*)(0x0252A5B3);
 	wchar_t* ChatInput = reinterpret_cast<wchar_t*>(0x01F76948);
@@ -1065,7 +1059,7 @@ void LuaExecutor() {
 
 	wcsncpy_s(NameFormat, 16, OpenedByExecutor ? L"%sConsole> %s" : L"%s> %s", 16);
 
-	if (AreWeLoaded == 0x1 && !LobbyCheck == 0x0 && CurrentGamemode == 0xFF) { // If SP/CO-OP allow executor... hopefully.
+	if (*GameLoaded == 1 && !*LobbyCheck == 0 && *CurrentGamemode == -1) { // If SP/CO-OP allow executor... hopefully.
 
 		if (IsKeyPressed(LUA_Key, false)) {
 			if (hasCheatMessageBeenSeen2 == 1 || Debug::CMPatches_DisableCheatFlag.IsApplied()) {

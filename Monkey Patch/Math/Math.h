@@ -26,4 +26,10 @@ namespace Math
 	namespace Fixes {
 		extern SafetyHookMid matrix_operator_multiplication_midhook;
 	}
+
+	inline bool isVectorNull(vector3& vec) {
+		if (vec.x != 0 || vec.y != 0 || vec.z != 0) return false;
+		else return true;
+	}
+
 }

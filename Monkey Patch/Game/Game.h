@@ -20,7 +20,7 @@ struct vint_message_struct
 	char padding1 = 0 ;
 	__int16 field_1E = 0;
 	int field_20 = 0;
-	int field_24 = 0;
+	int field_24 = 1;
 };
 
 struct xtbl_node
@@ -46,7 +46,7 @@ namespace Game
 		extern float GetHavokFrameTimeOver16ms_Fix();
 	}
 	namespace HUD {
-		extern int vint_message(wchar_t* message_text, vint_message_struct *a2);
+		extern int vint_message(const wchar_t* message_text, vint_message_struct *a2);
 	};
 	namespace InLoop {
 		extern bool IsCoopOrSP;

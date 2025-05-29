@@ -16,6 +16,12 @@ and / or run completely on startup or after we check everything else.*/
 #include "../Render/Render2D.h"
 #include "..\LUA\InGameConfig.h"
 #include "../Player/Input.h"
+#include "../Math/Math.h"
+#include "../UtilsGlobal.h"
+#include "../Game/Game.h"
+
+using namespace Math;
+
 namespace General {
 	bool DeletionMode;
 	const wchar_t* SaveMessage = L"Are you sure you want to delete this save?"; // ultimately, if we get extra strings to load, we should use a string label and request the string instead of hardcoding it
@@ -23,6 +29,13 @@ namespace General {
 	const char* JStr = "juiced";
 	bool IsSpawning = false;
 	bool* EnterPressed = (bool*)0x02348CD0;
+	bool* InCutscene = (bool*)0x2527D14;
+	bool* InMultiplayer = (bool*)0x2528B48;
+	bool IsQuickSaving = false;
+	char* CurrentGamemode = (char*)0x00E8B210;
+	char* LobbyCheck = (char*)0x02528C14; // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.
+	char* InMission = (char*)0x27B3C60;
+	char* GameLoaded = (char*)0x00E94D3E;
 	int CurrentNPC = 0;
 	int SpawnedNPCs[10] = { 0 }; // we could make this a vector maybe, i don't mind it being like this though
 
@@ -1008,9 +1021,47 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	
 		Render3D::ChangeShaderOptions();
 	}
+
+	void LoadSaveSetPos(SafetyHookContext& ctx) {
+		vector3 QuickSavePos = *(vector3*)(ctx.eax + 0x38C40);
+		matrix QuickSaveOrient = *(matrix*)(ctx.eax + 0x38C52);
+		if (!isVectorNull(QuickSavePos)) {
+			*(vector3*)(ctx.esp + 0x20) = QuickSavePos;
+			memcpy((void*)ctx.ecx, (void*)&QuickSaveOrient, 0x24);
+			ctx.eip = 0x006938F0;
+		}
+	}
+
+	void SaveCurrentPos(SafetyHookContext& ctx) {
+		if (IsQuickSaving) {
+			vector3* QuickSavePos = (vector3*)(ctx.ebx + 0x38C40);
+			matrix* QuickSaveOrient = (matrix*)(ctx.ebx + 0x38C52);
+			UtilsGlobal::GetPlayerXYZ(QuickSavePos);
+			UtilsGlobal::GetPlayerOrient(QuickSaveOrient);
+		}
+	}
+
+	void NewSave() {
+		if (*GameLoaded) {
+			vint_message_struct SaveMessage;
+			*(bool*)(0x252740E) = 1; // ins. fraud sound
+			if (*InMission == 0 && !(*InCutscene) && !*LobbyCheck == 0 && *CurrentGamemode == -1) {
+				Game::HUD::vint_message(L"JUICED: Quicksaving...", &SaveMessage);
+				IsQuickSaving = true;
+				((void(__cdecl*)(int*, bool, bool))0x695A60)((int*)0x1F7A9C0, false, false);
+				IsQuickSaving = false;
+			}
+			else {
+				Game::HUD::vint_message(L"JUICED: Unable to quicksave.", &SaveMessage);
+			}
+		}
+	}
+
 	void TopWinMain() {
 		if(GameConfig::GetValue("Debug","AllowMultipleSR2Windows",1)) // in case this fucks up or something
 		SafeWrite8(0x00BFA6B6, 0xEB);
+		static SafetyHookMid LoadPosHook = safetyhook::create_mid(0x006938EB, &LoadSaveSetPos);
+		static SafetyHookMid SavePosHook = safetyhook::create_mid(0x00695BBF, &SaveCurrentPos);
 		static SafetyHookMid D3D9Create = safetyhook::create_mid(0x00D1F7B0, &CreateD3D9DeviceFunction);
 		WriteRelJump(0x007F46E4, (UInt32)&AddStrings); // add custom string loading - the game automatically appends the string so it will load the right string file based on your language, eg - juiced_us.le_strings
 #if !JLITE

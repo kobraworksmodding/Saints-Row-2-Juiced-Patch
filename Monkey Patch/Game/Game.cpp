@@ -305,7 +305,7 @@ namespace Game
 	}
 	namespace HUD
 	{
-		int __declspec(naked) vint_message(wchar_t* message_text, vint_message_struct* a2) {
+		int __declspec(naked) vint_message(const wchar_t* message_text, vint_message_struct* a2) {
 			__asm {
 				push ebp
 				mov ebp, esp
