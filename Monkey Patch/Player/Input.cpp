@@ -416,6 +416,19 @@ namespace Input {
 			return &prompt_image_buffer[start_index];
 		}
 		else {
+			int keyboard_key = PC_port_key_for_controler_assignments[*action_index + 2].keyboard_button;
+			if (keyboard_key == 0x103 || keyboard_key == 0x104) {
+				if (prompt_image_buffer_index > 9500) {
+					prompt_image_buffer_index = 0;
+				}
+				int start_index = prompt_image_buffer_index;
+				if(keyboard_key == 0x104)
+				wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"[format][color:purple]%s[/format]", L"Mouse 5");
+				else if (keyboard_key == 0x103)
+				wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"[format][color:purple]%s[/format]", L"Mouse 4");
+				prompt_image_buffer_index += wcslen(&prompt_image_buffer[start_index]) + 1;
+				return &prompt_image_buffer[start_index];
+			} else
 			return getpckeyboardimage_T.ccall<wchar_t*>(action_index, mouse);
 		}
 	}
@@ -442,6 +455,95 @@ namespace Input {
 
 		return &prompt_image_buffer[start_index];
 	}
+	int* input_capturing = (int*)0xE82F6C;
+	int __declspec(naked) pc_port_action_register_maybe(int button) {
+		static const DWORD pc_port_action_register_maybe_addr = 0xC12450;
+		__asm pushad
+		__asm {
+			push ebp
+			mov ebp, esp
+			sub esp, __LOCAL_SIZE
+			mov     esi, button
+			call pc_port_action_register_maybe_addr
+			mov esp, ebp
+			pop ebp
+			popad
+			ret
+		}
+	}
+	static inline void setAL(SafetyHookContext& ctx, int val)
+	{
+		ctx.eax = (ctx.eax & 0xFFFFFF00) | (val & 0xFF);
+	}
+
+	SAFETYHOOK_NOINLINE void special_mouse_cases_midhook1(SafetyHookContext& ctx) {
+		if (IsKeyPressed(VK_XBUTTON1, true)) {
+			pc_port_action_register_maybe(0x103);
+			PC_port_key_for_controler_assignments[*input_capturing + 2].keyboard_button = 0x103;
+			setAL(ctx, true);
+		}
+		if (IsKeyPressed(VK_XBUTTON2, true)) {
+			pc_port_action_register_maybe(0x104);
+			PC_port_key_for_controler_assignments[*input_capturing + 2].keyboard_button = 0x104;
+			setAL(ctx, true);
+		}
+	}
+	struct SR2_SPECIAL_KEYBINDINGS
+	{
+		const char* localization_name;
+		DWORD key_code;
+	};
+	struct SR2_SPECIAL_KEYBINDINGS specialKeys[] = {
+	{"PCKEY_ARROW_LEFT", 0xCB},
+	{"PCKEY_ARROW_RIGHT", 0xCD},
+	{"PCKEY_ARROW_UP", 0xC8},
+	{"PCKEY_ARROW_DOWN", 0xD0},
+	{"PCKEY_LEFT_MOUSE_BUTTON", 0x100},
+	{"PCKEY_RIGHT_MOUSE_BUTTON", 0x101},
+	{"PCKEY_MIDDLE_MOUSE_BUTTON", 0x102},
+	{"MOUSE 4", 0x103},
+	{"MOUSE 5", 0x104},
+	{"PCKEY_ENTER", 0x1C},
+	{"PCKEY_ESC", 0x01},
+	{"PCKEY_TAB", 0x0F},
+	{"PCKEY_BACKSPACE", 0x0E},
+	{"PCKEY_SPACEBAR", 0x39},
+	{"PCKEY_LEFT_SHIFT", 0x2A},
+	{"PCKEY_RIGHT_SHIFT", 0x36},
+	{"PCKEY_LEFT_CONTROL", 0x1D},
+	{"PCKEY_RIGHT_CONTROL", 0x9D},
+	{"PCKEY_LEFT_ALT", 0x38},
+	{"PCKEY_RIGHT_ALT", 0xB8},
+	{"PCKEY_INSERT", 0xD2},
+	{"PCKEY_DELETE", 0xD3},
+	{"PCKEY_HOME", 0xC7},
+	{"PCKEY_END", 0xCF},
+	{"PCKEY_PAGE_UP", 0xC9},
+	{"PCKEY_PAGE_DOWN", 0xD1},
+	{"PCKEY_NUM_ENTER", 0x9C},
+	{"PCKEY_NUM_LOCK", 0xC5},
+	{"PCKEY_NUM_SLASH", 0xB5},
+	{"PCKEY_NUM_MINUS", 0x4A},
+	{"PCKEY_NUM_STAR", 0x37},
+	{"PCKEY_NUM_PLUS", 0x4E},
+	{"PCKEY_NUM_DOT", 0x53},
+	{"PCKEY_UNASSIGNED", 0xFFFFFFFF}
+	};
+
+	SAFETYHOOK_NOINLINE void key_held_midhook_special_mousecase_midhook1(SafetyHookContext& ctx) {
+		int key = ctx.eax;
+		if (key == 0x103) {
+			setAL(ctx, IsKeyPressed(VK_XBUTTON1, true));
+			// do a ret
+			ctx.eip = 0xC11220;
+		} else if (key == 0x104) {
+			setAL(ctx, IsKeyPressed(VK_XBUTTON2, true));
+			// do a ret
+			ctx.eip = 0xC11220;
+		}
+
+	}
+
 	void Init() {
 		OptionsManager::registerOption("Input", "HoldFineAim", &HoldFineAim);
 		if (EnableDynamicPrompts) {
@@ -450,6 +552,13 @@ namespace Input {
 			//SetThreadPriority(CreateThread(0, 0, LastInputCheck, 0, 0, 0),-1);
 			pc_get_action_pad_pure_text_T = safetyhook::create_inline(0xC11A90, &pc_get_action_pad_pure_text_hook);
 			getpckeyboardimage_T = safetyhook::create_inline(0xC11C00, &getpckeyboardimage_hook);
+
+			// currently I add mouse4 and mouse5 support, requires getpckeyboardimage_T hook.
+			static auto key_held_hook = safetyhook::create_mid(0xC11214, &key_held_midhook_special_mousecase_midhook1);
+			static auto special_mouse_cases_midhook = safetyhook::create_mid(0xC12A74, &special_mouse_cases_midhook1);
+			patchDWord((void*)(0xC119B0 + 2), (uint32_t)&specialKeys[0].key_code);
+			patchDWord((void*)(0xC119C2 + 2), (uint32_t)&specialKeys[0].localization_name);
+			patchDWord((void*)(0xC119CD + 3), (uint32_t)&specialKeys[0].localization_name);
 		}
 		LoadXInputDLL();
 		if (GameConfig::GetValue("Gameplay", "DisableAimAssist", 1) == 1)
