@@ -62,8 +62,8 @@ namespace Math
 				matrix* result = (matrix*)ctx.eax;
 				matrix* thisa = (matrix*)ctx.edx;
 				const matrix* m = (matrix*)ctx.ecx;
-
-				matrix_multiply_safe(result, thisa, m);
+				result->multiply(thisa, m);
+				//matrix_multiply_safe(result, thisa, m);
 
 				ctx.eip = 0x00BE313F;
 				});
@@ -73,4 +73,9 @@ namespace Math
 		if(GameConfig::GetValue("Debug","MathFixes",1))
 		Math::Fixes::Init();
 	}
+}
+
+void matrix::multiply(const matrix* lhs, const matrix* rhs)
+{
+	Math::matrix_multiply_safe(this,lhs,rhs);
 }

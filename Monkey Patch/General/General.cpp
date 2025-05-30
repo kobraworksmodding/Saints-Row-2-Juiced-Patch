@@ -1025,7 +1025,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	void LoadSaveSetPos(SafetyHookContext& ctx) {
 		vector3 QuickSavePos = *(vector3*)(ctx.eax + 0x38C40);
 		matrix QuickSaveOrient = *(matrix*)(ctx.eax + 0x38C52);
-		if (!isVectorNull(QuickSavePos)) {
+		if (!QuickSavePos.isNull()) {
 			*(vector3*)(ctx.esp + 0x20) = QuickSavePos;
 			memcpy((void*)ctx.ecx, (void*)&QuickSaveOrient, 0x24);
 			ctx.eip = 0x006938F0;
