@@ -1299,11 +1299,11 @@ int RenderLoopStuff_Hacked()
 		RPCHandler::UpdateDiscordParams();
 	}
 
-	if (Debug::addBindToggles)
 		UpdateKeys();
-	    cus_FrameToggles();
-	    Slew();
-
+		if (Debug::addBindToggles) {
+			cus_FrameToggles();
+			Slew();
+		}
     #if !RELOADED
 		LuaExecutor();
 		Noclip();
