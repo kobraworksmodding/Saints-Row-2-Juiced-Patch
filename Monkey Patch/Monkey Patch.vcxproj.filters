@@ -167,6 +167,9 @@
     </ClCompile>
     <ClCompile Include="OptionsManager.ixx" />
     <ClCompile Include="PatchNotifier.ixx" />
+    <ClCompile Include="Render\bitmap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="General\JuicedAPI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -317,6 +320,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LUA\InGameConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\bitmap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="General\JuicedAPI.h">

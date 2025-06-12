@@ -21,6 +21,7 @@ and / or run completely on startup or after we check everything else.*/
 #include "../Game/Game.h"
 #include "JuicedAPI.h"
 
+#include "../Render/bitmap.h"
 using namespace Math;
 #pragma warning( disable : 4409)
 namespace General {
@@ -1094,6 +1095,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	}
 	void TopWinMain() {
 		allowJuicedAPI = GameConfig::GetValue("API", "JuicedAPI", 1);
+		bitmap_loader::Init();
 		WriteRelJump(0x00685858, (UInt32)&LowGravity_cheat_fix_basejumping); // LowGravity_Apply()
 		WriteRelJump(0x00685EE0, (UInt32)&LowGravity_cheat_fix_basejumping); // LowGravity_Restore()
 		patchNop((BYTE*)0x004D6795, 5); // Fix for the sun flare disappearing upon reloading a save. Prevents the game from deallocating the flare.

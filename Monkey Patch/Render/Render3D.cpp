@@ -86,7 +86,6 @@ namespace Render3D
 		// Convert back to degrees
 		return atan(adjusted) * 2.0 * 57.29582977294922;
 	}
-
 	double GetFOV() {
 		bool* is_cutscene_active = (bool*)0x02527D14;
 		bool* unk = (bool*)((*(int*)0x2527D10) + 0xAFF);

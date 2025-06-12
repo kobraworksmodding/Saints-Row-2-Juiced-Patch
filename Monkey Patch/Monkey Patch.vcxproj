@@ -295,6 +295,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="PatchNotifier.ixx" />
     <ClCompile Include="Player\Behavior.cpp" />
     <ClCompile Include="Player\Input.cpp" />
+    <ClCompile Include="Render\bitmap.cpp" />
     <ClCompile Include="Render\Render2D.cpp" />
     <ClCompile Include="Render\Render3D.cpp" />
     <ClCompile Include="RPCHandler.cpp" />
@@ -320,6 +321,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="Patcher\CMultiPatch.h" />
     <ClInclude Include="Patcher\CPatch.h" />
     <ClInclude Include="Player\Input.h" />
+    <ClInclude Include="Render\bitmap.h" />
     <ClInclude Include="Render\Render2D.h" />
     <ClInclude Include="Shaders.h" />
     <ClInclude Include="Ext\Hooking.Patterns.h" />
