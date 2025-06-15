@@ -379,6 +379,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="RPCHandler.cpp" />
     <ClCompile Include="SafeWrite.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="UGC\CModLoader.cpp" />
     <ClCompile Include="UGC\Debug.cpp" />
     <ClCompile Include="UGC\InternalPrint.cpp" />
   </ItemGroup>
@@ -435,6 +436,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="RPCHandler.h" />
     <ClInclude Include="SafeWrite.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="UGC\CModLoader.h" />
     <ClInclude Include="UGC\Debug.h" />
     <ClInclude Include="UGC\InternalPrint.h" />
     <ClInclude Include="UtilsGlobal.h" />

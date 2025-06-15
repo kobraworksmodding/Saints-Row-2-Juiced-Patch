@@ -21,6 +21,7 @@ and / or run completely on startup or after we check everything else.*/
 #include "../Game/Game.h"
 #include "JuicedAPI.h"
 #include "..\Render\d3d9_hook.h"
+#include "../UGC/CModLoader.h"
 
 #include "../Render/bitmap.h"
 
@@ -1419,6 +1420,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	}
 	void TopWinMain() {
 		Logger::TypedLog("D3D9", "D3D9 Hook: %d\n", D3D9Hook::initialize());
+		CModLoader::Init();
 		allowJuicedAPI = GameConfig::GetValue("API", "JuicedAPI", 1);
 		bitmap_loader::Init();
 		WriteRelJump(0x00685858, (UInt32)&LowGravity_cheat_fix_basejumping); // LowGravity_Apply()

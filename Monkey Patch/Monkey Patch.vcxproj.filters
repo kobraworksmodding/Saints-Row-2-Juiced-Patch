@@ -182,6 +182,9 @@
     <ClCompile Include="Network\STUNNat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UGC\CModLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DFEngine.h">
@@ -347,6 +350,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Hooker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UGC\CModLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
