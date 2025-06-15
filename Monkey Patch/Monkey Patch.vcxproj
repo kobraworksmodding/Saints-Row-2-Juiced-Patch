@@ -272,6 +272,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="Audio\Audio.cpp" />
     <ClCompile Include="Audio\XACT.cpp" />
     <ClCompile Include="BlingMenuInstall.cpp" />
+    <ClCompile Include="DLCSupport.cpp" />
     <ClCompile Include="Ext\safetyhook\safetyhook.cpp" />
     <ClCompile Include="Ext\safetyhook\Zydis.c" />
     <ClCompile Include="Game\CrashFixes.cpp" />
@@ -319,6 +320,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="Audio\Audio.h" />
     <ClInclude Include="Audio\XACT.h" />
     <ClInclude Include="BlingMenu_public.h" />
+    <ClInclude Include="DLCSupport.h" />
     <ClInclude Include="exception.hpp" />
     <ClInclude Include="Ext\safetyhook\safetyhook.hpp" />
     <ClInclude Include="Ext\safetyhook\Zydis.h" />
