@@ -7,6 +7,7 @@ import component;
 #include "MainHooks.h"
 #include "UtilsGlobal.h"
 #include "General/General.h"
+#include "DLCSupport.h"
 
 #include "FileLogger.h"
 #include "SafeWrite.h"
@@ -1620,7 +1621,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 {
 	patchJmp((void*)0x697339, sub_73D900);
 
-
+	DLCSetup();
 		LUA_Key = GameConfig::GetValue("Debug", "ExecutorBind", VK_INSERT, "Changes the keybind for Lua Executor. refer to https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes for the key \"value\"s. (Clippy95)");
 	InGameConfig::AddOptions();
 	General::TopWinMain();
