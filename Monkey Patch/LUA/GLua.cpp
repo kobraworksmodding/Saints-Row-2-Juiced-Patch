@@ -11,6 +11,8 @@
 #include "..\General\General.h"
 #include "InGameConfig.h"
 #include "../Player/Input.h"
+#include "../Math/Math.h"
+#include "../UtilsGlobal.h"
 
 struct luaL_Reg
 {
@@ -210,6 +212,38 @@ public:
 typedef void(__stdcall* NeverDieT)(int character,uint8_t status);
 NeverDieT NeverDie = (NeverDieT)0x00966720;
 
+int GetVehFromLUA(const char* LUAVarName) {
+    return ((int(__fastcall*)(const char*))0xA52CD0)(LUAVarName);
+}
+
+int GetNPCFromLUA(const char* LUAVarName) {
+    return ((int(__fastcall*)(const char*))0xA52CA0)(LUAVarName);
+}
+
+int __declspec(naked) TeleportNPC(int NPCPointer, vector3* Position) {
+    __asm {
+        push ebp
+        mov ebp, esp
+
+        push 0
+        push - 1
+        mov edx, Position
+        push edx
+        mov eax, NPCPointer
+        mov ecx, 0x95F090
+        call ecx
+
+        add esp, 16
+        mov esp, ebp
+        pop ebp
+        ret
+    }
+}
+
+bool HeliFireRocketAtXYZ(int HeliPointer, float x, float y, float z) {
+    return ((bool(__thiscall*)(int, float, float, float))0xB36500)(HeliPointer, x, y, z);
+}
+
 namespace GLua
 {
     int __cdecl lua_func_never_die(lua_State* L)
@@ -230,6 +264,42 @@ namespace GLua
        returns.push(true);
        return returns.count();
 }
+
+
+    int __cdecl lua_func_helicopter_shoot_vehicle(lua_State* L)
+    {
+        int AttackHeliP = GetVehFromLUA((lua_tostring(L, 1)));
+        int PlayerHeliP = GetVehFromLUA((lua_tostring(L, 2)));
+        if (AttackHeliP && PlayerHeliP) {
+            vector3 PlayerHeliPos;
+            UtilsGlobal::GetObjectXYZ(&PlayerHeliPos, PlayerHeliP);
+            HeliFireRocketAtXYZ(AttackHeliP, PlayerHeliPos.x, PlayerHeliPos.y, PlayerHeliPos.z);
+            return 1;
+        }
+        return 0;
+    }
+
+    int __cdecl lua_func_vehicle_teleport_character(lua_State* L)
+    {
+        int Vehicle = GetVehFromLUA((lua_tostring(L, 1)));
+        int NPC = GetNPCFromLUA((lua_tostring(L, 2)));
+
+        float offset_f = (float)lua_tonumber(L, 3);
+        float offset_r = (float)lua_tonumber(L, 4);
+        float offset_u = (float)lua_tonumber(L, 5);
+
+        if (Vehicle && NPC) {
+            float* VehicleFloats = (float*)Vehicle;
+
+            vector3 Target;
+            Target.x = VehicleFloats[5] + VehicleFloats[14] * offset_f + VehicleFloats[8] * offset_r + VehicleFloats[11] * offset_u;
+            Target.y = VehicleFloats[6] + VehicleFloats[15] * offset_f + VehicleFloats[9] * offset_r + VehicleFloats[12] * offset_u;
+            Target.z = VehicleFloats[7] + VehicleFloats[16] * offset_f + VehicleFloats[10] * offset_r + VehicleFloats[13] * offset_u;
+            TeleportNPC(NPC, &Target);
+        }
+        return 0;
+    }
+
     void PatchSleepHack(int value) {
         if (value == 0) {
             if(Render3D::IsSleepHooked)
@@ -523,7 +593,13 @@ namespace GLua
     }
     void Init() {
 //#if !RELOADED
+        static const char* HeliShootVehN = "helicopter_shoot_vehicle";
+        static const char* VehTPCharN = "vehicle_teleport_character";
         SafeWrite32(0x00A4EC84 + 4, (UInt32)&lua_func_never_die);
+        SafeWrite32(0x00A4EC5C + 4, (UInt32)HeliShootVehN);
+        SafeWrite32(0x00A4EC64 + 4, (UInt32)&lua_func_helicopter_shoot_vehicle);
+        SafeWrite32(0x00A4EC4C + 4, (UInt32)VehTPCharN);
+        SafeWrite32(0x00A4EC54 + 4, (UInt32)&lua_func_vehicle_teleport_character);
         Logger::TypedLog("CHN_DBG", "address of lua func 0x{:X} \n", reinterpret_cast<uintptr_t>(&lua_func_vint_get_avg_processing_time));
         //static SafetyHookInline memoryutils = safetyhook::create_inline(0x00B907F0, &lua_func_vint_get_avg_processing_time);
         SafeWrite32(0x00B91212 + 7, (UInt32)&lua_func_vint_get_avg_processing_time);
