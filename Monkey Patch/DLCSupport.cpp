@@ -15,6 +15,6 @@ void IncreaseMemPool() {
 }
 
 void DLCSetup() {
-	static SafetyHookMid HashHookz = safetyhook::create_mid(0x006AD231, &LoadDLCPersonaVoice);
+	static SafetyHookMid DLCVoice = safetyhook::create_mid(0x006AD231, &LoadDLCPersonaVoice);
 	IncreaseMemPool();
 }

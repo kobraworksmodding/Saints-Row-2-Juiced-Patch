@@ -65,6 +65,10 @@ inline vector3* GetPlayerXYZ() {
     return (vector3*)0x25F5BB4;
 }
 
+inline void GetObjectXYZ(vector3* Dest, int ObjectPointer) {
+    memcpy(Dest, (void*)(ObjectPointer + 0x14), sizeof(vector3));
+}
+
 inline void GetPlayerOrient(matrix* Dest) {
     memcpy(Dest, (void*)(UtilsGlobal::getplayer() + 32), sizeof(matrix));
 }
