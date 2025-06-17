@@ -11,6 +11,8 @@
 #include "..\General\General.h"
 #include "InGameConfig.h"
 #include "../Player/Input.h"
+#include "../Math/Math.h"
+#include "../UtilsGlobal.h"
 
 struct luaL_Reg
 {
@@ -210,6 +212,14 @@ public:
 typedef void(__stdcall* NeverDieT)(int character,uint8_t status);
 NeverDieT NeverDie = (NeverDieT)0x00966720;
 
+int GetVehFromLUA(const char* LUAVarName) {
+    return ((int(__fastcall*)(const char*))0xA52CD0)(LUAVarName);
+}
+
+bool HeliFireRocketAtXYZ(int HeliPointer, float x, float y, float z) {
+    return ((bool(__thiscall*)(int, float, float, float))0xB36500)(HeliPointer, x, y, z);
+}
+
 namespace GLua
 {
     int __cdecl lua_func_never_die(lua_State* L)
@@ -230,6 +240,21 @@ namespace GLua
        returns.push(true);
        return returns.count();
 }
+
+
+    int __cdecl lua_func_helicopter_shoot_vehicle(lua_State* L)
+    {
+        int AttackHeliP = GetVehFromLUA((lua_tostring(L, 1)));
+        int PlayerHeliP = GetVehFromLUA((lua_tostring(L, 2)));
+        if (AttackHeliP && PlayerHeliP) {
+            vector3 PlayerHeliPos;
+            UtilsGlobal::GetObjectXYZ(&PlayerHeliPos, PlayerHeliP);
+            HeliFireRocketAtXYZ(AttackHeliP, PlayerHeliPos.x, PlayerHeliPos.y, PlayerHeliPos.z);
+            return 1;
+        }
+        return 0;
+    }
+
     void PatchSleepHack(int value) {
         if (value == 0) {
             if(Render3D::IsSleepHooked)
@@ -428,7 +453,10 @@ namespace GLua
     }
     void Init() {
 //#if !RELOADED
+        static const char* HeliShootVehN = "helicopter_shoot_vehicle";
         SafeWrite32(0x00A4EC84 + 4, (UInt32)&lua_func_never_die);
+        SafeWrite32(0x00A4EC5C + 4, (UInt32)HeliShootVehN);
+        SafeWrite32(0x00A4EC64 + 4, (UInt32)&lua_func_helicopter_shoot_vehicle);
         Logger::TypedLog("CHN_DBG", "address of lua func 0x%X \n", &lua_func_vint_get_avg_processing_time);
         //static SafetyHookInline memoryutils = safetyhook::create_inline(0x00B907F0, &lua_func_vint_get_avg_processing_time);
         SafeWrite32(0x00B91212 + 7, (UInt32)&lua_func_vint_get_avg_processing_time);
