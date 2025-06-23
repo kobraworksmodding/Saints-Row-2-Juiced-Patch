@@ -88,7 +88,7 @@ void __declspec(naked) AddInterfacePeg()
     __asm {
         mov edi, dword ptr[0x522450]
         call edi
-        mov edx, 0x27714D4
+        mov edx, 0x27716E4
         mov ecx, DLC
         call edi
         jmp jmp_continue
