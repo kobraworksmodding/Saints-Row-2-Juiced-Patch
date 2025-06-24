@@ -113,14 +113,11 @@ __declspec(naked) wchar_t* RequestMFailedString(const char* Label) {
 }
 
 void MissionFStringFix(SafetyHookContext& ctx) {
-    const char* ReqString = (const char*)(ctx.esi);
-    ctx.eax = (uintptr_t)RequestMFailedString(ReqString);
+    ctx.eax = (uintptr_t)RequestMFailedString((const char*)(ctx.esi));
     if (wcscmp((wchar_t*)ctx.eax, L"NULL") == 0) { // DLC ditches the mission_help.xtbl route so the LUA passes in MSN_ directly
-        wprintf(L"Mission falure string is %s\n", (const wchar_t*)ctx.eax);
         __asm pushad
-        ctx.eax = (uintptr_t)General::RequestString(nullptr, ReqString);
+        ctx.eax = (uintptr_t)General::RequestString(nullptr, (const char*)(ctx.esi));
         __asm popad
-        wprintf(L"Attempted to fix it, new string is %s\n", (const wchar_t*)ctx.eax);
     }
     ctx.eip = 0x00A39959;
 }
