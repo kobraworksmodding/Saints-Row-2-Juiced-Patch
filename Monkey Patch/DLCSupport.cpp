@@ -1,6 +1,7 @@
 #include "DLCSupport.h"
 #include "../SafeWrite.h"
 #include <safetyhook.hpp>
+#include <Hooking.Patterns.h>
 #include "Patcher/patch.h"
 #include "General/General.h" 
 
@@ -122,8 +123,68 @@ void MissionFStringFix(SafetyHookContext& ctx) {
     ctx.eip = 0x00A39959;
 }
 
+void PatchFollowerHeads() {
+
+    struct FollowerHead {
+        const char* Name;
+        uint32_t Value;
+    };
+
+    static FollowerHead FollowerHeads[] = { // gotta love Volition!
+        { "ui_hud_recruit_wb_f_asian", 0xFFFFFFFF },
+        { "ui_hud_recruit_wb_f_black", 0xFFFFFFFF },
+        { "ui_hud_recruit_wb_f_hispanic", 0xFFFFFFFF },
+        { "ui_hud_recruit_wb_f_white", 0xFFFFFFFF },
+        { "ui_hud_recruit_wb_m_asian", 0xFFFFFFFF },
+        { "ui_hud_recruit_wb_m_black", 0xFFFFFFFF },
+        { "ui_hud_recruit_wb_m_hispanic", 0xFFFFFFFF },
+        { "ui_hud_recruit_wb_m_white", 0xFFFFFFFF },
+        { "ui_hud_recruit_ho_asian", 0xFFFFFFFF },
+        { "ui_hud_recruit_ho_black", 0xFFFFFFFF },
+        { "ui_hud_recruit_ho_hispanic", 0xFFFFFFFF },
+        { "ui_hud_recruit_ho_white", 0xFFFFFFFF },
+        { "ui_hud_recruit_drug_tobias", 0xFFFFFFFF },
+        { "ui_hud_recruit_homie_laura", 0xFFFFFFFF },
+        { "ui_hud_recruit_homie_jane", 0xFFFFFFFF },
+        { "ui_hud_recruit_homie_lee", 0xFFFFFFFF },
+        { "ui_hud_recruit_misc_bouncer", 0xFFFFFFFF },
+        { "ui_hud_recruit_misc_derby", 0xFFFFFFFF },
+        { "ui_hud_recruit_misc_fuzz", 0xFFFFFFFF },
+        { "ui_hud_recruit_misc_luz", 0xFFFFFFFF },
+        { "ui_hud_recruit_misc_richie", 0xFFFFFFFF },
+        { "ui_hud_recruit_coop", 0xFFFFFFFF },
+        { "ui_hud_recruit_story_jgat", 0xFFFFFFFF },
+        { "ui_hud_recruit_story_julius", 0xFFFFFFFF },
+        { "ui_hud_recruit_story_troy", 0xFFFFFFFF },
+        { "ui_hud_recruit_story_carlos", 0xFFFFFFFF },
+        { "ui_hud_recruit_story_carlos_z", 0xFFFFFFFF },
+        { "ui_hud_recruit_story_donnie", 0xFFFFFFFF },
+        { "ui_hud_recruit_story_maero", 0xFFFFFFFF },
+        { "ui_hud_recruit_story_pierce", 0xFFFFFFFF },
+        { "ui_hud_recruit_story_shaundi", 0xFFFFFFFF },
+        { "ui_hud_recruit_story_jessica", 0xFFFFFFFF },
+        { "ui_hud_recruit_homie_tera_a", 0xFFFFFFFF }
+    };
+
+    auto pattern = hook::pattern("44 D8 E8 00");
+    pattern.for_each_result([](hook::pattern_match match) {
+        void* addr = match.get<void*>();
+        SafeWrite32((UInt32)addr, (UInt32)&FollowerHeads[0].Value);
+        });
+
+    pattern = hook::pattern("40 D8 E8 00");
+    pattern.for_each_result([](hook::pattern_match match) {
+        void* addr = match.get<void*>();
+        SafeWrite32((UInt32)addr, (UInt32)&FollowerHeads);
+        });
+    
+    SafeWrite8((UInt32)0x007909FE, sizeof(FollowerHeads) / sizeof(FollowerHeads[0]));
+    SafeWrite16((UInt32)0x00792A44, sizeof(FollowerHeads));
+}
+
 void DLCSetup() {
 #if !RELOADED
+    PatchFollowerHeads();
     static SafetyHookMid MissionFailure = safetyhook::create_mid(0x00A3994C, &MissionFStringFix);
     CHooks_cutscene();
     WriteRelJump(0x005207FE, (UInt32)&AddInterfacePeg);
