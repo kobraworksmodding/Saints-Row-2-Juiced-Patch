@@ -1,9 +1,14 @@
+// DLCSupport.cpp (Tervel, Clippy95)
+// --------------------
+// Created: 15/06/2025
+
 #include "DLCSupport.h"
 #include "../SafeWrite.h"
 #include <safetyhook.hpp>
 #include <Hooking.Patterns.h>
 #include "Patcher/patch.h"
 #include "General/General.h" 
+#include "Game/Game.h"
 
 typedef uintptr_t __cdecl load_packfileT(const char* name);
 load_packfileT* load_packfile = (load_packfileT*)(0xC0AE90);
@@ -184,11 +189,54 @@ void PatchFollowerHeads() {
     SafeWrite16((UInt32)0x00792A44, sizeof(FollowerHeads));
 }
 
+// CHooks = ClippyHooks as in dont expect the best
+
+struct unlockables
+{
+    char padding[0xC4];
+    bool unlocked;
+    bool dlc_start_unlocked;
+    char unk[0xA];
+};
+
+int* max_unlockables_counted = (int*)0x0145A29C;
+unlockables* Unlockables = (unlockables*)0x027DD018;
+typedef void __fastcall unlock_unlockablesT(unlockables* item,int unused);
+unlock_unlockablesT* unlock_item = (unlock_unlockablesT*)(0x6BBD50);
+
+void DLC_Unlocks() {
+    if (!*max_unlockables_counted)
+        return;
+    for (int i = 0; i < *max_unlockables_counted; i++) {
+        if (Unlockables[i].dlc_start_unlocked && !Unlockables[i].unlocked) {
+            unlock_item(&Unlockables[i],1);
+        }
+    }
+}
+SafetyHookInline sub_73B430T{};
+// Enter game?
+    // - Clippy if this causes issues, either change unsafe_call to call or will just have to do unlocks in a loop when in game
+int sub_73B430_hook() {
+    auto result = sub_73B430T.unsafe_call<int>();
+    DLC_Unlocks();
+    return result;
+}
+
+void CHooks_unlockable() {
+
+    static auto unlock_hack1 = safetyhook::create_mid(0x006BAD0D, [](SafetyHookContext& ctx) {
+        unlockables* current_unlockable = (unlockables*)ctx.ebp;
+        Game::xml::xtbl_get_bool("Purchase_Unlocked", &current_unlockable->dlc_start_unlocked, (xtbl_node*)ctx.ebx);
+        });
+    sub_73B430T = safetyhook::create_inline(0x73B430, &sub_73B430_hook);
+}
+
 void DLCSetup() {
 #if !RELOADED
     PatchFollowerHeads();
     static SafetyHookMid MissionFailure = safetyhook::create_mid(0x00A3994C, &MissionFStringFix);
     CHooks_cutscene();
+    CHooks_unlockable();
     WriteRelJump(0x005207FE, (UInt32)&AddInterfacePeg);
     static SafetyHookMid DLCVoice = safetyhook::create_mid(0x0047AD09, &LoadDLCPersonaVoice);
     IncreaseMemPool();
