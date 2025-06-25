@@ -63,6 +63,7 @@ namespace Game
 		extern read_and_parse_fileT read_and_parse_file;
 		extern xtbl_node* parse_table_node(const char* filename, int* override_xtbl_mempool);
 		extern uint32_t checksum(xtbl_node* root, uint32_t accumulator);
+		extern bool xtbl_get_bool(const char* item_name, bool* value_out, xtbl_node* branching);
 	}
 	namespace utils {
 		typedef uint32_t(__thiscall* crc_strT)(char* text);

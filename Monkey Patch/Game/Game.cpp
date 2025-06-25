@@ -213,13 +213,13 @@ namespace Game
 	SafetyHookMid xtbl_read_and_parse_file_hook{};
 	SafetyHookMid FixFrametimeVehicleSkids{};
 	XTBLScanStatus xtbl_scan_status = {};
-	void Init() { 
+	void Init() {
 		FixFrametimeVehicleSkids = safetyhook::create_mid(0xA9DDB3, [](SafetyHookContext& ctx) {
 			using namespace Timer;
 			float* wheel_force_local = (float*)(ctx.esp + 0xC);
 			if (*wheel_force_local == 0.f)
 				return;
-				*wheel_force_local *= Get16msOverHavokFrameTime_Fix();
+			*wheel_force_local *= Get16msOverHavokFrameTime_Fix();
 
 			});
 
@@ -519,8 +519,6 @@ namespace Game
 		}
 	}
 
-	// maybe expose read_and_parse_file for outside reloaded but currently I don't have a use for it in Juiced -- Clippy95
-#if RELOADED
 	namespace xml {
 		read_and_parse_fileT read_and_parse_file = (read_and_parse_fileT)0x00966720;
 
@@ -558,9 +556,27 @@ namespace Game
 				ret
 			}
 		}
+
+		__declspec(naked) bool xtbl_get_bool(const char* item_name, bool* value_out, xtbl_node* branching) {
+			__asm {
+				push ebp
+				mov ebp, esp
+				sub esp, __LOCAL_SIZE
+
+				mov ecx, item_name
+				push branching
+				push value_out
+				mov edx, 0xB750D0
+				call edx
+
+				mov esp, ebp
+				pop ebp
+				ret
+			}
+		}
+
 	}
 	namespace utils {
 		crc_strT str_to_hash = (crc_strT)0x00BDC9B0;
 	}
-#endif
 };
