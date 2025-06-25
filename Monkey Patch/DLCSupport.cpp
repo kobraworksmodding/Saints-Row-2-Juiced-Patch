@@ -36,7 +36,9 @@ char* vpp_list[] = {
 };
 
 void CHooks_cutscene() {
-
+    patchNop((void*)0x006D47A8, 5); // this removes the cutscene array sorting
+    // the idea is to have the DLC cutscenes get added at the very end
+    // it doesn't break the base VPP because all the base cutscenes will still be sorted alphabetically
     patchDWord((void*)(0x0051DAD0 + 2), (int)&vpp_list); // patch the new list into the startup function.
     patchByte((void*)(0x0051DB36 + 2), sizeof(vpp_list)); // patch number of VPPs it searches for.
     static auto chook_start = safetyhook::create_mid(0x6D46C4, [](SafetyHookContext& ctx) {
