@@ -9,6 +9,11 @@
 #include "Patcher/patch.h"
 #include "General/General.h" 
 #include "Game/Game.h"
+#include "UtilsGlobal.h"
+#include "FileLogger.h"
+using namespace General;
+
+bool DLCInstalled;
 
 typedef uintptr_t __cdecl load_packfileT(const char* name);
 load_packfileT* load_packfile = (load_packfileT*)(0xC0AE90);
@@ -99,6 +104,7 @@ void __declspec(naked) AddInterfacePeg()
         mov edx, 0x27716E4
         mov ecx, DLC
         call edi
+        mov DLCInstalled, al
         jmp jmp_continue
     }
 }
@@ -124,7 +130,7 @@ void MissionFStringFix(SafetyHookContext& ctx) {
     ctx.eax = (uintptr_t)RequestMFailedString((const char*)(ctx.esi));
     if (wcscmp((wchar_t*)ctx.eax, L"NULL") == 0) { // DLC ditches the mission_help.xtbl route so the LUA passes in MSN_ directly
         __asm pushad
-        ctx.eax = (uintptr_t)General::RequestString(nullptr, (const char*)(ctx.esi));
+        ctx.eax = (uintptr_t)RequestString(nullptr, (const char*)(ctx.esi));
         __asm popad
     }
     ctx.eip = 0x00A39959;
@@ -231,8 +237,46 @@ void CHooks_unlockable() {
     sub_73B430T = safetyhook::create_inline(0x73B430, &sub_73B430_hook);
 }
 
+void MissingDLCString(SafetyHookContext& ctx) {
+    if (!DLCInstalled && *(char*)(ctx.ebx + 0xA2) == 1) {
+        __asm pushad
+        wchar_t* Missing = General::RequestString(nullptr, "DLC_SAVE_TITLE_REPLACEMENT");
+        __asm popad
+        ctx.ecx = (uintptr_t)Missing;
+    }
+}
+
+void DontLoadTest(SafetyHookContext& ctx) {
+    int SaveArray = *(int*)0x25283A0;
+    int CurrentIndex = *(int*)0x25283B4;
+    if (!DLCInstalled && *(char*)(SaveArray + 172 * CurrentIndex + 0xA2) == 1) {
+        __asm pushad
+        wchar_t* Title = General::RequestString(nullptr, "SAVELOAD_ERROR");
+        wchar_t* Message = General::RequestString(nullptr, "DLC_CONTENT_NO_MATCH_ON_SAVE_LOAD");
+        const wchar_t* Options[] = { General::RequestString(nullptr, "CONTROL_OKAY") };
+        __asm popad
+        General::AddMessageCustomized(Title, Message, Options, 1);
+        ctx.eip = (uintptr_t)UtilsGlobal::RetZero;
+    }
+}
+
+void DLCSaveSetup() {
+    static SafetyHookMid MissingDLC = safetyhook::create_mid(0x00778313, &MissingDLCString);
+    static SafetyHookMid DontLoad = safetyhook::create_mid(0x00691E10, &DontLoadTest);
+
+    // hopefully won't override actual save data
+
+    static auto SaveFlag = safetyhook::create_mid(0x00695654, [](SafetyHookContext& ctx) {
+        if (DLCInstalled) ctx.ecx += 4;
+        });
+    static auto ReadFlag = safetyhook::create_mid(0x006958B4, [](SafetyHookContext& ctx) {
+        *(char*)(ctx.ebp + 0xA2) = (ctx.eax & 4) != 0;
+        });
+}
+
 void DLCSetup() {
 #if !RELOADED
+    DLCSaveSetup();
     PatchFollowerHeads();
     static SafetyHookMid MissionFailure = safetyhook::create_mid(0x00A3994C, &MissionFStringFix);
     CHooks_cutscene();
