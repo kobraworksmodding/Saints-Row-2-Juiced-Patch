@@ -1276,11 +1276,16 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	{
 		static int Continue = 0x007F46F0;
 		static int StringsLoad = 0x7F4780;
+		static const char* Patch = "patch"; // adding the TU3 strings from sr2_patch_text.vpp for DLC messages
 		static const char* DLC = "dlc"; // trying to load the DLC strings like this fine, they're parsed on init and the game won't have a stroke if it doesnt' find them
 
 		// loading our strings first which lets not only add new ones but "overwrite" original ones too
 
 		__asm {
+			push 0
+			mov ecx, Patch
+			call StringsLoad
+			add esp, 4
 			push 0
 			mov ecx, DLC
 			call StringsLoad
