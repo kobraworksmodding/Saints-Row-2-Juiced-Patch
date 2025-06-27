@@ -242,7 +242,7 @@ void CHooks_unlockable() {
 void MissingDLCString(SafetyHookContext& ctx) {
     if (!DLCInstalled && *(char*)(ctx.ebx + 0xA2) == 1) {
         __asm pushad
-        wchar_t* Missing = General::RequestString(nullptr, "DLC_SAVE_TITLE_REPLACEMENT");
+        wchar_t* Missing = RequestString(nullptr, "DLC_SAVE_TITLE_REPLACEMENT");
         __asm popad
         ctx.ecx = (uintptr_t)Missing;
     }
@@ -253,11 +253,11 @@ void DontLoadTest(SafetyHookContext& ctx) {
     int CurrentIndex = *(int*)0x25283B4;
     if (!DLCInstalled && *(char*)(SaveArray + 172 * CurrentIndex + 0xA2) == 1) {
         __asm pushad
-        wchar_t* Title = General::RequestString(nullptr, "SAVELOAD_ERROR");
-        wchar_t* Message = General::RequestString(nullptr, "DLC_CONTENT_NO_MATCH_ON_SAVE_LOAD");
-        const wchar_t* Options[] = { General::RequestString(nullptr, "CONTROL_OKAY") };
+        wchar_t* Title = RequestString(nullptr, "SAVELOAD_ERROR");
+        wchar_t* Message = RequestString(nullptr, "DLC_CONTENT_NO_MATCH_ON_SAVE_LOAD");
+        const wchar_t* Options[] = { RequestString(nullptr, "CONTROL_OKAY") };
         __asm popad
-        General::AddMessageCustomized(Title, Message, Options, 1);
+        AddMessageCustomized(Title, Message, Options, 1);
         ctx.eip = (uintptr_t)UtilsGlobal::RetZero;
     }
 }
@@ -267,9 +267,9 @@ void VehicleNotice(int Unk, int SelectedOption, int Action) {
         NoticesSeen = true; // the idea is to mimic the logic on console - they show up once per game session so if you reload a save w no DLC again it won't show them again
         NewGameAutoTut = false;
         __asm pushad
-        wchar_t* Title = General::RequestString(nullptr, "MENU_TITLE_NOTICE");
-        wchar_t* Message = General::RequestString(nullptr, "DLC_NEW_VEHICLES_AVAILABLE");
-        const wchar_t* Options[] = { General::RequestString(nullptr, "CONTROL_OKAY") };
+        wchar_t* Title = RequestString(nullptr, "MENU_TITLE_NOTICE");
+        wchar_t* Message = RequestString(nullptr, "DLC_NEW_VEHICLES_AVAILABLE");
+        const wchar_t* Options[] = { RequestString(nullptr, "CONTROL_OKAY") };
         __asm popad
         AddMessageCustomized(Title, Message, Options, 1);
     }
@@ -280,9 +280,9 @@ void ClothingNotice() {
     int CurrentIndex = *(int*)0x25283B4;
     if (!NoticesSeen && DLCInstalled && *(char*)(SaveArray + 172 * CurrentIndex + 0xA2) != 1) {
         __asm pushad
-        wchar_t* Title = General::RequestString(nullptr, "MENU_TITLE_NOTICE");
-        wchar_t* Message = General::RequestString(nullptr, "DLC_NEW_CLOTHING_AVAILABLE");
-        const wchar_t* Options[] = { General::RequestString(nullptr, "CONTROL_OKAY") };
+        wchar_t* Title = RequestString(nullptr, "MENU_TITLE_NOTICE");
+        wchar_t* Message = RequestString(nullptr, "DLC_NEW_CLOTHING_AVAILABLE");
+        const wchar_t* Options[] = { RequestString(nullptr, "CONTROL_OKAY") };
         __asm popad
         int Result = AddMessageCustomized(Title, Message, Options, 1);
         *(void**)(Result + 0x930) = &VehicleNotice; // definitely not what Volition did but the next notice is supposed to come right after so I think this is better
