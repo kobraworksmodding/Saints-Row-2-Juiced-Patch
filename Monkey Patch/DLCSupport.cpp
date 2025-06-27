@@ -184,7 +184,8 @@ void PatchFollowerHeads() {
         { "ui_hud_recruit_story_pierce", 0xFFFFFFFF },
         { "ui_hud_recruit_story_shaundi", 0xFFFFFFFF },
         { "ui_hud_recruit_story_jessica", 0xFFFFFFFF },
-        { "ui_hud_recruit_homie_tera_a", 0xFFFFFFFF }
+        { "ui_hud_recruit_homie_tera_a", 0xFFFFFFFF },
+        { "ui_hud_recruit_gryphon", 0xFFFFFFFF } // this one goes unused in the actual DLC due to an oversight most likely
     };
 
     auto pattern = hook::pattern("44 D8 E8 00");
