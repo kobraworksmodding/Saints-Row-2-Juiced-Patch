@@ -14,6 +14,8 @@
 using namespace General;
 
 bool DLCInstalled;
+bool NoticesSeen;
+bool NewGameAutoTut;
 
 typedef uintptr_t __cdecl load_packfileT(const char* name);
 load_packfileT* load_packfile = (load_packfileT*)(0xC0AE90);
@@ -260,9 +262,43 @@ void DontLoadTest(SafetyHookContext& ctx) {
     }
 }
 
+void VehicleNotice(int Unk, int SelectedOption, int Action) {
+    if (Action == 2 && SelectedOption == 0) {
+        NoticesSeen = true; // the idea is to mimic the logic on console - they show up once per game session so if you reload a save w no DLC again it won't show them again
+        NewGameAutoTut = false;
+        __asm pushad
+        wchar_t* Title = General::RequestString(nullptr, "MENU_TITLE_NOTICE");
+        wchar_t* Message = General::RequestString(nullptr, "DLC_NEW_VEHICLES_AVAILABLE");
+        const wchar_t* Options[] = { General::RequestString(nullptr, "CONTROL_OKAY") };
+        __asm popad
+        AddMessageCustomized(Title, Message, Options, 1);
+    }
+}
+
+void ClothingNotice() {
+    int SaveArray = *(int*)0x25283A0;
+    int CurrentIndex = *(int*)0x25283B4;
+    if (!NoticesSeen && DLCInstalled && *(char*)(SaveArray + 172 * CurrentIndex + 0xA2) != 1) {
+        __asm pushad
+        wchar_t* Title = General::RequestString(nullptr, "MENU_TITLE_NOTICE");
+        wchar_t* Message = General::RequestString(nullptr, "DLC_NEW_CLOTHING_AVAILABLE");
+        const wchar_t* Options[] = { General::RequestString(nullptr, "CONTROL_OKAY") };
+        __asm popad
+        int Result = AddMessageCustomized(Title, Message, Options, 1);
+        *(void**)(Result + 0x930) = &VehicleNotice; // definitely not what Volition did but the next notice is supposed to come right after so I think this is better
+        // pretty much just daisy chaining
+    }
+}
+
+void StartTutorialHook(unsigned int TutorialIndex, int a2, char a3, int a4, char a5) {
+    ((void(__cdecl*)(unsigned int, int, char, int, char))0x6B7260)(TutorialIndex, a2, a3, a4, a5);
+    if (TutorialIndex == 1) NewGameAutoTut = true;
+}
+
 void DLCSaveSetup() {
     static SafetyHookMid MissingDLC = safetyhook::create_mid(0x00778313, &MissingDLCString);
     static SafetyHookMid DontLoad = safetyhook::create_mid(0x00691E10, &DontLoadTest);
+    patchCall((void*)0x00A48636, StartTutorialHook);
 
     // hopefully won't override actual save data
 
@@ -271,6 +307,12 @@ void DLCSaveSetup() {
         });
     static auto ReadFlag = safetyhook::create_mid(0x006958B4, [](SafetyHookContext& ctx) {
         *(char*)(ctx.ebp + 0xA2) = (ctx.eax & 4) != 0;
+        });
+    static auto DLCNotices = safetyhook::create_mid(0x0073B7D7, [](SafetyHookContext& ctx) {
+        if (isMissionCompleted("tss01")) ClothingNotice(); // the mission check is to make it not instantly show up when you start a new game
+        });
+    static auto DLCNoticesNewGame = safetyhook::create_mid(0x006B6AD0, [](SafetyHookContext& ctx) {
+        if (NewGameAutoTut) ClothingNotice(); // post-tutorial like console
         });
 }
 
