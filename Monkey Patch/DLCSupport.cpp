@@ -227,14 +227,6 @@ void DLC_Unlocks() {
         }
     }
 }
-SafetyHookInline sub_73B430T{};
-// Enter game?
-    // - Clippy if this causes issues, either change unsafe_call to call or will just have to do unlocks in a loop when in game
-int sub_73B430_hook() {
-    auto result = sub_73B430T.unsafe_call<int>();
-    DLC_Unlocks();
-    return result;
-}
 
 void CHooks_unlockable() {
 
@@ -242,7 +234,6 @@ void CHooks_unlockable() {
         unlockables* current_unlockable = (unlockables*)ctx.ebp;
         Game::xml::xtbl_get_bool("Purchase_Unlocked", &current_unlockable->dlc_start_unlocked, (xtbl_node*)ctx.ebx);
         });
-    sub_73B430T = safetyhook::create_inline(0x73B430, &sub_73B430_hook);
 }
 
 void MissingDLCString(SafetyHookContext& ctx) {
@@ -316,7 +307,8 @@ void DLCSaveSetup() {
     static auto SaveContinueWorkaround = safetyhook::create_mid(0x00779270, [](SafetyHookContext& ctx) {
         if (!DLCInstalled && IsSaveDLC()) ctx.eip = 0x0077928E; // workaround to prevent softlocking if you have no DLC and you use the continue button to load a DLC save
         });
-    static auto DLCNotices = safetyhook::create_mid(0x0073B7D7, [](SafetyHookContext& ctx) {
+    static auto DLCNoticesAndUnlocks = safetyhook::create_mid(0x0073B7D7, [](SafetyHookContext& ctx) {
+        DLC_Unlocks();
         if (isMissionCompleted("tss01")) ClothingNotice(); // the mission check is to make it not instantly show up when you start a new game
         });
     static auto DLCNoticesNewGame = safetyhook::create_mid(0x006B6AD0, [](SafetyHookContext& ctx) {
