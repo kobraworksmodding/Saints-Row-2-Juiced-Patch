@@ -16,6 +16,12 @@ using namespace General;
 bool DLCInstalled;
 bool NoticesSeen;
 bool NewGameAutoTut;
+int& SaveArray = *(int*)0x25283A0;
+int& CurrentIndex = *(int*)0x25283B4;
+
+bool IsSaveDLC() {
+    return (*(char*)(SaveArray + 172 * CurrentIndex + 0xA2) != 0);
+}
 
 typedef uintptr_t __cdecl load_packfileT(const char* name);
 load_packfileT* load_packfile = (load_packfileT*)(0xC0AE90);
@@ -249,9 +255,7 @@ void MissingDLCString(SafetyHookContext& ctx) {
 }
 
 void DontLoadTest(SafetyHookContext& ctx) {
-    int SaveArray = *(int*)0x25283A0;
-    int CurrentIndex = *(int*)0x25283B4;
-    if (!DLCInstalled && *(char*)(SaveArray + 172 * CurrentIndex + 0xA2) == 1) {
+    if (!DLCInstalled && IsSaveDLC()) {
         __asm pushad
         wchar_t* Title = RequestString(nullptr, "SAVELOAD_ERROR");
         wchar_t* Message = RequestString(nullptr, "DLC_CONTENT_NO_MATCH_ON_SAVE_LOAD");
@@ -276,9 +280,7 @@ void VehicleNotice(int Unk, int SelectedOption, int Action) {
 }
 
 void ClothingNotice() {
-    int SaveArray = *(int*)0x25283A0;
-    int CurrentIndex = *(int*)0x25283B4;
-    if (!NoticesSeen && DLCInstalled && *(char*)(SaveArray + 172 * CurrentIndex + 0xA2) != 1) {
+    if (!NoticesSeen && DLCInstalled && !IsSaveDLC()) {
         __asm pushad
         wchar_t* Title = RequestString(nullptr, "MENU_TITLE_NOTICE");
         wchar_t* Message = RequestString(nullptr, "DLC_NEW_CLOTHING_AVAILABLE");
@@ -307,6 +309,12 @@ void DLCSaveSetup() {
         });
     static auto ReadFlag = safetyhook::create_mid(0x006958B4, [](SafetyHookContext& ctx) {
         *(char*)(ctx.ebp + 0xA2) = (ctx.eax & 4) != 0;
+        });
+    static auto UpdateContinueIndex = safetyhook::create_mid(0x007791BA, [](SafetyHookContext& ctx) {
+        *(int*)0x25283B4 = ctx.ebx; // the game does not update the current save index if you use the continue option in the main menu
+        });
+    static auto SaveContinueWorkaround = safetyhook::create_mid(0x00779270, [](SafetyHookContext& ctx) {
+        if (!DLCInstalled && IsSaveDLC()) ctx.eip = 0x0077928E; // workaround to prevent softlocking if you have no DLC and you use the continue button to load a DLC save
         });
     static auto DLCNotices = safetyhook::create_mid(0x0073B7D7, [](SafetyHookContext& ctx) {
         if (isMissionCompleted("tss01")) ClothingNotice(); // the mission check is to make it not instantly show up when you start a new game
