@@ -268,8 +268,10 @@ namespace GLua
 
     int __cdecl lua_func_helicopter_shoot_vehicle(lua_State* L)
     {
-        int AttackHeliP = GetVehFromLUA((lua_tostring(L, 1)));
-        int PlayerHeliP = GetVehFromLUA((lua_tostring(L, 2)));
+        LuaArgs Args(L);
+
+        int AttackHeliP = GetVehFromLUA((Args.get<const char*>()));
+        int PlayerHeliP = GetVehFromLUA((Args.get<const char*>()));
         if (AttackHeliP && PlayerHeliP) {
             vector3 PlayerHeliPos;
             UtilsGlobal::GetObjectXYZ(&PlayerHeliPos, PlayerHeliP);
@@ -281,12 +283,14 @@ namespace GLua
 
     int __cdecl lua_func_vehicle_teleport_character(lua_State* L)
     {
-        int Vehicle = GetVehFromLUA((lua_tostring(L, 1)));
-        int NPC = GetNPCFromLUA((lua_tostring(L, 2)));
+        LuaArgs Args(L);
 
-        float offset_f = (float)lua_tonumber(L, 3);
-        float offset_r = (float)lua_tonumber(L, 4);
-        float offset_u = (float)lua_tonumber(L, 5);
+        int Vehicle = GetVehFromLUA((Args.get<const char*>()));
+        int NPC = GetNPCFromLUA((Args.get<const char*>()));
+
+        float offset_f = Args.get<float>();
+        float offset_r = Args.get<float>();
+        float offset_u = Args.get<float>();
 
         if (Vehicle && NPC) {
             float* VehicleFloats = (float*)Vehicle;
@@ -578,6 +582,25 @@ namespace GLua
         register_custom_vint_functions(L);
     }
 
+    void register_custom_game_lua_functions() {
+        lua_State* L = *(lua_State**)0x0252983C;
+        luaL_Reg funcs_to_add[] = {
+            {"helicopter_shoot_vehicle", lua_func_helicopter_shoot_vehicle},
+            {"vehicle_teleport_character", lua_func_vehicle_teleport_character}
+        };
+
+        for (const auto& func : funcs_to_add) {
+            lua_pushstring(L, func.name);
+            lua_pushcfunction(L, func.lcfunc);
+            lua_settable(L, LUA_GLOBALSINDEX);
+        }
+    }
+
+    void __cdecl register_game_lua_funcs() {
+        ((void(*)())0xA4EE00)(); // the lua state is inside the function
+        register_custom_game_lua_functions();
+    }
+
     typedef char(__thiscall* cellphone_dial_numberT)(const char* number);
     cellphone_dial_numberT cellphone_dial_number = (cellphone_dial_numberT)0x788840;
 
@@ -593,13 +616,7 @@ namespace GLua
     }
     void Init() {
 //#if !RELOADED
-        static const char* HeliShootVehN = "helicopter_shoot_vehicle";
-        static const char* VehTPCharN = "vehicle_teleport_character";
         SafeWrite32(0x00A4EC84 + 4, (UInt32)&lua_func_never_die);
-        SafeWrite32(0x00A4EC5C + 4, (UInt32)HeliShootVehN);
-        SafeWrite32(0x00A4EC64 + 4, (UInt32)&lua_func_helicopter_shoot_vehicle);
-        SafeWrite32(0x00A4EC4C + 4, (UInt32)VehTPCharN);
-        SafeWrite32(0x00A4EC54 + 4, (UInt32)&lua_func_vehicle_teleport_character);
         Logger::TypedLog("CHN_DBG", "address of lua func 0x{:X} \n", reinterpret_cast<uintptr_t>(&lua_func_vint_get_avg_processing_time));
         //static SafetyHookInline memoryutils = safetyhook::create_inline(0x00B907F0, &lua_func_vint_get_avg_processing_time);
         SafeWrite32(0x00B91212 + 7, (UInt32)&lua_func_vint_get_avg_processing_time);
@@ -607,6 +624,7 @@ namespace GLua
 
         // THIS IS JUST FOR VINT HOOK 0xA4EE00 IF YOU WANT GAMEPLAY ones!
         //WriteRelCall(0xB91539, (uint32_t)&register_vint_lua_funcs);
+        WriteRelCall(0x00A23E4C, (uint32_t)&register_game_lua_funcs);
 //#endif
     }
 }
