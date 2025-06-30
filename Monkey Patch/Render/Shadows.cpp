@@ -229,8 +229,7 @@ namespace Shadows {
             InitializeShadowWorkerSync();
             SafeWrite32((0x00528539 + 1), (uint32_t)&shadow_job_thread);
             static auto add_shadow_job = safetyhook::create_mid(0x5285E2, [](SafetyHookContext& ctx) {
-                if (g_WorkAvailableEvent)
-                    SetEvent(g_WorkAvailableEvent);
+                SignalWorkAvailable();
                 });
         }
         Logger::TypedLog(CHN_DEBUG, "Patching amount of Shadow job threads to be %d\n", std::clamp((int)GameConfig::GetValue("Debug", "ShadowThreadCount", 2), 1, 64));
