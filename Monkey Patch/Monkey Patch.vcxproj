@@ -309,6 +309,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="Render\d3d9_hook.cpp" />
     <ClCompile Include="Render\Render2D.cpp" />
     <ClCompile Include="Render\Render3D.cpp" />
+    <ClCompile Include="Render\Shadows.cpp" />
     <ClCompile Include="RPCHandler.cpp" />
     <ClCompile Include="SafeWrite.cpp" />
     <ClCompile Include="stdafx.cpp" />
@@ -335,6 +336,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="Render\bitmap.h" />
     <ClInclude Include="Render\d3d9_hook.h" />
     <ClInclude Include="Render\Render2D.h" />
+    <ClInclude Include="Render\Shadows.h" />
     <ClInclude Include="Shaders.h" />
     <ClInclude Include="Ext\Hooking.Patterns.h" />
     <ClInclude Include="ext\inc\lua\lauxlib.h" />

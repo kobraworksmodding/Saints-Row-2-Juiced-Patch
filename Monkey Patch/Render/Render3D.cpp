@@ -22,7 +22,7 @@
 #include "Render2D.h"
 #include "../Game/CrashFixes.h"
 #include "../LUA/InGameConfig.h"
-
+#include "Shadows.h"
 import OptionsManager; 
 
 namespace Render3D
@@ -739,6 +739,7 @@ namespace Render3D
 	CPatch CIncreaseVehicleDespawnDistance = CPatch::SafeWrite32(0x0093BDF9,(uint32_t)&VehicleDespawnDistance);
 	void Init()
 	{
+		Shadows::Init();
 		if(GameConfig::GetValue("Graphics","RemovePixelationShader",0))
 		shaders_pc_hook();
 		OptionsManager::registerOption("Graphics", "ShaderOverride", &OVERRIDE_SHADER_LOD,1);
@@ -870,9 +871,6 @@ namespace Render3D
 		{  // Uncapping frames can lead to broken doors among other issues not yet noted.
 			Render3D::UncapFPS();
 		}
-
-		Logger::TypedLog(CHN_DEBUG, "Patching amount of Shadow job threads to be %d\n", std::clamp((int)GameConfig::GetValue("Debug", "ShadowThreadCount", 2), 1, 8));
-		patchDWord((void*)0x528524, std::clamp((int)GameConfig::GetValue("Debug", "ShadowThreadCount", 2), 1, 8));
 
 		// Removes all necessary sleep calls in the game, doubles fps and mitigates stutter, tanks CPU usage.
 		if (GameConfig::GetValue("Debug", "SleepHack", 0) == 1) // LOW patch
