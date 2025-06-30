@@ -110,9 +110,10 @@ float* flt_2612D10 = (float*)0x02612D10;
 LONG* shadows_jobs_working = (LONG*)0x25273E0;
 
 
-static HANDLE g_WorkAvailableEvent = NULL;
-static HANDLE g_ShutdownEvent = NULL;
+static std::mutex g_WorkMutex;
+static std::condition_variable g_WorkCondition;
 static volatile bool g_ShouldShutdown = false;
+static volatile bool g_HasWork = false;
 
 void __stdcall shadow_job_thread(LPVOID lpThreadParameter)
 {
@@ -142,49 +143,49 @@ void __stdcall shadow_job_thread(LPVOID lpThreadParameter)
     shadow_job_pool.size_2 = 819200;
     shadow_job_pool.size_3 = 819200;
 
-    HANDLE events[2] = { g_WorkAvailableEvent, g_ShutdownEvent };
-
     while (!g_ShouldShutdown)
     {
-        DWORD waitResult = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+        {
+            std::unique_lock<std::mutex> lock(g_WorkMutex);
+            g_WorkCondition.wait(lock, []() {
+                return g_ShouldShutdown || g_HasWork;
+                });
+        }
 
-        if (waitResult == WAIT_OBJECT_0 + 1)
+        if (g_ShouldShutdown)
         {
             break;
         }
 
-        if (waitResult == WAIT_OBJECT_0)
+        bool workProcessed = false;
+
+        EnterCriticalSection(shadow_jobs_lock);
+        if (*shadow_job_count > 0)
         {
-            // Process available work
-            bool workProcessed = false;
-
-            EnterCriticalSection(shadow_jobs_lock);
-            if (*shadow_job_count > 0)
+            indexing_1 = --(*shadow_job_count);
+            workProcessed = true;
+            if (*shadow_job_count == 0)
             {
-                indexing_1 = -- *shadow_job_count;
-                workProcessed = true;
-                if (*shadow_job_count == 0)
-                {
-                    ResetEvent(g_WorkAvailableEvent);
-                }
+                std::lock_guard<std::mutex> cvLock(g_WorkMutex);
+                g_HasWork = false;
             }
-            LeaveCriticalSection(shadow_jobs_lock);
+        }
+        LeaveCriticalSection(shadow_jobs_lock);
 
-            if (workProcessed)
-            {
-                u2 = shadow_job_list[indexing_1].u2;
-                shadow_job_class = &render_1[shadow_job_list[indexing_1].u1];
+        if (workProcessed)
+        {
+            u2 = shadow_job_list[indexing_1].u2;
+            shadow_job_class = &render_1[shadow_job_list[indexing_1].u1];
 
-                shadow_job_pool.vt->snapshot_pool_mark(&shadow_job_pool, 0);
-                shadow_job_class->renderable->table->do_shadows_calucation(
-                    shadow_job_class->renderable, 0,
-                    u2,
-                    &flt_2612D10[160 * u2],
-                    &shadow_job_pool);
-                shadow_job_pool.vt->set_pool_used_restore_to_mark(&shadow_job_pool, 0, -1);
+            shadow_job_pool.vt->snapshot_pool_mark(&shadow_job_pool, 0);
+            shadow_job_class->renderable->table->do_shadows_calucation(
+                shadow_job_class->renderable, 0,
+                u2,
+                &flt_2612D10[160 * u2],
+                &shadow_job_pool);
+            shadow_job_pool.vt->set_pool_used_restore_to_mark(&shadow_job_pool, 0, -1);
 
-                InterlockedExchangeAdd(shadows_jobs_working, -1);
-            }
+            InterlockedExchangeAdd(shadows_jobs_working, -1);
         }
     }
     if (v1)
@@ -196,31 +197,25 @@ void __stdcall shadow_job_thread(LPVOID lpThreadParameter)
 
 void SignalWorkAvailable()
 {
-    if (g_WorkAvailableEvent)
     {
-        SetEvent(g_WorkAvailableEvent);
+        std::lock_guard<std::mutex> lock(g_WorkMutex);
+        g_HasWork = true;
     }
+    g_WorkCondition.notify_all();
 }
 void InitializeShadowWorkerSync()
 {
-    if (!g_WorkAvailableEvent)
-    {
-        g_WorkAvailableEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-    }
-
-    if (!g_ShutdownEvent)
-    {
-        g_ShutdownEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-    }
+    g_ShouldShutdown = false;
+    g_HasWork = false;
 }
 
 void ShutdownShadowWorkers()
 {
-    g_ShouldShutdown = true;
-    if (g_ShutdownEvent)
     {
-        SetEvent(g_ShutdownEvent);
+        std::lock_guard<std::mutex> lock(g_WorkMutex);
+        g_ShouldShutdown = true;
     }
+    g_WorkCondition.notify_all();
 }
 
 namespace Shadows {
@@ -238,18 +233,7 @@ namespace Shadows {
 
     void Cleanup() {
         ShutdownShadowWorkers();
-        Sleep(100);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        if (g_WorkAvailableEvent)
-        {
-            CloseHandle(g_WorkAvailableEvent);
-            g_WorkAvailableEvent = NULL;
-        }
-
-        if (g_ShutdownEvent)
-        {
-            CloseHandle(g_ShutdownEvent);
-            g_ShutdownEvent = NULL;
-        }
     }
 }
