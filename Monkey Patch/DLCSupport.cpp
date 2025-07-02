@@ -317,8 +317,64 @@ void DLCSaveSetup() {
         });
 }
 
+void AppendFollowerHeads()
+{
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x00792AC7, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x790A10)(); // we call it once and then when it resumes the game will call it again
+            IsDLC = true;
+        });
+
+    static auto AddCount = safetyhook::create_mid(0x00790A63, [](SafetyHookContext& ctx)
+        {
+            *(int*)0x2528514 += (int)ctx.eax;
+            ctx.eip = 0x00790A68;
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x00790A19, [](SafetyHookContext& ctx)
+        {
+            static const char* name = "dlc_follower_heads.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00E1E190);
+            ctx.eip = 0x00790A1E;
+        });
+
+    static auto IncreaseAlloc = safetyhook::create_mid(0x00790A73, [](SafetyHookContext& ctx)
+        {
+            ctx.eax = ctx.eax + 40; // love it or hate it, this is exactly what they did in the DLC - why calculate it! HARDCODE IT!!!
+        });
+    static auto SkipAlloc = safetyhook::create_mid(0x00790A71, [](SafetyHookContext& ctx)
+        {
+            if (IsDLC) ctx.eip = 0x00790A8B;
+        });
+}
+
+void AppendHomies() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x005202A7, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x7863E0)();
+            IsDLC = true;
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x007863F4, [](SafetyHookContext& ctx)
+        {
+            static const char* name = "dlc_homies.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00E1D5AC);
+            ctx.eip = 0x007863F9;
+        });
+}
+
+void AppendSetup() {
+    AppendFollowerHeads();
+    AppendHomies();
+}
+
 void DLCSetup() {
 #if !RELOADED
+    AppendSetup();
     DLCSaveSetup();
     PatchFollowerHeads();
     static SafetyHookMid MissionFailure = safetyhook::create_mid(0x00A3994C, &MissionFStringFix);
