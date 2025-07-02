@@ -435,12 +435,46 @@ void AppendVoice() {
         });
 }
 
+__declspec(naked) void LoadBitmapTable(const char* FileName) {
+    __asm {
+        push ebp
+        mov ebp, esp
+        sub esp, __LOCAL_SIZE
+
+        mov eax, FileName
+        mov edx, 0xB87540
+        call edx
+
+        mov esp, ebp
+        pop ebp
+        ret
+    }
+}
+
+void AppendBitmaps() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x0051F648, [](SafetyHookContext& ctx)
+        {
+            LoadBitmapTable((const char*)(ctx.esp + 24));
+            IsDLC = true;
+            LoadBitmapTable("dlc_bitmap_sheets.xtbl");
+            ctx.eip = 0x0051F651;
+        });
+
+    static auto Skip = safetyhook::create_mid(0x00B875B0, [](SafetyHookContext& ctx)
+        {
+            if (IsDLC) ctx.eip = 0x00B875C4;
+        });
+}
+
 void AppendSetup() {
     AppendFollowerHeads();
     AppendHomies();
     AppendUnlockables();
     AppendFoley();
     AppendVoice();
+    AppendBitmaps();
 }
 
 void DLCSetup() {
@@ -454,5 +488,9 @@ void DLCSetup() {
     WriteRelJump(0x005207FE, (UInt32)&AddInterfacePeg);
     static SafetyHookMid DLCVoice = safetyhook::create_mid(0x0047AD09, &LoadDLCPersonaVoice);
     IncreaseMemPool();
+    static auto PlaceholderStringFix = safetyhook::create_mid(0x00B92C0F, [](SafetyHookContext& ctx) {
+        if (ctx.eax)
+            if (*(short*)ctx.eax == 0x0001) ctx.ebp = ctx.eax + 2; // eax + 2 so we can get the image tags displaying in the outfits section of the wardrobe like in TU3
+        });
 #endif
 }
