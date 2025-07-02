@@ -317,6 +317,8 @@ void DLCSaveSetup() {
         });
 }
 
+// Tervel - the appending/merging could be better but I had issues with doing regular lambdas and using writerelcall, otherwise the name swaps & calls could work without mid hooks
+
 void AppendFollowerHeads()
 {
     static bool IsDLC = false;
@@ -367,9 +369,78 @@ void AppendHomies() {
         });
 }
 
+void AppendUnlockables() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x006BCBBF, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x006BC920)();
+            IsDLC = true;
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x006BC928, [](SafetyHookContext& ctx)
+        {
+            static const char* name = "dlc_unlockables.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00E0C434);
+            ctx.eip = 0x006BC937;
+        });
+}
+
+void AppendFoley() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x0046514F, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x00479990)();
+            IsDLC = true;
+        });
+
+    static auto SkipMemset = safetyhook::create_mid(0x00479993, [](SafetyHookContext& ctx)
+        {
+            if (IsDLC) ctx.eip = 0x004799A7;
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x004799AC, [](SafetyHookContext& ctx)
+        {
+            static const char* name = "dlc_foley.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00DD87BC);
+            ctx.eip = 0x004799B1;
+        });
+}
+
+void AppendVoice() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x00465154, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x0047AE30)();
+            IsDLC = true;
+        });
+
+    static auto SkipMemset = safetyhook::create_mid(0x0047AE33, [](SafetyHookContext& ctx)
+        {
+            if (IsDLC) ctx.eip = 0x0047AE47;
+        });
+
+    static auto SkipTable = safetyhook::create_mid(0x0047AEC5, [](SafetyHookContext& ctx)
+        {
+            if (IsDLC) ctx.eip = 0x0047AF63;
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x0047AE49, [](SafetyHookContext& ctx)
+        {
+            static const char* name = "dlc_voice.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00DD886C);
+            ctx.eip = 0x0047AE4E;
+        });
+}
+
 void AppendSetup() {
     AppendFollowerHeads();
     AppendHomies();
+    AppendUnlockables();
+    AppendFoley();
+    AppendVoice();
 }
 
 void DLCSetup() {
