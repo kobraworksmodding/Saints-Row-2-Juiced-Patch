@@ -13,6 +13,19 @@
 #include "FileLogger.h"
 using namespace General;
 
+#define MAX_VEH 168
+
+struct VehiclePadding {
+    unsigned char Padding[2000];
+};
+
+struct PostLoadPadding {
+    unsigned char Padding[12];
+};
+
+VehiclePadding* VehArr;
+PostLoadPadding* PostLoadArr;
+
 bool DLCInstalled;
 bool NoticesSeen;
 bool NewGameAutoTut;
@@ -235,6 +248,62 @@ void CHooks_unlockable() {
         unlockables* current_unlockable = (unlockables*)ctx.ebp;
         Game::xml::xtbl_get_bool("Purchase_Unlocked", &current_unlockable->dlc_start_unlocked, (xtbl_node*)ctx.ebx);
         });
+}
+
+void ReplaceVehArray() {
+    *(float*)0x2527B8C = 0.04;
+    UInt32 OriginalBase = 0x02FAD1F8;
+    UInt32 NewBase = (UInt32)VehArr;
+    int NumThreads = std::thread::hardware_concurrency();
+    int OffsetsPerThread = sizeof(VehiclePadding) / NumThreads;
+    std::vector<std::thread> Threads;
+
+    for (int T = 0; T < NumThreads; T++) {
+        int StartOffset = T * OffsetsPerThread;
+        int EndOffset = (T == NumThreads - 1) ? sizeof(VehiclePadding) : (T + 1) * OffsetsPerThread;
+
+        Threads.emplace_back([StartOffset, EndOffset, OriginalBase, NewBase] {
+            for (int Offset = StartOffset; Offset < EndOffset; Offset++) {
+                UInt32 TargetAddr = OriginalBase + Offset;
+                char PatternStr[32];
+                sprintf(PatternStr, "%02X %02X %02X %02X",
+                    TargetAddr & 0xFF, (TargetAddr >> 8) & 0xFF,
+                    (TargetAddr >> 16) & 0xFF, (TargetAddr >> 24) & 0xFF);
+
+                auto Pattern = hook::pattern(PatternStr);
+                if (!Pattern.empty()) {
+                    Pattern.for_each_result([Offset, NewBase](hook::pattern_match Match) {
+                        SafeWrite32((UInt32)Match.get<void*>(), NewBase + Offset);
+                        });
+                }
+            }
+            });
+    }
+
+    for (auto& Thread : Threads) {
+        Thread.join();
+    }
+    ((void(*)())0x0051F700)();
+}
+
+
+void IncreaseVehLimits() {
+
+    VehArr = (VehiclePadding*)malloc(sizeof(VehiclePadding) * MAX_VEH);
+    PostLoadArr = (PostLoadPadding*)malloc(sizeof(PostLoadPadding) * MAX_VEH);
+
+    int Stack = (MAX_VEH * 65) + 8;
+
+    SafeWrite32(0x00AEE5F0 + 1, Stack); // 4 patches to increase the local filename buffer's size
+    SafeWrite32(0x00AEE601 + 3, Stack - 4);
+    SafeWrite32(0x00AEE8FD + 3, Stack + 12);
+    SafeWrite32(0x00AEE90F + 2, Stack);
+
+    SafeWrite32(0x00DB2055 + 1, MAX_VEH - 1); // index for the post load init loop & the new array
+    SafeWrite32(0x00DB2050 + 1, (UInt32)PostLoadArr);
+    SafeWrite32(0x00ADAEB2 + 3, (UInt32)PostLoadArr);
+
+    WriteRelCall(0x0052081B, (UInt32)ReplaceVehArray); // swap out all the original veh array references
 }
 
 void MissingDLCString(SafetyHookContext& ctx) {
@@ -488,6 +557,7 @@ void DLCSetup() {
     WriteRelJump(0x005207FE, (UInt32)&AddInterfacePeg);
     static SafetyHookMid DLCVoice = safetyhook::create_mid(0x0047AD09, &LoadDLCPersonaVoice);
     IncreaseMemPool();
+    IncreaseVehLimits();
     static auto PlaceholderStringFix = safetyhook::create_mid(0x00B92C0F, [](SafetyHookContext& ctx) {
         if (ctx.eax)
             if (*(short*)ctx.eax == 0x0001) ctx.ebp = ctx.eax + 2; // eax + 2 so we can get the image tags displaying in the outfits section of the wardrobe like in TU3
