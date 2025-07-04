@@ -537,6 +537,25 @@ void AppendBitmaps() {
         });
 }
 
+void AppendVehicleCameras() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x00AEE8A2, [](SafetyHookContext& ctx)
+        {
+            static const char* name = "dlc_vehicle_cameras.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00E48100);
+            ctx.eip = 0x00AEE8A7;
+        });
+
+    static auto Reset = safetyhook::create_mid(0x00AEE8C9, [](SafetyHookContext& ctx)
+        {
+            if (!IsDLC) {
+                IsDLC = true;
+                ctx.eip = 0x0000AEE8A0;
+            }
+        });
+}
+
 void AppendSetup() {
     AppendFollowerHeads();
     AppendHomies();
@@ -544,6 +563,7 @@ void AppendSetup() {
     AppendFoley();
     AppendVoice();
     AppendBitmaps();
+    AppendVehicleCameras();
 }
 
 void DLCSetup() {
