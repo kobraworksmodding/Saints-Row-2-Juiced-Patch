@@ -577,7 +577,7 @@ void DLCSetup() {
     WriteRelJump(0x005207FE, (UInt32)&AddInterfacePeg);
     static SafetyHookMid DLCVoice = safetyhook::create_mid(0x0047AD09, &LoadDLCPersonaVoice);
     IncreaseMemPool();
-    IncreaseVehLimits();
+    //IncreaseVehLimits();
     static auto PlaceholderStringFix = safetyhook::create_mid(0x00B92C0F, [](SafetyHookContext& ctx) {
         if (ctx.eax)
             if (*(short*)ctx.eax == 0x0001) ctx.ebp = ctx.eax + 2; // eax + 2 so we can get the image tags displaying in the outfits section of the wardrobe like in TU3
