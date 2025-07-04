@@ -244,6 +244,26 @@ namespace General {
 		return ((bool(__thiscall*)(const char*))0x006A6E50)(Name);
 	}
 
+	void LoadCTS(const char* Name) {
+		((void(__cdecl*)(const char*))0xA24AB0)(Name);
+	}
+
+	__declspec(naked) void LoadBitmapTable(const char* FileName) {
+		__asm {
+			push ebp
+			mov ebp, esp
+			sub esp, __LOCAL_SIZE
+
+			mov eax, FileName
+			mov edx, 0xB87540
+			call edx
+
+			mov esp, ebp
+			pop ebp
+			ret
+		}
+	}
+
 	void IdleFix(bool Hide) {
 
 		patchByte((BYTE*)0x004F81EE, Hide ? 0x00 : 0x32);
