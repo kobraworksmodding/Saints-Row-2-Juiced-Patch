@@ -406,8 +406,8 @@ void AppendFollowerHeads()
 
     static auto ChangeTable = safetyhook::create_mid(0x00790A19, [](SafetyHookContext& ctx)
         {
-            static const char* name = "dlc_follower_heads.xtbl";
-            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00E1E190);
+            static const char* Name = "dlc_follower_heads.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E1E190);
             ctx.eip = 0x00790A1E;
         });
 
@@ -432,8 +432,8 @@ void AppendHomies() {
 
     static auto ChangeTable = safetyhook::create_mid(0x007863F4, [](SafetyHookContext& ctx)
         {
-            static const char* name = "dlc_homies.xtbl";
-            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00E1D5AC);
+            static const char* Name = "dlc_homies.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E1D5AC);
             ctx.eip = 0x007863F9;
         });
 }
@@ -449,8 +449,8 @@ void AppendUnlockables() {
 
     static auto ChangeTable = safetyhook::create_mid(0x006BC928, [](SafetyHookContext& ctx)
         {
-            static const char* name = "dlc_unlockables.xtbl";
-            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00E0C434);
+            static const char* Name = "dlc_unlockables.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E0C434);
             ctx.eip = 0x006BC937;
         });
 }
@@ -471,8 +471,8 @@ void AppendFoley() {
 
     static auto ChangeTable = safetyhook::create_mid(0x004799AC, [](SafetyHookContext& ctx)
         {
-            static const char* name = "dlc_foley.xtbl";
-            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00DD87BC);
+            static const char* Name = "dlc_foley.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00DD87BC);
             ctx.eip = 0x004799B1;
         });
 }
@@ -498,26 +498,10 @@ void AppendVoice() {
 
     static auto ChangeTable = safetyhook::create_mid(0x0047AE49, [](SafetyHookContext& ctx)
         {
-            static const char* name = "dlc_voice.xtbl";
-            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00DD886C);
+            static const char* Name = "dlc_voice.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00DD886C);
             ctx.eip = 0x0047AE4E;
         });
-}
-
-__declspec(naked) void LoadBitmapTable(const char* FileName) {
-    __asm {
-        push ebp
-        mov ebp, esp
-        sub esp, __LOCAL_SIZE
-
-        mov eax, FileName
-        mov edx, 0xB87540
-        call edx
-
-        mov esp, ebp
-        pop ebp
-        ret
-    }
 }
 
 void AppendBitmaps() {
@@ -542,8 +526,8 @@ void AppendVehicleCameras() {
 
     static auto Append = safetyhook::create_mid(0x00AEE8A2, [](SafetyHookContext& ctx)
         {
-            static const char* name = "dlc_vehicle_cameras.xtbl";
-            ctx.eax = (IsDLC ? (uintptr_t)name : (uintptr_t)0x00E48100);
+            static const char* Name = "dlc_vehicle_cameras.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E48100);
             ctx.eip = 0x00AEE8A7;
         });
 
@@ -556,6 +540,38 @@ void AppendVehicleCameras() {
         });
 }
 
+void AppendCityMissions() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x005207EF, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x00696C70)();
+            IsDLC = true;
+        });
+
+    static auto Append2 = safetyhook::create_mid(0x006A410E, [](SafetyHookContext& ctx)
+        {
+            static const char* Name = "_missions_dlc.xtbl";
+            SafeWrite32(0x0069F13D + 1, 0x00E00E6C);
+            ((void(*)())0x0069F120)();
+            SafeWrite32(0x0069F13D + 1, (UInt32)Name);
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x00696C8A, [](SafetyHookContext& ctx)
+        {
+            static const char* Name = "sr2_city_missions_dlc.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E00850);
+            ctx.eip = 0x00696C99;
+        });
+
+}
+
+void AppendCityCTS(const char* LevelName) {
+    LoadCTS(LevelName);
+    // only try loading the dlc one in sr2_city, other levels include mp maps
+    if (_stricmp(LevelName, "sr2_city") == 0) LoadCTS("dlc_mission_start_sr2_city");
+}
+
 void AppendSetup() {
     AppendFollowerHeads();
     AppendHomies();
@@ -564,6 +580,8 @@ void AppendSetup() {
     AppendVoice();
     AppendBitmaps();
     AppendVehicleCameras();
+    AppendCityMissions();
+    WriteRelCall(0x00A248A3, (UInt32)AppendCityCTS);
 }
 
 void DLCSetup() {
