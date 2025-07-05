@@ -554,13 +554,21 @@ void AppendCityMissions() {
             static const char* Name = "_missions_dlc.xtbl";
             SafeWrite32(0x0069F13D + 1, 0x00E00E6C);
             ((void(*)())0x0069F120)();
+            IsDLC = true;
             SafeWrite32(0x0069F13D + 1, (UInt32)Name);
+        });
+
+    static auto SkipLoop = safetyhook::create_mid(0x0069F9C2, [](SafetyHookContext& ctx)
+        {
+            if (!IsDLC) ctx.eip = 0x69FA38; // the idea is to avoid the loop at the end of the function on the first call
+            else IsDLC = false;
         });
 
     static auto ChangeTable = safetyhook::create_mid(0x00696C8A, [](SafetyHookContext& ctx)
         {
             static const char* Name = "sr2_city_missions_dlc.xtbl";
             ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E00850);
+            IsDLC = false;
             ctx.eip = 0x00696C99;
         });
 
@@ -584,6 +592,27 @@ void AppendSetup() {
     WriteRelCall(0x00A248A3, (UInt32)AppendCityCTS);
 }
 
+void UnlockEmergentMissionForDLC()
+{
+    if ((*(char*)0xFA239B & 0x10) == 0)
+    {
+        __asm pushad
+        wchar_t* String = RequestString(nullptr, "EMERGENT_MISSION_UNLOCKED");
+        __asm popad
+        AddInfoMessage(String, (int*)0xEAD1B8);
+        unsigned int PhoneHash = Game::utils::str_to_hash((char*)"5552628");
+        UnlockPhoneNumber(&PhoneHash, 1);
+    }
+
+    ((void(__cdecl*)(bool))0x6A8FF0)(0); // no idea why but they kept the mission unlock outside the if statement
+}
+
+void DLCGlobals() { // this was done in LUA because they assumed they'd add more globals probably but due to how small it is it's not worth the loading hassle
+    ((void(*)())0x54C220)();
+    if (!isMissionCompleted("tss04") || isMissionCompleted("em01") || isMissionUnlocked("em01")) return;
+    UnlockEmergentMissionForDLC();
+}
+
 void DLCSetup() {
 #if !RELOADED
     AppendSetup();
@@ -593,6 +622,7 @@ void DLCSetup() {
     CHooks_cutscene();
     CHooks_unlockable();
     WriteRelJump(0x005207FE, (UInt32)&AddInterfacePeg);
+    WriteRelCall(0x0068D167, (UInt32)DLCGlobals);
     static SafetyHookMid DLCVoice = safetyhook::create_mid(0x0047AD09, &LoadDLCPersonaVoice);
     IncreaseMemPool();
     //IncreaseVehLimits();
