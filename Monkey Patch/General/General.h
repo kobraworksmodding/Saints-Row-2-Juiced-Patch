@@ -35,10 +35,13 @@ namespace General {
 	int GetNPCWeaponType(int NPCPointer);
 	bool isCoop();
 	bool isMissionCompleted(const char* Name);
+	bool isMissionUnlocked(const char* Name);
 	void LoadCTS(const char* Name);
 	void LoadBitmapTable(const char* FileName);
 	int AddMessage(const wchar_t* Title, const wchar_t* Desc);
 	int AddMessageCustomized(const wchar_t* Title, const wchar_t* Desc, const wchar_t* Options[], int OptionCount);
+	void AddInfoMessage(wchar_t* String, int* Data);
+	void UnlockPhoneNumber(unsigned int* StringHash, bool Unk);
 	bool VintGetGlobalBool(const char* Name);
 	bool VintSetGlobalBool(const char* Name, bool Value);
 	bool IsInSaveMenu();

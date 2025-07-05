@@ -244,8 +244,20 @@ namespace General {
 		return ((bool(__thiscall*)(const char*))0x006A6E50)(Name);
 	}
 
+	bool isMissionUnlocked(const char* Name) {
+		return ((bool(__thiscall*)(const char*))0x006A6F50)(Name);
+	}
+
 	void LoadCTS(const char* Name) {
 		((void(__cdecl*)(const char*))0xA24AB0)(Name);
+	}
+
+	void AddInfoMessage(wchar_t* String, int* Data) {
+		((void(__cdecl*)(wchar_t*, int*))0x79C150)(String, Data);
+	}
+
+	void UnlockPhoneNumber(unsigned int* StringHash, bool Unk) {
+		((void(__thiscall*)(unsigned int*, bool))0x789590)(StringHash, Unk);
 	}
 
 	__declspec(naked) void LoadBitmapTable(const char* FileName) {
