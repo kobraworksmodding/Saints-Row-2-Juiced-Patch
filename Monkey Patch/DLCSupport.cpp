@@ -580,12 +580,42 @@ void AppendCityCTS(const char* LevelName) {
     if (_stricmp(LevelName, "sr2_city") == 0) LoadCTS("dlc_mission_start_sr2_city");
 }
 
+void AppendAudioBanks() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x004819E9, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x00481450)();
+            IsDLC = true;
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x00481469, [](SafetyHookContext& ctx)
+        {
+            static const char* Name = "dlc_audio_bank.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00DD88F0);
+            ctx.eip = 0x0048146E;
+        });
+
+    static auto Increase = safetyhook::create_mid(0x00481486, [](SafetyHookContext& ctx)
+        {
+            ctx.eax += 1; // this is pretty crap but there only other "correct" way to do it would be to get the bank count from the table..
+        });
+
+    static auto SkipAlloc = safetyhook::create_mid(0x00481475, [](SafetyHookContext& ctx)
+        {
+            if (!ctx.eax) ctx.eip = 0x00481690; // vanilla game never assumes the file can be missing so without this it crashes if it can't find it
+            else
+                if (IsDLC) ctx.eip = 0x004814EF;
+        });
+}
+
 void AppendSetup() {
     AppendFollowerHeads();
     AppendHomies();
     AppendUnlockables();
     AppendFoley();
     AppendVoice();
+    AppendAudioBanks();
     AppendBitmaps();
     AppendVehicleCameras();
     AppendCityMissions();
