@@ -286,7 +286,6 @@ void ReplaceVehArray() {
     ((void(*)())0x0051F700)();
 }
 
-
 void IncreaseVehLimits() {
 
     VehArr = (VehiclePadding*)malloc(sizeof(VehiclePadding) * MAX_VEH);
@@ -417,7 +416,10 @@ void AppendFollowerHeads()
         });
     static auto SkipAlloc = safetyhook::create_mid(0x00790A71, [](SafetyHookContext& ctx)
         {
-            if (IsDLC) ctx.eip = 0x00790A8B;
+            if (IsDLC) {
+                IsDLC = false;
+                ctx.eip = 0x00790A8B;
+            }
         });
 }
 
@@ -434,6 +436,7 @@ void AppendHomies() {
         {
             static const char* Name = "dlc_homies.xtbl";
             ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E1D5AC);
+            IsDLC = false;
             ctx.eip = 0x007863F9;
         });
 }
@@ -451,6 +454,7 @@ void AppendUnlockables() {
         {
             static const char* Name = "dlc_unlockables.xtbl";
             ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E0C434);
+            IsDLC = false;
             ctx.eip = 0x006BC937;
         });
 }
@@ -473,6 +477,7 @@ void AppendFoley() {
         {
             static const char* Name = "dlc_foley.xtbl";
             ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00DD87BC);
+            IsDLC = false;
             ctx.eip = 0x004799B1;
         });
 }
@@ -493,7 +498,10 @@ void AppendVoice() {
 
     static auto SkipTable = safetyhook::create_mid(0x0047AEC5, [](SafetyHookContext& ctx)
         {
-            if (IsDLC) ctx.eip = 0x0047AF63;
+            if (IsDLC) {
+                IsDLC = false;
+                ctx.eip = 0x0047AF63;
+            }
         });
 
     static auto ChangeTable = safetyhook::create_mid(0x0047AE49, [](SafetyHookContext& ctx)
@@ -517,7 +525,10 @@ void AppendBitmaps() {
 
     static auto Skip = safetyhook::create_mid(0x00B875B0, [](SafetyHookContext& ctx)
         {
-            if (IsDLC) ctx.eip = 0x00B875C4;
+            if (IsDLC) {
+                IsDLC = false;
+                ctx.eip = 0x00B875C4;
+            }
         });
 }
 
@@ -537,6 +548,11 @@ void AppendVehicleCameras() {
                 IsDLC = true;
                 ctx.eip = 0x0000AEE8A0;
             }
+        });
+
+    static auto Reset2 = safetyhook::create_mid(0x00AEE8D6, [](SafetyHookContext& ctx)
+        {
+            if (IsDLC) IsDLC = false;
         });
 }
 
@@ -605,7 +621,28 @@ void AppendAudioBanks() {
         {
             if (!ctx.eax) ctx.eip = 0x00481690; // vanilla game never assumes the file can be missing so without this it crashes if it can't find it
             else
-                if (IsDLC) ctx.eip = 0x004814EF;
+                if (IsDLC) {
+                    IsDLC = false;
+                    ctx.eip = 0x004814EF;
+                }
+        });
+}
+
+void AppendItemsInventory() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x0092F5AC, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x0091CF50)();
+            IsDLC = true;
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x0091CF59, [](SafetyHookContext& ctx)
+        {
+            static const char* Name = "dlc_items_inventory.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E38D24);
+            IsDLC = false;
+            ctx.eip = 0x0091CF63;
         });
 }
 
@@ -619,6 +656,7 @@ void AppendSetup() {
     AppendBitmaps();
     AppendVehicleCameras();
     AppendCityMissions();
+    AppendItemsInventory();
     WriteRelCall(0x00A248A3, (UInt32)AppendCityCTS);
 }
 
