@@ -660,6 +660,25 @@ void AppendCustomizationItems() {
             static const char* Name = "customization_items_dlc.xtbl";
             ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E20E64);
             ctx.eip = 0x007BBA61;
+            IsDLC = false;
+        });
+}
+
+void AppendCustomizationOutfits() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x007BF9E2, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x7BE4B0)();
+            IsDLC = true;
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x007BE4B9, [](SafetyHookContext& ctx)
+        {
+            static const char* Name = "customization_outfits_dlc.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E20E80);
+            ctx.eip = 0x007BE4BE;
+            IsDLC = false;
         });
 }
 
@@ -675,6 +694,7 @@ void AppendSetup() {
     AppendCityMissions();
     AppendItemsInventory();
     AppendCustomizationItems();
+    AppendCustomizationOutfits();
     WriteRelCall(0x00A248A3, (UInt32)AppendCityCTS);
 }
 
