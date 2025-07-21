@@ -663,7 +663,7 @@ void AppendCustomizationItems() {
 
     static auto ChangeTable = safetyhook::create_mid(0x007BBA5C, [](SafetyHookContext& ctx)
         {
-            static const char* Name = "customization_items_dlc.xtbl";
+            static const char* Name = "dlc_customization_items.xtbl";
             ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E20E64);
             ctx.eip = 0x007BBA61;
             IsDLC = false;
@@ -681,7 +681,7 @@ void AppendCustomizationOutfits() {
 
     static auto ChangeTable = safetyhook::create_mid(0x007BE4B9, [](SafetyHookContext& ctx)
         {
-            static const char* Name = "customization_outfits_dlc.xtbl";
+            static const char* Name = "dlc_customization_outfits.xtbl";
             ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E20E80);
             ctx.eip = 0x007BE4BE;
             IsDLC = false;
@@ -703,7 +703,7 @@ void AppendCustomizationStores() {
 
     static auto ChangeTable = safetyhook::create_mid(0x007BD259, [](SafetyHookContext& ctx)
         {
-            static const char* Name = "customization_stores_dlc.xtbl";
+            static const char* Name = "dlc_customization_stores.xtbl";
             ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E20E9C);
             ctx.eip = 0x007BD25E;
         });
