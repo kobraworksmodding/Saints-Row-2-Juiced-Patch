@@ -12,6 +12,7 @@
 #include "UtilsGlobal.h"
 #include "FileLogger.h"
 using namespace General;
+using namespace Game::xml;
 
 #define MAX_VEH 168
 
@@ -21,6 +22,11 @@ struct VehiclePadding {
 
 struct PostLoadPadding {
     unsigned char Padding[12];
+};
+
+struct Store {
+    const char* Name;
+    char Padding[0xD20];
 };
 
 VehiclePadding* VehArr;
@@ -682,6 +688,56 @@ void AppendCustomizationOutfits() {
         });
 }
 
+void AppendCustomizationStores() {
+    static bool IsDLC = false;
+    #define STORE_COUNT *(int*)0x25288F0
+
+    patchNop((void*)0x007BD95C, 10); // removing some of the init
+    patchNop((void*)0x007BD5C2, 6);
+
+    static auto Append = safetyhook::create_mid(0x007BF9E7, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x7BD250)();
+            IsDLC = true;
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x007BD259, [](SafetyHookContext& ctx)
+        {
+            static const char* Name = "customization_stores_dlc.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E20E9C);
+            ctx.eip = 0x007BD25E;
+        });
+
+    static auto SkipAlloc = safetyhook::create_mid(0x007BD273, [](SafetyHookContext& ctx)
+        {
+            if (IsDLC) {
+                ctx.esp += 4;
+                *(uintptr_t*)(ctx.esp + 68) = STORE_COUNT;
+                ctx.eax = (uintptr_t)0x25288EC;
+                ctx.eip = 0x007BD2AC;
+            }
+        });
+
+    static auto StoreSkip = safetyhook::create_mid(0x007BD2E7, [](SafetyHookContext& ctx) // re-parsing the base store data needs to be avoided, so we just handle the store items directly
+        {
+            if (IsDLC) {
+                *(uintptr_t*)(ctx.esp + 60) = STORE_COUNT;
+                Store* StoreArray = *(Store**)0x25288EC;
+                for (int i = 0; i < STORE_COUNT; i++)
+                {
+                    const char* StoreName = xtbl_get_req_string_ref(*(xtbl_node**)(ctx.esp + 24), "Name");
+                    if (StoreName && strcmp(StoreArray[i].Name, StoreName) == 0)
+                    {
+                        ctx.ebp = (uintptr_t)&StoreArray[i];
+                        *(uintptr_t*)(ctx.esp + 20) = (uintptr_t)&StoreArray[i];
+                        break;
+                    }
+                }
+                ctx.eip = 0x007BD553;
+            }
+        });
+}
+
 void AppendSetup() {
     AppendFollowerHeads();
     AppendHomies();
@@ -695,6 +751,7 @@ void AppendSetup() {
     AppendItemsInventory();
     AppendCustomizationItems();
     AppendCustomizationOutfits();
+    AppendCustomizationStores();
     WriteRelCall(0x00A248A3, (UInt32)AppendCityCTS);
 }
 
