@@ -779,6 +779,38 @@ namespace Game
 			}
 		}
 
+		xtbl_node* xtbl_find(const xtbl_node* element, const char* tag)
+		{
+			xtbl_node* elements;
+
+			if (!element)
+				return 0;
+			elements = element->elements;
+			if (!elements)
+				return 0;
+			while (stricmp(elements->name, tag))
+			{
+				elements = elements->next;
+				if (!elements)
+					return 0;
+			}
+			return elements;
+		}
+
+		const char* xtbl_get_req_string_ref(xtbl_node* root, const char* attribute_name)
+		{
+			xtbl_node* node;
+
+			if (!root)
+				return 0;
+			if (!attribute_name)
+				return root->text;
+			node = xtbl_find(root, attribute_name);
+			if (node)
+				return node->text;
+			else
+				return 0;
+		}
 	}
 	namespace utils {
 		crc_strT str_to_hash = (crc_strT)0x00BDC9B0;
