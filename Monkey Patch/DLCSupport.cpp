@@ -72,6 +72,30 @@ char* vpp_list[] = {
     const_cast<char*>("patch.vpp"),
 };
 
+void __declspec(naked) ParseCharacterTable(const char* Extension, int Callback1, const char* TableName, int Callback2, int Pointer) {
+    __asm {
+        push ebp
+        mov ebp, esp
+        sub esp, __LOCAL_SIZE
+
+        push Pointer
+        push Callback2
+        push TableName
+        mov edx, Callback1
+        mov ecx, Extension
+        mov ebx, 0x4A4870
+        call ebx
+
+        mov esp, ebp
+        pop ebp
+        ret
+    }
+}
+
+void __cdecl CountCallback(int CharacterCount, int* Unk) {
+    ((void(__cdecl*)(int, int*))0x4A3B40)(CharacterCount + 15, Unk); // in TU3 this is exactly what they did, hardcoded additional 15 character allocations
+}
+
 void CHooks_cutscene() {
     patchNop((void*)0x006D47A8, 5); // this removes the cutscene array sorting
     // the idea is to have the DLC cutscenes get added at the very end
@@ -739,6 +763,45 @@ void AppendCustomizationStores() {
         });
 }
 
+void AppendCharacterPresets() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x00520082, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x4A5DE0)();
+            IsDLC = true;
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x004A5DFE, [](SafetyHookContext& ctx)
+        {
+            static const char* Name = "dlc_character_presets.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00DDAB84);
+            ctx.eip = 0x004A5E03;
+            IsDLC = false;
+        });
+}
+
+void AppendCharacterMorphs() {
+    int Callback = 0x6DFD80;
+    ParseCharacterTable("cha", Callback, "character.xtbl", 0, 0);
+    ParseCharacterTable("cha", Callback, "dlc_character.xtbl", 0, 0);
+}
+
+void AppendCharacter() {
+    SafeWrite32(0x004A3F95, (UInt32)&CountCallback);
+    patchCall((void*)0x006E08C1, AppendCharacterMorphs); // morphs are parsed from the same table
+    static auto Append = safetyhook::create_mid(0x004A3FB7, [](SafetyHookContext& ctx)
+        {
+            ParseCharacterTable("cha", 0x4A3760, "dlc_character.xtbl", 0, *(uintptr_t*)(ctx.esp + 8));
+        });
+}
+
+void AppendCharacterDesign() {
+    int Callback = 0x4A3B90;
+    ParseCharacterTable("des", Callback, "character_design.xtbl", 0, 0);
+    ParseCharacterTable("des", Callback, "dlc_character_design.xtbl", 0, 0);
+}
+
 void AppendSetup() {
     AppendFollowerHeads();
     AppendHomies();
@@ -753,6 +816,9 @@ void AppendSetup() {
     AppendCustomizationItems();
     AppendCustomizationOutfits();
     AppendCustomizationStores();
+    AppendCharacter();
+    AppendCharacterPresets();
+    patchCall((void*)0x004A3FCB, AppendCharacterDesign);
     WriteRelCall(0x00A248A3, (UInt32)AppendCityCTS);
 }
 
