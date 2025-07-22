@@ -694,6 +694,7 @@ void AppendCustomizationStores() {
 
     patchNop((void*)0x007BD95C, 10); // removing some of the init
     patchNop((void*)0x007BD5C2, 6);
+    SafeWrite32(0x007BD62A, 510); // doubled store item limit - this is necessary, otherwise you have too many tattoos in Rusty's Needle for example and past the limit they won't register
 
     static auto Append = safetyhook::create_mid(0x007BF9E7, [](SafetyHookContext& ctx)
         {
