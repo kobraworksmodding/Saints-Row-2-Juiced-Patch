@@ -1,4 +1,4 @@
-// DLCSupport.cpp (Tervel, Clippy95)
+﻿// DLCSupport.cpp (Tervel, Clippy95)
 // --------------------
 // Created: 15/06/2025
 
@@ -15,6 +15,7 @@ using namespace General;
 using namespace Game::xml;
 
 #define MAX_VEH 168
+#define STORE_ITEM_LIMIT 512
 
 struct VehiclePadding {
     unsigned char Padding[2000];
@@ -26,7 +27,7 @@ struct PostLoadPadding {
 
 struct Store {
     const char* Name;
-    char Padding[0xD20];
+    char Padding[292 + (12 * STORE_ITEM_LIMIT - 4)]; // 73 * 4 = 292 for the offset of the clothing items + (12 * size - 4)
 };
 
 VehiclePadding* VehArr;
@@ -715,10 +716,16 @@ void AppendCustomizationOutfits() {
 void AppendCustomizationStores() {
     static bool IsDLC = false;
     #define STORE_COUNT *(int*)0x25288F0
-
     patchNop((void*)0x007BD95C, 10); // removing some of the init
     patchNop((void*)0x007BD5C2, 6);
-    SafeWrite32(0x007BD62A, 510); // doubled store item limit - this is necessary, otherwise you have too many tattoos in Rusty's Needle for example and past the limit they won't register
+
+    int Size = sizeof(Store);
+    SafeWrite32(0x007BD62A, STORE_ITEM_LIMIT - 1); // doubled store item limit - this is necessary, otherwise you have too many tattoos in Rusty's Needle for example and past the limit they won't register
+    SafeWrite32(0x007BD281, Size); // patches to change the indexing of the array to be * new size
+    SafeWrite32(0x007BD2F1, Size);
+    SafeWrite32(0x007C4F42, Size);
+    SafeWrite32(0x007BFB00, Size);
+    SafeWrite32(0x007C4F95, Size);
 
     static auto Append = safetyhook::create_mid(0x007BF9E7, [](SafetyHookContext& ctx)
         {
