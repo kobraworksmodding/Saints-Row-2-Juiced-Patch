@@ -31,7 +31,9 @@ namespace Debug
 	};
 
 	void PatchDatafiles() {
-		if (CreateCache((char*)"loose.txt"))
+		bool LooseCache = CreateCache((char*)"loose.txt");
+		bool DLCCache = ScanDLCDir("DLC");
+		if (LooseCache || DLCCache)
 		{
 			CacheConflicts();
 			patchJmp((void*)0x0051DAC0, (void*)hook_loose_files);						// Allow the loading of loose files
@@ -39,7 +41,7 @@ namespace Debug
 			static SafetyHookMid InsertHashes = safetyhook::create_mid(0x00C0A8E0, &InsertFileHashes);
 		}
 		else
-			Logger::TypedLog(CHN_DLL, "Create loose file cache failed.\n");
+			Logger::TypedLog(CHN_DLL, "Create loose file cache failed for both loose.txt & DLC.\n");
 	}
 	constexpr auto MEGABYTE = 1048576.0;
 	int UseDynamicRenderDistance = false;
