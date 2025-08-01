@@ -46,6 +46,7 @@ struct FILEDATA
 };
 
 bool CreateCache(char* DirListFile);
+bool ScanDLCDir(const char* Dir);
 void DumpCache();
 void CacheConflicts();
 void ClearDirCache();

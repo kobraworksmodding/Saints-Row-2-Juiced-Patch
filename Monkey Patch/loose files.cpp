@@ -12,47 +12,47 @@ std::string loaded_files_to_render;
 
 bool __stdcall raw_get_file_info_by_name_inner_wrapped(FILE_INFO* file_info, char* filename, BOOL override_check)
 {
-	FILE* file_stream;
-	_int64 file_size;
-	
+    FILE* file_stream;
+    _int64 file_size;
+
 	FILEDATA *file_data;
 
-	if (override_check)
-		return(false);
+    if (override_check)
+        return(false);
 
-	file_data = TranslateFilePathData(filename);
+    file_data = TranslateFilePathData(filename);
 
-	if (file_data == NULL)
-	{
-		file_stream = fopen(filename, "rb");
-		if (!file_stream)
-			return(false);
+    if (file_data == NULL)
+    {
+        file_stream = fopen(filename, "rb");
+        if (!file_stream)
+            return(false);
 
-		strncpy_s(file_info->filename, filename, sizeof(file_info->filename));
+        strncpy_s(file_info->filename, filename, sizeof(file_info->filename));
 		
-		if (fseek(file_stream, 0, SEEK_END))
-			return(false);
+        if (fseek(file_stream, 0, SEEK_END))
+            return(false);
 
-		file_size = _ftelli64(file_stream);
+        file_size = _ftelli64(file_stream);
 
-		if (file_size >= 0xFFFFFFFF)
-			return(false);
+        if (file_size >= 0xFFFFFFFF)
+            return(false);
 
-		file_info->size = file_size;
-		fclose(file_stream);
-	}
-	else
-	{
-		//Logger::TypedLog(CHN_DLL, "Redirecting file %s to %s (%u)\n", filename, file_data->FilePath.c_str(), file_data->file_size);
-		strncpy_s(file_info->filename, file_data->FilePath.c_str(), sizeof(file_info->filename));
-		file_info->size = file_data->file_size;
-	}
+        file_info->size = file_size;
+        fclose(file_stream);
+    }
+    else
+    {
+        //Logger::TypedLog(CHN_DLL, "Redirecting file %s to %s (%u)\n", filename, file_data->FilePath.c_str(), file_data->file_size);
+        strncpy_s(file_info->filename, file_data->FilePath.c_str(), sizeof(file_info->filename));
+        file_info->size = file_data->file_size;
+    }
 
-	file_info->filename[255] = 0;
-	file_info->access_method = 0;
-	file_info->access_flag = 0;
+    file_info->filename[255] = 0;
+    file_info->access_method = 0;
+    file_info->access_flag = 0;
 
-	return(true);
+    return(true);
 }
 
 
@@ -132,7 +132,7 @@ bool __declspec(naked) hook_raw_get_file_info_by_name(char* filename, BOOL overr
 		call raw_get_file_info_by_name_inner_cb
 		pop	ebp
 		ret	0
-	}
+    }
 }
 
 // Changes the order in which files are searched. With loose files being the highest priority instead of the lowest.
@@ -140,41 +140,105 @@ bool __declspec(naked) hook_raw_get_file_info_by_name(char* filename, BOOL overr
 _declspec(naked) void hook_loose_files()
 {
 	__asm {
-		mov cl, 1
-		mov edi, 1
-		xor esi, esi
-		mov eax, 0x00BFDB50
-		call eax
-		mov cl, 1
-		xor edi, edi
-		mov esi, 0
-		mov eax, 0x00BFDB50
-		call eax
-		mov eax, 0x0051DAC9
-		jmp eax
-	}
+        mov cl, 1
+        mov edi, 1
+        xor esi, esi
+        mov eax, 0x00BFDB50
+        call eax
+        mov cl, 1
+        xor edi, edi
+        mov esi, 0
+        mov eax, 0x00BFDB50
+        call eax
+        mov eax, 0x0051DAC9
+        jmp eax
+    }
 }
 
 
 
 std::map<std::string, FILEDATA> DirCache;
+std::map<std::string, FILEDATA> DLCCache;
 
 std::string StringToUpper(std::string strToConvert)
 {
-	std::transform(strToConvert.begin(), strToConvert.end(), strToConvert.begin(), ::toupper);
+    std::transform(strToConvert.begin(), strToConvert.end(), strToConvert.begin(), ::toupper);
 
-	return(strToConvert);
+    return(strToConvert);
 }
 
 std::string StringToLower(std::string strToConvert)
 {
-	std::transform(strToConvert.begin(), strToConvert.end(), strToConvert.begin(), ::tolower);
+    std::transform(strToConvert.begin(), strToConvert.end(), strToConvert.begin(), ::tolower);
+    return(strToConvert);
+}
 
-	return(strToConvert);
+// Recursively scan DLC directory
+
+bool ScanDLCDir(const char* Directory)
+{
+    char CurrentSearch[MAX_PATH];
+    char PathBuffer[MAX_PATH];
+    WIN32_FIND_DATAA FileData;
+    HANDLE SearchDirHandle;
+
+    strcpy_s(CurrentSearch, MAX_PATH, Directory);
+    PathAppendA(CurrentSearch, "*");
+    SearchDirHandle = FindFirstFileA(CurrentSearch, &FileData);
+
+    if (SearchDirHandle == INVALID_HANDLE_VALUE)
+    {
+        Logger::TypedLog(CHN_DLL, "Unable to find directory %s\n", Directory);
+        return false;
+    }
+
+    else {
+        Logger::TypedLog(CHN_DLL, "Adding contents of directory %s\n", Directory);
+    }
+
+    do
+    {
+        if (!strcmp(FileData.cFileName, ".") || !strcmp(FileData.cFileName, ".."))
+            continue;
+
+        strcpy_s(PathBuffer, MAX_PATH, Directory);
+        PathAppendA(PathBuffer, FileData.cFileName);
+
+        if (FileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        {
+            ScanDLCDir(PathBuffer);
+            continue;
+        }
+
+        char* Extension = PathFindExtensionA(FileData.cFileName);
+        if (!_stricmp(Extension, ".exe") || !_stricmp(Extension, ".dll") || !_stricmp(Extension, ".bbsave"))
+            continue;
+
+        std::string SearchFileName(FileData.cFileName);
+        SearchFileName = StringToLower(SearchFileName);
+
+        std::map<std::string, FILEDATA>::iterator itDLCCache;
+        itDLCCache = DLCCache.find(SearchFileName);
+        if (itDLCCache == DLCCache.end())
+        {
+            FILEDATA PushData;
+            std::string FullFindFilePath(PathBuffer);
+            PushData.FilePath = FullFindFilePath;
+            PushData.file_size = FileData.nFileSizeLow;
+            PushData.MultiDef = false;
+            DLCCache[SearchFileName] = PushData;
+        }
+        else
+            itDLCCache->second.MultiDef = true;
+
+    } while (FindNextFileA(SearchDirHandle, &FileData));
+
+    FindClose(SearchDirHandle);
+    return true;
 }
 
 bool CreateCache(char* DirListFile)
-{
+{   
 	FILE *DirListHandle = fopen(DirListFile, "r");
 	if (!DirListHandle)
 	{
@@ -184,42 +248,42 @@ bool CreateCache(char* DirListFile)
 
 	Logger::TypedLog(CHN_DLL, "Creating cache directory data from {}\n", DirListFile);
 
-	char CurrentDirectory[MAX_PATH];
-	char CurrentSearch[MAX_PATH];
+    char CurrentDirectory[MAX_PATH];
+    char CurrentSearch[MAX_PATH];
 
-	char PathBuffer[MAX_PATH];
+    char PathBuffer[MAX_PATH];
 
-	bool SearchRootVPP = false;
+    bool SearchRootVPP = false;
 
-	while (fgets(CurrentDirectory, MAX_PATH, DirListHandle) != NULL)
-	{
-		
-		// Remove any control codes from the end of the file path string
-		for (int i = strlen(CurrentDirectory) - 1; i >= 0; i--)
-		{
-			if (CurrentDirectory[i] > 31)
-				break;
-			CurrentDirectory[i] = 0;
-		}
+    while (fgets(CurrentDirectory, MAX_PATH, DirListHandle) != NULL)
+    {
 
-		// If the line is blank or a comment (#) then skip
+        // Remove any control codes from the end of the file path string
+        for (int i = strlen(CurrentDirectory) - 1; i >= 0; i--)
+        {
+            if (CurrentDirectory[i] > 31)
+                break;
+            CurrentDirectory[i] = 0;
+        }
+
+        // If the line is blank or a comment (#) then skip
 
 		if (!CurrentDirectory[0] || CurrentDirectory[0]=='#')
-			continue;
+            continue;
 
-		// If the file path is "." then set it to the current directory otherwise FindFirstFileA will search the root directory
-		// of your drive.
+        // If the file path is "." then set it to the current directory otherwise FindFirstFileA will search the root directory
+        // of your drive.
 
-		//if (!strcmp(CurrentDirectory, "."))
-			//GetCurrentDirectoryA(MAX_PATH, CurrentDirectory);
+        //if (!strcmp(CurrentDirectory, "."))
+        //GetCurrentDirectoryA(MAX_PATH, CurrentDirectory);
 
-		HANDLE SearchDirHandle;
-		WIN32_FIND_DATAA FileData;
+        HANDLE SearchDirHandle;
+        WIN32_FIND_DATAA FileData;
 
-		strcpy_s(CurrentSearch, MAX_PATH, CurrentDirectory);
-		PathAppendA(CurrentSearch, "*");
+        strcpy_s(CurrentSearch, MAX_PATH, CurrentDirectory);
+        PathAppendA(CurrentSearch, "*");
 
-		SearchDirHandle = FindFirstFileA(CurrentSearch, &FileData);
+        SearchDirHandle = FindFirstFileA(CurrentSearch, &FileData);
 
 		// Check for errors searching the directory
 		if (SearchDirHandle == INVALID_HANDLE_VALUE)
@@ -236,44 +300,44 @@ bool CreateCache(char* DirListFile)
 			if (!strcmp(FileData.cFileName, ".") || !strcmp(FileData.cFileName, "..") || (FileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 				continue;
 
-			char* Extension = PathFindExtensionA(FileData.cFileName);
+            char* Extension = PathFindExtensionA(FileData.cFileName);
 
-			// Blacklist of file extensions to skip
+            // Blacklist of file extensions to skip
 			if (!_stricmp(Extension, ".exe") || !_stricmp(Extension, ".dll") || !_stricmp(Extension,".bbsave"))
-				continue;
+                continue;
 
-			std::string SearchFileName(FileData.cFileName);
-			SearchFileName = StringToLower(SearchFileName);
+            std::string SearchFileName(FileData.cFileName);
+            SearchFileName = StringToLower(SearchFileName);
 			std::map<std::string, FILEDATA>::iterator itDirCache;
 
-			itDirCache = DirCache.find(SearchFileName);
+            itDirCache = DirCache.find(SearchFileName);
 
-			if (itDirCache == DirCache.end())
-			{
-				FILEDATA PushData;
-				strcpy_s(PathBuffer, MAX_PATH, CurrentDirectory);
-				PathAppendA(PathBuffer, FileData.cFileName);
-				std::string FullFindFilePath(PathBuffer);
-				PushData.FilePath = FullFindFilePath;
-				PushData.file_size = FileData.nFileSizeLow;
-				PushData.MultiDef = false;
-				DirCache[SearchFileName] = PushData;
-			}
-			else
-				itDirCache->second.MultiDef = true;
+            if (itDirCache == DirCache.end())
+            {
+                    FILEDATA PushData;
+                    strcpy_s(PathBuffer, MAX_PATH, CurrentDirectory);
+                    PathAppendA(PathBuffer, FileData.cFileName);
+                    std::string FullFindFilePath(PathBuffer);
+                    PushData.FilePath = FullFindFilePath;
+                    PushData.file_size = FileData.nFileSizeLow;
+                    PushData.MultiDef = false;
+                    DirCache[SearchFileName] = PushData;
+                }
+            else
+                itDirCache->second.MultiDef = true;
 
-		} while (FindNextFileA(SearchDirHandle, &FileData));
+        } while (FindNextFileA(SearchDirHandle, &FileData));
 
-		FindClose(SearchDirHandle);
-	}
+        FindClose(SearchDirHandle);
+    }
 
-	if (DirListHandle)
-		fclose(DirListHandle);
-	
-	if (DirCache.empty())
-		return(false);
+    if (DirListHandle)
+        fclose(DirListHandle);
 
-	return(true);
+    if (DirCache.empty())
+        return(false);
+
+    return(true);
 }
 
 void DumpCache()
@@ -292,8 +356,8 @@ void DumpCache()
 
 void CacheConflicts()
 {
-	bool has_conflicts = false;
-	Logger::TypedLog(CHN_DEBUG, "Possible loose file conflicts:\n");
+    bool has_conflicts = false;
+    Logger::TypedLog(CHN_DEBUG, "Possible loose file conflicts:\n");
 	for(std::map<std::string, FILEDATA>::iterator DumpRecord = DirCache.begin(), itr_end = DirCache.end(); DumpRecord != itr_end; ++DumpRecord)
 		if (DumpRecord->second.MultiDef)
 		{
@@ -302,115 +366,118 @@ void CacheConflicts()
 		}
 	if (!has_conflicts)
 		Logger::TypedLog(CHN_DEBUG, "    none\n");
-	return;
+    return;
 }
 
 const char* TranslateFilePath(const char* FilePath)
 {
-	std::string FilePathString(FilePath);
-	FilePathString = StringToLower(FilePathString);
+    std::string FilePathString(FilePath);
+    FilePathString = StringToLower(FilePathString);
 
+    std::map<std::string, FILEDATA>::iterator FoundFilePath;
+    FoundFilePath = DirCache.find(FilePathString);
+    if (FoundFilePath != DirCache.end())
+        return(FoundFilePath->second.FilePath.c_str());
 
-	std::map<std::string, FILEDATA>::iterator FoundFilePath;
+    FoundFilePath = DLCCache.find(FilePathString);
+    if (FoundFilePath != DLCCache.end())
+        return(FoundFilePath->second.FilePath.c_str());
 
-	FoundFilePath = DirCache.find(FilePathString);
-
-	if (FoundFilePath == DirCache.end())
-		return(NULL);
-
-	return(FoundFilePath->second.FilePath.c_str());
+    return(NULL);
 }
 
 FILEDATA* TranslateFilePathData(const char* FilePath)
 {
-	std::string FilePathString(FilePath);
-	FilePathString = StringToLower(FilePathString);
+    std::string FilePathString(FilePath);
+    FilePathString = StringToLower(FilePathString);
 
+    std::map<std::string, FILEDATA>::iterator FoundFilePath;
+    FoundFilePath = DirCache.find(FilePathString);
+    if (FoundFilePath != DirCache.end())
+        return(&FoundFilePath->second);
 
-	std::map<std::string, FILEDATA>::iterator FoundFilePath;
+    FoundFilePath = DLCCache.find(FilePathString);
+    if (FoundFilePath != DLCCache.end())
+        return(&FoundFilePath->second);
 
-	FoundFilePath = DirCache.find(FilePathString);
-
-	if (FoundFilePath == DirCache.end())
-		return(NULL);
-
-	return(&FoundFilePath->second);
+    return(NULL);
 }
 
 void ClearDirCache()
 {
-	DirCache.clear();
-	return;
+    DirCache.clear();
+    DLCCache.clear();
+    return;
 }
 
 struct VPPFile
 {
-	const char* FileName;
-	const char* Extension;
+    const char* FileName;
+    const char* Extension;
 };
 
 struct VPPFileData
 {
-	unsigned int Hash;
-	VPPFile* Data;
+    unsigned int Hash;
+    VPPFile* Data;
 };
 
 int FileHashExists(const char* FileName) {
-	return ((int(__cdecl*)(const char*))0xC0A3B0)(FileName);
+    return ((int(__cdecl*)(const char*))0xC0A3B0)(FileName);
 }
 
 void AddFileHash(VPPFileData* Struct) {
-	((void(__cdecl*)(VPPFileData*))0xC0A350)(Struct);
+    ((void(__cdecl*)(VPPFileData*))0xC0A350)(Struct);
 }
 
 int GetStringHash(const char* String) {
-	return ((int(__fastcall*)(int, const char*))0xBF2BD0)(0, String);
+    return ((int(__fastcall*)(int, const char*))0xBF2BD0)(0, String);
+}
+
+void ProcessCacheHashes(std::map<std::string, FILEDATA>& Cache) {
+
+    const char* validExts[] = {
+        ".cmesh_pc", ".g_cmesh_pc", ".peg_pc", ".g_peg_pc", ".pcm_pc", ".sim_pc", ".cvtf", ".morph_pc",
+        ".car_pc", ".g_car_pc", ".smesh_pc", ".g_smesh_pc", ".chunk_pc", ".g_chunk_pc", ".effect_pc",
+        ".g_effect_pc"
+    };
+
+    int extCount = sizeof(validExts) / sizeof(validExts[0]);
+
+    for (std::map<std::string, FILEDATA>::iterator it = Cache.begin(), it_end = Cache.end(); it != it_end; ++it) {
+        const std::string& filename = it->first;
+        const char* matchedExt = NULL;
+        for (int i = 0; i < extCount; i++) {
+            const char* ext = validExts[i];
+            size_t extLen = strlen(ext);
+            if (filename.length() >= extLen) {
+                if (filename.compare(filename.length() - extLen, extLen, ext) == 0) {
+                    matchedExt = ext;
+                    break;
+                }
+            }
+        }
+        if (!matchedExt)
+            continue;
+
+        if (!FileHashExists(filename.c_str())) {
+            int Hash = GetStringHash(filename.c_str());
+            std::string BaseName = filename.substr(0, filename.length() - strlen(matchedExt));
+            std::string Extension = (matchedExt[0] == '.') ? matchedExt + 1 : matchedExt;
+            char* tempBase = _strdup(BaseName.c_str());
+            char* tempExt = _strdup(Extension.c_str());
+            VPPFile* Entry = new VPPFile();
+            Entry->FileName = tempBase;
+            Entry->Extension = tempExt;
+            VPPFileData* Data = new VPPFileData();
+            Data->Hash = Hash;
+            Data->Data = Entry;
+            AddFileHash(Data);
+        }
+    }
 }
 
 void InsertFileHashes(SafetyHookContext& ctx) {
-	const char* validExts[] = {
-		".cmesh_pc", ".g_cmesh_pc", ".peg_pc", ".g_peg_pc", ".pcm_pc", ".sim_pc", ".cvtf", ".morph_pc",
-		".car_pc", ".g_car_pc", ".smesh_pc", ".g_smesh_pc", ".chunk_pc", ".g_chunk_pc", ".effect_pc",
-		".g_effect_pc"
-	};
-
-	for (std::map<std::string, FILEDATA>::iterator it = DirCache.begin(), it_end = DirCache.end(); it != it_end; ++it) {
-		const std::string& filename = it->first;
-		const char* matchedExt = NULL;
-
-		for (int i = 0; i < sizeof(validExts) / sizeof(validExts[0]); i++) {
-			const char* ext = validExts[i];
-			size_t extLen = strlen(ext);
-
-			if (filename.length() >= extLen) {
-				if (filename.compare(filename.length() - extLen, extLen, ext) == 0) {
-					matchedExt = ext;
-					break;
-				}
-			}
-		}
-
-		if (!matchedExt)
-			continue;
-
-		if (!FileHashExists(filename.c_str())) {
-			int Hash = GetStringHash(filename.c_str());
-			std::string BaseName = filename.substr(0, filename.length() - strlen(matchedExt));
-			std::string Extension = (matchedExt[0] == '.') ? matchedExt + 1 : matchedExt;
-
-			char* tempBase = _strdup(BaseName.c_str());
-			char* tempExt = _strdup(Extension.c_str());
-
-			VPPFile* Entry = new VPPFile();
-			Entry->FileName = tempBase;
-			Entry->Extension = tempExt;
-
-			VPPFileData* Data = new VPPFileData();
-			Data->Hash = Hash;
-			Data->Data = Entry;
-
-			AddFileHash(Data);
-		}
-	}
+    ProcessCacheHashes(DirCache);
+    ProcessCacheHashes(DLCCache);
 }
-
