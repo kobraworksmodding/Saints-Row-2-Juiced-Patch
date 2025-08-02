@@ -612,6 +612,40 @@ void AppendBitmaps() {
         });
 }
 
+void ParseVehicle(xtbl_node* TablePointer, int Unk) {
+    ((void(__cdecl*)(xtbl_node*, int))0xAEDA10)(TablePointer, Unk);
+}
+
+void ParseVehicleTable(const char* TableName)
+{
+    xtbl_node* Vehicle;
+    char Buffer[32 * 65];
+    int Count = 0;
+
+    xtbl_node* Node = parse_table_node(TableName, 0);
+    for (Vehicle = xtbl_find(Node, "Vehicle"); Vehicle; Vehicle = xtbl_find_next(Node, Vehicle, "Vehicle")) {
+        const char* Name = xtbl_get_req_string_ref(Vehicle, "Name");
+        char* New = &Buffer[Count * 65];
+        Count++;
+        sprintf(New, "%s_veh.xtbl", Name);
+    }
+
+    xtbl_free();
+
+    for (int i = 0; i < Count; i++) {
+        Node = parse_table_node(&Buffer[i * 65], 0);
+        ParseVehicle(Node, -1);
+        xtbl_free();
+    }
+}
+
+void AppendVehicles() {
+    static auto ParseTable = safetyhook::create_mid(0x00AEE85E, [](SafetyHookContext& ctx)
+        {
+            ParseVehicleTable("dlc_vehicles.xtbl");
+        });
+}
+
 void AppendVehicleCameras() {
     static bool IsDLC = false;
 
@@ -866,6 +900,7 @@ void AppendSetup() {
     AppendVoice();
     AppendAudioBanks();
     AppendBitmaps();
+    AppendVehicles();
     AppendVehicleCameras();
     AppendCityMissions();
     AppendItemsInventory();

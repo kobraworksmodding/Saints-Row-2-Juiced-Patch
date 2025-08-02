@@ -797,6 +797,29 @@ namespace Game
 			return elements;
 		}
 
+		xtbl_node* xtbl_find_next(xtbl_node* element, xtbl_node* current, const char* tag)
+		{
+			if (!element || !current)
+				return 0;
+			while (true)
+			{
+				current = current->next;
+				if (current)
+				{
+					if (!_strcmpi(current->name, tag))
+						break;
+				}
+				if (!current)
+					return 0;
+			}
+			return current;
+		}
+
+		void xtbl_free() {
+			((void(__thiscall*)(void*, int))0xBFC870)(*(void**)0xE87138, *(int*)0xE87134);
+			*(int*)0xE87134 = -1;
+		}
+
 		const char* xtbl_get_req_string_ref(xtbl_node* root, const char* attribute_name)
 		{
 			xtbl_node* node;

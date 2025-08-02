@@ -100,6 +100,8 @@ namespace Game
 		extern uint32_t checksum(xtbl_node* root, uint32_t accumulator);
 		extern bool xtbl_get_bool(const char* item_name, bool* value_out, xtbl_node* branching);
 		xtbl_node* xtbl_find(const xtbl_node* element, const char* tag);
+		xtbl_node* xtbl_find_next(xtbl_node* element, xtbl_node* current, const char* tag);
+		void xtbl_free();
 		const char* xtbl_get_req_string_ref(xtbl_node* root, const char* attribute_name);
 	}
 	namespace utils {
