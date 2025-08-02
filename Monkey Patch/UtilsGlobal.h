@@ -77,6 +77,14 @@ inline matrix* GetPlayerOrient() {
     return (matrix*)(UtilsGlobal::getplayer() + 32);
 }
 
+inline void* __cdecl calloc_game(size_t Count, size_t Size) {
+    return ((void* (__cdecl*)(size_t, size_t))0x00CB5CAA)(Count, Size);
+}
+
+inline void* __cdecl malloc_game(size_t Size) {
+    return ((void* (__cdecl*)(size_t))0x00C96CFF)(Size);
+}
+
 inline bool invert;
 
 inline bool isPaused;

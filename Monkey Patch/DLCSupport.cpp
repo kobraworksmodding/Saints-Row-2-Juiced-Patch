@@ -282,45 +282,94 @@ void CHooks_unlockable() {
 }
 
 void ReplaceVehArray() {
-    *(float*)0x2527B8C = 0.04;
-    UInt32 OriginalBase = 0x02FAD1F8;
-    UInt32 NewBase = (UInt32)VehArr;
-    int NumThreads = std::thread::hardware_concurrency();
-    int OffsetsPerThread = sizeof(VehiclePadding) / NumThreads;
-    std::vector<std::thread> Threads;
 
-    for (int T = 0; T < NumThreads; T++) {
-        int StartOffset = T * OffsetsPerThread;
-        int EndOffset = (T == NumThreads - 1) ? sizeof(VehiclePadding) : (T + 1) * OffsetsPerThread;
+    const std::pair<unsigned int, std::vector<unsigned int>> Mappings[] = {
+    { 0x000000, {
+        0x004840C7, 0x004A7444, 0x00541807, 0x005524FD, 0x0055423A, 0x00554349, 0x00555522, 0x00555743,
+        0x00575353, 0x0057BD98, 0x0057CF43, 0x0057D07E, 0x0057DB40, 0x0057DC52, 0x0057E48E, 0x0057E4AB,
+        0x0057EADD, 0x0057EAF8, 0x0057F9B4, 0x0057F9D7, 0x00581347, 0x00583060, 0x00584074, 0x005840AE,
+        0x005845CC, 0x0058466B, 0x005851C2, 0x005851DF, 0x00585212, 0x0058522F, 0x0058AA94, 0x0058E61F,
+        0x00591B2F, 0x005C4F87, 0x005E1083, 0x005EB4A8, 0x005F3F76, 0x005FDCD0, 0x005FE3D6, 0x005FE908,
+        0x006004B5, 0x00630854, 0x00630D06, 0x00643853, 0x00643872, 0x006448D7, 0x006448F4, 0x00644CC9,
+        0x00644CED, 0x0064A0E8, 0x0064A11C, 0x0065EACB, 0x006711F1, 0x00678647, 0x0067ADB6, 0x0067ADC6,
+        0x0067ADF5, 0x0067AE5E, 0x0067AE74, 0x00682CDB, 0x00682D16, 0x00682D7B, 0x006831A5, 0x0068359D,
+        0x00683630, 0x0068724D, 0x0069FDBE, 0x006BBF4E, 0x006D046D, 0x00783DCC, 0x0078714F, 0x007871B9,
+        0x00789FDD, 0x007A668E, 0x007A7702, 0x007DC0DF, 0x007DC3DD, 0x007DC3F8, 0x007DC433, 0x007DC44E,
+        0x007DC489, 0x007DC4A7, 0x007DEC0F, 0x007DED1D, 0x007DED3D, 0x007DED5D, 0x007DEDDB, 0x008734D4,
+        0x0088640A, 0x00886415, 0x0088693F, 0x00886A30, 0x00886C63, 0x00886E45, 0x00888B11, 0x00888D73,
+        0x0088900E, 0x008A4B19, 0x008A4B81, 0x008A4C38, 0x008A5D48, 0x008AEDB2, 0x00922C16, 0x00923C18,
+        0x00924074, 0x009391B8, 0x0093A0AA, 0x0093A459, 0x0093DDD1, 0x0093F79F, 0x009400B0, 0x009400E8,
+        0x00943FE0, 0x00944067, 0x009446C6, 0x00944B86, 0x00946269, 0x0094658D, 0x009466F9, 0x00947B58,
+        0x00947B8F, 0x00947BE5, 0x00947C0B, 0x00948213, 0x0094825D, 0x009483AD, 0x0094898F, 0x00948B96,
+        0x00949244, 0x00949276, 0x0094930D, 0x0094948C, 0x009497E3, 0x00949A09, 0x00949AF0, 0x0094F883,
+        0x00956695, 0x009588BC, 0x009588EB, 0x00959EE9, 0x00A47702, 0x00A4E1E5, 0x00A4E214, 0x00A6F7F9,
+        0x00A6FA1C, 0x00A6FD1A, 0x00A6FE75, 0x00A6FEAA, 0x00AA834C, 0x00AA8397, 0x00AAF213, 0x00AC73E6,
+        0x00AC743D, 0x00ADAEA8, 0x00ADB17C, 0x00ADB4FE, 0x00ADBAE2, 0x00AE2A42, 0x00AE2BCB, 0x00AE2CB2,
+        0x00AE2F4E, 0x00AE327D, 0x00AE32BF, 0x00AE32F0, 0x00AE3324, 0x00AE3E78, 0x00AE40D1, 0x00AE4507,
+        0x00AE456C, 0x00AE461A, 0x00AE468C, 0x00AE46E9, 0x00AE4777, 0x00AE4BC3, 0x00AEDA57, 0x00AEDB84,
+        0x00AEDD8D, 0x00B16469, 0x00B545E1
+    }},
+    { 0x000004, {
+        0x00949153, 0x009497F4, 0x00955C45, 0x00AC7AC0, 0x00AE3E87
+    }},
+    { 0x00007C, {
+        0x00AE235B
+    }},
+    { 0x000080, {
+        0x005797B9, 0x0057B2A7, 0x0057C2EB, 0x005826E1, 0x005833CC, 0x00585DDC, 0x0058615A, 0x0058A2BC,
+        0x0058AB39, 0x005EB4D1, 0x005F0B48, 0x005F4470, 0x00886CB8, 0x00886DC4, 0x00886DF2, 0x00886FDD,
+        0x00A6ED62, 0x00A70BA1, 0x00AC5897, 0x00AE3DE7
+    }},
+    { 0x000098, {
+        0x0057AF35, 0x0057BD25, 0x0057DAFD, 0x0057DC0F, 0x005823A5, 0x00582FF5, 0x0058544C, 0x005854FB,
+        0x005940D8, 0x005942DB, 0x005AD36C, 0x005E70DF, 0x005E71DF, 0x005E8BFC, 0x005F0B05, 0x005F1EB5,
+        0x0062D6FC, 0x0063C785, 0x006446B2, 0x006446D9, 0x0064A9DF, 0x0064AA03, 0x0064AA27, 0x0064AA4B,
+        0x0064AA82, 0x0065097B, 0x00651E0B, 0x00662DD1, 0x00671165, 0x0067CF39, 0x00683575, 0x00683605,
+        0x006926CB, 0x00696331, 0x006BB275, 0x007868B5, 0x00922BE3, 0x00927BC9, 0x00946240, 0x00946555,
+        0x00AC7A9F, 0x00AE3EF0, 0x00AE40AF, 0x00AEDB56, 0x00AEDD65
+    }},
+    { 0x00009C, {
+        0x00554596, 0x0055676B, 0x005567AB, 0x005E1219, 0x005E3CBC, 0x00642C9C, 0x00642CA3, 0x006450FC,
+        0x00888FB3, 0x0093A4BA, 0x00955FC2, 0x009576E5, 0x00A47733, 0x00AB5179, 0x00AB5209, 0x00AB5296
+    }},
+    { 0x00022E, {
+        0x0055267B, 0x005F0B6D, 0x005FEC29, 0x00AE3DF7
+    }},
+    { 0x000294, {
+        0x005E785F, 0x005E7865, 0x005E786D
+    }},
+    { 0x0002A0, {
+        0x00AA83C6, 0x00AA83CE, 0x00AE28E8
+    }},
+    { 0x0002A4, {
+        0x00AE3E08
+    }},
+    { 0x000414, {
+        0x00DB2098
+    }},
+    { 0x00053C, {
+        0x006BBD9C
+    }},
+    { 0x00059C, {
+        0x00AE200F, 0x00AE3F24, 0x00AE3FE1
+    }},
+    { 0x0005B0, {
+        0x00939ADD, 0x00AE5058
+    }},
+    };
 
-        Threads.emplace_back([StartOffset, EndOffset, OriginalBase, NewBase] {
-            for (int Offset = StartOffset; Offset < EndOffset; Offset++) {
-                UInt32 TargetAddr = OriginalBase + Offset;
-                char PatternStr[32];
-                sprintf(PatternStr, "%02X %02X %02X %02X",
-                    TargetAddr & 0xFF, (TargetAddr >> 8) & 0xFF,
-                    (TargetAddr >> 16) & 0xFF, (TargetAddr >> 24) & 0xFF);
-
-                auto Pattern = hook::pattern(PatternStr);
-                if (!Pattern.empty()) {
-                    Pattern.for_each_result([Offset, NewBase](hook::pattern_match Match) {
-                        SafeWrite32((UInt32)Match.get<void*>(), NewBase + Offset);
-                        });
-                }
-            }
-            });
+    for (const auto& Entry : Mappings) {
+        unsigned int Offset = Entry.first;
+        for (unsigned int Address : Entry.second) {
+            SafeWrite32(Address, (UInt32)VehArr + Offset);
+        }
     }
-
-    for (auto& Thread : Threads) {
-        Thread.join();
-    }
-    ((void(*)())0x0051F700)();
 }
 
 void IncreaseVehLimits() {
 
-    VehArr = (VehiclePadding*)malloc(sizeof(VehiclePadding) * MAX_VEH);
-    PostLoadArr = (PostLoadPadding*)malloc(sizeof(PostLoadPadding) * MAX_VEH);
+    VehArr = (VehiclePadding*)UtilsGlobal::calloc_game(MAX_VEH, sizeof(VehiclePadding));
+    PostLoadArr = (PostLoadPadding*)UtilsGlobal::calloc_game(MAX_VEH, sizeof(PostLoadPadding));
 
     int Stack = (MAX_VEH * 65) + 8;
 
@@ -333,7 +382,7 @@ void IncreaseVehLimits() {
     SafeWrite32(0x00DB2050 + 1, (UInt32)PostLoadArr);
     SafeWrite32(0x00ADAEB2 + 3, (UInt32)PostLoadArr);
 
-    WriteRelCall(0x0052081B, (UInt32)ReplaceVehArray); // swap out all the original veh array references
+    ReplaceVehArray(); // swap out all the original veh array references
 }
 
 void MissingDLCString(SafetyHookContext& ctx) {
@@ -862,7 +911,7 @@ void DLCSetup() {
     WriteRelCall(0x0068D167, (UInt32)DLCGlobals);
     static SafetyHookMid DLCVoice = safetyhook::create_mid(0x0047AD09, &LoadDLCPersonaVoice);
     IncreaseMemPool();
-    //IncreaseVehLimits();
+    IncreaseVehLimits();
     static auto PlaceholderStringFix = safetyhook::create_mid(0x00B92C0F, [](SafetyHookContext& ctx) {
         if (ctx.eax)
             if (*(short*)ctx.eax == 0x0001) ctx.ebp = ctx.eax + 2; // eax + 2 so we can get the image tags displaying in the outfits section of the wardrobe like in TU3
