@@ -640,9 +640,9 @@ void ParseVehicleTable(const char* TableName)
 }
 
 void AppendVehicles() {
-    static auto ParseTable = safetyhook::create_mid(0x00AEE85E, [](SafetyHookContext& ctx)
+    static auto ParseTable = safetyhook::create_mid(0x00AEE89B, [](SafetyHookContext& ctx)
         {
-            ParseVehicleTable("dlc_vehicles.xtbl");
+            if (!ctx.edi) ParseVehicleTable("dlc_vehicles.xtbl");
         });
 }
 
