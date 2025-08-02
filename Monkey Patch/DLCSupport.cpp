@@ -371,12 +371,12 @@ void IncreaseVehLimits() {
     VehArr = (VehiclePadding*)UtilsGlobal::calloc_game(MAX_VEH, sizeof(VehiclePadding));
     PostLoadArr = (PostLoadPadding*)UtilsGlobal::calloc_game(MAX_VEH, sizeof(PostLoadPadding));
 
-    int Stack = (MAX_VEH * 65) + 8;
+    /*int Stack = (MAX_VEH * 65) + 8;
 
     SafeWrite32(0x00AEE5F0 + 1, Stack); // 4 patches to increase the local filename buffer's size
     SafeWrite32(0x00AEE601 + 3, Stack - 4);
     SafeWrite32(0x00AEE8FD + 3, Stack + 12);
-    SafeWrite32(0x00AEE90F + 2, Stack);
+    SafeWrite32(0x00AEE90F + 2, Stack);*/
 
     SafeWrite32(0x00DB2055 + 1, MAX_VEH - 1); // index for the post load init loop & the new array
     SafeWrite32(0x00DB2050 + 1, (UInt32)PostLoadArr);
