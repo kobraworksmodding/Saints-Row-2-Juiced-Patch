@@ -752,6 +752,23 @@ void AppendVehicleInteraction() {
         });
 }
 
+void AppendEffects() {
+    static bool IsDLC = false;
+
+    static auto Append = safetyhook::create_mid(0x0050DAD4, [](SafetyHookContext& ctx)
+        {
+            ((void(*)())0x50D000)();
+            IsDLC = true;
+        });
+
+    static auto ChangeTable = safetyhook::create_mid(0x0050D01A, [](SafetyHookContext& ctx)
+        {
+            static const char* Name = "dlc_effects.xtbl";
+            ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00DE044C);
+            ctx.eip = 0x0050D01F;
+        });
+}
+
 void AppendCityMissions() {
     static bool IsDLC = false;
 
@@ -1019,6 +1036,7 @@ void AppendSetup() {
     AppendVehicles();
     AppendVehicleCameras();
     AppendVehicleInteraction();
+    AppendEffects();
     AppendCityMissions();
     AppendWeapons();
     AppendItemsInventory();
