@@ -38,6 +38,7 @@ bool NoticesSeen;
 bool NewGameAutoTut;
 int& SaveArray = *(int*)0x25283A0;
 int& CurrentIndex = *(int*)0x25283B4;
+bool IsDLCVI;
 
 bool IsSaveDLC() {
     return (*(char*)(SaveArray + 172 * CurrentIndex + 0xA2) != 0);
@@ -382,6 +383,9 @@ void IncreaseVehLimits() {
     SafeWrite32(0x00DB2050 + 1, (UInt32)PostLoadArr);
     SafeWrite32(0x00ADAEB2 + 3, (UInt32)PostLoadArr);
 
+    SafeWrite32(0x0051F0CB + 1, 1003520); // increased vehicle memory pool for other tables
+    SafeWrite32(0x0051F0FD + 1, 1003520);
+
     ReplaceVehArray(); // swap out all the original veh array references
 }
 
@@ -670,6 +674,84 @@ void AppendVehicleCameras() {
         });
 }
 
+SafetyHookInline ParseVIAnim{};
+unsigned char __fastcall ParseVIAnimHook(int* AnimCount, int* AnimPool, const char* TableName, int AnimType) {   
+    static const char* VIEnter = "dlc_vi_enter.xtbl";
+    static const char* VIExit = "dlc_vi_exit.xtbl";
+    static const char* VIRide = "dlc_vi_ride.xtbl";
+
+    if (IsDLCVI) {
+        switch (AnimType) {
+        case 1:
+            return ParseVIAnim.unsafe_fastcall<char>(AnimCount, AnimPool, VIEnter, AnimType);
+            break;
+        case 2:
+            return ParseVIAnim.unsafe_fastcall<char>(AnimCount, AnimPool, VIExit, AnimType);
+            break;
+        case 3:
+            return ParseVIAnim.unsafe_fastcall<char>(AnimCount, AnimPool, VIRide, AnimType);
+            break;
+        }
+    }
+     return ParseVIAnim.unsafe_fastcall<char>(AnimCount, AnimPool, TableName, AnimType);
+}
+
+void AppendVehicleInteraction() {
+
+    static auto Append = safetyhook::create_mid(0x00AEE64A, [](SafetyHookContext& ctx)
+        {
+            ((void(__thiscall*)())0x00B160F0)();
+            IsDLCVI = true;
+        });
+
+    static auto ChangePointSetsTable = safetyhook::create_mid(0x00B1534A, [](SafetyHookContext& ctx)
+        {
+            static const char* Name = "dlc_vehicle_interaction_point_sets.xtbl";
+            ctx.eax = (IsDLCVI ? (uintptr_t)Name : (uintptr_t)0x00E48B84);
+            ctx.eip = 0x00B1534F;
+        });
+
+    static auto PointSetsAlloc = safetyhook::create_mid(0x00B1536E, [](SafetyHookContext& ctx)
+        {
+            ctx.eax += 12 * 5; // same increasement as TU3, same applies to all other increasements here
+            if (IsDLCVI) {
+                if (!ctx.esi) ctx.eflags |= (1 << 6);
+                else ctx.eflags &= ~(1 << 6);
+                ctx.eip = 0x00B15382;
+            }
+        });
+
+    ParseVIAnim = safetyhook::create_inline(0xB15D00, ParseVIAnimHook);
+
+    static auto VIAnimAlloc = safetyhook::create_mid(0x00B15D4A, [](SafetyHookContext& ctx)
+        {
+            ctx.eax += 12 * 10;
+            if (IsDLCVI) {
+                if (!ctx.esi) ctx.eflags |= (1 << 6);
+                else ctx.eflags &= ~(1 << 6);
+                ctx.eip = 0x00B15D5B;
+            }
+        });
+
+    static auto ChangeIntInfoTable = safetyhook::create_mid(0x00B15779, [](SafetyHookContext& ctx)
+        {
+            static const char* Name = "dlc_vehicle_interaction_info.xtbl";
+            ctx.eax = (IsDLCVI ? (uintptr_t)Name : (uintptr_t)0x00E48C5C);
+            ctx.eip = 0x00B1577E;
+        });
+
+    static auto IntInfoAlloc = safetyhook::create_mid(0x00B1579C, [](SafetyHookContext& ctx)
+        {
+            ctx.eax += 324 * 10;
+            if (IsDLCVI) {
+                if (!ctx.esi) ctx.eflags |= (1 << 6);
+                else ctx.eflags &= ~(1 << 6);
+                IsDLCVI = false;
+                ctx.eip = 0x00B157B0;
+            }
+        });
+}
+
 void AppendCityMissions() {
     static bool IsDLC = false;
 
@@ -936,6 +1018,7 @@ void AppendSetup() {
     AppendBitmaps();
     AppendVehicles();
     AppendVehicleCameras();
+    AppendVehicleInteraction();
     AppendCityMissions();
     AppendWeapons();
     AppendItemsInventory();
