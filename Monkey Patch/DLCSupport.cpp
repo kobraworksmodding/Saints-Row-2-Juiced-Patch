@@ -742,6 +742,40 @@ void AppendAudioBanks() {
         });
 }
 
+void ParseWeaponData(char* WeaponPointer, xtbl_node* TablePointer, bool Refresh) {
+    ((void(__cdecl*)(char*, xtbl_node*, bool))0x00B6D6E0)(WeaponPointer, TablePointer, Refresh);
+}
+
+void ParseWeaponTable(const char* TableName)
+{
+    xtbl_node* Weapon;
+    int& WeaponCount = *(int*)0x22D7BD0;
+    char* WeaponBase = *(char**)0x22D7BCC;
+
+    xtbl_node* Node = parse_table_node(TableName, 0);
+
+    for (Weapon = xtbl_find(Node, "Weapon"); Weapon; Weapon = xtbl_find_next(Node, Weapon, "Weapon")) {
+        char* Pointer = WeaponBase + WeaponCount * 1176;
+        ParseWeaponData(Pointer, Weapon, false);
+        WeaponCount++;
+    }
+    xtbl_free();
+}
+
+
+void AppendWeapons() {
+
+    static auto IncreaseAlloc = safetyhook::create_mid(0x00B710F1, [](SafetyHookContext& ctx)
+        {
+            ctx.eax += 40; // they add 40 weapon entries in TU3 as well, which is generous
+        });
+
+    static auto LoadTable = safetyhook::create_mid(0x00B711F6, [](SafetyHookContext& ctx)
+        {
+            if(!*(bool*)(ctx.esp + 16)) ParseWeaponTable("dlc_weapons.xtbl");
+        });
+}
+
 void AppendItemsInventory() {
     static bool IsDLC = false;
 
@@ -903,6 +937,7 @@ void AppendSetup() {
     AppendVehicles();
     AppendVehicleCameras();
     AppendCityMissions();
+    AppendWeapons();
     AppendItemsInventory();
     AppendCustomizationItems();
     AppendCustomizationOutfits();
