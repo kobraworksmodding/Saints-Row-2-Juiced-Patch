@@ -1,2 +1,4 @@
 #pragma once
-void DLCSetup();
+namespace DLC {
+	void Init();
+}

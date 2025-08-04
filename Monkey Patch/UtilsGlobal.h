@@ -2,6 +2,7 @@
 #include <corecrt_math_defines.h>
 #include "..\Generated\BuildInfo.h"
 #include "Math\Math.h"
+#include <filesystem>
 #pragma warning( disable : 4219)
 using namespace Math;
 
@@ -16,6 +17,16 @@ inline uintptr_t getplayer(bool provideaddress = false) {
 
 inline int RetZero() {
     return 0;
+}
+
+inline bool FolderExists(const std::string& folderName) {
+    try {
+        return std::filesystem::exists(folderName) &&
+            std::filesystem::is_directory(folderName);
+    }
+    catch (const std::filesystem::filesystem_error& e) {
+        return false;
+    }
 }
 
 inline bool RetFalse() {
