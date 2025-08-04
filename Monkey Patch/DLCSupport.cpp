@@ -11,6 +11,7 @@
 #include "Game/Game.h"
 #include "UtilsGlobal.h"
 #include "FileLogger.h"
+#include "GameConfig.h"
 using namespace General;
 using namespace Game::xml;
 
@@ -142,7 +143,7 @@ void LoadDLCPersonaVoice(SafetyHookContext& ctx) {
     }
 }
 
-void IncreaseMemPool() {
+void IncreaseVoiceMemPool() {
     SafeWrite32((UInt32)0x006AD138, 2049100); // doubled size to avoid the game crashing if you merge voice_pc with dlc_voice_xbox2
     SafeWrite32((UInt32)0x006AD151, 2049100);
 }
@@ -1066,22 +1067,23 @@ void UnlockEmergentMissionForDLC()
 
 void DLCGlobals() { // this was done in LUA because they assumed they'd add more globals probably but due to how small it is it's not worth the loading hassle
     ((void(*)())0x54C220)();
-    if (!isMissionCompleted("tss04") || isMissionCompleted("em01") || isMissionUnlocked("em01")) return;
+    if (!DLCInstalled || !isMissionCompleted("tss04") || isMissionCompleted("em01") || isMissionUnlocked("em01")) return;
     UnlockEmergentMissionForDLC();
 }
 
-void DLCSetup() {
+void DLC::Init() {
 #if !RELOADED
-    AppendSetup();
     DLCSaveSetup();
+    if (!UtilsGlobal::FolderExists("DLC") || !GameConfig::GetValue("DLC", "EnableDLC", 1)) return;
+    AppendSetup();
     PatchFollowerHeads();
     static SafetyHookMid MissionFailure = safetyhook::create_mid(0x00A3994C, &MissionFStringFix);
     CHooks_cutscene();
     CHooks_unlockable();
     WriteRelJump(0x005207FE, (UInt32)&AddInterfacePeg);
-    WriteRelCall(0x0068D167, (UInt32)DLCGlobals);
+    if (GameConfig::GetValue("DLC", "UnlockEmergentMission", 1)) WriteRelCall(0x0068D167, (UInt32)DLCGlobals);
     static SafetyHookMid DLCVoice = safetyhook::create_mid(0x0047AD09, &LoadDLCPersonaVoice);
-    IncreaseMemPool();
+    IncreaseVoiceMemPool();
     IncreaseVehLimits();
     static auto PlaceholderStringFix = safetyhook::create_mid(0x00B92C0F, [](SafetyHookContext& ctx) {
         if (ctx.eax)
