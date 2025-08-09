@@ -24,7 +24,7 @@ namespace Render2D
 	bool BetterChatTest = 0;
 #if !JLITE
 	bool IVRadarScaling = false;
-
+	bool aspectratio_1610 = false;
 	float RadarScale = 0.87272727272f;
 	void RadarScaling() {
 		float currentX = (float)(*(unsigned int*)0x022f63f8);
@@ -209,6 +209,10 @@ int processtextwidth(int width) {
 
 }
 
+	inline bool is_aspect_1610() {
+		return *currentAR == 1.6f;
+	}
+
 	float get_vint_x_resolution() {
 		if (*currentAR >= 1.77777777778f)
 			return *currentAR * 720;
@@ -216,7 +220,11 @@ int processtextwidth(int width) {
 		// between ultrawide and non-ultrawide, only sometimes so it's still super buggy and weird.
 		else return 1280.f; 
 	}
-
+	float get_vint_1610_hack_scale() {
+		if (!is_aspect_1610())
+			return 0.f;
+		return 80.f;
+	}
 	void __declspec(naked) InGamePrintASM(const char* Text, int x, int y, int font) {
 		__asm {
 			push ebp
@@ -352,42 +360,48 @@ int processtextwidth(int width) {
 		cached_str[sizeof(cached_str) - 1] = '\0';
 		char buffer[256];
 		const char* lua_command = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %f, %f)";
-		snprintf(buffer, sizeof(buffer), lua_command,"safe_frame", cached_str,"anchor", (get_vint_x_resolution() - 1280) / 2.f,0.f);
+		const char* lua_command_visbile = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %s)";
+		snprintf(buffer, sizeof(buffer), lua_command,"safe_frame", cached_str,"anchor", (get_vint_x_resolution() - 1280) / 2.f, get_vint_1610_hack_scale() / 2.f);
 		//Logger::TypedLog(CHN_DEBUG, "%s \n", possible_str);
 		General::VintExecute(buffer);
 
 		if (strcmp(cached_str, "hud") == 0) {
 
-			snprintf(buffer, sizeof(buffer), lua_command, "extra_homie", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			snprintf(buffer, sizeof(buffer), lua_command_visbile, "extra_homie", "hud", "visible", "false");
 			General::VintExecute(buffer);
 
-			snprintf(buffer, sizeof(buffer), lua_command, "mp_snatch_john", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			snprintf(buffer, sizeof(buffer), lua_command_visbile, "mp_snatch_john", "hud", "visible", "false");
 			General::VintExecute(buffer);
 
-			snprintf(buffer, sizeof(buffer), lua_command, "health_mini_grp", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			snprintf(buffer, sizeof(buffer), lua_command_visbile, "health_mini_grp", "hud", "visible", "false");
 			General::VintExecute(buffer);
 
 
-			snprintf(buffer, sizeof(buffer), lua_command, "health_large_grp", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
+			snprintf(buffer, sizeof(buffer), lua_command_visbile, "health_large_grp", "hud", "visible", "false");
 			General::VintExecute(buffer);
-			snprintf(buffer, sizeof(buffer), lua_command, "mayhem_grp", "hud", "anchor", -((get_vint_x_resolution() - 1280) / 2.f), 0.f);
+			snprintf(buffer, sizeof(buffer), lua_command, "mayhem_grp", "hud", "anchor", -((get_vint_x_resolution() - 1280) / 2.f), -(get_vint_1610_hack_scale() / 2.f));
 			General::VintExecute(buffer);
 
 			float weirdscale = 1.f / (widescreenvalue / *currentAR);
-			snprintf(buffer, sizeof(buffer), lua_command, "mayhem_grp", "hud", "scale", weirdscale, 1.f);
+			float weirdscale_y = 0.f;
+			if (Render2D::is_aspect_1610()) {
+				weirdscale = 1.f / (*Render2D::currentAR / Render2D::widescreenvalue);
+				weirdscale_y = weirdscale;
+			}
+				snprintf(buffer, sizeof(buffer), lua_command, "mayhem_grp", "hud", "scale", weirdscale, weirdscale_y);
+				General::VintExecute(buffer);
+			
+			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "anchor", -((get_vint_x_resolution() - 1280) / 2.f), -(get_vint_1610_hack_scale() / 2.f));
 			General::VintExecute(buffer);
 
-			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "anchor", -((get_vint_x_resolution() - 1280) / 2.f), 0.f);
-			General::VintExecute(buffer);
-
-			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "scale", weirdscale, 1.f);
+			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "scale", weirdscale, weirdscale_y);
 			General::VintExecute(buffer);
 
 		}
 	}
 
 bool UltrawideFix = false;
-// Clippy TODO, maybe handle 16:10?
+
 std::thread RefreshHUD_thread;
 void RefreshHUD_loop() {
 	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n",2);
@@ -407,7 +421,7 @@ char SR2Ultrawide_HUDScale() {
 	// Cutscene black bars
 	SafeWrite32((0x00755C49 + 1), 1280);
 	Render3D::AspectRatioFix(true);
-	if (aspectRatio >= 1.77) {
+	if (aspectRatio >= 1.58f) {
 		SafeWrite32((0x00755C49 + 1), (uint32_t)(aspectRatio * 720));
 		// Fix reflections being broken at ultrawide.
 		*(float*)(0x0E86388) = aspectRatio;
@@ -420,24 +434,32 @@ char SR2Ultrawide_HUDScale() {
 
 		// Fucking tagging system cause yeah lets hard code the anchor for it?
 	int var = (int)(aspectRatio * 720.f);
-	static int var2;
-	 var2 = (int)(aspectRatio * 360.f);
-	SafeWrite32(0x00622571 + 1, var);
-	SafeWrite32(0x00625A2B + 2, var);
-	//SafeWrite32(0x00625F70 + 1, var);
-	//SafeWrite32(0x00755A21 + 1, var);
-	//SafeWrite32(0x00755C49 + 1, var);
-	//SafeWrite32(0x00B87313 + 1, var2);
-	//SafeWrite32(0x00B87313 + 1, var2);
-	SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
-	SafeWrite32(0x0062597F + 2, (UInt32)&var2);
-	
+	static int var2 = (int)(aspectRatio * 360.f);
+	if (aspectRatio != 1.6f) {
+		SafeWrite32(0x00622571 + 1, var);
+		SafeWrite32(0x00625A2B + 2, var);
+		SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
+		SafeWrite32(0x0062597F + 2, (UInt32)&var2);
+	}
+	SafeWrite32(0x00622555 + 2, 720);
+	SafeWrite32(0x00625A44 + 1, 720);
+
+	SafeWrite32(0x00625D5D + 2, 0x22DBF90);
+	SafeWrite32(0x006259FC + 2, 0x22DBF90);
+	if (aspectRatio == 1.6f) {
+		int aspect_1610 = 800;
+		SafeWrite32(0x00622555 + 2, aspect_1610);
+		SafeWrite32(0x00625A44 + 1, aspect_1610);
+		static int aspect_1610_width = 400;
+		SafeWrite32(0x00625D5D + 2, (UInt32)&aspect_1610_width);
+		SafeWrite32(0x006259FC + 2, (UInt32)&aspect_1610_width);
+	}
 		Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 3);
 		RefreshHUD_thread = std::thread(RefreshHUD_loop);
 		RefreshHUD_thread.detach();
 	}
 	if ((GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1)) {
-		if (aspectRatio <= 1.79777777778f && aspectRatio != 1.5f) {
+		if (aspectRatio <= 1.79777777778f && aspectRatio != 1.5f && aspectRatio != 1.6f) {
 
 			UltrawideFix = false;
 			General::CleanupModifiedScript();
@@ -459,7 +481,7 @@ char SR2Ultrawide_HUDScale() {
 
 	float stretchedX = currentX / 1280.0f;
 	float adjustedX = stretchedX * correctionFactor;
-
+	aspectratio_1610 = false;
 	if (aspectRatio <= 1.59f) {
 		result = 0;
 		*(uint8_t*)0x0213c383 = 0;
@@ -474,7 +496,16 @@ char SR2Ultrawide_HUDScale() {
 		*(float*)0x022fdcc0 = adjustedX;
 		*(float*)0x022fdcbc = currentY / 720.0f;
 	}
-	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: %f Y: %f bool: %d \n", adjustedX, currentY / 720.0f, UltrawideFix);
+	// Okay this shit is pissing me off, I really have to find a universal way of calculating HUD for all aspect ratios than hard coding this garbage in - Clippy95
+	if (aspectRatio == 1.6f) {
+		result = 1;
+		*(uint8_t*)0x0213c383 = 1;
+		*(uint8_t*)0x025272dd = 1;
+		*(float*)0x022fdcc0 = currentX / 1280.0f;
+		*(float*)0x022fdcbc = currentY / 800.0f; 
+		aspectratio_1610 = true;
+	}
+	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: %f Y: %f bool: %d, aspect ratio %f \n", adjustedX, *(float*)0x022fdcbc, UltrawideFix, aspectRatio);
 	return result;
 }
 float saturate(float x) {

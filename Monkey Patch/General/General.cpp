@@ -601,6 +601,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				}
 
 				const char* lua_command = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %f, %f)";
+				const char* lua_command_visbile = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %s)";
 				char buffer[512];
 #if !JLITE
 				if (Render2D::IVRadarScaling) {
@@ -646,7 +647,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #endif
 				if (Render2D::UltrawideFix) {
 					snprintf(buffer, sizeof(buffer), lua_command, "safe_frame", cached_str.c_str(), "anchor",
-						(Render2D::get_vint_x_resolution() - 1280) / 2.f, 0.f);
+						(Render2D::get_vint_x_resolution() - 1280) / 2.f, Render2D::get_vint_1610_hack_scale() / 2.f);
 					customCode += "\n";
 					customCode += buffer;
 
@@ -655,50 +656,51 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 						using namespace Render2D;
 						char extraBuffer[512];
 
-						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "extra_homie", "hud", "anchor",
-							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command_visbile, "extra_homie", "hud", "visible","false");
 						customCode += "\n";
 						customCode += extraBuffer;
 
-						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mp_snatch_john", "hud", "anchor",
-							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command_visbile, "mp_snatch_john", "hud", "visible", "false");
 						customCode += "\n";
 						customCode += extraBuffer;
 
-						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "health_mini_grp", "hud", "anchor",
-							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command_visbile, "health_mini_grp", "hud", "visible", "false");
 						customCode += "\n";
 						customCode += extraBuffer;
 
-						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "health_large_grp", "hud", "anchor",
-							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
+						snprintf(extraBuffer, sizeof(extraBuffer), lua_command_visbile, "health_large_grp", "hud", "visible", "false");
 						customCode += "\n";
 						customCode += extraBuffer;
-
-						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "anchor",
-							-((get_vint_x_resolution() - 1280) / 2.f), 0.f);
-						customCode += "\n";
-						customCode += extraBuffer;
-
+						bool should_stretch = !Render2D::is_aspect_1610();
 						float weirdscale = 1.f / (Render2D::widescreenvalue / *Render2D::currentAR);
-						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "scale",
-							weirdscale, 1.f);
-						customCode += "\n";
-						customCode += extraBuffer;
+						float weirdscale_y = 1.f;
+						if (Render2D::is_aspect_1610()) {
+							weirdscale = 1.f / (*Render2D::currentAR / Render2D::widescreenvalue);
+							weirdscale_y = weirdscale;
+						}
 
+							snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "anchor",
+								-((get_vint_x_resolution() - 1280) / 2.f), -(Render2D::get_vint_1610_hack_scale() / 2.f));
+							customCode += "\n";
+							customCode += extraBuffer;
+							snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "scale",
+								weirdscale, weirdscale_y);
+							customCode += "\n";
+							customCode += extraBuffer;
+						
 						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "vignettes", "hud", "scale",
-							weirdscale, 1.f);
+							weirdscale, weirdscale_y);
 						customCode += "\n";
 						customCode += extraBuffer;
 
 						// This here is a LUA-less vint_document, we'll scale in hud's LUA file.
 						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "safe_frame", "vignette", "scale",
-							weirdscale, 1.f);
+							weirdscale, weirdscale_y);
 						customCode += "\n";
 						customCode += extraBuffer;
 
 						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "vignettes", "hud", "anchor",
-							-((get_vint_x_resolution() - 1280) / 2.f), 0.f);
+							-((get_vint_x_resolution() - 1280) / 2.f), Render2D::get_vint_1610_hack_scale() / 2.f);
 						customCode += "\n";
 						customCode += extraBuffer;
 					}
