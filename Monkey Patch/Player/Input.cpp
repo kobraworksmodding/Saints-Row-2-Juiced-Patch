@@ -16,13 +16,34 @@ import OptionsManager;
 #include <safetyhook.hpp>
 #include "../Game/Game.h"
 #include <Hooking.Patterns.h>
+#include <SDL3/SDL_gamepad.h>
+#include <SDL3/SDL_init.h>
 bool IsKeyPressed(unsigned char Key, bool Hold);
 int __fastcall subT_6218F0(DWORD* a1);
 namespace Input {
 	// DO NOT CHANGE WHILE GAME IS RUNNING, only meant to disable on runtime. if it causes any issues (hopefully none) 
 	BYTE EnableDynamicPrompts = 2;
+	static SDL_Gamepad* g_gamepad = NULL;
 	bool allow_hacked_inventory_KBM;
 	int HoldFineAim = false;
+
+	static bool SDL_isPlayStationController() {
+		if (!g_gamepad) return false;
+
+		SDL_GamepadType type = SDL_GetGamepadType(g_gamepad);
+
+		if (type == SDL_GAMEPAD_TYPE_PS3 || type == SDL_GAMEPAD_TYPE_PS4 || type == SDL_GAMEPAD_TYPE_PS5) {
+			return true;
+		}
+
+		Uint16 vendor = SDL_GetGamepadVendor(g_gamepad);
+		if (vendor == 0x054C) {  // Sony vendor ID
+			return true;
+		}
+
+		return false;
+	}
+
 	bool __declspec(naked) key_held(int keycode) {
 		static const DWORD func_addr = 0xC111D0;
 		__asm {
@@ -504,7 +525,236 @@ namespace Input {
 			pause_map_crosshair->y += ((float)mouse().getYdelta() * mouse().getMouseY_sens()) * zoom_modifier;
 			});
 	}
+
+	inline void controller_disconect_dialog_prevframe() {
+		*(bool*)0xE8DFBF = false;
+	}
+
+	int __declspec(naked) controller_flushasm(controller* a1) {
+		static const DWORD controllerflush_addr = 0x75C700;
+		__asm {
+			push ebp
+			mov ebp, esp
+			sub esp, __LOCAL_SIZE
+			mov     eax, a1
+			call controllerflush_addr
+			mov esp, ebp
+			pop ebp
+			ret
+		}
+	}
+
+	void controller_flush(controller* a1) {
+		__asm pushad
+		__asm pushfd
+		controller_flushasm(a1);
+		__asm popfd
+		__asm popad
+	}
+
+	int __declspec(naked) set_deadzoneasm(float* x, float* y, float deadzone) {
+		static const DWORD set_deadzone_addr = 0xC13A90;
+		__asm {
+			push ebp
+			mov ebp, esp
+			sub esp, __LOCAL_SIZE
+
+			mov     edi, x
+
+			mov     esi, y
+
+			push deadzone
+
+			call set_deadzone_addr
+			mov esp, ebp
+			pop ebp
+			ret
+		}
+	}
+
+	void __stdcall set_deadzone(float* x, float* y, float deadzone) {
+		__asm pushad
+		__asm pushfd
+		set_deadzoneasm(x, y, deadzone);
+		__asm popfd
+		__asm popad
+	}
+
+	void __cdecl input_pc_poll_sdl(controller* cntrl)
+	{
+		bool& pad_is_connected = *(bool*)0x0252A58E;
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_EVENT_GAMEPAD_ADDED) {
+				if (!g_gamepad) {
+					g_gamepad = SDL_OpenGamepad(event.gdevice.which);
+					if (g_gamepad) {
+						if (!pad_is_connected) {
+							controller_disconect_dialog_prevframe();
+						}
+						pad_is_connected = 1;
+					}
+				}
+			}
+			else if (event.type == SDL_EVENT_GAMEPAD_REMOVED) {
+				if (g_gamepad && event.gdevice.which == SDL_GetGamepadID(g_gamepad)) {
+					SDL_CloseGamepad(g_gamepad);
+					g_gamepad = NULL;
+					if (pad_is_connected) {
+						controller_flush(cntrl);
+					}
+					pad_is_connected = 0;
+				}
+			}
+		}
+
+		// Check if we need to find/reconnect a gamepad
+		if (!g_gamepad) {
+			// Try to find and open the first available gamepad
+			int num_joysticks;
+			SDL_JoystickID* joysticks = SDL_GetJoysticks(&num_joysticks);
+			if (joysticks) {
+				for (int i = 0; i < num_joysticks; i++) {
+					if (SDL_IsGamepad(joysticks[i])) {
+						g_gamepad = SDL_OpenGamepad(joysticks[i]);
+						if (g_gamepad) {
+							if (!pad_is_connected) {
+								controller_disconect_dialog_prevframe();
+							}
+							pad_is_connected = 1;
+							SDL_free(joysticks);
+							break;
+						}
+					}
+				}
+				SDL_free(joysticks);
+			}
+
+			// No gamepad found
+			if (!g_gamepad) {
+				if (pad_is_connected) {
+					controller_flush(cntrl);
+				}
+				pad_is_connected = 0;
+				return;
+			}
+		}
+
+		// Gamepad is connected, read input
+		if (!pad_is_connected) {
+			controller_disconect_dialog_prevframe();
+		}
+		pad_is_connected = 1;
+		cntrl->di_buttons[0] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_SOUTH) ? 128 : 0;  // A
+		cntrl->di_buttons[1] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_EAST) ? 128 : 0;   // B
+		cntrl->di_buttons[2] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_WEST) ? 128 : 0;   // X
+		cntrl->di_buttons[3] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_NORTH) ? 128 : 0;  // Y
+		cntrl->di_buttons[4] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER) ? 128 : 0; // LB
+		cntrl->di_buttons[5] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER) ? 128 : 0;// RB
+		cntrl->di_buttons[6] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_BACK) ? 128 : 0;         // Back
+		cntrl->di_buttons[7] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_START) ? 128 : 0;        // Start
+		cntrl->di_buttons[8] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_LEFT_STICK) ? 128 : 0;   // LS
+		cntrl->di_buttons[9] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_RIGHT_STICK) ? 128 : 0;  // RS
+
+		auto left_trigger = SDL_GetGamepadAxis(g_gamepad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+		auto right_trigger = SDL_GetGamepadAxis(g_gamepad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
+
+		cntrl->di_buttons[10] = (left_trigger > 3932) ? (left_trigger * 128) / 32767 : 0;  // ~3932 = 30/255 * 32767 deadzone
+		cntrl->di_buttons[11] = (right_trigger > 3932) ? (right_trigger * 128) / 32767 : 0;
+
+		// D-pad
+		cntrl->di_buttons[16] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT) ? 128 : 0;  // bit 8 = RIGHT
+		cntrl->di_buttons[17] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_DPAD_UP) ? 128 : 0;     // bit 1 = UP
+		cntrl->di_buttons[18] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT) ? 128 : 0;   // bit 4 = LEFT  
+		cntrl->di_buttons[19] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_DPAD_DOWN) ? 128 : 0;   // bit 2 = DOWN
+		//printf("cntrl all di_buttons %p\n", cntrl);
+		bool& g_CapturePadInput = *(bool*)0x252A5B0;
+		bool* g_PadCaptureStates = (bool*)0x2349808;
+		if (g_CapturePadInput) {
+			for (unsigned int i = 0; i < cntrl->di_num_buttons; ++i) {
+				g_PadCaptureStates[i] = cntrl->di_buttons[i] != 0;
+			}
+			*(bool*)0x2349818 = cntrl->di_buttons[16] != 0;  // Up
+			*(bool*)0x2349819 = cntrl->di_buttons[17] != 0;  // Down
+			*(bool*)0x234981A = cntrl->di_buttons[18] != 0;  // Left
+			*(bool*)0x234981B = cntrl->di_buttons[19] != 0;  // Right
+		}
+		else {
+			float axis_reading[4]{};
+			axis_reading[0] = -(float)SDL_GetGamepadAxis(g_gamepad, SDL_GAMEPAD_AXIS_LEFTY) / 32767.0f;    // Left Y (inverted)
+			axis_reading[1] = (float)SDL_GetGamepadAxis(g_gamepad, SDL_GAMEPAD_AXIS_LEFTX) / 32767.0f;     // Left X
+			axis_reading[2] = -(float)SDL_GetGamepadAxis(g_gamepad, SDL_GAMEPAD_AXIS_RIGHTY) / 32767.0f;   // Right Y (inverted)
+			axis_reading[3] = (float)SDL_GetGamepadAxis(g_gamepad, SDL_GAMEPAD_AXIS_RIGHTX) / 32767.0f;    // Right X
+
+			int* axis_bind = (int*)0x234E768;
+
+			cntrl->joys[4].x_val = axis_reading[axis_bind[0]];
+			cntrl->joys[4].y_val = axis_reading[axis_bind[1]];
+			cntrl->joys[3].x_val = axis_reading[axis_bind[2]];
+			cntrl->joys[3].y_val = axis_reading[axis_bind[3]];
+
+			// Apply deadzones
+			set_deadzone(&cntrl->joys[4].x_val, &cntrl->joys[4].y_val, cntrl->joys[4].deadzone);
+			set_deadzone(&cntrl->joys[3].x_val, &cntrl->joys[3].y_val, cntrl->joys[3].deadzone);
+
+			// Fallback assignments
+			if (cntrl->joys[0].x_val == 0.0f) cntrl->joys[0].x_val = cntrl->joys[4].x_val;
+			if (cntrl->joys[0].y_val == 0.0f) cntrl->joys[0].y_val = cntrl->joys[4].y_val;
+			if (cntrl->joys[1].x_val == 0.0f) cntrl->joys[1].x_val = cntrl->joys[3].x_val;
+			if (cntrl->joys[1].y_val == 0.0f) cntrl->joys[1].y_val = cntrl->joys[3].y_val;
+			if (cntrl->joys[6].x_val == 0.0f) cntrl->joys[6].x_val = cntrl->joys[3].x_val;
+			if (cntrl->joys[6].y_val == 0.0f) cntrl->joys[6].y_val = cntrl->joys[3].y_val;
+			if (cntrl->joys[7].x_val == 0.0f) cntrl->joys[7].x_val = cntrl->joys[4].x_val;
+			if (cntrl->joys[7].y_val == 0.0f) cntrl->joys[7].y_val = cntrl->joys[4].y_val;
+			if (cntrl->joys[2].x_val == 0.0f) cntrl->joys[2].x_val = cntrl->joys[0].x_val;
+			if (cntrl->joys[2].y_val == 0.0f) cntrl->joys[2].y_val = cntrl->joys[0].y_val;
+
+			if (!cntrl->di_buttons) {
+				printf("ERROR: di_buttons became NULL, skipping button mapping addr %p value %p cntrl %p\n", &cntrl->di_buttons, cntrl->di_buttons,cntrl);
+				return;
+			}
+
+
+			for (int i = 0; i < 87; ++i) {
+				int controller_button = PC_port_key_for_controler_assignments[i + 2].controller_button;
+
+
+				if (controller_button != -1 && cntrl->buttons && cntrl->buttons[i].value == 0.0f) {
+					cntrl->buttons[i].value = (float)cntrl->di_buttons[controller_button] / 128.0f;
+				}
+			}
+		}
+	}
+
+	int __stdcall XInputSetState_SDL_replace(int dwUserIndex, XINPUT_VIBRATION* pVibration) {
+		// Ignore dwUserIndex since we only have one gamepad
+		if (!g_gamepad || !pVibration) {
+			return -1;  // Error
+		}
+
+
+		return SDL_RumbleGamepad(g_gamepad, pVibration->wLeftMotorSpeed, pVibration->wRightMotorSpeed, 0);
+	}
+
+
+	int input_pc_init_sdl()
+	{
+		if (SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt") == -1) {
+			Logger::TypedLog("SDL", "Could not load gamecontrollerdb.txt: %s\n", SDL_GetError());
+		}
+		patchNop((void*)0xC131CF, 2);
+		patchNop((void*)0xC133A2, 0xA);
+		patchNop((void*)0xC133C0, 0xA);
+		patchNop((void*)0xC133DE, 0xA);
+		patchCall((void*)0xC14A06, &XInputSetState_SDL_replace);
+		return SDL_Init(SDL_INIT_GAMEPAD);
+
+	}
+
 	void Init() {
+		if(GameConfig::GetValue("Input","SDL",1) != 0)
+		input_pc_init_sdl();
+		patchJmp((void*)0xC13C80, &input_pc_poll_sdl);
 		patch_zoom_aware_interior_pause_map();
 		static auto tag_shake_frametimefix = safetyhook::create_mid(0x621C04, [](SafetyHookContext& ctx) {
 			if (g_lastInput == MOUSE) {
