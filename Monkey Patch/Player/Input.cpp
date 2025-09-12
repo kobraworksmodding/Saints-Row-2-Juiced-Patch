@@ -595,6 +595,7 @@ namespace Input {
 	{
 		bool& pad_is_connected = *(bool*)0x0252A58E;
 		SDL_Event event;
+		const char* GamepadName = NULL;
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_GAMEPAD_ADDED) {
 				if (!g_gamepad) {
@@ -604,11 +605,17 @@ namespace Input {
 							controller_disconect_dialog_prevframe();
 						}
 						pad_is_connected = 1;
+						GamepadName = SDL_GetGamepadName(g_gamepad);
+						if(GamepadName)
+						Logger::TypedLog("SDL", "%s connected\n", GamepadName);
 					}
 				}
 			}
 			else if (event.type == SDL_EVENT_GAMEPAD_REMOVED) {
 				if (g_gamepad && event.gdevice.which == SDL_GetGamepadID(g_gamepad)) {
+					GamepadName = SDL_GetGamepadName(g_gamepad);
+					if (GamepadName)
+						Logger::TypedLog("SDL", "%s disconnected\n", GamepadName);
 					SDL_CloseGamepad(g_gamepad);
 					g_gamepad = NULL;
 					if (pad_is_connected) {
