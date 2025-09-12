@@ -122,4 +122,5 @@ namespace Input {
 	extern int ForceInput;
 	extern BYTE EnableDynamicPrompts;
 	extern int HoldFineAim;
+	extern bool UsePS3Prompts();
 }

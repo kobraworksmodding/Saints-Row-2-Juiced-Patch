@@ -268,7 +268,7 @@ namespace GLua
         }
         if (strcmp(cmd, "INPUT") == 0) {
             if (Input::LastInputUI() == Input::GAME_LAST_INPUT::CONTROLLER) {
-                if(!Input::usePS3Prompts)
+                if(!Input::UsePS3Prompts())
                 lua_pushstring(L, "XBOX360");
                 else lua_pushstring(L, "PS3");
                 return 1;

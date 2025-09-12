@@ -43,6 +43,17 @@ namespace Input {
 
 		return false;
 	}
+	int usePS3Prompts = false;
+	bool UsePS3Prompts() {
+		if (usePS3Prompts == 1)
+			return true;
+		if (usePS3Prompts == 2)
+			return false;
+		if (!g_gamepad)
+			return false;
+
+		return SDL_isPlayStationController();
+	}
 
 	bool __declspec(naked) key_held(int keycode) {
 		static const DWORD func_addr = 0xC111D0;
@@ -340,16 +351,16 @@ namespace Input {
 	};
 
 	bool useTextPrompts = false;
-	int usePS3Prompts = false;
 	wchar_t* __cdecl getpckeyboardimage_hook(uint32_t* action_index, int mouse) {
 		if (LastInputUI() == GAME_LAST_INPUT::CONTROLLER) {
+			bool use_PS3_prompts = UsePS3Prompts();
 			if (prompt_image_buffer_index > 9500) {
 				prompt_image_buffer_index = 0;
 			}
 			int start_index = prompt_image_buffer_index;
 			if (!action_index) {
 				if (mouse == 1) {
-					const wchar_t* buttonImage = usePS3Prompts ? L"ui_ctrl_ps3_btn_r3" : L"ui_ctrl_360_btn_rs";
+					const wchar_t* buttonImage = use_PS3_prompts ? L"ui_ctrl_ps3_btn_r3" : L"ui_ctrl_360_btn_rs";
 					wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"[format][scale:1.0][image:%s][/format]", buttonImage);
 					prompt_image_buffer_index += wcslen(&prompt_image_buffer[start_index]) + 1;
 					return &prompt_image_buffer[start_index];
@@ -362,12 +373,12 @@ namespace Input {
 
 			auto it = padButtonMaps.find(controller_key);
 			if (it != padButtonMaps.end()) {
-				const wchar_t* buttonImage = usePS3Prompts ? it->second.ps3 : it->second.xbox;
+				const wchar_t* buttonImage = use_PS3_prompts ? it->second.ps3 : it->second.xbox;
 				wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"[format][scale:1.0][image:%s][/format]", buttonImage);
 			}
 			else if (controller_key == -1) {
 				auto actionfinder = actionsToController.find(*action_index);
-				const wchar_t* buttonImageActions = usePS3Prompts ? actionfinder->second.ps3 : actionfinder->second.xbox;
+				const wchar_t* buttonImageActions = use_PS3_prompts ? actionfinder->second.ps3 : actionfinder->second.xbox;
 				if (actionfinder != actionsToController.end())
 					wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"[format][scale:1.0][image:%s][/format]", buttonImageActions);
 				else {
