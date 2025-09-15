@@ -15,6 +15,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        submodules: recursive
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Restore NuGet packages
@@ -29,6 +30,8 @@ jobs:
         copy Release\DFEngine.dll upload\
         copy "Release\Reloaded Patch.pdb" upload\
         copy Discord\discord_game_sdk.dll upload\
+        copy Monkey Patch\Ext\lib\x86\SDL3.dll upload\
+        copy external\SDL_GameControllerDB\gamecontrollerdb.txt upload\
         copy juiced.ini upload\
         copy license.txt upload\
         xcopy Mods upload\Mods /E /I /Y
