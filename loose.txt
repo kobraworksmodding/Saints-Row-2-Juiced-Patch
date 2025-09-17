@@ -6,4 +6,5 @@ mods/JUICED - Strings
 mods/JUICED - Lua Libraries
 mods/JUICED - Shaders
 mods/JUICED - Animations
+mods/JUICED - Textures
 mods

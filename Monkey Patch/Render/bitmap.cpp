@@ -13,6 +13,7 @@
 #include "../FileLogger.h"
 #include "../SafeWrite.h"
 #include "../GameConfig.h"
+#include "../Patcher/patch.h"
 
 uint32_t string_hash_table::estimate_maximum_memory_usage(uint32_t hash_table_size, uint32_t string_pool_size)
 {
@@ -173,9 +174,63 @@ SAFETYHOOK_NOINLINE __int16 __fastcall bm_find_og(void* dummy1, void* dummy2, ui
     return hndl;
 }
 
+__declspec(naked) void LoadBitmapTableasm(const char* FileName) {
+
+
+    __asm {
+
+        push ebp
+        mov ebp, esp
+
+        sub esp, __LOCAL_SIZE
+        mov eax, FileName
+
+        mov edx, 0xB87540
+
+        call edx
+
+        mov esp, ebp
+
+        pop ebp
+
+        ret
+
+    }
+}
+
+bitmap_statusT bitmap_status{};
+
+void LoadExtraBitMapTable(const char* fileName) {
+    patchJmp((void*)0xB875B0, (void*)0xB875C4);
+    LoadBitmapTableasm(fileName);
+    patchDWord((void*)0xB875B0, 0xA1A005C7);
+}
+SafetyHookInline load_pegT;
+bool __fastcall load_peg_hook(const char* filename, uintptr_t mempool) {
+
+    if (mempool == 0x27716E4 && strcmp(filename, "interface-backend.peg") == 0) {
+        load_pegT.fastcall<bool>(filename, mempool);
+        bool result = load_pegT.fastcall<bool>("juiced-ui.peg", mempool);
+        bitmap_status.juiced_ui_loaded = result;
+        //load_pegT.disable();
+        return result;
+    }
+
+    return load_pegT.fastcall<bool>(filename, mempool);
+}
+
+SafetyHookInline sub_51D290T;
+
+uintptr_t sub_51D290Lang() {
+    LoadExtraBitMapTable("juiced-ui.xtbl");
+    return sub_51D290T.ccall<uintptr_t>();
+}
+
 namespace bitmap_loader {
     void Init() {
         if (GameConfig::GetValue("Modding", "addon_bitmaps", 1)) {
+            load_pegT = safetyhook::create_inline(0x522450, &load_peg_hook);
+            sub_51D290T = safetyhook::create_inline(0x51D290, sub_51D290Lang);
             SafeWrite32(0x00C08803 + 1, 1806336);
             SafeWrite32(0x00C08817 + 1, 1806336);
             bm_findT = safetyhook::create_inline(0xC07160, &bm_find);

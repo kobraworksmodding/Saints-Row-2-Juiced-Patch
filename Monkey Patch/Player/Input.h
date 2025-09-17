@@ -102,6 +102,27 @@ struct __declspec(align(4)) controller
 	bool xi_connected;
 };
 
+enum controller_values {
+	a_button = 0,
+	x_button = 1,
+	b_button = 2,
+	y_button = 3,
+	right_stick = 4,
+	lt_button = 5,
+	rt_button = 6,
+	lb_button = 7,
+	rb_button = 8,
+	left_right = 9,
+	up_down = 10,
+	left_trigger = 11,
+	right_trigger = 12,
+	dpad_image = 13,
+	dpad_lr_image = 14,
+	dpad_ud_image = 15,
+	control_stick_base = 16,
+	control_stick_thumb = 17,
+	max_values = 18,
+};
 
 namespace Input {
 	extern bool useTextPrompts;
@@ -123,4 +144,27 @@ namespace Input {
 	extern BYTE EnableDynamicPrompts;
 	extern int HoldFineAim;
 	extern bool UsePS3Prompts();
+
+	struct ControllerMappingSDL {
+		const char* SteamDeck;
+		const char* XboxSeriesX;
+		const char* nx;
+		const char* PS5;
+	};
+
+	enum ControllerType {
+		NONE,
+		SteamDeck,
+		XboxSeriesX,
+		nx,
+		PS5,
+		PS3,
+		Xbox360,
+		//FORCE_KEYBOARD,
+		MAX,
+	};
+	extern ControllerType GetControllerType();
+	extern ControllerType controller_type;
+	extern std::unordered_map<controller_values, ControllerMappingSDL> char_SDLButtons_lua;
+
 }

@@ -103,6 +103,10 @@ public:
 
 typedef uintptr_t peg_entry;
 
+struct bitmap_statusT {
+    unsigned __int8 juiced_ui_loaded : 1;
+};
+
 struct bitmap_entry
 {
     char* filename_ptr;

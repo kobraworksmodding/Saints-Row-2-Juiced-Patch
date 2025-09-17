@@ -256,6 +256,74 @@ namespace GLua
         }
 
     }
+
+    int SDL_INPUT_PROMPT(lua_State* L) {
+        using namespace Input;
+        LuaArgs args(L);
+        LuaReturns returns(L);
+        //printf("controller type addr %p\n", &controller_type);
+
+        const char* bogus = args.get<const char*>();
+
+        int controller = (int)GetControllerType();
+
+        if ((controller > PS5) || LastInputUI() != Input::CONTROLLER) {
+            controller = 0;
+        }
+
+        returns.push((int)controller);
+        return returns.count();
+
+        //if(bogus)
+        //printf("%s\n", bogus);
+        //controller_values control_image_id = (controller_values)args.get<int>();
+        //if (control_image_id < max_values) {
+        //    auto it = Input::char_SDLButtons_lua.find(control_image_id);
+
+        //    if (it != Input::char_SDLButtons_lua.end()) {
+        //        
+        //        if (control_image_id <= max_values) {
+        //            auto it = Input::char_SDLButtons_lua.find(control_image_id);
+        //            if (it != Input::char_SDLButtons_lua.end()) {
+        //                const char* button_name = nullptr;
+
+        //                switch (controller_type) {
+        //                case SteamDeck:
+        //                    button_name = it->second.SteamDeck;
+        //                    break;
+        //                case XboxSeriesX:
+        //                    button_name = it->second.XboxSeriesX;
+        //                    break;
+        //                case PS5:
+        //                    button_name = it->second.PS5;
+        //                    break;
+        //                case nx:
+        //                    button_name = it->second.nx;
+        //                    break;
+        //                default:
+        //                    returns.push(false);
+        //                    returns.push("");
+        //                    return returns.count();
+        //                }
+
+        //                returns.push(true);
+        //                returns.push(button_name);
+        //            }
+        //            else {
+        //                returns.push(false);
+        //                returns.push(""); // empty string for not found
+        //            }
+        //        }
+
+        //    }
+        //    else {
+        //        returns.push(false);
+        //    }
+
+        //}
+        return returns.count();
+    }
+
     int __cdecl lua_func_vint_get_avg_processing_time(lua_State* L) {
         using namespace InGameConfig;
         if (L == NULL) {
@@ -266,6 +334,11 @@ namespace GLua
             lua_pushnil(L);
             return 0;
         }
+
+        if (strcmp(cmd, "INPUT_PROMPT") == 0) {
+            return SDL_INPUT_PROMPT(L);
+        }
+
         if (strcmp(cmd, "INPUT") == 0) {
             if (Input::LastInputUI() == Input::GAME_LAST_INPUT::CONTROLLER) {
                 if(!Input::UsePS3Prompts())

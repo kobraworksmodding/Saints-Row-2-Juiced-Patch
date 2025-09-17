@@ -90,7 +90,7 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("DisableTutorials", "DisableTutorials");
         if (Input::EnableDynamicPrompts) {
             InGameConfig::RegisterSlider("ForceInputPrompt", "ForceInputPrompt", { "Automated","Controller","Keyboard and Mouse" }, MenuType::CONTROLS);
-            InGameConfig::RegisterSlider("usePS3Prompts", "usePS3Prompts",{"Automated","Force On","Force Off"}, MenuType::CONTROLS);
+            InGameConfig::RegisterSlider("ForcedControllerPrompts", "Controller Prompts",{"Automated","Steam Deck","Xbox Series X","Nintendo Switch","Dualsense","Dualshock 3","Xbox 360"}, MenuType::CONTROLS);
         }
         InGameConfig::RegisterBoolSlider("HoldFineAim", "HoldFineAim", MenuType::CONTROLS);
         InGameConfig::RegisterSlider("DisableAimAssist", "Disable Aim Assist", { "CONTROL_NO","On Mouse only","Always"}, MenuType::CONTROLS);

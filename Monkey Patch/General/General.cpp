@@ -364,6 +364,118 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	}
 	char* currentModifiedBuffer = nullptr;
 	char* currentModifiedBuffer_general_lua = nullptr;
+
+	std::unordered_map<std::string, std::unordered_map<Input::ControllerType, std::string>> sdlButtonMappings = {
+		{"get_a_button", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_btn_a"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_btn_a"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_btn_b"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_btn_cross"}
+		}},
+		{"get_x_button", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_btn_x"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_btn_x"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_btn_y"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_btn_square"}
+		}},
+		{"get_b_button", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_btn_b"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_btn_b"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_btn_a"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_btn_circle"}
+		}},
+		{"get_y_button", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_btn_y"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_btn_y"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_btn_x"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_btn_triangle"}
+		}},
+		{"get_right_stick", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_R3"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_RS"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_RS"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_R3"}
+		}},
+		{"get_lt_button", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_L1"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_LB"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_L"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_L1"}
+		}},
+		{"get_rt_button", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_R1"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_RB"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_R"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_R1"}
+		}},
+		{"get_lb_button", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_L1"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_LB"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_L"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_L1"}
+		}},
+		{"get_rb_button", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_R1"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_RB"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_R"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_R1"}
+		}},
+		{"get_left_right", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_dpad_lr"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_dpad_lr"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_dpad_lr"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_dpad_lr"}
+		}},
+		{"get_up_down", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_dpad_ud"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_dpad_ud"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_dpad_ud"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_dpad_ud"}
+		}},
+		{"get_left_trigger", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_L2"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_LT"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_ZL"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_L2"}
+		}},
+		{"get_right_trigger", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_R2"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_RT"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_ZR"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_R2"}
+		}},
+		{"get_control_stick_base", {
+			{Input::ControllerType::SteamDeck, "ui_hud_base_radial_base_sdk"},
+			{Input::ControllerType::XboxSeriesX, "ui_hud_base_radial_base_xsx"},
+			{Input::ControllerType::nx, "ui_hud_base_radial_base_nx"},
+			{Input::ControllerType::PS5, "ui_hud_base_radial_base_ps5"}
+		}},
+		{"get_control_stick_thumb", {
+			{Input::ControllerType::SteamDeck, "ui_hud_base_radial_thumb_sdk"},
+			{Input::ControllerType::XboxSeriesX, "ui_hud_base_radial_thumb_xsx"},
+			{Input::ControllerType::nx, "ui_hud_base_radial_thumb_nx"},
+			{Input::ControllerType::PS5, "ui_hud_base_radial_thumb_ps5"}
+		}},
+		{"get_dpad_image", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_dpad"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_dpad"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_dpad"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_dpad"}
+		}},
+		{"get_dpad_lr_image", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_dpad_lr"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_dpad_lr"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_dpad_lr"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_dpad_lr"}
+		}},
+		{"get_dpad_ud_image", {
+			{Input::ControllerType::SteamDeck, "ui_ctrl_sdk_dpad_ud"},
+			{Input::ControllerType::XboxSeriesX, "ui_ctrl_xsx_dpad_ud"},
+			{Input::ControllerType::nx, "ui_ctrl_nx_dpad_ud"},
+			{Input::ControllerType::PS5, "ui_ctrl_ps5_dpad_ud"}
+		}}
+	};
+
 	void generalluaLoadBuff(safetyhook::Context32& ctx) {
 		if (!(ctx.esp + 0x14))
 			return;
@@ -406,6 +518,47 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				//		count, searchStr.c_str(), replaceStr.c_str(), filename);
 				//}
 				return count;
+				};
+
+			auto injectSDLCheck = [&](const std::string& funcName) {
+				if (sdlButtonMappings.find(funcName) == sdlButtonMappings.end()) {
+					return; // Function not in mapping, skip
+				}
+				printf("HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIGFASDAGAG;LJGSDFJKLGHSDFLKHGJBDKSJFLGHDSLJKGHSDFJKGHKDJFHSBNKJTBII\n");
+				// Build the injection code
+				std::string injectionCode = "\tlocal controller_type = vint_get_avg_processing_time(\"INPUT_PROMPT\")\n";
+
+				auto& mappings = sdlButtonMappings[funcName];
+				for (const auto& pair : mappings) {
+					int controllerType = pair.first;
+					const std::string& imageName = pair.second;
+
+					if (controllerType == 1) {
+						injectionCode += "\tif controller_type == " + std::to_string(controllerType) + " then\n";
+						printf("555IIIIIIIIIIIIIIIIIIIIIIIIIIIIIGFASDAGAG;LJGSDFJKLGHSDFLKHGJBDKSJFLGHDSLJKGHSDFJKGHKDJFHSBNKJTBII\n");
+					}
+					else {
+						injectionCode += "\telseif controller_type == " + std::to_string(controllerType) + " then\n";
+						printf("11555IIIIIIIIIIIIIIIIIIIIIIIIIIIIIGFASDAGAG;LJGSDFJKLGHSDFLKHGJBDKSJFLGHDSLJKGHSDFJKGHKDJFHSBNKJTBII\n");
+					}
+					injectionCode += "\t\treturn \"" + imageName + "\"\n";
+				}
+				injectionCode += "\tend\n";
+
+				// Find and replace pattern
+				std::string searchPattern = "function " + funcName + "()";
+
+				size_t pos = finalContent.find(searchPattern);
+
+				if (pos == std::string::npos) {
+					Logger::TypedLog(CHN_LUA, "Search pattern not found for %s: '%s'\n",
+						funcName.c_str(), searchPattern.c_str());
+					return;
+				}
+
+				std::string replacePattern = "function " + funcName + "()\n" + injectionCode;
+
+				performReplacement(searchPattern, replacePattern);
 				};
 
 			// Lambda function for platform-specific image replacements
@@ -478,7 +631,15 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 				return count;
 				};
+			if (strcmp(filename, "vint_lib.lua") == 0) {
+				for (const auto& mapping : sdlButtonMappings) {
+					injectSDLCheck(mapping.first);
+				}
 
+				performReplacement("ui_ctrl_360_btn_rt", "ui_ctrl_360_btn_rb");
+				performReplacement("ui_ctrl_360_btn_lt", "ui_ctrl_360_btn_lb");
+
+			}
 			performReplacement("get_platform()", "vint_get_avg_processing_time(\"INPUT\")");
 			performReplacement("ui_ctrl_PC_btn_enter", "ui_ctrl_PC_key_enter");
 			performReplacement("SUI_PLATFORM ==", "vint_get_avg_processing_time(\"INPUT\") ==");
@@ -560,7 +721,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #if !JLITE
 			|| Render2D::IVRadarScaling || allowJuicedAPI
 #endif
-			|| (strcmp(filename, "pause_menu.lua") == 0 && !InGameConfig::g_sliders.empty());
+			|| (strcmp(filename, "pause_menu.lua") == 0 && !InGameConfig::g_sliders.empty()) || (strcmp(filename, "hud.lua") == 0);
 		{
 			// Clean up previous buffer if it exists (regardless of which file it was for)
 			if (needBufferMod) {
@@ -736,6 +897,39 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 				}
 #endif
+
+
+				if (strcmp(filename, "hud.lua") == 0) {
+					if (!modified) {
+						finalContent = std::string(currentBuff, sz);
+					}
+
+
+					std::string searchPattern = "function hud_inventory_show()";
+					size_t pos = finalContent.find(searchPattern);
+
+					if (pos != std::string::npos) {
+						size_t lineEnd = finalContent.find('\n', pos);
+						if (lineEnd != std::string::npos) {
+							std::string injectionCode =
+								"\n    local control_group_h = vint_object_find(\"control_stick\", Hud_radial_menu.radial_grp_h)"
+								"\n    local control_base_h = vint_object_find(\"base\", control_group_h)"
+								"\n    vint_set_property(control_base_h, \"image\", get_control_stick_base())"
+								"\n    local control_stick_group_h = vint_object_find(\"stick_grp\", control_group_h)"
+								"\n    local control_stick_h = vint_object_find(\"stick\", control_stick_group_h)"
+								"\n    vint_set_property(control_stick_h, \"image\", get_control_stick_thumb())"
+								"\n    local control_stick_text_h = vint_object_find(\"stick_text\", control_stick_group_h)"
+								"\n    vint_set_property(control_stick_text_h, \"text_tag\", get_control_stick_text())"
+								"\n    "
+								"\n    local control_dpad_h = vint_object_find(\"dpad\", Hud_radial_menu.radial_grp_h)"
+								"\n    vint_set_property(control_dpad_h, \"image\", get_dpad_image())";
+
+							finalContent.insert(lineEnd, injectionCode);
+							modified = true;
+						}
+					}
+				}
+
 
 				// If any modifications were made, create a new buffer
 				if (modified) {
