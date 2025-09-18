@@ -229,6 +229,12 @@ uintptr_t sub_51D290Lang() {
 namespace bitmap_loader {
     void Init() {
         if (GameConfig::GetValue("Modding", "addon_bitmaps", 1)) {
+            static auto interface_gpu_increase = safetyhook::create_mid(0x51E322, [](SafetyHookContext& ctx) {
+                if (double interface_gpu_new_size = GameConfig::GetDoubleValue("Mempool", "interface_gpu_multi", 1.5); interface_gpu_new_size >= 1.0) {
+                    ctx.esi *= interface_gpu_new_size;
+                    Logger::TypedLog("Mempool", "Patched interface_gpu size to 0x%X\n", ctx.esi);
+                }
+                });
             load_pegT = safetyhook::create_inline(0x522450, &load_peg_hook);
             sub_51D290T = safetyhook::create_inline(0x51D290, sub_51D290Lang);
             SafeWrite32(0x00C08803 + 1, 1806336);
