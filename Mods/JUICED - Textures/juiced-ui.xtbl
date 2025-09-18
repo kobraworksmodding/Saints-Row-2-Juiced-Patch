@@ -532,7 +532,7 @@
 				<PersistFilename>D:\projects\sr2art\Interface\bms\main_menu\ui_mainmenu_pres_start_ch.tga</PersistFilename>
 				</Properties>
 			<Properties>
-				<Name>ui_ctrl_nx_R</Name>
+				<Name>ui_ctrl_nx_L</Name>
 				<StartX>437</StartX>
 				<StartY>379</StartY>
 				<ImageWidth>44</ImageWidth>
@@ -756,7 +756,7 @@
 				<PersistFilename>D:\projects\sr2art\Interface\bms\hud\ui_hud_combo_thumb.tga</PersistFilename>
 				</Properties>
 			<Properties>
-				<Name>ui_hud_combo_thumb</Name>
+				<Name>ui_hud_combo_thumb_xsx</Name>
 				<StartX>290</StartX>
 				<StartY>315</StartY>
 				<ImageWidth>71</ImageWidth>
@@ -764,7 +764,7 @@
 				<PersistFilename>D:\projects\sr2art\Interface\bms\hud\ui_hud_combo_thumb.tga</PersistFilename>
 				</Properties>
 			<Properties>
-				<Name>ui_hud_combo_thumb</Name>
+				<Name>ui_hud_combo_thumb_nx</Name>
 				<StartX>512</StartX>
 				<StartY>437</StartY>
 				<ImageWidth>71</ImageWidth>
