@@ -13,7 +13,7 @@
 #include "../Player/Input.h"
 #include "../Math/Math.h"
 #include "../UtilsGlobal.h"
-
+#include "../DLCSupport.h"
 struct luaL_Reg
 {
     const char* name;
@@ -540,6 +540,10 @@ namespace GLua
             double value = (double)lua_tonumber(L, 3);
             InGameConfig::GLuaWrapperF(varName, &value, true);
             lua_pushboolean(L, 1);
+            return 1;
+        }
+        else if (strcmp(cmd, "DLCInstalled") == 0) {
+            lua_pushboolean(L, DLCInstalled);
             return 1;
         }
 
