@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include "CrashFixes.h"
 #include "../SafeWrite.h"
+#include "../Hooker.h"
 namespace AssertHandler {
 	static std::unordered_set<std::string> ignored_asserts;
 	static std::mutex assert_mutex;
@@ -57,32 +58,32 @@ namespace CrashFixes {
 	}
 	SAFETYHOOK_NOINLINE void Fix_0x0055B681_crash(SafetyHookContext& ctx) {
 		if (!*(DWORD*)ctx.eax)
-			ctx.eip = 0x0055B68D;
+			ctx.eip = DynAddress(0x0055B68D);
 	}
 	SAFETYHOOK_NOINLINE void Fix_0x007B1D7E_crash_weaponstore(SafetyHookContext& ctx) {
 		if (!ctx.edx)
-			ctx.eip = 0x007B1E0D;
+			ctx.eip = DynAddress(0x007B1E0D);
 	}
 	SAFETYHOOK_NOINLINE void Fix_0x007B510D_crash(SafetyHookContext& ctx) {
 		if (!ctx.edx)
-			ctx.eip = 0x007B5135;
+			ctx.eip = DynAddress(0x007B5135);
 	}
 	SAFETYHOOK_NOINLINE void Fix_009AEDAD_crash_cs_start_characters_for_shot(SafetyHookContext& ctx) {
 		if (ctx.ebx) {
 			if (!(*(int*)(ctx.ebx + 0x10A4) + 0x18)) {
-				ctx.eip = 0x9AEE79;
+				ctx.eip = DynAddress(0x9AEE79);
 				goto crash_cs_start_characters_for_shot_009AEDAD;
 			}
 			else if(!*(int*)(*(int*)(ctx.ebx + 0x10A4) + 0x18)) {
-				ctx.eip = 0x9AEE79;
+				ctx.eip = DynAddress(0x9AEE79);
 				goto crash_cs_start_characters_for_shot_009AEDAD;
 			}
 			else if (!(*(int*)(*(int*)(ctx.ebx + 0x10A4) + 0x18) + 0x44)) {
-				ctx.eip = 0x9AEE79;
+				ctx.eip = DynAddress(0x9AEE79);
 				goto crash_cs_start_characters_for_shot_009AEDAD;
 			}
 			else if (!*(int*)(*(int*)(*(int*)(ctx.ebx + 0x10A4) + 0x18) + 0x44)) {
-				ctx.eip = 0x9AEE79;
+				ctx.eip = DynAddress(0x9AEE79);
 				goto crash_cs_start_characters_for_shot_009AEDAD;
 			}
 		}
@@ -93,19 +94,19 @@ namespace CrashFixes {
 	SAFETYHOOK_NOINLINE void Fix_009AEE86_crash_cs_start_characters_for_shot(SafetyHookContext& ctx) {
 		if (ctx.ebx) {
 			if (!(*(int*)(ctx.ebx + 0x10AC) + 0x18)) {
-				ctx.eip = 0x9AEF8C;
+				ctx.eip = DynAddress(0x9AEF8C);
 				goto crash_cs_start_characters_for_shot_009AEE86;
 			}
 			else if (!*(int*)(*(int*)(ctx.ebx + 0x10AC) + 0x18)) {
-				ctx.eip = 0x9AEF8C;
+				ctx.eip = DynAddress(0x9AEF8C);
 				goto crash_cs_start_characters_for_shot_009AEE86;
 			}
 			else if (!(*(int*)(*(int*)(ctx.ebx + 0x10AC) + 0x18) + 0x44)) {
-				ctx.eip = 0x9AEF8C;
+				ctx.eip = DynAddress(0x9AEF8C);
 				goto crash_cs_start_characters_for_shot_009AEE86;
 			}
 			else if (!*(int*)(*(int*)(*(int*)(ctx.ebx + 0x10AC) + 0x18) + 0x44)) {
-				ctx.eip = 0x9AEF8C;
+				ctx.eip = DynAddress(0x9AEF8C);
 				goto crash_cs_start_characters_for_shot_009AEE86;
 			}
 		}
@@ -114,10 +115,10 @@ namespace CrashFixes {
 		AssertHandler::AssertOnce("cs_start_characters_for_shot_009AEE86", "Crash prevented due to bad preload breaking cutscene objects, please fix your preload, game might still crash \n");
 	}
 
-	void __declspec(naked) crash_0x0071447C_fix() {
-		static const DWORD null_jump = 0x714396;
-		static const DWORD continue_jump = 0x714483;
 
+		static DWORD null_jump = DynAddress(0x714396);
+		static DWORD continue_jump = DynAddress(0x714483);
+		void __declspec(naked) crash_0x0071447C_fix() {
 		__asm {
 			test edx, edx
 			jz null_case
@@ -135,7 +136,7 @@ namespace CrashFixes {
 		static auto FixAudioLoop_null_crash1_hook = safetyhook::create_mid(0x0046EE64, &FixAudioLoop_null_crash1);
 		static auto player_vehicle_C4_crash = safetyhook::create_mid(0x4FA07B, [](SafetyHookContext& ctx) {
 			if (ctx.eax == NULL)
-				ctx.eip = 0x4FA09E;
+				ctx.eip = DynAddress(0x4FA09E);
 			});
 		// The one above should work always..
 		if (GameConfig::GetValue("Debug", "FixCrashes", 2)) {	
@@ -144,14 +145,14 @@ namespace CrashFixes {
 			static auto Fix_0x007B510D_hook = safetyhook::create_mid(0x007B510D, &Fix_0x007B510D_crash);
 			static auto Fix_0x004B58B2_hook = safetyhook::create_mid(0x004B58B2, [](SafetyHookContext& ctx) {
 				if (ctx.ecx == NULL) {
-					ctx.eip = 0x4B58E9;
+					ctx.eip = DynAddress(0x4B58E9);
 					AssertHandler::AssertOnce("Fix_0x004B58B2_hook", "Crash prevented but still unsafe? (most likely cause is a modded install) ecx\n");
 					return;
 				}
 				uintptr_t ptr = *(uintptr_t*)ctx.ecx;
 				uintptr_t ptr1 = *(uintptr_t*)(ptr + 0x20);
 				if (ptr1 == NULL) {
-					ctx.eip = 0x4B58E9;
+					ctx.eip = DynAddress(0x4B58E9);
 					AssertHandler::AssertOnce("Fix_0x004B58B2_hook1", "Crash prevented but still unsafe? (most likely cause is a modded install) ecx\n");
 					return;
 				}
@@ -159,7 +160,7 @@ namespace CrashFixes {
 
 			static auto Fix_0x0x943711_hook = safetyhook::create_mid(0x943711, [](SafetyHookContext& ctx) {
 				if (!ctx.ebp) {
-					ctx.eip = 0x9436CA;
+					ctx.eip = DynAddress(0x9436CA);
 					Logger::TypedLog(CHN_DEBUG, "Avoided 0x943711 crash?\n");
 					}
 				});
