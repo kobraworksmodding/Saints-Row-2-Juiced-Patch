@@ -54,6 +54,7 @@
 #include "LUA/InGameConfig.h"
 #include "../Game/CrashFixes.h"
 #include "loose files.h"
+#include "Hooker.h"
 
 using namespace General;
 const char ServerNameSR2[] = "[Saints Row 2]";
@@ -276,6 +277,9 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	return(GetVersionExA(lpVersionInformation));
 }
 
+auto pauseGame_addr = DynAddress(0x699840);
+auto unpauseGame_addr = DynAddress(0x699910);
+
 void __declspec(naked) pauseGame() {
 	__asm {
 
@@ -285,8 +289,7 @@ void __declspec(naked) pauseGame() {
 
 		push 1
 		mov  edi, 5
-		mov  esi, 0x699840
-		call esi
+		call pauseGame_addr
 
 		mov esp, ebp
 		pop ebp
@@ -297,29 +300,28 @@ void __declspec(naked) pauseGame() {
 void __declspec(naked) unpauseGame() {
 	__asm {
 		mov  esi, 2
-		mov  edi, 0x699910
-		call edi
+		call unpauseGame
 		ret
 	}
 }
 
 typedef void(__cdecl* SlewCameraT)(float* Pos, float* Orient, float Frametime, int idk1, bool idk2);
-SlewCameraT SlewCamera = (SlewCameraT)0xC01650;
+SlewCameraT SlewCamera = (SlewCameraT)DynAddress(0xC01650);
 
 typedef void(__cdecl* UpdateCameraT)();
-UpdateCameraT UpdateCamera = (UpdateCameraT)0x4932F0;
+UpdateCameraT UpdateCamera = (UpdateCameraT)DynAddress(0x4932F0);
 
 typedef void(__cdecl* CoopRemotePauseT)(char pause);
-CoopRemotePauseT CoopRemotePause = (CoopRemotePauseT)0x008CB140;
+CoopRemotePauseT CoopRemotePause = (CoopRemotePauseT)DynAddress(0x008CB140);
 
 typedef char(__cdecl* LoadContinueT)();
-LoadContinueT LoadContinue = (LoadContinueT)0x7790E0;
+LoadContinueT LoadContinue = (LoadContinueT)DynAddress(0x7790E0);
 
 typedef void(*ChunkStrT)();
-ChunkStrT ChunkStr = (ChunkStrT)0xA7B880;
+ChunkStrT ChunkStr = (ChunkStrT)DynAddress(0xA7B880);
 
 typedef void(*VegStrT)();
-VegStrT VegStr = (VegStrT)0x4E66A0;
+VegStrT VegStr = (VegStrT)DynAddress(0x4E66A0);
 
 bool slewMode = false;
 
@@ -331,16 +333,16 @@ void RawTags() {
 	mouse mouseread;
 	int32_t x = mouseread.getXdelta();
 	int32_t y = mouseread.getYdelta();*/
-	float xsensmod = 0.7742329836f / *(float*)0x25F5C98;
-	float ysensmod = 0.7742329836f / *(float*)0x25F5C9C;
-	float XDelta = *(float*)0x2348534 * xsensmod;
-	float yDelta = *(float*)0x2348538 * ysensmod;
-	float LeftStickX = *(float*)0x23485F4;
-	float LeftStickY = *(float*)0x23485F8;
-	float RightStickX = *(float*)0x023485B4;
-	float RightStickY = *(float*)0x023485B8;
-	uint16_t yTag = *(uint16_t*)0x027A3F6C;
-	uint16_t xTag = *(uint16_t*)0x027A3F68;
+	float xsensmod = 0.7742329836f / *(float*)DynAddress(0x25F5C98);
+	float ysensmod = 0.7742329836f / *(float*)DynAddress(0x25F5C9C);
+	float XDelta = *(float*)DynAddress(0x2348534) * xsensmod;
+	float yDelta = *(float*)DynAddress(0x2348538) * ysensmod;
+	float LeftStickX = *(float*)DynAddress(0x23485F4);
+	float LeftStickY = *(float*)DynAddress(0x23485F8);
+	float RightStickX = *(float*)DynAddress(0x023485B4);
+	float RightStickY = *(float*)DynAddress(0x023485B8);
+	uint16_t yTag = *(uint16_t*)DynAddress(0x027A3F6C);
+	uint16_t xTag = *(uint16_t*)DynAddress(0x027A3F68);
 
 	int16_t newYTag = yTag;
 	int16_t newXTag = xTag;
@@ -374,13 +376,13 @@ void RawTags() {
 		newXTag = 0;
 	}
 
-	*(uint16_t*)0x027A3F6C = static_cast<uint16_t>(newYTag);
-	*(uint16_t*)0x027A3F68 = static_cast<uint16_t>(newXTag);
+	*(uint16_t*)DynAddress(0x027A3F6C) = static_cast<uint16_t>(newYTag);
+	*(uint16_t*)DynAddress(0x027A3F68) = static_cast<uint16_t>(newXTag);
 }
 
 int __fastcall subT_6218F0(DWORD* a1) {
 	RawTags();
-	return ((int(__fastcall*)(DWORD*))0x6218F0)((a1));
+	return ((int(__fastcall*)(DWORD*))DynAddress(0x6218F0))((a1));
 }
 
 void getDeltaTime() {
@@ -397,10 +399,10 @@ void getDeltaTime() {
 }
 
 void FogTest() {
-	float ogFogStrength1 = *(float*)(0x00E989A0);
-	float ogFogStrength2 = *(float*)(0x00E989A4);
-	*(float*)(0x027B2CBA) = max(ogFogStrength1 / 1.5, 0.3f);
-	*(float*)(0x027B2CBE) = max(ogFogStrength2 / 1.5, 0.3f);
+	float ogFogStrength1 = *(float*)(DynAddress(0x00E989A0));
+	float ogFogStrength2 = *(float*)(DynAddress(0x00E989A4));
+	*(float*)(DynAddress(0x027B2CBA)) = max(ogFogStrength1 / 1.5, 0.3f);
+	*(float*)(DynAddress(0x027B2CBE)) = max(ogFogStrength2 / 1.5, 0.3f);
 }
 
 bool DOFEnabled;
@@ -411,10 +413,10 @@ float DOFDistance = 50.0f;
 void Slew() {
 	UtilsGlobal::mouse Mouse;
 	float Speed = 15.0f;
-	float* CameraPos = (float*)(0x25F5B20);
-	float* CameraOrient = (float*)(0x25F5B5C);
-	float& FOV = *(float*)0x25F5BA8;
-	float& Roll = *(float*)0x33DA350;
+	float* CameraPos = (float*)(DynAddress(0x25F5B20));
+	float* CameraOrient = (float*)(DynAddress(0x25F5B5C));
+	float& FOV = *(float*)DynAddress(0x25F5BA8);
+	float& Roll = *(float*)DynAddress(0x33DA350);
 
 	if (slewMode) {
 
@@ -424,12 +426,12 @@ void Slew() {
 			UpdateCamera();
 			ChunkStr();
 			VegStr();
-			*(float*)0x02F9B7F8 = *(float*)0x025F5B1C;
-			*(float*)0x02F9B7F4 = *(float*)0x025F5B18;
-			*(float*)0x02F9B7F0 = *(float*)0x025F5B14;
-			*(float*)0x02F9B7EC = *(float*)0x025F5B1C;
-			*(float*)0x02F9B7E8 = *(float*)0x025F5B18;
-			*(float*)0x02F9B7E4 = *(float*)0x025F5B14;
+			*(float*)DynAddress(0x02F9B7F8) = *(float*)DynAddress(0x025F5B1C);
+			*(float*)DynAddress(0x02F9B7F4) = *(float*)DynAddress(0x025F5B18);
+			*(float*)DynAddress(0x02F9B7F0) = *(float*)DynAddress(0x025F5B14);
+			*(float*)DynAddress(0x02F9B7EC) = *(float*)DynAddress(0x025F5B1C);
+			*(float*)DynAddress(0x02F9B7E8) = *(float*)DynAddress(0x025F5B18);
+			*(float*)DynAddress(0x02F9B7E4) = *(float*)DynAddress(0x025F5B14);
 		}
 
 		if (IsKeyPressed(VK_MBUTTON, false)) {
@@ -469,10 +471,10 @@ void Slew() {
 
 void havokFrameTicker() { // Proper Frametime ticker by Tervel
 
-	if (*(float*)0xE84380 <= 0.03333333333f)
-		*(float*)(0x02527DA4) = *(float*)0xE84380 / 2;
+	if (*(float*)DynAddress(0xE84380) <= 0.03333333333f)
+		*(float*)(DynAddress(0x02527DA4)) = *(float*)0xE84380 / 2;
 	else
-		*(float*)(0x02527DA4) = 0.01666666666f;
+		*(float*)(DynAddress(0x02527DA4)) = 0.01666666666f;
 
 }
 
@@ -487,10 +489,10 @@ int addsubtitles(const wchar_t* subtitles, float delay, float duration, float wh
 void coopPauseLoop() {
 	bool CoopCheck = isCoop();
 	static bool PauseRestored = false;
-	BYTE* IsPaused = (BYTE*)(0x027B2CF6);
-	BYTE IsPausedOriginal = *(BYTE*)(0x02527C08);
-	BYTE IsPauseMenuOpen = *(BYTE*)(0x00EBE860);
-	BYTE ThankYouVolition = *(BYTE*)(0x00E8CF80); // Some UI mode shit, hopefully can be used to check if you passed/failed a mission to restore OG pause
+	BYTE* IsPaused = (BYTE*)(DynAddress(0x027B2CF6));
+	BYTE IsPausedOriginal = *(BYTE*)(DynAddress(0x02527C08));
+	BYTE IsPauseMenuOpen = *(BYTE*)(DynAddress(0x00EBE860));
+	BYTE ThankYouVolition = *(BYTE*)(DynAddress(0x00E8CF80)); // Some UI mode shit, hopefully can be used to check if you passed/failed a mission to restore OG pause
 
 	/*float delay = 0.0f;
 	float duration = 1.5f;
@@ -530,8 +532,8 @@ void coopPauseLoop() {
 
 void LessRetardedChat() {
 
-	wchar_t* ACDProjektBlackSpecial = reinterpret_cast<wchar_t*>(0x01F76948);
-	wchar_t* FixThatShit = reinterpret_cast<wchar_t*>(0x022092FF);
+	wchar_t* ACDProjektBlackSpecial = reinterpret_cast<wchar_t*>(DynAddress(0x01F76948));
+	wchar_t* FixThatShit = reinterpret_cast<wchar_t*>(DynAddress(0x022092FF));
 
 	size_t Length = 0;
 	for (Length = 0; Length < 127 && ACDProjektBlackSpecial[Length] != L'\0'; ++Length);
@@ -561,7 +563,7 @@ void SkipMainMenu() {
 		}
 
 		if (currentTick - lastTick >= 1) { // very small delay, otherwise it black screens the game in juiced?? worked fine in my code w/o that
-			memset((void*)0x025283BC, 1, 3);
+			memset((void*)DynAddress(0x025283BC), 1, 3);
 			LoadContinue();
 			ShouldSkip = false;
 		}
@@ -569,60 +571,62 @@ void SkipMainMenu() {
 }
 
 typedef int(__cdecl* VehicleSpawnT)(int a1);
-VehicleSpawnT VehicleSpawn = (VehicleSpawnT)0x00AE4AE0;
+VehicleSpawnT VehicleSpawn = (VehicleSpawnT)DynAddress(0x00AE4AE0);
 
 typedef int(__thiscall* GetVehIndexT)(const char* Vehicle);
-GetVehIndexT GetVehIndex = (GetVehIndexT)0x00AE4090;
+GetVehIndexT GetVehIndex = (GetVehIndexT)DynAddress(0x00AE4090);
 
 typedef int(__fastcall* GetPointerT)(int VehiclePointer);
-GetPointerT GetPointer = (GetPointerT)0x00AE28F0;
+GetPointerT GetPointer = (GetPointerT)DynAddress(0x00AE28F0);
 
 typedef int(*TeleportPlayerT)();
-TeleportPlayerT TeleportPlayer = (TeleportPlayerT)0x9D3C50;
+TeleportPlayerT TeleportPlayer = (TeleportPlayerT)DynAddress(0x9D3C50);
 
 typedef int(__thiscall* DeleteVehT)(int a1, int a2);
-DeleteVehT DeleteVeh = (DeleteVehT)0xAA4490;
+DeleteVehT DeleteVeh = (DeleteVehT)DynAddress(0xAA4490);
 
 typedef char(__cdecl* StopRagdollT)(int a1, int a2);
-StopRagdollT StopRagdoll = (StopRagdollT)0x9ACB10;
+StopRagdollT StopRagdoll = (StopRagdollT)DynAddress(0x9ACB10);
 
 typedef void(__stdcall* DisableRagdollT)(int Pointer, bool Enable);
-DisableRagdollT DisableRagdoll = (DisableRagdollT)0x965B50;
+DisableRagdollT DisableRagdoll = (DisableRagdollT)DynAddress(0x965B50);
 
 typedef char(*ExitVehicleT)();
-ExitVehicleT ExitVehicle = (ExitVehicleT)0x5E8140;
+ExitVehicleT ExitVehicle = (ExitVehicleT)DynAddress(0x5E8140);
 
 typedef char(__cdecl* ExitFineAimT)(int PlayerPointer);
-ExitFineAimT ExitFineAim = (ExitFineAimT)0x9D9FD0;
+ExitFineAimT ExitFineAim = (ExitFineAimT)DynAddress(0x9D9FD0);
 
 typedef int(__cdecl* GetAnimStateT)(const char* Name);
-GetAnimStateT GetAnimState = (GetAnimStateT)0x6EF510;
+GetAnimStateT GetAnimState = (GetAnimStateT)DynAddress(0x6EF510);
 
 typedef void(__thiscall* SetAnimStateT)(int Pointer, int* Anim);
-SetAnimStateT SetAnimState = (SetAnimStateT)0x9695F0;
+SetAnimStateT SetAnimState = (SetAnimStateT)DynAddress(0x9695F0);
 
 typedef void(__thiscall* CollisionTestT)(int Pointer, char Idk1, int Idk2);
-CollisionTestT CollisionTest = (CollisionTestT)0x960800; // npc_enable_human_collision lead me to this, it's needed to fix an issue w the noclip
+CollisionTestT CollisionTest = (CollisionTestT)DynAddress(0x960800); // npc_enable_human_collision lead me to this, it's needed to fix an issue w the noclip
 
 void tpCoords(float x, float y, float z) {
-	float* xyz = reinterpret_cast<float*>(0x027B305A);
+	float* xyz = reinterpret_cast<float*>(DynAddress(0x027B305A));
 	xyz[0] = x;
 	xyz[1] = y;
 	xyz[2] = z;
 	TeleportPlayer();
 }
 
+
+
+auto FadeIn_addr = DynAddress(0xAABC80);
 void __declspec(naked) FadeIn(int Veh, int Duration) {
 	__asm {
 
 		mov eax, [esp + 4]
 		mov edx, [esp + 8]
-		mov esi, 0xAABC80
-		call esi
+		call FadeIn_addr
 		ret
 	}
 }
-
+auto EnterVeh_addr = DynAddress(0x597C40);
 void __declspec(naked) EnterVeh(int VehPointer, int PlayerPointer, int SeatIndex) {
 	__asm {
 
@@ -633,8 +637,7 @@ void __declspec(naked) EnterVeh(int VehPointer, int PlayerPointer, int SeatIndex
 		push    SeatIndex
 		mov     esi, PlayerPointer
 		mov     edi, VehPointer
-		mov		ebx, 0x597C40
-		call    ebx
+		call    EnterVeh_addr
 
 		mov esp, ebp
 		pop ebp
@@ -642,6 +645,7 @@ void __declspec(naked) EnterVeh(int VehPointer, int PlayerPointer, int SeatIndex
 	}
 }
 
+auto GetVarIndex_addr = DynAddress(0xAC7420);
 int __declspec(naked) GetVarIndex(int VehData, const char* VariantName) {
 	__asm {
 
@@ -657,8 +661,7 @@ int __declspec(naked) GetVarIndex(int VehData, const char* VariantName) {
 		add     eax, ebx
 		mov	    edi, VariantName
 		mov     ecx, edi
-		mov		ebx, 0xAC7420
-		call    ebx
+		call    GetVarIndex_addr
 
 		mov esp, ebp
 		pop ebp
@@ -671,8 +674,8 @@ void VehicleSpawner(const char* Name, const char* Var) {
 	static int VehPointer;
 	static int CurVehPointer;
 
-	int& VehFromSpawner = *(int*)(0x0252A0E0);
-	int& PlayerOffset = *(int*)0x21703D4;
+	int& VehFromSpawner = *(int*)(DynAddress(0x0252A0E0));
+	int& PlayerOffset = *(int*)DynAddress(0x21703D4);
 	int& CurrentVeh = *(int*)(PlayerOffset + 0xD74);
 
 	if (CurrentVeh > 0 && CurrentVeh != VehFromSpawner) {
@@ -701,16 +704,16 @@ void VehicleSpawner(const char* Name, const char* Var) {
 bool hasCheatMessageBeenSeen = 0;
 
 typedef void(__cdecl* ShowPauseDialogT)(bool a1, bool a2, bool a3, bool a4);
-ShowPauseDialogT ShowPauseDialog = (ShowPauseDialogT)0x7540D0;
+ShowPauseDialogT ShowPauseDialog = (ShowPauseDialogT)DynAddress(0x7540D0);
 
 typedef void(*RemovePauseDialogT)();
-RemovePauseDialogT RemovePauseDialog = (RemovePauseDialogT)0x754270;
+RemovePauseDialogT RemovePauseDialog = (RemovePauseDialogT)DynAddress(0x754270);
 
 void SlewModeToggle() {
 	float delay = 0.0f;
 	float duration = 1.5f;
 	float whateverthefuck = 0.0f;
-	bool InCutscene = *(bool*)(0x2527D14);
+	bool InCutscene = *(bool*)(DynAddress(0x2527D14));
 	*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 
 	slewMode = !slewMode;
@@ -721,10 +724,10 @@ void SlewModeToggle() {
 	addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
 
 	if (InCutscene) {
-		*(int*)(0x25F5AE8) = (slewMode ? 2 : 5);
+		*(int*)(DynAddress(0x25F5AE8)) = (slewMode ? 2 : 5);
 	}
 	else {
-		*(int*)(0x25F5AE8) = (slewMode ? 2 : 0);
+		*(int*)(DynAddress(0x25F5AE8)) = (slewMode ? 2 : 0);
 	}
 
 	SafeWrite32(0x0051A8BD + 3, slewMode ? (UInt32)&DOFEnabled : (UInt32)0x276D00C);
@@ -737,15 +740,15 @@ void SlewModeToggle() {
 void TeleportToWaypoint() {
 	if (!UtilsGlobal::getplayer())
 		return;
-	if ((*(int*)(0x1F7A418) != 0)) { // check if there's a waypoint
+	if ((*(int*)(DynAddress(0x1F7A418)) != 0)) { // check if there's a waypoint
 		if (!Debug::CMPatches_DisableCheatFlag.IsApplied()) {
-			*(BYTE*)0x02527B5A = 0x1;
-			*(BYTE*)0x02527BE6 = 0x1;
+			*(BYTE*)DynAddress(0x02527B5A) = 0x1;
+			*(BYTE*)DynAddress(0x02527BE6) = 0x1;
 		}
-		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
+		*(bool*)(DynAddress(0x252740E)) = 1; // Ins Fraud Sound
 		std::wstring subtitles = (L"Teleported to waypoint!");
 		addsubtitles(subtitles.c_str(), 0.0f, 1.5f, 0.0f);
-		tpCoords(*(float*)0x29B9CD0, *(float*)0x29B9CD4, *(float*)0x29B9CD8);
+		tpCoords(*(float*)DynAddress(0x29B9CD0), *(float*)DynAddress(0x29B9CD4), *(float*)DynAddress(0x29B9CD8));
 
 	}
 }
@@ -764,22 +767,22 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_F1, false)) { // F1
 
-		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
+		*(bool*)(DynAddress(0x252740E)) = 1; // Ins Fraud Sound
 
 		uglyMode = !uglyMode;
 		if (uglyMode) {
-			ogAA = *(uint8_t*)(0x252A2DC);
-			*(uint8_t*)(0x252A2DC) = 0;
+			ogAA = *(uint8_t*)(DynAddress(0x252A2DC));
+			*(uint8_t*)(DynAddress(0x252A2DC)) = 0;
 		}
 		else {
-			*(uint8_t*)(0x252A2DC) = ogAA;
+			*(uint8_t*)(DynAddress(0x252A2DC)) = ogAA;
 		}
 		std::wstring subtitles = L"Ugly Mode:[format][color:purple]";
 		subtitles += uglyMode ? L" ON" : L" OFF";
 		subtitles += L"[/format]";
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-		*(uint8_t*)(0x25273B4) = uglyMode ? 1 : 0;
-		*(float*)(0xE98988) = uglyMode ? 400.0f : 20000.0f;
+		*(uint8_t*)(DynAddress(0x25273B4)) = uglyMode ? 1 : 0;
+		*(float*)(DynAddress(0xE98988)) = uglyMode ? 400.0f : 20000.0f;
 	}
 #if !RELOADED
 	if (IsKeyPressed(VK_F11, false)) { // F1
@@ -792,7 +795,7 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_F3, false)) { // F3
 
-		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
+		*(bool*)(DynAddress(0x252740E)) = 1; // Ins Fraud Sound
 
 		useJuicedOSD = (useJuicedOSD + 1) % 4;
 		std::wstring subtitles = L"Debugging Info:[format][color:purple]";
@@ -818,10 +821,10 @@ void cus_FrameToggles() {
 
 		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
 		std::wstring subtitles = L"HUD Toggle:[format][color:purple]";
-		subtitles += *(BYTE*)(0x0252737C) ? L" ON" : L" OFF";
+		subtitles += *(BYTE*)(DynAddress(0x0252737C)) ? L" ON" : L" OFF";
 		subtitles += L"[/format]";
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-		*(bool*)(0x0252737C) = !(*(bool*)(0x0252737C));
+		*(bool*)(DynAddress(0x0252737C)) = !(*(bool*)(DynAddress(0x0252737C)));
 
 	}
 
@@ -846,11 +849,11 @@ void cus_FrameToggles() {
 	}
 
 	if (IsKeyPressed(VK_F5, false)) { // F5
-		FLOAT* hkg_playerPosition = (FLOAT*)0x00FA6DB0;
-		float xAngle = *(float*)0x025F5B50;
-		float zAngle = *(float*)0x025F5B58;
+		FLOAT* hkg_playerPosition = (FLOAT*)DynAddress(0x00FA6DB0);
+		float xAngle = *(float*)DynAddress(0x025F5B50);
+		float zAngle = *(float*)DynAddress(0x025F5B58);
 		float hkg_camOrient = atan2(xAngle, zAngle);
-		*(bool*)(0x252740E) = 1; // Ins Fraud Sound
+		*(bool*)(DynAddress(0x252740E)) = 1; // Ins Fraud Sound
 
 		std::wstring subtitles = (L"Player Position & Orient Printed to Console!");
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
@@ -894,17 +897,17 @@ void cus_FrameToggles() {
 }
 
 typedef int(__cdecl* chatWindowT)();
-chatWindowT chatWindow = (chatWindowT)0x75C8F0;
+chatWindowT chatWindow = (chatWindowT)DynAddress(0x75C8F0);
 
 bool hasCheatMessageBeenSeen2 = 0;
 
 bool NoclipEnabled = false;
 
 typedef void(__stdcall* PlayerHolsterT)(int Player, bool Holster);
-PlayerHolsterT PlayerHolster = (PlayerHolsterT)0x9661E0;
+PlayerHolsterT PlayerHolster = (PlayerHolsterT)DynAddress(0x9661E0);
 
 typedef void(__stdcall* SetInvulnerableT)(int Pointer, bool Enable);
-SetInvulnerableT SetInvulnerable = (SetInvulnerableT)0x965F40;
+SetInvulnerableT SetInvulnerable = (SetInvulnerableT)DynAddress(0x965F40);
 
 #if !RELOADED
 void ResetYVel() {
@@ -943,16 +946,16 @@ void ToggleNoclip() {
 	ExitVehicle();
 
 	DWORD old;
-	VirtualProtect((LPVOID)0xDD04F4, sizeof(float), PAGE_READWRITE, &old);
-	*(float*)0xDD04F4 = NoclipEnabled ? 0.0f : 1.5f;
-	VirtualProtect((LPVOID)0xDD04F4, sizeof(float), old, &old);
+	VirtualProtect((LPVOID)DynAddress(0xDD04F4), sizeof(float), PAGE_READWRITE, &old);
+	*(float*)DynAddress(0xDD04F4) = NoclipEnabled ? 0.0f : 1.5f;
+	VirtualProtect((LPVOID)DynAddress(0xDD04F4), sizeof(float), old, &old);
 
 	StopRagdoll(UtilsGlobal::getplayer(), 0);
 	DisableRagdoll(UtilsGlobal::getplayer(), NoclipEnabled ? true : false);
 	PlayerHolster(UtilsGlobal::getplayer(), NoclipEnabled ? true : false);
 	SetInvulnerable(UtilsGlobal::getplayer(), NoclipEnabled ? true : false);
 
-	*(bool*)(0x252740E) = 1; // Ins Fraud Sound
+	*(bool*)(DynAddress(0x252740E)) = 1; // Ins Fraud Sound
 	std::wstring subtitles = L"Noclip:[format][color:purple]";
 	subtitles += NoclipEnabled ? L" ON" : L" OFF";
 	subtitles += L"[/format]";
@@ -972,13 +975,13 @@ void xtbl_parse_test() {
 }
 */
 void Noclip() {
-	int PlayerBase = *(int*)0x21703D4;
+	int PlayerBase = *(int*)DynAddress(0x21703D4);
 	if (!PlayerBase)
 		return; // Noclip will still be enabled if this passes.. - Clippy95.
 	float MovementSpeed = (IsKeyPressed(VK_SHIFT, true) ? 80.0f : 40.0f);
-	float xAngle = *(float*)0x025F5B50;
-	float yAngle = *(float*)0x025F5B54;
-	float zAngle = *(float*)0x025F5B58;
+	float xAngle = *(float*)DynAddress(0x025F5B50);
+	float yAngle = *(float*)DynAddress(0x025F5B54);
+	float zAngle = *(float*)DynAddress(0x025F5B58);
 	float* PlayerSin = (float*)(PlayerBase + 0x38);
 	float* PlayerCos = (float*)(PlayerBase + 0x40);
 
@@ -1027,14 +1030,14 @@ void Noclip() {
 }
 #endif
 typedef void(*LoadLevelT)();
-LoadLevelT LoadLevel = (LoadLevelT)0x73C000;
+LoadLevelT LoadLevel = (LoadLevelT)DynAddress(0x73C000);
 char LUA_Key = VK_INSERT;
 #if !RELOADED
 void LuaExecutor() {
 	static bool OpenedByExecutor = false;
-	BOOL* IsOpen = (BOOL*)(0x0252A5B3);
-	wchar_t* ChatInput = reinterpret_cast<wchar_t*>(0x01F76948);
-	wchar_t* NameFormat = reinterpret_cast<wchar_t*>(0x027B303A);
+	BOOL* IsOpen = (BOOL*)(DynAddress(0x0252A5B3));
+	wchar_t* ChatInput = reinterpret_cast<wchar_t*>(DynAddress(0x01F76948));
+	wchar_t* NameFormat = reinterpret_cast<wchar_t*>(DynAddress(0x027B303A));
 	static std::wstring cmdLog[10]; // feel free to increase or decrease this but make sure to edit all the code below to not break it
 	static int cmdN = 0, cmdIndex = -1;
 
@@ -1045,13 +1048,13 @@ void LuaExecutor() {
 		if (IsKeyPressed(LUA_Key, false)) {
 			if (hasCheatMessageBeenSeen2 == 1 || Debug::CMPatches_DisableCheatFlag.IsApplied()) {
 				if (*IsOpen && OpenedByExecutor) {
-					*(BYTE*)(0x2349849) = 1;
+					*(BYTE*)(DynAddress(0x2349849)) = 1;
 					OpenedByExecutor = false;
 					IsWaiting = false;
 				}
 				else if (!*IsOpen && !IsWaiting) {
 					IsWaiting = true;
-					*(BYTE*)(0x1F76944) = 3;
+					*(BYTE*)(DynAddress(0x1F76944)) = 3;
 					chatWindow();
 					//*(wchar_t*)(0x1F76948) = 0; // idea was to flush the textbox to allow other keys to be used other than VK_INSERT, seems useless as the game already does this. - Clippy95
 					OpenedByExecutor = true;
@@ -1122,7 +1125,7 @@ void LuaExecutor() {
 			}
 
 			else if (sscanf_s(Converted.c_str(), "level %s", Arg1) == 1) {
-				char* ConsoleString = (char*)0x02345A60;
+				char* ConsoleString = (char*)DynAddress(0x02345A60);
 				strcpy_s(ConsoleString, 128, Arg1);
 				LoadLevel();
 				ConsoleString = NULL;
@@ -1147,8 +1150,8 @@ void LuaExecutor() {
 				VintExecute(Converted.c_str());
 			}
 			if (!Debug::CMPatches_DisableCheatFlag.IsApplied()) {
-				*(BYTE*)0x02527B5A = 0x1;
-				*(BYTE*)0x02527BE6 = 0x1;
+				*(BYTE*)DynAddress(0x02527B5A) = 0x1;
+				*(BYTE*)DynAddress(0x02527BE6) = 0x1;
 			}
 		}
 
@@ -1219,9 +1222,8 @@ inline void ModpackWarning(const wchar_t* Warning) {
 
 }
 #endif
-
+static const DWORD player_sniper_func = DynAddress(0x9DA290);
 bool __declspec(naked) player_sniper(uintptr_t player, char zoom_state) {
-	static const DWORD player_sniper_func = 0x9DA290;
 	__asm {
 		push ebp
 		mov ebp, esp
@@ -1241,31 +1243,31 @@ inline void HoldForFineAim() {
 	uint32_t flags = *(uint32_t*)(UtilsGlobal::getplayer() + 0x1160);
 	bool is_currently_fine_aim = (flags >> 27) & 1;
 	bool is_currently_sniper = (flags >> 8) & 1;
-	uint8_t* statusaim = (uint8_t*)0x02347AFA;
+	uint8_t* statusaim = (uint8_t*)DynAddress(0x02347AFA);
 	if (is_currently_fine_aim && *statusaim == 0) {
 		ExitFineAim(UtilsGlobal::getplayer());
 	} else if(is_currently_sniper && *statusaim == 0)
 		player_sniper(UtilsGlobal::getplayer(), 0);
 }
 typedef int __cdecl RenderLoopStuff_Native();
-RenderLoopStuff_Native* UpdateRenderLoopStuff = (RenderLoopStuff_Native*)(0x00C063D0); //0x00BD4A80
+RenderLoopStuff_Native* UpdateRenderLoopStuff = (RenderLoopStuff_Native*)(DynAddress(0x00C063D0)); //0x00BD4A80
 #if !JLITE
 int early_render_hook() {
-	((void(__cdecl*)())0x68C950)();
+	((void(__cdecl*)())DynAddress(0x68C950))();
 	Debug::DynamicRenderDistance();
 	if (useJuicedOSD) {
 		PrintFrametime();
 		PrintGameFrametime();
 		PrintFramerate();
 		if (useJuicedOSD >= 2) {
-			PrintCoords(*(float*)0x25F5BB4, *(float*)0x25F5BBC, *(float*)0x25F5BB8, (useJuicedOSD >= 3)); // z = height? even though it's most likely Y since they are in X,Y,Z
+			PrintCoords(*(float*)DynAddress(0x25F5BB4), *(float*)DynAddress(0x25F5BBC), *(float*)DynAddress(0x25F5BB8), (useJuicedOSD >= 3)); // z = height? even though it's most likely Y since they are in X,Y,Z
 			PrintUsername();
 			PrintPartnerUsername();
 			PrintLatestChunk();
 			PrintDBGGarble();
 		}
 	}
-	return ((int(*)(void))0xD14770)();
+	return ((int(*)(void))DynAddress(0xD14770))();
 }
 #endif
 #if !RELOADED
@@ -1343,8 +1345,8 @@ void PrintCoords(float x, float z,float y, bool showplayerorient) {
 			float x_player_sin = *(float*)(baseplayer + 0x38);
 			float x_player_cos = *(float*)(baseplayer + 0x40);
 			float orient_player = atan2(x_player_sin, x_player_cos);
-			float xAngle = *(float*)0x025F5B50;
-			float zAngle = *(float*)0x025F5B58;
+			float xAngle = *(float*)DynAddress(0x025F5B50);
+			float zAngle = *(float*)DynAddress(0x025F5B58);
 			float orient_camera = atan2(xAngle, zAngle);
 		snprintf(buffer, sizeof(buffer), "UserCoords: (X: %.4f, Y: %.4f, Z: %.4f, C: %.4f, P: %.4f)", x, y, z, orient_camera, orient_player);
 	}
@@ -1362,7 +1364,7 @@ void PrintFrametime() {
 	DWORD currentTime = GetTickCount();
 	if (currentTime - lastUpdate >= 500) {
 		lastUpdate = currentTime;
-		fr = 1.0f / *(float*)(0xE84380);
+		fr = 1.0f / *(float*)(DynAddress(0xE84380));
 		frms = 1.0f / fr * 1000;
 	}
 	char buffer[50];
@@ -1398,7 +1400,7 @@ void PrintFramerate() {
 	DWORD currentTime = GetTickCount();
 	if (currentTime - lastUpdate >= 500) {
 		lastUpdate = currentTime;
-		fr = static_cast<int>(1.0f / *(float*)(0xE84380));
+		fr = static_cast<int>(1.0f / *(float*)(DynAddress(0xE84380)));
 	}
 
 	char buffer[50];
@@ -1422,10 +1424,10 @@ void PrintFramerate() {
 	__asm popad
 }
 void PrintUsername() {
-	BYTE GamespyStatus = *(BYTE*)0x02529334;
+	BYTE GamespyStatus = *(BYTE*)DynAddress(0x02529334);
 	if (GamespyStatus == 4) {
 		char buffer[50];
-		char* playerName = (CHAR*)0x0212AB48;
+		char* playerName = (CHAR*)DynAddress(0x0212AB48);
 		snprintf(buffer, sizeof(buffer), "GS Username: %s", playerName);
 		Render2D::ChangeTextColor(255, 255, 255, 255);
 		__asm pushad
@@ -1436,7 +1438,7 @@ void PrintUsername() {
 
 void PrintLatestChunk() {
 	char buffer[50];
-	char* latestChunk = (CHAR*)0x00EB865C;
+	char* latestChunk = (CHAR*)DynAddress(0x00EB865C);
 	snprintf(buffer, sizeof(buffer), "NewChunkStreamed: % s", latestChunk);
 	Render2D::ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
@@ -1446,7 +1448,7 @@ void PrintLatestChunk() {
 
 void PrintDBGGarble() {
 	char buffer[50];
-	char* dbgg = (CHAR*)0x023460E0;
+	char* dbgg = (CHAR*)DynAddress(0x023460E0);
 	snprintf(buffer, sizeof(buffer), "DBGGarble: % s", dbgg);
 	Render2D::ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
@@ -1463,10 +1465,10 @@ std::string wstring_to_string(const std::wstring& wstr) {
 }
 
 void PrintPartnerUsername() {
-	BYTE GamespyStatus = *(BYTE*)0x02529334;
+	BYTE GamespyStatus = *(BYTE*)DynAddress(0x02529334);
 	if (GamespyStatus == 4) {
 		char buffer[50];
-		wchar_t* partnerName = (WCHAR*)0x02CD1870;
+		wchar_t* partnerName = (WCHAR*)DynAddress(0x02CD1870);
 		std::wstring wPartnerName = partnerName; // parse co-op partner name to a wstring
 		std::string f_PartnerName = wstring_to_string(wPartnerName); // THEN to a string
 		snprintf(buffer, sizeof(buffer), "Recently played with in CO-OP: %s", f_PartnerName.c_str());
@@ -1507,7 +1509,7 @@ void __cdecl UpdateCallback(int Unk, int SelectedOption, int Action) {
 void __cdecl QuitGameCallback(int Unk, int SelectedOption, int Action) {
 
 	if (Action == 2 && SelectedOption == 0) {
-		*(bool*)0x252A41C = true;
+		*(bool*)DynAddress(0x252A41C) = true;
 	}
 }
 
@@ -1579,7 +1581,7 @@ int* sub_73D900() {
 	}
 
 #endif
-	return ((int* (*)())0x73D900)();
+	return ((int* (*)())DynAddress(0x73D900))();
 }
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {

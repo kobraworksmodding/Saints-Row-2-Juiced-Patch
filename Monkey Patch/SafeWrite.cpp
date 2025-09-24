@@ -1,8 +1,10 @@
 #include "SafeWrite.h"
 #include "stdafx.h"
+#include "Hooker.h"
 
 void SafeWrite8(UInt32 addr, UInt32 data)
 {
+	addr = DynAddress(addr);
 	UInt32	oldProtect;
 
 	VirtualProtect((void *)addr, 4, PAGE_EXECUTE_READWRITE, &oldProtect);
@@ -12,6 +14,7 @@ void SafeWrite8(UInt32 addr, UInt32 data)
 
 void SafeWrite16(UInt32 addr, UInt32 data)
 {
+	addr = DynAddress(addr);
 	UInt32	oldProtect;
 
 	VirtualProtect((void *)addr, 4, PAGE_EXECUTE_READWRITE, &oldProtect);
@@ -21,6 +24,7 @@ void SafeWrite16(UInt32 addr, UInt32 data)
 
 void SafeWrite32(UInt32 addr, UInt32 data)
 {
+	addr = DynAddress(addr);
 	UInt32	oldProtect;
 
 	VirtualProtect((void *)addr, 4, PAGE_EXECUTE_READWRITE, &oldProtect);
@@ -30,6 +34,7 @@ void SafeWrite32(UInt32 addr, UInt32 data)
 
 void SafeWriteBuf(UInt32 addr, void * data, UInt32 len)
 {
+	addr = DynAddress(addr);
 	UInt32	oldProtect;
 
 	VirtualProtect((void *)addr, len, PAGE_EXECUTE_READWRITE, &oldProtect);

@@ -1,6 +1,7 @@
 #include "CMultiPatch.h"
 #include <windows.h>
 #include <cstring> // for std::memcpy
+#include "../Hooker.h"
 
 CMultiPatch::CMultiPatch()
     : m_isApplied(false)
@@ -31,6 +32,7 @@ CMultiPatch::~CMultiPatch()
 //------------------------------------
 void CMultiPatch::AddPatch(std::uintptr_t address, const std::vector<uint8_t>& patchBytes)
 {
+    address = DynAddress(address);
     PatchEntry entry;
     entry.address = address;
     entry.patchBytes = patchBytes;

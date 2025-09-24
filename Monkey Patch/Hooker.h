@@ -1,7 +1,6 @@
 #pragma once
-#include "UtilsGlobal.h"
 #include <libloaderapi.h>
-
+#include <bit>
 //template<typename AT>
 //inline AT DynAddress(AT address)
 //{
