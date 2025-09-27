@@ -49,11 +49,11 @@ namespace Debug
 	int SIZE_MIN = 200;
 	int MAX = 1400;
 	void DynamicRenderDistance() {
-		int size = *(int*)0x02784990;
 		float* render_distance = (float*)0x00E996B4;
 		float* frametime = (float*)0xE8437C;
 
 		if (UseDynamicRenderDistance) {
+			int size = **(int**)(0x52431A + 1);
 			// Only make changes when size is at least 1
 			if (size < 1) {
 				return;
@@ -113,7 +113,7 @@ namespace Debug
 			Render2D::InGamePrint(buffer, y + 20, Render2D::processtextwidth(0), 6);
 			__asm popad
 
-			snprintf(buffer, sizeof(buffer), "render distance %2.4f render size %d", *(float*)0x00E996B4,*(int*)0x02784990);
+			snprintf(buffer, sizeof(buffer), "render distance %2.4f render size %d", *(float*)0x00E996B4,**(int**)(0x52431A + 1));
 			__asm pushad
 			Render2D::InGamePrint(buffer, y + 40, Render2D::processtextwidth(0), 6);
 			__asm popad

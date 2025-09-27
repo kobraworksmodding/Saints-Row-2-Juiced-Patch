@@ -45,4 +45,5 @@ namespace Render3D
     extern SafetyHookMid screen_3d_to_2d_midhook;
     extern bool use_old;
     extern void apply_old();
+    extern bool push_back_force_old_size;
 }

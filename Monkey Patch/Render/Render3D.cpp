@@ -23,6 +23,11 @@
 #include "../Game/CrashFixes.h"
 #include "../LUA/InGameConfig.h"
 #include "Shadows.h"
+#include "../Math/Math.h"
+#include "../UtilsGlobal.h"
+#include <fstream>
+#include <map>
+#include <Hooking.Patterns.h>
 #include "..\Hooker.h"
 import OptionsManager; 
 
@@ -779,20 +784,298 @@ namespace Render3D
 				return false;
 				};
 
-			if (GameConfig::GetValue("Graphics", "RemovePixelationShader", 0)) {
-				remove_line("data\\shaders\\standard\\sr2-pixelate_c.fxo_pc");
-				Logger::TypedLog(CHN_MOD, "Patching shaders_pc to remove %s\n", "data\\shaders\\standard\\sr2-pixelate_c.fxo_pc");
-			}
+				if (GameConfig::GetValue("Graphics", "RemovePixelationShader", 0)) {
+					remove_line("data\\shaders\\standard\\sr2-pixelate_c.fxo_pc");
+					Logger::TypedLog(CHN_MOD, "Patching shaders_pc to remove %s\n", "data\\shaders\\standard\\sr2-pixelate_c.fxo_pc");
+				}
 			});
 	}
 
 	volatile float VehicleDespawnDistance = 140.f;
-	CPatch CIncreaseVehicleDespawnDistance = CPatch::SafeWrite32(0x0093BDF9,(uint32_t)&VehicleDespawnDistance);
+	CPatch CIncreaseVehicleDespawnDistance = CPatch::SafeWrite32(0x0093BDF9, (uint32_t)&VehicleDespawnDistance);
 	static inline void setBL(SafetyHookContext& ctx, int val)
 	{
 		ctx.ebx = (ctx.ebx & 0xFFFFFF00) | (val & 0xFF);
 	}
 	SafetyHookMid screen_3d_to_2d_midhook;
+
+
+	struct batch_entry
+	{
+		void* m_ri;
+		unsigned int m_flags;
+		unsigned int m_vis_bits0;
+		unsigned int m_vis_bits1;
+		float render_distance;
+	};
+
+
+	template <size_t N>
+	class render_batch {
+	public:
+		batch_entry m_batch[N];
+		unsigned int m_size;
+		//unsigned int m_overflow_count;
+	};
+constexpr auto new_size_n = 5000;
+	render_batch<new_size_n> main_render_bigger{};
+
+	constexpr auto alpha_new_size = 2500;
+	render_batch<alpha_new_size> alpha_bigger{};
+	bool push_back_force_old_size = false;
+	size_t debug_push_back_size(unsigned int old_size, unsigned int new_size) {
+
+		if (!push_back_force_old_size)
+			return new_size;
+		
+		return old_size;
+
+	}
+
+	int __stdcall push_back(
+		void* ri,
+		unsigned int render_flags,
+		unsigned int vis0,
+		unsigned int vis1) {
+		batch_entry* new_entry; // [esp+4h] [ebp-8h]
+		unsigned int next_inst; // [esp+8h] [ebp-4h]
+
+		auto main_size = debug_push_back_size(1536, new_size_n);
+
+		next_inst = _InterlockedIncrement(&main_render_bigger.m_size);
+		if (next_inst > main_size)
+		{
+			main_render_bigger.m_size = main_size;
+			//main_render_bigger.m_overflow_count;
+		}
+		else
+		{
+			new_entry = &main_render_bigger.m_batch[next_inst - 1];
+			new_entry->m_ri = ri;
+			new_entry->m_flags = render_flags;
+			new_entry->m_vis_bits0 = vis0;
+			new_entry->m_vis_bits1 = vis1;
+		}
+
+		return next_inst;
+
+	}
+
+#define Alpha_Size_New 2000
+	render_batch<Alpha_Size_New> Alpha_Render_batch;
+
+	int __stdcall push_back_alpha(
+		void* ri,
+		unsigned int render_flags,
+		unsigned int vis0,
+		unsigned int vis1) {
+		batch_entry* new_entry; // [esp+4h] [ebp-8h]
+		unsigned int next_inst; // [esp+8h] [ebp-4h]
+
+		next_inst = _InterlockedIncrement(&Alpha_Render_batch.m_size);
+
+		auto alpha_size = debug_push_back_size(1024, Alpha_Size_New);
+
+		if (next_inst > alpha_size)
+		{
+			Alpha_Render_batch.m_size = alpha_size;
+			//main_render_bigger.m_overflow_count;
+		}
+		else
+		{
+			new_entry = &Alpha_Render_batch.m_batch[next_inst - 1];
+			new_entry->m_ri = ri;
+			new_entry->m_flags = render_flags;
+			new_entry->m_vis_bits0 = vis0;
+			new_entry->m_vis_bits1 = vis1;
+		}
+
+		return next_inst;
+
+	}
+
+#define Supp_pass_Size_New 2000
+	render_batch<Supp_pass_Size_New> Supp_pass_increased;
+	int __stdcall push_back_Supp_Pass(
+		void* ri,
+		unsigned int render_flags,
+		unsigned int vis0) {
+		batch_entry* new_entry; // [esp+4h] [ebp-8h]
+		unsigned int next_inst; // [esp+8h] [ebp-4h]
+
+		auto supp_size = debug_push_back_size(512, Supp_pass_Size_New);
+
+		next_inst = _InterlockedIncrement(&Supp_pass_increased.m_size);
+		if (next_inst > supp_size)
+		{
+			Supp_pass_increased.m_size = supp_size;
+			//Supp_pass_increased.m_overflow_count;
+		}
+		else
+		{
+			new_entry = &Supp_pass_increased.m_batch[next_inst - 1];
+			new_entry->m_ri = ri;
+			new_entry->m_flags = render_flags;
+			new_entry->m_vis_bits0 = vis0;
+			new_entry->m_vis_bits1 = 0;
+		}
+
+		return next_inst;
+
+	}
+
+	template<size_t OriginalSize, size_t NewSize>
+	void PatchRenderBatch(const char* batch_name, uintptr_t original_address, render_batch<NewSize>& new_structure) {
+		printf("=== Patching %s render_batch Structure ===\n", batch_name);
+		printf("Original address: 0x%08X (size: %zu entries)\n", static_cast<unsigned int>(original_address), OriginalSize);
+		printf("New structure address: 0x%08X (size: %zu entries)\n",
+			static_cast<unsigned int>(reinterpret_cast<uintptr_t>(&new_structure)), NewSize);
+		printf("New structure size: %zu bytes (was %zu)\n\n", sizeof(new_structure), sizeof(render_batch<OriginalSize>));
+
+		// Calculate offsets for structure fields
+		size_t original_batch_array_size = sizeof(batch_entry) * OriginalSize;
+
+		// Convert addresses to little-endian patterns for scanning
+		struct AddressPatch {
+			const char* name;
+			uintptr_t original_address;
+			uintptr_t new_address;
+			std::string pattern;
+		};
+
+		auto addr_to_pattern = [](uintptr_t addr) -> std::string {
+			uint8_t* bytes = reinterpret_cast<uint8_t*>(&addr);
+			char pattern[20];
+			sprintf(pattern, "%02X %02X %02X %02X", bytes[0], bytes[1], bytes[2], bytes[3]);
+			return std::string(pattern);
+			};
+
+		AddressPatch address_patches[] = {
+			// Map original addresses to new addresses
+			{"m_batch[0].m_ri",
+			 original_address + offsetof(batch_entry, m_ri),
+			 reinterpret_cast<uintptr_t>(&new_structure.m_batch[0].m_ri),
+			 addr_to_pattern(original_address + offsetof(batch_entry, m_ri))},
+
+			{"m_batch[0].m_flags",
+			 original_address + offsetof(batch_entry, m_flags),
+			 reinterpret_cast<uintptr_t>(&new_structure.m_batch[0].m_flags),
+			 addr_to_pattern(original_address + offsetof(batch_entry, m_flags))},
+
+			{"m_batch[0].m_vis_bits0",
+			 original_address + offsetof(batch_entry, m_vis_bits0),
+			 reinterpret_cast<uintptr_t>(&new_structure.m_batch[0].m_vis_bits0),
+			 addr_to_pattern(original_address + offsetof(batch_entry, m_vis_bits0))},
+
+			{"m_batch[0].m_vis_bits1",
+			 original_address + offsetof(batch_entry, m_vis_bits1),
+			 reinterpret_cast<uintptr_t>(&new_structure.m_batch[0].m_vis_bits1),
+			 addr_to_pattern(original_address + offsetof(batch_entry, m_vis_bits1))},
+
+			{"m_batch[0].render_distance",
+			 original_address + offsetof(batch_entry, render_distance),
+			 reinterpret_cast<uintptr_t>(&new_structure.m_batch[0].render_distance),
+			 addr_to_pattern(original_address + offsetof(batch_entry, render_distance))},
+
+			{"m_size",
+			 original_address + original_batch_array_size,
+			 reinterpret_cast<uintptr_t>(&new_structure.m_size),
+			 addr_to_pattern(original_address + original_batch_array_size)},
+
+
+
+			{"base address (m_batch)",
+			 original_address,
+			 reinterpret_cast<uintptr_t>(&new_structure.m_batch),
+			 addr_to_pattern(original_address)},
+		};
+
+		int total_patches_applied = 0;
+		int total_references_found = 0;
+
+		for (const auto& patch_info : address_patches) {
+			printf("Patching: %s\n", patch_info.name);
+			printf("Original: 0x%08X -> New: 0x%08X\n",
+				static_cast<unsigned int>(patch_info.original_address),
+				static_cast<unsigned int>(patch_info.new_address));
+			printf("Pattern: %s\n", patch_info.pattern.c_str());
+
+			try {
+				auto pattern_results = hook::pattern(patch_info.pattern);
+				size_t count = pattern_results.size();
+				total_references_found += static_cast<int>(count);
+
+				if (count > 0) {
+					printf("  Found %zu references - applying patches...\n", count);
+
+					// Apply patches to all found references
+					for (size_t i = 0; i < count; ++i) {
+						auto match = pattern_results.get(i);
+						uintptr_t patch_location = reinterpret_cast<uintptr_t>(match.get<void>());
+
+						printf("    Patching reference at 0x%08X\n", static_cast<unsigned int>(patch_location));
+
+						// Apply the patch using SafeWrite32
+						SafeWrite32(patch_location, patch_info.new_address);
+						total_patches_applied++;
+					}
+					printf("  Successfully applied %zu patches for %s\n", count, patch_info.name);
+				}
+				else {
+					printf("  No references found - no patches needed\n");
+				}
+			}
+			catch (...) {
+				printf("  Pattern scan failed for %s\n", patch_info.name);
+			}
+			printf("\n");
+		}
+
+
+		printf("=== Scanning for additional array element references ===\n");
+
+		for (int i = 1; i < 10; ++i) {
+			uintptr_t original_entry = original_address + (sizeof(batch_entry) * i);
+			uintptr_t new_entry = reinterpret_cast<uintptr_t>(&new_structure.m_batch[i]);
+			std::string entry_pattern = addr_to_pattern(original_entry);
+
+			try {
+				auto pattern_results = hook::pattern(entry_pattern);
+				size_t count = pattern_results.size();
+
+				if (count > 0) {
+					printf("Found %zu references to m_batch[%d] - patching...\n", count, i);
+
+					for (size_t j = 0; j < count; ++j) {
+						auto match = pattern_results.get(j);
+						uintptr_t patch_location = reinterpret_cast<uintptr_t>(match.get<void>());
+						SafeWrite32(patch_location, new_entry);
+						total_patches_applied++;
+					}
+					total_references_found += static_cast<int>(count);
+				}
+			}
+			catch (...) {
+				// Continue with next entry
+			}
+		}
+
+		printf("Total references found: %d\n", total_references_found);
+		printf("Total patches applied: %d\n", total_patches_applied);
+		printf("New structure capacity: %zu entries (was %zu)\n", NewSize, OriginalSize);
+		printf("Memory size increase: %zu bytes\n", sizeof(new_structure) - sizeof(render_batch<OriginalSize>));
+
+
+		new_structure.m_size = 0;
+
+		printf("New %s structure initialized and ready for use!\n", batch_name);
+		printf("========================================\n\n");
+	}
+
+#define Instance_pool_buffer_old_size 4587520
+#define Instance_pool_buffer_new_size Instance_pool_buffer_old_size * 6
+	unsigned __int8 Instance_pool_buffer[Instance_pool_buffer_new_size];
+
 
 	bool& rendered_second_this_frame = *(bool*)DynAddress(0x0252737E);
 
@@ -877,6 +1160,23 @@ namespace Render3D
 	{
 		patchJmp((void*)DynAddress(0x00D755F0), &AlphaMaskAvailable);
 		Shadows::Init();
+		patchDWord((void*)(0xC0BD0B + 1), Instance_pool_buffer_new_size);
+		patchDWord((void*)(0xC0BD13 + 1), (uintptr_t)&Instance_pool_buffer);
+		//static auto whatever = safetyhook::create_mid(0xD098B0, [](SafetyHookContext& ctx) {
+		//	void* return_addr = _ReturnAddress();
+
+		//	printf("num lod %d %p\n", ctx.ecx, return_addr);
+
+		//	});
+		//ScanRender();
+		PatchRenderBatch<1536, new_size_n>("Main", 0x0277D190, main_render_bigger);
+		PatchRenderBatch<1024, Alpha_Size_New>("Alpha", 0x02784998, Alpha_Render_batch);
+		PatchRenderBatch<512, Supp_pass_Size_New>("Supp", 0x027899A0, Supp_pass_increased);
+
+		patchCall((void*)0x52E926, push_back);
+		patchCall((void*)0x52E912, push_back_alpha);
+		patchCall((void*)0x52E967, push_back_Supp_Pass);
+
 		if(GameConfig::GetValue("Graphics","RemovePixelationShader",0))
 		shaders_pc_hook();
 		OptionsManager::registerOption("Graphics", "ShaderOverride", &OVERRIDE_SHADER_LOD,1);
@@ -1048,5 +1348,6 @@ namespace Render3D
 		if (GameConfig::GetValue("Graphics", "FixGlares", 1)) {
 			patchByte((void*)0x004AFBA2, 0xEB);
 		}
+		Shadows::Init();
 	}
 }

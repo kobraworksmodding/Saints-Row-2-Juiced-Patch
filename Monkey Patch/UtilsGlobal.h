@@ -49,8 +49,16 @@ inline void GetPlayerXYZ(vector3* Dest) {
     memcpy(Dest, (void*)(0x25F5BB4), sizeof(vector3));
 }
 
+inline vector3* GetPlayerXYZ() {
+    return (vector3*)0x25F5BB4;
+}
+
 inline void GetPlayerOrient(matrix* Dest) {
     memcpy(Dest, (void*)(UtilsGlobal::getplayer() + 32), sizeof(matrix));
+}
+
+inline matrix* GetPlayerOrient() {
+    return (matrix*)(UtilsGlobal::getplayer() + 32);
 }
 
 inline bool invert;

@@ -103,7 +103,7 @@ struct shadow_job
 };
 shadow_job* shadow_job_list = (shadow_job*)0xFA23DC;
 
-render_load* render_1 = (render_load*)0x277D190;
+render_load* render_1;
 
 float* flt_2612D10 = (float*)0x02612D10;
 
@@ -221,6 +221,7 @@ void ShutdownShadowWorkers()
 namespace Shadows {
     void Init() {
         if (GameConfig::GetValue("Debug", "sync_shadows_threads", 1) || GameConfig::GetValue("Debug", "FixPerformance", 1) >= 2) {
+            render_1 = (render_load*)*(uintptr_t*)(((0x0052434E + 2)));
             InitializeShadowWorkerSync();
             SafeWrite32((0x00528539 + 1), (uint32_t)&shadow_job_thread);
             static auto add_shadow_job = safetyhook::create_mid(0x5285E2, [](SafetyHookContext& ctx) {

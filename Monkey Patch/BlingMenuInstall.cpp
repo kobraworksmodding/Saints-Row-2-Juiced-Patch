@@ -398,8 +398,8 @@ namespace BlingMenuInstall
        BlingMenuAddBool("Juiced Debug", "UseDynamicRenderDistance", (bool*)&Debug::UseDynamicRenderDistance, NULL);
        BlingMenuAddFloat("Juiced Debug", "MAX_RENDER", &Debug::MAX_RENDER, NULL, 0.1f, 1.f, 50.f);
        BlingMenuAddFloat("Juiced Debug", "TRANSITION_SPEED", &Debug::TRANSITION_SPEED, NULL, 0.1f, 1.f, 50.f);
-       BlingMenuAddInt("Juiced Debug", "SIZE_MIN", &Debug::SIZE_MIN, NULL,5,1,1536);
-       BlingMenuAddInt("Juiced Debug", "MAX", &Debug::MAX, NULL, 5, 1, 1536);
+       BlingMenuAddInt("Juiced Debug", "SIZE_MIN", &Debug::SIZE_MIN, NULL,5,1,153600);
+       BlingMenuAddInt("Juiced Debug", "MAX", &Debug::MAX, NULL, 5, 1, 153600);
        BlingMenuAddInt("Juiced Debug", "ShaderOverride",&Render3D::OVERRIDE_SHADER_LOD, NULL, 1, 0, 2);
        BlingMenuAddInt("Juiced Debug", "SHADER_LOD", (int*)&Render3D::SHADER_LOD, NULL, 1, -2, 10);
        BlingMenuAddFloat("Juiced Debug", "SHADER_DISTANCE_SQUARED_MULT", &Render3D::SHADER_DISTANCE_SQUARED_MULT, NULL, 0.1f, 1.f, 250.f);
@@ -407,6 +407,8 @@ namespace BlingMenuInstall
        BlingMenuAddFuncCustom("Juiced Debug", "screen_3d_to_2d_midhook", NULL, &BM_screen_3d_to_2d_midhook, NULL);
        BlingMenuAddBool("Juiced Debug", "useTextPrompts", &Input::useTextPrompts, NULL);
        BlingMenuAddInt("Juiced Debug", "Use PS3 Prompts", &Input::usePS3Prompts, NULL, 1, 0, 1);
+       BlingMenuAddFloat("Juiced Debug", "Render Distance", (float*)0x00E996B4, NULL, 0.65f, 1.f, 500.f);
+       BlingMenuAddBool("Juiced Debug", "push_back_force_old_size", &Render3D::push_back_force_old_size, NULL);
        //BlingMenuAddInt8("Juiced Debug", "Fix mouse water", &Math::Fixes::FixWater, NULL,1,0,2);
        //BlingMenuAddBool("Juiced Debug", "Simulate mouse water", &Math::Fixes::SimulateWaterBug, NULL);
        BlingMenuAddBool("Juiced Debug", "old sleep hack 1", &Render3D::use_old, Render3D::apply_old);
