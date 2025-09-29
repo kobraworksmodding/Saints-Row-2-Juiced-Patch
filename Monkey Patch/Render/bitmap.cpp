@@ -222,11 +222,17 @@ bool __fastcall load_peg_hook(const char* filename, uintptr_t mempool) {
 SafetyHookInline sub_51D290T;
 
 uintptr_t sub_51D290Lang() {
+    LoadExtraBitMapTable("ui_bms_btnmash_j.xtbl");
     LoadExtraBitMapTable("juiced-ui.xtbl");
     return sub_51D290T.ccall<uintptr_t>();
 }
-
+#define first_increase 12000 * 2
+#define second_increase 73728
 namespace bitmap_loader {
+constexpr size_t permanent_default = 0x00800000;
+#define KB (size_t)(1024)
+#define MB (size_t)(1024 * KB)
+#define GB (size_t)(1024 * MB)
     void Init() {
         if (GameConfig::GetValue("Modding", "addon_bitmaps", 1)) {
             static auto interface_gpu_increase = safetyhook::create_mid(0x51E322, [](SafetyHookContext& ctx) {
@@ -235,6 +241,18 @@ namespace bitmap_loader {
                     Logger::TypedLog("Mempool", "Patched interface_gpu size to 0x%X\n", ctx.esi);
                 }
                 });
+            size_t new_permanent_size = std::clamp(GameConfig::GetValue("Mempool", "permanent", permanent_default * 1.5), permanent_default,GB);
+
+            SafeWrite32((0x51DCB4 + 1), new_permanent_size);
+            SafeWrite32((0x51DDC8 + 1), new_permanent_size);
+            // Increase size for bitmap string hash table
+            SafeWrite32((0xB8723D + 1), first_increase);
+            SafeWrite32((0xB87280 + 1), second_increase);
+            SafeWrite32((0xB872C3 + 6), second_increase);
+            SafeWrite32((0xB87304 + 6), second_increase);
+
+
+
             load_pegT = safetyhook::create_inline(0x522450, &load_peg_hook);
             sub_51D290T = safetyhook::create_inline(0x51D290, sub_51D290Lang);
             SafeWrite32(0x00C08803 + 1, 1806336);
