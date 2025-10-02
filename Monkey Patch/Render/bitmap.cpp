@@ -222,7 +222,7 @@ bool __fastcall load_peg_hook(const char* filename, uintptr_t mempool) {
 SafetyHookInline sub_51D290T;
 
 uintptr_t sub_51D290Lang() {
-    LoadExtraBitMapTable("ui_bms_btnmash_j.xtbl");
+    //LoadExtraBitMapTable("ui_bms_btnmash_j.xtbl");
     LoadExtraBitMapTable("juiced-ui.xtbl");
     return sub_51D290T.ccall<uintptr_t>();
 }
