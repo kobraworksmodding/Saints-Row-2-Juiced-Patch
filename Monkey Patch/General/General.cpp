@@ -79,17 +79,17 @@ namespace General {
 
 			Check :
 			mov al, ds : byte ptr[0x2527D14]
-			cmp al, 0
-			jz Skip
-			jmp Resume
+				cmp al, 0
+				jz Skip
+				jmp Resume
 
-			Skip :
+				Skip :
 			jmp SkipAddr
 
-			Resume :
+				Resume :
 			mov edi, dword ptr[0x6C6870]
-			call edi
-			jmp Continue
+				call edi
+				jmp Continue
 
 		}
 	}
@@ -133,7 +133,7 @@ namespace General {
 
 			Replace :
 			push SaveDelCallback
-			jmp Continue
+				jmp Continue
 		}
 	}
 
@@ -148,7 +148,7 @@ namespace General {
 			call	edx
 			jmp		Continue
 		}
-		Skip:
+	Skip:
 		__asm{
 			mov eax, 1
 			mov		ds: DeletionMode, 0
@@ -171,9 +171,9 @@ namespace General {
 
 			Skip :
 			mov eax, SaveMessage
-			mov     ecx, [EnterPressed]
-			mov     ds : byte ptr[ecx], 0
-			jmp Continue
+				mov     ecx, [EnterPressed]
+				mov     ds : byte ptr[ecx], 0
+				jmp Continue
 		}
 	}
 
@@ -191,9 +191,9 @@ namespace General {
 
 			Skip :
 			add esp, 4
-			mov byte ptr[DeletionMode], 0
-			mov ds : byte ptr[0x2528377], 1
-			jmp SkipAddr
+				mov byte ptr[DeletionMode], 0
+				mov ds : byte ptr[0x2528377], 1
+				jmp SkipAddr
 		}
 	}
 
@@ -208,7 +208,7 @@ namespace General {
 
 			Skip :
 			mov ds : byte ptr[0x252A37C], 0
-			jmp jmp_continue
+				jmp jmp_continue
 		}
 	}
 
@@ -379,8 +379,8 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 		std::string finalContent;
 		finalContent = std::string(currentBuff, sz);
-		if (strcmp(filename, "vint_lib.lua") == 0 || 
-			strcmp(filename, "hud_btnmash.lua") == 0 || 
+		if (strcmp(filename, "vint_lib.lua") == 0 ||
+			strcmp(filename, "hud_btnmash.lua") == 0 ||
 			strcmp(filename, "completion.lua") == 0 ||
 			strcmp(filename, "pause_map.lua") == 0) {
 			if (!modified) {
@@ -503,7 +503,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		const char* buff = (const char*)ctx.ebp;
 		const char* filename = (const char*)(ctx.esp + 0x14);
 		size_t& sz = ctx.ecx;
-	
+
 		std::string convertedBuff(buff,sz);
 #if !JLITE
 		int* resX = (int*)(0xE8DF14);
@@ -640,7 +640,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 					char extraBuffer[850]{};
 					if (cached_str == "hud") {
 						using namespace Render2D;
-						
+
 
 						snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "extra_homie", "hud", "anchor",
 							(get_vint_x_resolution() - 1280) / 2.f, -500.f);
@@ -666,7 +666,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 							weirdscale_y = weirdscale;
 						}
 
-						float weirdscale = 1.f / (Render2D::widescreenvalue / *Render2D::currentAR);
 						//snprintf(extraBuffer, sizeof(extraBuffer), lua_command, "mayhem_grp", "hud", "scale",
 						//	weirdscale, 1.f);
 						//customCode += "\n";
@@ -737,7 +736,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 						}
 					}
 					if(externallyModified)
-					modified = externallyModified;
+						modified = externallyModified;
 
 				}
 #endif
@@ -759,7 +758,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			}
 		}
 	}
-	
+
 	SafetyHookMid cleanupBufferHook;
 	void CleanupModifiedScript() {
 		if (currentModifiedBuffer != nullptr) {
@@ -1133,7 +1132,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		WriteRelJump(0x00685EE0, (UInt32)&LowGravity_cheat_fix_basejumping); // LowGravity_Restore()
 		patchNop((BYTE*)0x004D6795, 5); // Fix for the sun flare disappearing upon reloading a save. Prevents the game from deallocating the flare.
 		if(GameConfig::GetValue("Debug","AllowMultipleSR2Windows",1)) // in case this fucks up or something
-		SafeWrite8(0x00BFA6B6, 0xEB);
+			SafeWrite8(0x00BFA6B6, 0xEB);
 		static SafetyHookMid LoadPosHook = safetyhook::create_mid(0x006938EB, &LoadSaveSetPos);
 		static SafetyHookMid SavePosHook = safetyhook::create_mid(0x00695BBF, &SaveCurrentPos);
 		D3D9CreateFunctionT = safetyhook::create_inline(0xD1F3F0, &CreateD3D9DeviceFunction);
@@ -1157,9 +1156,9 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			modpackread = 1;
 			*/
 #endif
-			Logger::TypedLog(CHN_DLL, "Fixing Default Texture\n");
-			patchDWord((void*)0x00C08873, (int)"always_loaded"); // patches to correct the missing texture on PC
-			patchDWord((void*)0x00C088F8, (int)"missing-grey.tga");
+		Logger::TypedLog(CHN_DLL, "Fixing Default Texture\n");
+		patchDWord((void*)0x00C08873, (int)"always_loaded"); // patches to correct the missing texture on PC
+		patchDWord((void*)0x00C088F8, (int)"missing-grey.tga");
 		patchNop((BYTE*)0x0052598D, 6); // fix for black water in the distance with AA disabled
 		patchNop((BYTE*)0x005267F0, 6); // fix for black water in the distance with AA enabled
 		//patchDWord((void*)(0x007ECA66 + 1), (int)"PS3"); // patch get_platform to return ps3. Not ideal.
@@ -1184,7 +1183,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				General::CleanupModifiedScript();
 				},safetyhook::MidHook::Default);
 			luaLoadBuffHook = safetyhook::create_mid(0x00CDE379, &VINT_DOC_luaLoadBuff
-);
+			);
 			if (Input::EnableDynamicPrompts) {
 				static auto cleanupBufferHook_general = safetyhook::create_mid(0xCD9FF7, [](safetyhook::Context32& ctx) {
 					General::CleanupModifiedScript_general();
@@ -1223,7 +1222,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		if (GameConfig::GetValue("Input", "FixVerticalMouseSensitivity", 1)) {
 
 			patchBytesM((BYTE*)0x00498331, (BYTE*)"\xD9\xE8\x90", 3); // fld1 nop
-			
+
 		}
 		WriteRelJump(0x0098E493, (UInt32)&StoreNPCPointer);
 		WriteRelJump(0x0098EE0B, (UInt32)&SpawningCheck);

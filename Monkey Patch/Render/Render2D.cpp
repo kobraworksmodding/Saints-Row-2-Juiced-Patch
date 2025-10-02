@@ -205,17 +205,17 @@ namespace Render2D
 		*y = targetY;
 	}
 
-int processtextwidth(int width) {
-	if (*currentAR >= 1.77777777778f) {
-		int offset = (int)(*currentAR * 720);
-		offset -= 1280;
-		if (offset != 0) {
-			width += offset / 2;
+	int processtextwidth(int width) {
+		if (*currentAR >= 1.77777777778f) {
+			int offset = (int)(*currentAR * 720);
+			offset -= 1280;
+			if (offset != 0) {
+				width += offset / 2;
+			}
 		}
-	}
-	return width;
+		return width;
 
-}
+	}
 
 	inline bool is_aspect_1610() {
 		return *currentAR == 1.6f;
@@ -226,7 +226,7 @@ int processtextwidth(int width) {
 			return *currentAR * 720;
 		// Hack to fix odd weird res widescreens like 1.6f during display changes 
 		// between ultrawide and non-ultrawide, only sometimes so it's still super buggy and weird.
-		else return 1280.f; 
+		else return 1280.f;
 	}
 	float get_vint_1610_hack_scale() {
 		if (!is_aspect_1610())
@@ -457,8 +457,14 @@ int processtextwidth(int width) {
 			General::VintExecute(buffer);
 
 			float weirdscale = 1.f;
+			float weirdscale_y = 1.f;
 			if (!is_aspect_1610())
-			weirdscale = 1.f / (widescreenvalue / *currentAR);
+				weirdscale = 1.f / (widescreenvalue / *currentAR);
+
+			if (Render2D::is_aspect_1610()) {
+				weirdscale_y = 1.f / (widescreenvalue / *currentAR);
+			}
+
 			//snprintf(buffer, sizeof(buffer), lua_command, "mayhem_grp", "hud", "scale", weirdscale, 1.f);
 			//General::VintExecute(buffer);
 
@@ -477,266 +483,277 @@ int processtextwidth(int width) {
 		}
 	}
 
-bool UltrawideFix = false;
+	bool UltrawideFix = false;
 
-std::thread RefreshHUD_thread;
-void RefreshHUD_loop() {
-	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n",2);
-	vint_create_process_hook.enable();
-	std::this_thread::sleep_for(std::chrono::seconds(4));
-	vint_create_process_hook.disable();
-}
+	std::thread RefreshHUD_thread;
+	void RefreshHUD_loop() {
+		Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n",2);
+		vint_create_process_hook.enable();
+		std::this_thread::sleep_for(std::chrono::seconds(4));
+		vint_create_process_hook.disable();
+	}
 
-char SR2Ultrawide_HUDScale() {
-	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 1);
-	Render3D::ChangeShaderOptions();
-	float currentX = (float)(*(unsigned int*)0x022f63f8);
-	float currentY = (float)(*(unsigned int*)0x022f63fc);
-	char result;
+	char SR2Ultrawide_HUDScale() {
+		Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 1);
+		Render3D::ChangeShaderOptions();
+		float currentX = (float)(*(unsigned int*)0x022f63f8);
+		float currentY = (float)(*(unsigned int*)0x022f63fc);
+		char result;
 
-	float aspectRatio = currentX / currentY;
-	// Cutscene black bars
-	SafeWrite32((0x00755C49 + 1), 1280);
-	Render3D::AspectRatioFix(true);
-	SafeWrite32((0x75F1F6 + 4), processtextwidth(387));
-	if (aspectRatio >= 1.77) {
-		SafeWrite32((0x00755C49 + 1), (uint32_t)(aspectRatio * 720));
-		// Fix reflections being broken at ultrawide.
-		*(float*)(0x0E86388) = aspectRatio;
+		float aspectRatio = currentX / currentY;
+		// Cutscene black bars
+		SafeWrite32((0x00755C49 + 1), 1280);
+		Render3D::AspectRatioFix(true);
+		SafeWrite32((0x75F1F6 + 4), processtextwidth(387));
+		if (aspectRatio >= 1.77 || aspectRatio == 1.6f) {
+			SafeWrite32((0x00755C49 + 1), (uint32_t)(aspectRatio * 720));
+			// Fix reflections being broken at ultrawide.
+			*(float*)(0x0E86388) = aspectRatio;
 #if !JLITE
-		if (GameConfig::GetValue("Graphics", "IVRadarScaling", 0)) {
-			IVRadarScaling = true;
-			RadarScaling();
-		}
+			if (GameConfig::GetValue("Graphics", "IVRadarScaling", 0)) {
+				IVRadarScaling = true;
+				RadarScaling();
+			}
 #endif
 
-		// Fucking tagging system cause yeah lets hard code the anchor for it?
-	int var = (int)(aspectRatio * 720.f);
-	static int var2 = (int)(aspectRatio * 360.f);
-	if (aspectRatio != 1.6f) {
-		SafeWrite32(0x00622571 + 1, var);
-		SafeWrite32(0x00625A2B + 2, var);
-		SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
-		SafeWrite32(0x0062597F + 2, (UInt32)&var2);
-	}
-	SafeWrite32(0x00622555 + 2, 720);
-	SafeWrite32(0x00625A44 + 1, 720);
+			// Fucking tagging system cause yeah lets hard code the anchor for it?
+			int var = (int)(aspectRatio * 720.f);
+			static int var2 = (int)(aspectRatio * 360.f);
+			if (aspectRatio != 1.6f) {
+				SafeWrite32(0x00622571 + 1, var);
+				SafeWrite32(0x00625A2B + 2, var);
+				SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
+				SafeWrite32(0x0062597F + 2, (UInt32)&var2);
+			}
+			SafeWrite32(0x00622555 + 2, 720);
+			SafeWrite32(0x00625A44 + 1, 720);
 
-	SafeWrite32(0x00625D5D + 2, 0x22DBF90);
-	SafeWrite32(0x006259FC + 2, 0x22DBF90);
-	if (aspectRatio == 1.6f) {
-		int aspect_1610 = 800;
-		SafeWrite32(0x00622555 + 2, aspect_1610);
-		SafeWrite32(0x00625A44 + 1, aspect_1610);
-		static int aspect_1610_width = 400;
-		SafeWrite32(0x00625D5D + 2, (UInt32)&aspect_1610_width);
-		SafeWrite32(0x006259FC + 2, (UInt32)&aspect_1610_width);
-	}
-		Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 3);
-		RefreshHUD_thread = std::thread(RefreshHUD_loop);
-		RefreshHUD_thread.detach();
-	}
-	if ((GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1)) {
-		if (aspectRatio <= 1.79777777778f && aspectRatio != 1.5f && aspectRatio != 1.6f) {
+			SafeWrite32(0x00625D5D + 2, 0x22DBF90);
+			SafeWrite32(0x006259FC + 2, 0x22DBF90);
+			if (aspectRatio == 1.6f) {
+				int aspect_1610 = 800;
+				SafeWrite32(0x00622555 + 2, aspect_1610);
+				SafeWrite32(0x00625A44 + 1, aspect_1610);
+				static int aspect_1610_width = 400;
+				SafeWrite32(0x00625D5D + 2, (UInt32)&aspect_1610_width);
+				SafeWrite32(0x006259FC + 2, (UInt32)&aspect_1610_width);
+			}
 
-			UltrawideFix = false;
-			General::CleanupModifiedScript();
-			return ((char(*)())0xD1C910)(); // Original HUD scale function.
-			
+			static auto diversion_hud_loc = safetyhook::create_mid(0x79AF1F, [](SafetyHookContext& ctx) {
+				float currentX = (float)(*(unsigned int*)0x022f63f8);
+				float currentY = (float)(*(unsigned int*)0x022f63fc);
+				float aspectRatio = currentX / currentY;
+
+				if (aspectRatio == 1.6f) {
+					ctx.eax = 800;
+				}
+				});
+
+			Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 3);
+			RefreshHUD_thread = std::thread(RefreshHUD_loop);
+			RefreshHUD_thread.detach();
 		}
-		else {
+		if ((GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1)) {
+			if (aspectRatio <= 1.79777777778f && aspectRatio != 1.5f && aspectRatio != 1.6f) {
 
-			Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 4);
-			if(aspectRatio != 1.5f)
-			UltrawideFix = true;
-			if (aspectRatio == 1.5f) {
+				UltrawideFix = false;
 				General::CleanupModifiedScript();
+				return ((char(*)())0xD1C910)(); // Original HUD scale function.
+
+			}
+			else {
+
+				Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 4);
+				if(aspectRatio != 1.5f)
+					UltrawideFix = true;
+				if (aspectRatio == 1.5f) {
+					General::CleanupModifiedScript();
+				}
 			}
 		}
+
+		float correctionFactor = 1.777777777777778f / aspectRatio;
+
+		float stretchedX = currentX / 1280.0f;
+		float adjustedX = stretchedX * correctionFactor;
+		aspectratio_1610 = false;
+		if (aspectRatio <= 1.59f) {
+			result = 0;
+			*(uint8_t*)0x0213c383 = 0;
+			*(uint8_t*)0x025272dd = 0;
+			*(float*)0x022fdcc0 = currentX / 640.0;
+			*(float*)0x022fdcbc = currentY / 480.0f;
+		}
+		else {
+			result = 1;
+			*(uint8_t*)0x0213c383 = 1;
+			*(uint8_t*)0x025272dd = 1;
+			*(float*)0x022fdcc0 = adjustedX;
+			*(float*)0x022fdcbc = currentY / 720.0f;
+		}
+		// Okay this shit is pissing me off, I really have to find a universal way of calculating HUD for all aspect ratios than hard coding this garbage in - Clippy95
+		if (aspectRatio == 1.6f) {
+			result = 1;
+			*(uint8_t*)0x0213c383 = 1;
+			*(uint8_t*)0x025272dd = 1;
+			*(float*)0x022fdcc0 = currentX / 1280.0f;
+			*(float*)0x022fdcbc = currentY / 800.0f;
+			aspectratio_1610 = true;
+		}
+		Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: %f Y: %f bool: %d, aspect ratio %f \n", adjustedX, *(float*)0x022fdcbc, UltrawideFix, aspectRatio);
+		return result;
+	}
+	float saturate(float x) {
+		return std::clamp(x, 0.0f, 1.0f);
 	}
 
-	float correctionFactor = 1.777777777777778f / aspectRatio;
 
-	float stretchedX = currentX / 1280.0f;
-	float adjustedX = stretchedX * correctionFactor;
-	aspectratio_1610 = false;
-	if (aspectRatio <= 1.59f) {
-		result = 0;
-		*(uint8_t*)0x0213c383 = 0;
-		*(uint8_t*)0x025272dd = 0;
-		*(float*)0x022fdcc0 = currentX / 640.0;
-		*(float*)0x022fdcbc = currentY / 480.0f;
+	float X360GammaApprox(float x) {
+		const float A = 0.541901f;
+		const float B = 1.13465f;
+		const float C = 13.53054f;
+		const float D = 6.56649f;
+		const float E = 0.311465f;
+		float f1 = A * x;
+		float f2 = std::pow(x, B) * (1.0f - std::exp2(-C * x));
+		float f3 = saturate(x * D + E);
+
+		return std::lerp(f1, f2, f3);
 	}
-	else {
-		result = 1;
-		*(uint8_t*)0x0213c383 = 1;
-		*(uint8_t*)0x025272dd = 1;
-		*(float*)0x022fdcc0 = adjustedX;
-		*(float*)0x022fdcbc = currentY / 720.0f;
+
+
+	void ApplyX360Gamma(color& col) {
+		float r = col.r / 255.0f;
+		float g = col.g / 255.0f;
+		float b = col.b / 255.0f;
+
+		r = X360GammaApprox(r);
+		g = X360GammaApprox(g);
+		b = X360GammaApprox(b);
+
+		col.r = static_cast<unsigned __int8>(saturate(r) * 255.0f);
+		col.g = static_cast<unsigned __int8>(saturate(g) * 255.0f);
+		col.b = static_cast<unsigned __int8>(saturate(b) * 255.0f);
 	}
-	// Okay this shit is pissing me off, I really have to find a universal way of calculating HUD for all aspect ratios than hard coding this garbage in - Clippy95
-	if (aspectRatio == 1.6f) {
-		result = 1;
-		*(uint8_t*)0x0213c383 = 1;
-		*(uint8_t*)0x025272dd = 1;
-		*(float*)0x022fdcc0 = currentX / 1280.0f;
-		*(float*)0x022fdcbc = currentY / 800.0f; 
-		aspectratio_1610 = true;
+
+	void fix_screen_fade_notint() {
+		static auto screen_fade_notint_fix = safetyhook::create_mid(0x518F39, [](SafetyHookContext& ctx) {
+			vector3* tint = (vector3*)(ctx.eax + 0xC);
+			vector3* fade = (vector3*)0x00E9D670;
+			*tint *= *fade;
+			});
 	}
-	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: %f Y: %f bool: %d, aspect ratio %f \n", adjustedX, *(float*)0x022fdcbc, UltrawideFix, aspectRatio);
-	return result;
-}
-float saturate(float x) {
-	return std::clamp(x, 0.0f, 1.0f);
-}
+
+	SafetyHookMid final_2d_render{};
+
+	typedef int(__cdecl* bink_renderT)(float l, float r,float w,float h);
+	bink_renderT bink_render = (bink_renderT)0x4923F0;
 
 
-float X360GammaApprox(float x) {
-	const float A = 0.541901f;
-	const float B = 1.13465f;
-	const float C = 13.53054f;
-	const float D = 6.56649f;
-	const float E = 0.311465f;
-	float f1 = A * x;
-	float f2 = std::pow(x, B) * (1.0f - std::exp2(-C * x));
-	float f3 = saturate(x * D + E);
+	// A fix for bink videos being vert- (zoomed in) on aspect ratios that aren't matched to the .bik videos.
+	int __cdecl bink_render_hook(float l, float r, float w, float h) {
+		BINK* bink_handle = *(BINK**)(0x140E670);
+		int display_w = *(int*)0x22FDC1C;
+		int display_h = *(int*)0x22FDC20;
 
-	return std::lerp(f1, f2, f3);
-}
+		if (!bink_handle || display_w < 1 || display_h < 1) {
+			return bink_render(l, r, w, h);
+		}
 
+		float display_aspect = (float)display_w / (float)display_h;
+		float movie_aspect = (float)bink_handle->Width / (float)bink_handle->Height;
 
-void ApplyX360Gamma(color& col) {
-	float r = col.r / 255.0f;
-	float g = col.g / 255.0f;
-	float b = col.b / 255.0f;
+		if (display_aspect > movie_aspect) {
+			float corrected_w = (float)display_h * movie_aspect;
+			float corrected_l = ((float)display_w - corrected_w) * 0.5f;
 
-	r = X360GammaApprox(r);
-	g = X360GammaApprox(g);
-	b = X360GammaApprox(b);
+			return bink_render(corrected_l, 0.0f, corrected_w, (float)display_h);
+		}
 
-	col.r = static_cast<unsigned __int8>(saturate(r) * 255.0f);
-	col.g = static_cast<unsigned __int8>(saturate(g) * 255.0f);
-	col.b = static_cast<unsigned __int8>(saturate(b) * 255.0f);
-}
-
-void fix_screen_fade_notint() {
-	static auto screen_fade_notint_fix = safetyhook::create_mid(0x518F39, [](SafetyHookContext& ctx) {
-		vector3* tint = (vector3*)(ctx.eax + 0xC);
-		vector3* fade = (vector3*)0x00E9D670;
-		*tint *= *fade;
-		});
-}
-
-SafetyHookMid final_2d_render{};
-
-typedef int(__cdecl* bink_renderT)(float l, float r,float w,float h);
-bink_renderT bink_render = (bink_renderT)0x4923F0;
-
-
-// A fix for bink videos being vert- (zoomed in) on aspect ratios that aren't matched to the .bik videos.
-int __cdecl bink_render_hook(float l, float r, float w, float h) {
-	BINK* bink_handle = *(BINK**)(0x140E670);
-	int display_w = *(int*)0x22FDC1C;
-	int display_h = *(int*)0x22FDC20;
-
-	if (!bink_handle || display_w < 1 || display_h < 1) {
 		return bink_render(l, r, w, h);
 	}
 
-	float display_aspect = (float)display_w / (float)display_h;
-	float movie_aspect = (float)bink_handle->Width / (float)bink_handle->Height;
 
-	if (display_aspect > movie_aspect) {
-		float corrected_w = (float)display_h * movie_aspect;
-		float corrected_l = ((float)display_w - corrected_w) * 0.5f;
 
-		return bink_render(corrected_l, 0.0f, corrected_w, (float)display_h);
+	char __cdecl bitmap_minimap_render_player(
+		uint32_t id,
+		float x,
+		float y,
+		float angle,
+		float scale,
+		DWORD unk) {
+
+		if (*(bool*)0x2528615)
+			return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))0xB87C10)(id, x, y, angle, scale, unk);
+
+		if (UtilsGlobal::getplayer()) {
+			float* PlayerSin = (float*)(UtilsGlobal::getplayer() + 0x38);
+			float* PlayerCos = (float*)(UtilsGlobal::getplayer() + 0x40);
+
+			angle = -angle;
+			float playerAngle = -atan2f(*PlayerSin, *PlayerCos) + M_PI;
+			angle = angle - playerAngle;
+
+			if (isfinite(angle)) {
+				angle = fmodf(angle, 2.0f * M_PI);
+				if (angle < 0) angle += 2.0f * M_PI;
+			}
+		}
+
+		return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))0xB87C10)(id, x, y, angle, scale, unk);
 	}
 
-	return bink_render(l, r, w, h);
-}
+	char __cdecl bitmap_pause_map_render_player(
+		uint32_t id,
+		float x,
+		float y,
+		float angle,
+		float scale,
+		DWORD unk) {
 
 
+		if (UtilsGlobal::getplayer()) {
+			float* PlayerSin = (float*)(UtilsGlobal::getplayer() + 0x38);
+			float* PlayerCos = (float*)(UtilsGlobal::getplayer() + 0x40);
 
-char __cdecl bitmap_minimap_render_player(
-	uint32_t id,
-	float x,
-	float y,
-	float angle,
-	float scale,
-	DWORD unk) {
+			float playerAngle = -atan2f(*PlayerSin, *PlayerCos) + M_PI;
+			angle = -playerAngle;
 
-	if (*(bool*)0x2528615)
+			if (isfinite(angle)) {
+				angle = fmodf(angle, 2.0f * M_PI);
+				if (angle < 0) angle += 2.0f * M_PI;
+			}
+		}
 		return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))0xB87C10)(id, x, y, angle, scale, unk);
 
-	if (UtilsGlobal::getplayer()) {
-		float* PlayerSin = (float*)(UtilsGlobal::getplayer() + 0x38);
-		float* PlayerCos = (float*)(UtilsGlobal::getplayer() + 0x40);
+	}
 
-		angle = -angle;
-		float playerAngle = -atan2f(*PlayerSin, *PlayerCos) + M_PI;
-		angle = angle - playerAngle;
+	CMultiPatch CMPatches_ProperPlayerCursor = {
 
-		if (isfinite(angle)) {
-			angle = fmodf(angle, 2.0f * M_PI);
-			if (angle < 0) angle += 2.0f * M_PI;
+		[](CMultiPatch& mp) {
+			mp.AddWriteRelCall(0x7A3C8B,(uintptr_t)&bitmap_minimap_render_player);
+			mp.AddWriteRelCall(0x7704CC, (uintptr_t)&bitmap_pause_map_render_player);
+			mp.AddWriteRelJump(0x7A3C95, 0x7A3C11);
+		},
+
+	};
+
+	void __fastcall vint_sr2_render(void* thisa) {
+		((void(__thiscall*)(void*))0x7F33B0)(thisa);
+
+		if (!loaded_files_to_render.empty()) {
+			std::string display_text = loaded_files_to_render + "[JUICED] These are loose files loaded during THIS loading screen.";
+			ChangeTextColor(238, 130, 238, 255);
+
+			InGamePrintScale(6, display_text.c_str(), processtextwidth(0), 0, 0.7f);
 		}
 	}
-
-	return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))0xB87C10)(id, x, y, angle, scale, unk);
-}
-
-char __cdecl bitmap_pause_map_render_player(
-	uint32_t id,
-	float x,
-	float y,
-	float angle,
-	float scale,
-	DWORD unk) {
-
-
-	if (UtilsGlobal::getplayer()) {
-		float* PlayerSin = (float*)(UtilsGlobal::getplayer() + 0x38);
-		float* PlayerCos = (float*)(UtilsGlobal::getplayer() + 0x40);
-
-		float playerAngle = -atan2f(*PlayerSin, *PlayerCos) + M_PI;
-		angle = -playerAngle;
-
-		if (isfinite(angle)) {
-			angle = fmodf(angle, 2.0f * M_PI);
-			if (angle < 0) angle += 2.0f * M_PI;
-		}
-	}
-		return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))0xB87C10)(id, x, y, angle, scale, unk);
-	
-}
-
-CMultiPatch CMPatches_ProperPlayerCursor = {
-
-	[](CMultiPatch& mp) {
-		mp.AddWriteRelCall(0x7A3C8B,(uintptr_t)&bitmap_minimap_render_player);
-		mp.AddWriteRelCall(0x7704CC, (uintptr_t)&bitmap_pause_map_render_player);
-		mp.AddWriteRelJump(0x7A3C95, 0x7A3C11);
-	},
-
-};
-
-void __fastcall vint_sr2_render(void* thisa) {
-	((void(__thiscall*)(void*))0x7F33B0)(thisa);
-
-	if (!loaded_files_to_render.empty()) {
-		std::string display_text = loaded_files_to_render + "[JUICED] These are loose files loaded during THIS loading screen.";
-		ChangeTextColor(238, 130, 238, 255);
-
-		InGamePrintScale(6, display_text.c_str(), processtextwidth(0), 0, 0.7f);
-	}
-}
 
 	void Init() {
 		if(GameConfig::GetValue("Debug","DisplayLooseFilesLoading",1))
-		patchCall((void*)0x68C607, vint_sr2_render);
+			patchCall((void*)0x68C607, vint_sr2_render);
 		if(GameConfig::GetValue("Graphics","mini_pause_map_PlayerRotation",1))
-		CMPatches_ProperPlayerCursor.Apply();
+			CMPatches_ProperPlayerCursor.Apply();
 		patchCall((void*)0x688C7A, bink_render_hook);
 		// Fix vint UI speeding up at 1000?+ FPS
 		fix_screen_fade_notint();
