@@ -117,7 +117,7 @@
 				</Properties>
 			<Properties>
 				<Name>ui_ctrl_sdk_start</Name>
-				<StartX>122</StartX>
+				<StartX>169</StartX>
 				<StartY>106</StartY>
 				<ImageWidth>40</ImageWidth>
 				<ImageHeight>32</ImageHeight>
@@ -125,7 +125,7 @@
 				</Properties>
 			<Properties>
 				<Name>ui_ctrl_sdk_select</Name>
-				<StartX>169</StartX>
+				<StartX>122</StartX>
 				<StartY>106</StartY>
 				<ImageWidth>40</ImageWidth>
 				<ImageHeight>32</ImageHeight>
@@ -277,7 +277,7 @@
 				</Properties>
 			<Properties>
 				<Name>ui_ctrl_ps5_start</Name>
-				<StartX>486</StartX>
+				<StartX>533</StartX>
 				<StartY>106</StartY>
 				<ImageWidth>40</ImageWidth>
 				<ImageHeight>32</ImageHeight>
@@ -285,7 +285,7 @@
 				</Properties>
 			<Properties>
 				<Name>ui_ctrl_ps5_select</Name>
-				<StartX>533</StartX>
+				<StartX>486</StartX>
 				<StartY>106</StartY>
 				<ImageWidth>40</ImageWidth>
 				<ImageHeight>32</ImageHeight>
@@ -597,7 +597,7 @@
 				</Properties>
 			<Properties>
 				<Name>ui_ctrl_nx_start</Name>
-				<StartX>581</StartX>
+				<StartX>628</StartX>
 				<StartY>316</StartY>
 				<ImageWidth>40</ImageWidth>
 				<ImageHeight>40</ImageHeight>
@@ -605,7 +605,7 @@
 				</Properties>
 			<Properties>
 				<Name>ui_ctrl_nx_select</Name>
-				<StartX>628</StartX>
+				<StartX>581</StartX>
 				<StartY>316</StartY>
 				<ImageWidth>40</ImageWidth>
 				<ImageHeight>40</ImageHeight>
