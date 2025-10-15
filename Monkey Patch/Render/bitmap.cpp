@@ -241,15 +241,20 @@ constexpr size_t permanent_default = 0x00800000;
                     Logger::TypedLog("Mempool", "Patched interface_gpu size to 0x%X\n", ctx.esi);
                 }
                 });
-            size_t new_permanent_size = std::clamp(GameConfig::GetValue("Mempool", "permanent", permanent_default * 1.5), permanent_default,GB);
+            size_t new_permanent_size = std::clamp(GameConfig::GetValue("Mempool", "permanent", permanent_default * 1.5), permanent_default,GB / 2);
+
+            size_t first_increase_hastable = std::clamp(GameConfig::GetValue("Mempool", "Bitmap_Image_Names_hashtable", (size_t)first_increase), (size_t)12000, GB);
+
+            size_t second_increase_BitMap_Image_names = std::clamp(GameConfig::GetValue("Mempool", "Bitmap_Image_Names", (size_t)second_increase), (size_t)49152, GB);
 
             SafeWrite32((0x51DCB4 + 1), new_permanent_size);
             SafeWrite32((0x51DDC8 + 1), new_permanent_size);
             // Increase size for bitmap string hash table
-            SafeWrite32((0xB8723D + 1), first_increase);
-            SafeWrite32((0xB87280 + 1), second_increase);
-            SafeWrite32((0xB872C3 + 6), second_increase);
-            SafeWrite32((0xB87304 + 6), second_increase);
+            SafeWrite32((0xB8723D + 1), first_increase_hastable);
+
+            SafeWrite32((0xB87280 + 1), second_increase_BitMap_Image_names);
+            SafeWrite32((0xB872C3 + 6), second_increase_BitMap_Image_names);
+            SafeWrite32((0xB87304 + 6), second_increase_BitMap_Image_names);
 
 
 
