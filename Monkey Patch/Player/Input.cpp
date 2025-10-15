@@ -415,6 +415,7 @@ namespace Input {
 	};
 
 	std::unordered_map<int, ControllerMapping> actionsToController = {
+		{0, {L"ui_ctrl_360_btn_ls", L"ui_ctrl_ps3_btn_l3", L"ui_ctrl_sdk_L3", L"ui_ctrl_xsx_LS", L"ui_ctrl_nx_LS", L"ui_ctrl_ps5_L3"}},
 		{2, {L"ui_ctrl_360_btn_ls", L"ui_ctrl_ps3_btn_l3", L"ui_ctrl_sdk_L3", L"ui_ctrl_xsx_LS", L"ui_ctrl_nx_LS", L"ui_ctrl_ps5_L3"}},
 		{3, {L"ui_ctrl_360_btn_ls", L"ui_ctrl_ps3_btn_l3", L"ui_ctrl_sdk_L3", L"ui_ctrl_xsx_LS", L"ui_ctrl_nx_LS", L"ui_ctrl_ps5_L3"}},
 		{12, {L"ui_ctrl_360_btn_a", L"ui_ctrl_ps3_btn_cross", L"ui_ctrl_sdk_btn_a", L"ui_ctrl_xsx_btn_a", L"ui_ctrl_nx_btn_b", L"ui_ctrl_ps5_btn_cross"}},
@@ -439,30 +440,31 @@ namespace Input {
 			int start_index = prompt_image_buffer_index;
 
 			if (!action_index) {
-				if (mouse == 1) {
+				auto action_controller_pc = (mouse == 1) ? padButtonMaps.find(9) : padButtonMaps.find(8);
+				if (action_controller_pc != padButtonMaps.end()) {
 					const wchar_t* buttonImage = nullptr;
 
 					switch (controller_type) {
 					case Xbox360:
-						buttonImage = L"ui_ctrl_360_btn_rs";
+						buttonImage = action_controller_pc->second.xbox;
 						break;
 					case PS3:
-						buttonImage = L"ui_ctrl_ps3_btn_r3";
+						buttonImage = action_controller_pc->second.ps3;
 						break;
 					case SteamDeck:
-						buttonImage = L"ui_ctrl_sdk_R3";
+						buttonImage = action_controller_pc->second.steamdeck;
 						break;
 					case XboxSeriesX:
-						buttonImage = L"ui_ctrl_xsx_RS";
+						buttonImage = action_controller_pc->second.xboxseriesx;
 						break;
 					case nx:
-						buttonImage = L"ui_ctrl_nx_RS";
+						buttonImage = action_controller_pc->second.nx;
 						break;
 					case PS5:
-						buttonImage = L"ui_ctrl_ps5_R3";
+						buttonImage = action_controller_pc->second.ps5;
 						break;
 					default:
-						buttonImage = L"ui_ctrl_360_btn_rs";
+						buttonImage = action_controller_pc->second.xbox; // Default to Xbox360
 						break;
 					}
 
