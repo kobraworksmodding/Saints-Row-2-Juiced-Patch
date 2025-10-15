@@ -930,9 +930,10 @@ namespace Input {
 	}
 
 	void Init() {
-		if(GameConfig::GetValue("Input","SDL",1) != 0)
-		input_pc_init_sdl();
-		patchJmp((void*)0xC13C80, &input_pc_poll_sdl);
+		if (GameConfig::GetValue("Input", "SDL", 1) != 0) {
+			input_pc_init_sdl();
+			patchJmp((void*)0xC13C80, &input_pc_poll_sdl);
+		}
 		patch_zoom_aware_interior_pause_map();
 		static auto tag_shake_frametimefix = safetyhook::create_mid(0x621C04, [](SafetyHookContext& ctx) {
 			if (g_lastInput == MOUSE) {
