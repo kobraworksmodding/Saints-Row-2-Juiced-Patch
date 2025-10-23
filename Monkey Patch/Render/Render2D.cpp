@@ -18,59 +18,66 @@
 #include "..\Ext\Hooking.Patterns.h"
 #include <random>
 #include "../loose files.h"
+#include "../Hooker.h"
 namespace Render2D
 {
-	float* currentAR = (float*)0x022FD8EC;
+	float* currentAR = (float*)DynAddress(0x022FD8EC);
 	const float widescreenvalue = 1.777777791f;
 	bool BetterChatTest = 0;
 #if !JLITE
 	bool IVRadarScaling = false;
 
 	float RadarScale = 0.87272727272f;
+
+	inline auto make_range_pattern_dynaddress(uintptr_t begin, uintptr_t end, std::string_view bytes)
+	{
+		return hook::make_range_pattern(DynAddress(begin), DynAddress(end), std::move(bytes));
+	}
+
 	void RadarScaling() {
-		float currentX = (float)(*(unsigned int*)0x022f63f8);
-		float currentY = (float)(*(unsigned int*)0x022f63fc);
+		float currentX = (float)(*(unsigned int*)DynAddress(0x022f63f8));
+		float currentY = (float)(*(unsigned int*)DynAddress(0x022f63fc));
 
 		float aspect = currentX / currentY;
 		if (!IVRadarScaling && aspect < 1.45f)
 			return;
 
 		// vint scale
-		auto pattern = hook::make_range_pattern(0x7A2C30, 0x007A37D2, "AC BF 2D 02");
+		auto pattern = make_range_pattern_dynaddress(0x7A2C30, 0x007A37D2, "AC BF 2D 02");
 		//Logger::TypedLog(CHN_DEBUG,"Count of vint %d \n", pattern.size());
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 		// Height scale
-		pattern = hook::make_range_pattern(0x7A2C30, 0x007A37D2, "A8 BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x7A2C30, 0x007A37D2, "A8 BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// vint scale
-		pattern = hook::make_range_pattern(0x79E970, 0x0079EB0A, "AC BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x79E970, 0x0079EB0A, "AC BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// Height scale
-		pattern = hook::make_range_pattern(0x79E970, 0x0079EB0A, "A8 BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x79E970, 0x0079EB0A, "A8 BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 		// vint scale
-		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "AC BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x79EB10, 0x0079EDE3, "AC BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// Height scale
-		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "A8 BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x79EB10, 0x0079EDE3, "A8 BF 2D 02");
 
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
@@ -78,7 +85,7 @@ namespace Render2D
 			});
 
 		// vint scale
-		pattern = hook::make_range_pattern(0x00B877B0, 0x00B877D7, "AC BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x00B877B0, 0x00B877D7, "AC BF 2D 02");
 
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
@@ -86,64 +93,64 @@ namespace Render2D
 			});
 
 		// height scale
-		pattern = hook::make_range_pattern(0x00B877B0, 0x00B877D7, "A8 BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x00B877B0, 0x00B877D7, "A8 BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// vint scale
-		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "AC BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x79EB10, 0x0079EDE3, "AC BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// height scale
-		pattern = hook::make_range_pattern(0x79EB10, 0x0079EDE3, "A8 BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x79EB10, 0x0079EDE3, "A8 BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// vint scale
-		pattern = hook::make_range_pattern(0x79FEB0, 0x0079FFE5, "AC BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x79FEB0, 0x0079FFE5, "AC BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
 		// vint scale
-		pattern = hook::make_range_pattern(0x79FEB0, 0x0079FFE5, "A8 BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x79FEB0, 0x0079FFE5, "A8 BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
-		pattern = hook::make_range_pattern(0x5489F0, 0x00548C5C, "A? BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x5489F0, 0x00548C5C, "A? BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
-		pattern = hook::make_range_pattern(0x7A37E0, 0x007A3D2F, "AC BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x7A37E0, 0x007A3D2F, "AC BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
-		pattern = hook::make_range_pattern(0x7A37E0, 0x007A3D2F, "A8 BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x7A37E0, 0x007A3D2F, "A8 BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
 
-		pattern = hook::make_range_pattern(0x0079FC92, 0x0079FD92, "AC BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x0079FC92, 0x0079FD92, "AC BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
 			});
-		pattern = hook::make_range_pattern(0x0079FC92, 0x0079FD92, "A8 BF 2D 02");
+		pattern = make_range_pattern_dynaddress(0x0079FC92, 0x0079FD92, "A8 BF 2D 02");
 		pattern.for_each_result([](hook::pattern_match match) {
 			void* addr = match.get<void*>();
 			SafeWrite32((UInt32)addr, (UInt32)&RadarScale);
@@ -168,13 +175,13 @@ namespace Render2D
 	}
 
 #endif
-	ChangeTextColorT ChangeTextColor = (ChangeTextColorT)0xD14840;
+	ChangeTextColorT ChangeTextColor = (ChangeTextColorT)DynAddress(0xD14840);
 	// What I use in BlingMenu to clamp mouse cursor, maybe a bit too much for Ultrawide? who's going to have an ultrawide under 720p?
 	void get_vint_res_limit(float* x, float* y) {
 		if (!x || !y) return;
 
-		float currentX = (float)(*(unsigned int*)0x022F63F8);
-		float currentY = (float)(*(unsigned int*)0x022F63FC);
+		float currentX = (float)(*(unsigned int*)DynAddress(0x022F63F8));
+		float currentY = (float)(*(unsigned int*)DynAddress(0x022F63FC));
 
 		if (currentX <= 0 || currentY <= 0) return;
 
@@ -224,7 +231,7 @@ int processtextwidth(int width) {
 		// between ultrawide and non-ultrawide, only sometimes so it's still super buggy and weird.
 		else return 1280.f; 
 	}
-
+	static auto InGamePrintASM_addr = DynAddress(0xD15DC0);
 	void __declspec(naked) InGamePrintASM(const char* Text, int x, int y, int font) {
 		__asm {
 			push ebp
@@ -240,8 +247,8 @@ int processtextwidth(int width) {
 			push x
 			push y
 
-			mov eax, 0xD15DC0
-			call eax
+
+			call InGamePrintASM_addr
 
 			pop eax
 			pop esi
@@ -253,6 +260,7 @@ int processtextwidth(int width) {
 		}
 	}
 
+	static auto InGamePrintASMSS_addr = DynAddress(0xD15D00);
 	void __declspec(naked) InGamePrintASMSS(int a1, const char* a2, int a3, int a4, float a5) {
 		__asm {
 			push ebp
@@ -269,8 +277,8 @@ int processtextwidth(int width) {
 			push a4
 			push a3
 
-			mov eax, 0xD15D00
-			call eax
+
+			call InGamePrintASMSS_addr
 
 			pop eax
 			pop esi
@@ -284,44 +292,44 @@ int processtextwidth(int width) {
 
 	void InGamePrintScale(int font, const char* a2, int a3, int a4, float a5) {
 		if (font == 2 || font == 0) {
-			font = *(int*)0x00E98A90;
+			font = *(int*)DynAddress(0x00E98A90);
 		}
 		else if (font == 6) {
-			font = *(int*)0x00E98A24;
+			font = *(int*)DynAddress(0x00E98A24);
 		}
 		InGamePrintASMSS(font, a2, a3, a4, a5);
 	}
 
 	void InGamePrint(const char* Text, int x, int y, int font) {
 		if (font == 2 || font == 0) {
-			font = *(int*)0x00E98A90;
+			font = *(int*)DynAddress(0x00E98A90);
 		}
 		else if (font == 6) {
-			font = *(int*)0x00E98A24;
+			font = *(int*)DynAddress(0x00E98A24);
 		}
 		InGamePrintASM(Text, x, y, font);
 
 	}
 
 	typedef void SomeMMFunc_Native();
-	SomeMMFunc_Native* UpdateSomeMMFunc = (SomeMMFunc_Native*)(0x0075B270);
+	SomeMMFunc_Native* UpdateSomeMMFunc = (SomeMMFunc_Native*)DynAddress(0x0075B270);
 
 	typedef void SomePMFunc_Native();
-	SomePMFunc_Native* UpdateSomePMFunc = (SomePMFunc_Native*)(0x00B99DB0);
+	SomePMFunc_Native* UpdateSomePMFunc = (SomePMFunc_Native*)DynAddress(0x00B99DB0);
 	const char* JuicedText = "JUICED ";
 	void SomeMMFunc_Hacked()
 	{
 #if JLITE
-		if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
+		if (*(BYTE*)DynAddress(0x02527B75) == 1 && *(BYTE*)0xE8D56B == 1) {
 			ChangeTextColor(160, 160, 160, 128);
 			__asm pushad
 			InGamePrint(("JUICED LITE " + std::string(UtilsGlobal::juicedversion)).c_str(), 680, processtextwidth(1070), 2);
 			__asm popad
 		}
 #else
-		bool& r_is_widescreen = *(bool*)0x025272DD;
+		bool& r_is_widescreen = *(bool*)DynAddress(0x025272DD);
 #if !RELOADED
-		if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
+		if (*(BYTE*)DynAddress(0x02527B75) == 1 && *(BYTE*)DynAddress(0xE8D56B) == 1) {
 
 			int x = 0;
 			int y = 0;
@@ -341,7 +349,7 @@ int processtextwidth(int width) {
 			InGamePrint((JuicedText + std::string(UtilsGlobal::juicedversion)).c_str(), y, x, 2);
 			__asm popad
 
-			if (*(BYTE*)0x02529334 == 4) {
+			if (*(BYTE*)DynAddress(0x02529334) == 4) {
 				ChangeTextColor(160, 160, 160, 128);
 				__asm pushad
 				InGamePrint(UtilsGlobal::mynat_type.c_str(), y + 15, Render2D::processtextwidth(10), 6);
@@ -349,7 +357,7 @@ int processtextwidth(int width) {
 			}
 		}
 #else
-		if (*(BYTE*)0xE8D56B == 1) {
+		if (*(BYTE*)DynAddress(0xE8D56B) == 1) {
 
 			int x = 0;
 			int y = 0;
@@ -478,8 +486,8 @@ void RefreshHUD_loop() {
 char SR2Ultrawide_HUDScale() {
 	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 1);
 	Render3D::ChangeShaderOptions();
-	float currentX = (float)(*(unsigned int*)0x022f63f8);
-	float currentY = (float)(*(unsigned int*)0x022f63fc);
+	float currentX = (float)(*(unsigned int*)DynAddress(0x022f63f8));
+	float currentY = (float)(*(unsigned int*)DynAddress(0x022f63fc));
 	char result;
 
 	float aspectRatio = currentX / currentY;
@@ -490,7 +498,7 @@ char SR2Ultrawide_HUDScale() {
 	if (aspectRatio >= 1.77) {
 		SafeWrite32((0x00755C49 + 1), (uint32_t)(aspectRatio * 720));
 		// Fix reflections being broken at ultrawide.
-		*(float*)(0x0E86388) = aspectRatio;
+		*(float*)DynAddress(0x0E86388) = aspectRatio;
 #if !JLITE
 		if (GameConfig::GetValue("Graphics", "IVRadarScaling", 0)) {
 			IVRadarScaling = true;
@@ -521,7 +529,7 @@ char SR2Ultrawide_HUDScale() {
 
 			UltrawideFix = false;
 			General::CleanupModifiedScript();
-			return ((char(*)())0xD1C910)(); // Original HUD scale function.
+			return ((char(*)())DynAddress(0xD1C910))(); // Original HUD scale function.
 			
 		}
 		else {
@@ -542,17 +550,17 @@ char SR2Ultrawide_HUDScale() {
 
 	if (aspectRatio <= 1.59f) {
 		result = 0;
-		*(uint8_t*)0x0213c383 = 0;
-		*(uint8_t*)0x025272dd = 0;
-		*(float*)0x022fdcc0 = currentX / 640.0;
-		*(float*)0x022fdcbc = currentY / 480.0f;
+		*(uint8_t*)DynAddress(0x0213c383) = 0;
+		*(uint8_t*)DynAddress(0x025272dd) = 0;
+		*(float*)DynAddress(0x022fdcc0) = currentX / 640.0;
+		*(float*)DynAddress(0x022fdcbc) = currentY / 480.0f;
 	}
 	else {
 		result = 1;
-		*(uint8_t*)0x0213c383 = 1;
-		*(uint8_t*)0x025272dd = 1;
-		*(float*)0x022fdcc0 = adjustedX;
-		*(float*)0x022fdcbc = currentY / 720.0f;
+		*(uint8_t*)DynAddress(0x0213c383) = 1;
+		*(uint8_t*)DynAddress(0x025272dd) = 1;
+		*(float*)DynAddress(0x022fdcc0) = adjustedX;
+		*(float*)DynAddress(0x022fdcbc) = currentY / 720.0f;
 	}
 	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: %f Y: %f bool: %d \n", adjustedX, currentY / 720.0f, UltrawideFix);
 	return result;
@@ -593,7 +601,7 @@ void ApplyX360Gamma(color& col) {
 void fix_screen_fade_notint() {
 	static auto screen_fade_notint_fix = safetyhook::create_mid(0x518F39, [](SafetyHookContext& ctx) {
 		vector3* tint = (vector3*)(ctx.eax + 0xC);
-		vector3* fade = (vector3*)0x00E9D670;
+		vector3* fade = (vector3*)DynAddress(0x00E9D670);
 		*tint *= *fade;
 		});
 }
@@ -601,14 +609,14 @@ void fix_screen_fade_notint() {
 SafetyHookMid final_2d_render{};
 
 typedef int(__cdecl* bink_renderT)(float l, float r,float w,float h);
-bink_renderT bink_render = (bink_renderT)0x4923F0;
+bink_renderT bink_render = (bink_renderT)DynAddress(0x4923F0);
 
 
 // A fix for bink videos being vert- (zoomed in) on aspect ratios that aren't matched to the .bik videos.
 int __cdecl bink_render_hook(float l, float r, float w, float h) {
-	BINK* bink_handle = *(BINK**)(0x140E670);
-	int display_w = *(int*)0x22FDC1C;
-	int display_h = *(int*)0x22FDC20;
+	BINK* bink_handle = *(BINK**)(DynAddress(0x140E670));
+	int display_w = *(int*)DynAddress(0x22FDC1C);
+	int display_h = *(int*)DynAddress(0x22FDC20);
 
 	if (!bink_handle || display_w < 1 || display_h < 1) {
 		return bink_render(l, r, w, h);
@@ -637,8 +645,8 @@ char __cdecl bitmap_minimap_render_player(
 	float scale,
 	DWORD unk) {
 
-	if (*(bool*)0x2528615)
-		return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))0xB87C10)(id, x, y, angle, scale, unk);
+	if (*(bool*)DynAddress(0x2528615))
+		return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))DynAddress(0xB87C10))(id, x, y, angle, scale, unk);
 
 	if (UtilsGlobal::getplayer()) {
 		float* PlayerSin = (float*)(UtilsGlobal::getplayer() + 0x38);
@@ -654,7 +662,7 @@ char __cdecl bitmap_minimap_render_player(
 		}
 	}
 
-	return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))0xB87C10)(id, x, y, angle, scale, unk);
+	return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))DynAddress(0xB87C10))(id, x, y, angle, scale, unk);
 }
 
 char __cdecl bitmap_pause_map_render_player(
@@ -678,7 +686,7 @@ char __cdecl bitmap_pause_map_render_player(
 			if (angle < 0) angle += 2.0f * M_PI;
 		}
 	}
-		return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))0xB87C10)(id, x, y, angle, scale, unk);
+		return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))DynAddress(0xB87C10))(id, x, y, angle, scale, unk);
 	
 }
 
@@ -693,7 +701,7 @@ CMultiPatch CMPatches_ProperPlayerCursor = {
 };
 
 void __fastcall vint_sr2_render(void* thisa) {
-	((void(__thiscall*)(void*))0x7F33B0)(thisa);
+	((void(__thiscall*)(void*))DynAddress(0x7F33B0))(thisa);
 
 	if (!loaded_files_to_render.empty()) {
 		std::string display_text = loaded_files_to_render + "[JUICED] These are loose files loaded during THIS loading screen.";
