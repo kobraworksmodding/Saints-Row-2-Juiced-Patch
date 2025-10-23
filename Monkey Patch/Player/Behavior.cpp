@@ -14,6 +14,7 @@
 #include "../BlingMenu_public.h"
 #include "../UtilsGlobal.h"
 #include "..\Game\Game.h"
+#include "../Hooker.h"
 #pragma warning( disable : 4834)
 // Use me to store garbagedata when NOP doesn't work.
 static float garbagedata = 0;
@@ -42,11 +43,11 @@ namespace Behavior
 	}
 	
 	int FindMeleeTarget(int NPCPointer) {
-		return ((int(__cdecl*)(int))0x974FB0)(NPCPointer);
+		return ((int(__cdecl*)(int))DynAddress(0x974FB0))(NPCPointer);
 	}
 
 	bool IsNPCDead(int NPCPointer) {
-		return ((bool(__fastcall*)(int))0x9855F0)(NPCPointer);
+		return ((bool(__fastcall*)(int))DynAddress(0x9855F0))(NPCPointer);
 	}
 
 	int __cdecl DisableMeleeLockon1(int NPCPointer) {
@@ -140,9 +141,10 @@ CMultiPatch CMPatches_SR1Reloading = {
 		CMPatches_SR1QuickSwitch.Apply();
 	}
 
+	static auto TauntLeft_jmp_continue = DynAddress(0x004F8323);
 	void __declspec(naked) TauntLeft()
 	{
-		static int jmp_continue = 0x004F8323;
+
 		__asm {
 			push 1
 			push 1
@@ -152,13 +154,13 @@ CMultiPatch CMPatches_SR1Reloading = {
 			push 1
 			push 1
 			push 1
-			jmp jmp_continue
+			jmp TauntLeft_jmp_continue
 		}
 	}
 
+	static auto TauntRight_jmp_continue = DynAddress(0x004F833F);
 	void __declspec(naked) TauntRight()
 	{
-		static int jmp_continue = 0x004F833F;
 		__asm {
 			push 1
 			push 1
@@ -168,7 +170,7 @@ CMultiPatch CMPatches_SR1Reloading = {
 			push 1
 			push 1
 			push 0
-			jmp jmp_continue
+			jmp TauntRight_jmp_continue
 		}
 	}
 	CMultiPatch CMPatches_TauntCancelling = {
@@ -279,9 +281,9 @@ CMultiPatch CMPatches_SR1Reloading = {
 		float mouse_x = (mouse().getXdelta() / 30.f) * mouse().getMouseX_sens();
 		// re-inverted because Tervel inverted it somewhere.
 		float mouse_y = (-mouse().getYdelta() / 30.f) * mouse().getMouseY_sens();
-		float* rs_x = (float*)(0x023485B4);
-		float* rs_y = (float*)(0x023485B8);
-		float& FOV = *(float*)0x25F5BA8;
+		float* rs_x = (float*)DynAddress(0x023485B4);
+		float* rs_y = (float*)DynAddress(0x023485B8);
+		float& FOV = *(float*)DynAddress(0x25F5BA8);
 		mouse_x *= Game::Timer::Get33msOverFrameTime_Fix();
 
 		mouse_y *= Game::Timer::Get33msOverFrameTime_Fix();
@@ -316,15 +318,16 @@ CMultiPatch CMPatches_SR1Reloading = {
 	}
 
 	void __fastcall vehicle_get_velocity(void* vehicle, vector3* velocity, uint32_t sub_object_id = -1) {
-		((vector3*(__thiscall*)(void*,vector3*,uint32_t))0xAA5150)(vehicle,velocity,sub_object_id);
+		((vector3*(__thiscall*)(void*,vector3*,uint32_t))DynAddress(0xAA5150))(vehicle,velocity,sub_object_id);
 	}
 
 	inline double __fastcall vehicle_get_brake_value(void* a1, void* a2) {
-		return ((double(__fastcall*)(void*, void*))0xAA64A0)(a1, a2);
+		return ((double(__fastcall*)(void*, void*))DynAddress(0xAA64A0))(a1, a2);
 	}
 
+	static auto vehicle_get_accelerator_value_addr = DynAddress(0xAA63A0);
 	double __declspec(naked) vehicle_get_accelerator_value(int vehicle_handle) {
-		static uintptr_t vehicle_get_accelerator_value_addr = 0xAA63A0;
+
 		__asm {
 			push ebp
 			mov ebp, esp
@@ -387,10 +390,10 @@ CMultiPatch CMPatches_SR1Reloading = {
 			if (*follow_camera != -1.f)
 				*follow_camera = vehicle_camera_follow_modifier;
 			if (*follow_camera != -1.f) {
-				ctx.eip = 0x498B60;
+				ctx.eip = DynAddress(0x498B60);
 			}
 			else {
-				ctx.eip = 0x498D14;
+				ctx.eip = DynAddress(0x498D14);
 			}
 			},safetyhook::MidHook::StartDisabled);
 		// Lower values = camera slower panning around car
