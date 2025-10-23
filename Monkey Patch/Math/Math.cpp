@@ -7,6 +7,7 @@
 #include "../GameConfig.h"
 #include "Math.h"
 #include "../Player/Input.h"
+#include "../Hooker.h"
 namespace Math
 {
 	void matrix_multiply_safe(matrix* result, const matrix* lhs, const matrix* rhs) {
@@ -226,7 +227,9 @@ namespace Math
 					float* a2 = (float*)ctx.ecx;
 					float* a3 = (float*)(ctx.esp + 8);
 					sub_BDB4F0_SSE4(a1, a2, a3);
-					ctx.eip = 0x00BDB54E;
+
+					static auto this_return = DynAddress(0x00BDB54E);
+					ctx.eip = this_return;
 					});
 			}
 
