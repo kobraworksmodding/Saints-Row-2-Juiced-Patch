@@ -9,6 +9,7 @@
 #include "../FileLogger.h"
 #include "../SafeWrite.h"
 #include "../GameConfig.h"
+#include "../Hooker.h"
 struct mempool;
 struct mempool_vt
 {
@@ -89,11 +90,11 @@ struct render_load
 
 
 typedef mempool* __fastcall mempoolConstructorT(mempool *thisa, int unused);
-mempoolConstructorT* mempool_init = (mempoolConstructorT*)(0xBF48F0);
+mempoolConstructorT* mempool_init = (mempoolConstructorT*)DynAddress(0xBF48F0);
 
-LPCRITICAL_SECTION shadow_jobs_lock = (LPCRITICAL_SECTION)0xFA23BC;
+LPCRITICAL_SECTION shadow_jobs_lock = (LPCRITICAL_SECTION)DynAddress(0xFA23BC);
 
-int* shadow_job_count = (int*)0x25273DC;
+int* shadow_job_count = (int*)DynAddress(0x25273DC);
 
 struct shadow_job
 {
@@ -101,13 +102,13 @@ struct shadow_job
     int u2;
     int unk;
 };
-shadow_job* shadow_job_list = (shadow_job*)0xFA23DC;
+shadow_job* shadow_job_list = (shadow_job*)DynAddress(0xFA23DC);
 
-render_load* render_1 = (render_load*)0x277D190;
+render_load* render_1 = (render_load*)DynAddress(0x277D190);
 
-float* flt_2612D10 = (float*)0x02612D10;
+float* flt_2612D10 = (float*)DynAddress(0x02612D10);
 
-LONG* shadows_jobs_working = (LONG*)0x25273E0;
+LONG* shadows_jobs_working = (LONG*)DynAddress(0x25273E0);
 
 
 static std::mutex g_WorkMutex;
@@ -128,7 +129,7 @@ void __stdcall shadow_job_thread(LPVOID lpThreadParameter)
     v1 = VirtualAlloc(0, 819200, 0x1000, 4);
     if (!v1)
         GetLastError();
-    *(int*)0x252A5D0 += 819200;
+    *(int*)DynAddress(0x252A5D0) += 819200;
     strncpy(shadow_job_pool.name, "shadow job pool", 0x20);
     shadow_job_pool.name[31] = 0;
     shadow_job_pool.field_30 = 0;
@@ -191,7 +192,7 @@ void __stdcall shadow_job_thread(LPVOID lpThreadParameter)
     if (v1)
     {
         VirtualFree(v1, 0, MEM_RELEASE);
-        *(int*)0x252A5D0 -= 819200;
+        *(int*)DynAddress(0x252A5D0) -= 819200;
     }
 }
 
