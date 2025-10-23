@@ -14,12 +14,14 @@
 #include "../SafeWrite.h"
 #include "../GameConfig.h"
 #include "../Patcher/patch.h"
+#include "../Hooker.h"
 
 uint32_t string_hash_table::estimate_maximum_memory_usage(uint32_t hash_table_size, uint32_t string_pool_size)
 {
     return string_pool_size + 4 * hash_table_size + (hash_table_size << 7);
 }
 
+static auto create_empty_addr = DynAddress(0xC07A80);
 int __declspec(naked) create_empty(string_hash_table* table, int hash_table_size, mempool* to_use, int string_pool_size) {
     __asm {
         push ebp
@@ -31,8 +33,8 @@ int __declspec(naked) create_empty(string_hash_table* table, int hash_table_size
         push    table
         mov     eax, string_pool_size
 
-        mov esi, 0xC07A80
-        call esi
+
+        call create_empty_addr
 
         mov esp, ebp
         pop ebp
@@ -40,6 +42,7 @@ int __declspec(naked) create_empty(string_hash_table* table, int hash_table_size
     }
 }
 
+static auto add_string_addr = DynAddress(0xC07AF0);
 int __declspec(naked) add_string(string_hash_table* table, char* text, int user_data) {
     __asm {
 
@@ -51,8 +54,8 @@ int __declspec(naked) add_string(string_hash_table* table, char* text, int user_
         push text
         mov eax, table
 
-        mov esi, 0xC07AF0
-        call esi
+
+        call add_string_addr
 
         mov esp, ebp
         pop ebp
@@ -61,12 +64,12 @@ int __declspec(naked) add_string(string_hash_table* table, char* text, int user_
 }
 
 int Bm_discovery_callback(bitmap_entry* fuck) {
-    return ((int(__cdecl*)(bitmap_entry*))0x51D700)(fuck);
+    return ((int(__cdecl*)(bitmap_entry*))DynAddress(0x51D700))(fuck);
 }
 
-uint32_t* Bm_entry_count = (uint32_t*)0x2348904;
-uint32_t* Bm_bitmap_count = (uint32_t*)0x2348908;
-bitmap_entry** Bm_bitmaps = (bitmap_entry**)0x234890C;
+uint32_t* Bm_entry_count = (uint32_t*)DynAddress(0x2348904);
+uint32_t* Bm_bitmap_count = (uint32_t*)DynAddress(0x2348908);
+bitmap_entry** Bm_bitmaps = (bitmap_entry**)DynAddress(0x234890C);
 void __cdecl file_remove_extension(char* filename, size_t ext, const char* new_filename_array_size)
 {
     const char* new_filename;
@@ -87,8 +90,8 @@ void __cdecl file_remove_extension(char* filename, size_t ext, const char* new_f
     }
 }
 
-string_hash_table* Extra_bm_filename_hash_table = (string_hash_table*)0xEC5D38;
-mempool* pool = (mempool*)0xEC5DA8;
+string_hash_table* Extra_bm_filename_hash_table = (string_hash_table*)DynAddress(0xEC5D38);
+mempool* pool = (mempool*)DynAddress(0xEC5DA8);
 
 void bitmap_testf(SafetyHookContext& ctx) {
     pool->snapshot_pool();
@@ -102,8 +105,10 @@ void bitmap_testf(SafetyHookContext& ctx) {
 void set_thread_ownership(mempool* test) {
     test->field_30 = GetCurrentThreadId();
 }
-LPCRITICAL_SECTION Bm_add_lock = (LPCRITICAL_SECTION)0x33DA354;
+LPCRITICAL_SECTION Bm_add_lock = (LPCRITICAL_SECTION)DynAddress(0x33DA354);
 
+static auto BOGUS_PEG = DynAddress(0x0252A560);
+static auto Bogus_static_bitmap_entry_addr = DynAddress(0x252A564);
 int __cdecl bm_add_bitmap(const char* filename)
 {
     bitmap_entry* b;
@@ -127,26 +132,26 @@ int __cdecl bm_add_bitmap(const char* filename)
         file_remove_extension(extension_less, 0x40u, filename);
         b->filename_ptr = (char*)add_string(Extra_bm_filename_hash_table, extension_less, handle);
         b->frame_number = 0;
-        b->this_peg = (peg_entry*)*(uintptr_t*)0x0252A560;
+        b->this_peg = (peg_entry*)*(uintptr_t*)BOGUS_PEG;
         Bm_discovery_callback(b);
         LeaveCriticalSection(Bm_add_lock);
     }
     else
     {
-        bitmap_entry* Bogus_static_bitmap_entry = (bitmap_entry*)*(int*)(0x252A564);
+        bitmap_entry* Bogus_static_bitmap_entry = (bitmap_entry*)*(int*)(Bogus_static_bitmap_entry_addr);
         if (b != nullptr)
             *b = *Bogus_static_bitmap_entry;
     }
     return handle;
 }
 
-
+static auto extra_string_hash_table_EC5D38_addr = DynAddress((uintptr_t)0xEC5D38);
 
 
 SafetyHookInline bm_findT{};
 __int16 __fastcall bm_find(void* dummy1, void* dummy2, uintptr_t a2, char* String2) {
     int hndl = 0;
-    if (a2 == 0xEC5D38) {
+    if (a2 == extra_string_hash_table_EC5D38_addr) {
         char extension_less[64] = {};
         file_remove_extension(extension_less, 0x40u, String2);
         hndl = bm_findT.thiscall<__int16>(dummy1, a2, extension_less);
@@ -155,15 +160,16 @@ __int16 __fastcall bm_find(void* dummy1, void* dummy2, uintptr_t a2, char* Strin
     {
         hndl = bm_findT.thiscall<__int16>(dummy1, a2, String2);
     }
-    if (a2 == 0xEC5D38 && hndl == -1) {
+    if (a2 == extra_string_hash_table_EC5D38_addr && hndl == -1) {
         return bm_add_bitmap(String2);
     }
     return hndl;
 }
 
+
 SAFETYHOOK_NOINLINE __int16 __fastcall bm_find_og(void* dummy1, void* dummy2, uintptr_t a2, char* String2) {
     int hndl = 0;
-    if (a2 == 0xEC5D38) {
+    if (a2 == extra_string_hash_table_EC5D38_addr) {
         char extension_less[64] = {};
         file_remove_extension(extension_less, 0x40u, String2);
         hndl = bm_findT.thiscall<__int16>(dummy1, a2, extension_less);
@@ -174,6 +180,7 @@ SAFETYHOOK_NOINLINE __int16 __fastcall bm_find_og(void* dummy1, void* dummy2, ui
     return hndl;
 }
 
+static auto LoadBitmapTableasm_addr = DynAddress(0xB87540);
 __declspec(naked) void LoadBitmapTableasm(const char* FileName) {
 
 
@@ -185,9 +192,9 @@ __declspec(naked) void LoadBitmapTableasm(const char* FileName) {
         sub esp, __LOCAL_SIZE
         mov eax, FileName
 
-        mov edx, 0xB87540
 
-        call edx
+
+        call LoadBitmapTableasm_addr
 
         mov esp, ebp
 
@@ -200,6 +207,7 @@ __declspec(naked) void LoadBitmapTableasm(const char* FileName) {
 
 bitmap_statusT bitmap_status{};
 
+
 void LoadExtraBitMapTable(const char* fileName) {
     patchJmp((void*)0xB875B0, (void*)0xB875C4);
     LoadBitmapTableasm(fileName);
@@ -208,7 +216,7 @@ void LoadExtraBitMapTable(const char* fileName) {
 SafetyHookInline load_pegT;
 bool __fastcall load_peg_hook(const char* filename, uintptr_t mempool) {
 
-    if (mempool == 0x27716E4 && strcmp(filename, "interface-backend.peg") == 0) {
+    if (mempool == DynAddress(0x27716E4) && strcmp(filename, "interface-backend.peg") == 0) {
         load_pegT.fastcall<bool>(filename, mempool);
         bool result = load_pegT.fastcall<bool>("juiced-ui.peg", mempool);
         bitmap_status.juiced_ui_loaded = result;
@@ -229,7 +237,7 @@ uintptr_t sub_51D290Lang() {
 #define first_increase 12000 * 2
 #define second_increase 73728
 namespace bitmap_loader {
-constexpr size_t permanent_default = 0x00800000;
+    constexpr size_t permanent_default = 0x00800000;
 #define KB (size_t)(1024)
 #define MB (size_t)(1024 * KB)
 #define GB (size_t)(1024 * MB)
@@ -241,7 +249,7 @@ constexpr size_t permanent_default = 0x00800000;
                     Logger::TypedLog("Mempool", "Patched interface_gpu size to 0x%X\n", ctx.esi);
                 }
                 });
-            size_t new_permanent_size = std::clamp(GameConfig::GetValue("Mempool", "permanent", permanent_default * 1.5), permanent_default,GB / 2);
+            size_t new_permanent_size = std::clamp(GameConfig::GetValue("Mempool", "permanent", permanent_default * 1.5), permanent_default, GB / 2);
 
             size_t first_increase_hastable = std::clamp(GameConfig::GetValue("Mempool", "Bitmap_Image_Names_hashtable", (size_t)first_increase), (size_t)12000, GB);
 
