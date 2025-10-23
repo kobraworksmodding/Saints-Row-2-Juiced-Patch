@@ -3,13 +3,13 @@
 #include "FileLogger.h"
 #include <tchar.h>
 #include <algorithm>
-
+#include "Hooker.h"
 using namespace std;
 
 vector<char*> g_debugLines;
-fnLuaFile LuaFile = (fnLuaFile)0x00D74B40;
-fnLuaRegister LuaRegister = (fnLuaRegister)0x00CD68D0;
-fnLuaPushCFunction LuaPushCFunction = (fnLuaPushCFunction)0x00CDCD30;
+fnLuaFile LuaFile = (fnLuaFile)DynAddress(0x00D74B40);
+fnLuaRegister LuaRegister = (fnLuaRegister)DynAddress(0x00CD68D0);
+fnLuaPushCFunction LuaPushCFunction = (fnLuaPushCFunction)DynAddress(0x00CDCD30);
 static lua_State* hkg_luaState = NULL;
 
 std::string TCHARToString(const TCHAR* tcharStr) {
