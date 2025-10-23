@@ -13,6 +13,7 @@
 #include "../General/General.h"
 #include <fstream>
 #include <string>
+#include "..\Hooker.h"
 using namespace General;
 import OptionsManager; 
 #if !RELOADED
@@ -22,7 +23,7 @@ const wchar_t* gameindheader = L"thaRow";
 #endif
 namespace InGameConfig {
     typedef bool(*isCoopT)();
-    isCoopT isCoop = (isCoopT)0x007F7AD0;
+    isCoopT isCoop = (isCoopT)DynAddress(0x007F7AD0);
     static non_live_options restart_option[] = {
     { "Debug", "DisableXInput",MenuType::CONTROLS },
     { "Debug", "ForceDisableVibration",MenuType::CONTROLS },
@@ -736,12 +737,12 @@ namespace InGameConfig {
                 }
             }
         }
-        int MP_game_mode = *(int*)0x00E8B210;
+        int MP_game_mode = *(int*)DynAddress(0x00E8B210);
         bool enableCoopMultiplayerCheck = (GameConfig::GetValue("Debug","PopulateInGameOptions",1) >= 2);
 #if !RELOADED
         bool shouldCreateJuicedMenu = true;
         if (enableCoopMultiplayerCheck) {
-            int MP_game_mode = *(int*)0x00E8B210;
+            int MP_game_mode = *(int*)DynAddress(0x00E8B210);
             shouldCreateJuicedMenu = (isCoop() == false && MP_game_mode == -1);
         }
         if (shouldCreateJuicedMenu) {
