@@ -32,16 +32,16 @@ namespace General {
 	const char* JVLib = "juiced_vint_lib";
 	const char* JStr = "juiced";
 	bool IsSpawning = false;
-	bool* EnterPressed = (bool*)0x02348CD0;
-	bool* InCutscene = (bool*)0x2527D14;
-	bool* InMultiplayer = (bool*)0x2528B48;
+	bool* EnterPressed = (bool*)DynAddress(0x02348CD0);
+	bool* InCutscene = (bool*)DynAddress(0x2527D14);
+	bool* InMultiplayer = (bool*)DynAddress(0x2528B48);
 	bool IsQuickSaving = false;
-	char* CurrentGamemode = (char*)0x00E8B210;
-	UINT16* GameResX = (UINT16*)0x022F63F8;
-	UINT16* GameResY = (UINT16*)0x022F63FC;
-	char* LobbyCheck = (char*)0x02528C14; // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.
-	char* InMission = (char*)0x27B3C60;
-	char* GameLoaded = (char*)0x00E94D3E;
+	char* CurrentGamemode = (char*)DynAddress(0x00E8B210);
+	UINT16* GameResX = (UINT16*)DynAddress(0x022F63F8);
+	UINT16* GameResY = (UINT16*)DynAddress(0x022F63FC);
+	char* LobbyCheck = (char*)DynAddress(0x02528C14); // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.
+	char* InMission = (char*)DynAddress(0x27B3C60);
+	char* GameLoaded = (char*)DynAddress(0x00E94D3E);
 	int CurrentNPC = 0;
 	int SpawnedNPCs[10] = { 0 }; // we could make this a vector maybe, i don't mind it being like this though
 
@@ -51,10 +51,10 @@ namespace General {
 
 	bool resFound = false;
 
-	GetCharacterIDT GetCharacterID = (GetCharacterIDT)0x4A5A90;
-	ChangeCharacterT ChangeCharacter = (ChangeCharacterT)0x6856A0;
-	ResetCharacterT ResetCharacter = (ResetCharacterT)0x685D50;
-	DeleteNPCT DeleteNPC = (DeleteNPCT)0x960240;
+	GetCharacterIDT GetCharacterID = (GetCharacterIDT)DynAddress(0x4A5A90);
+	ChangeCharacterT ChangeCharacter = (ChangeCharacterT)DynAddress(0x6856A0);
+	ResetCharacterT ResetCharacter = (ResetCharacterT)DynAddress(0x685D50);
+	DeleteNPCT DeleteNPC = (DeleteNPCT)DynAddress(0x960240);
 
 	bool IsSRFocused()
 	{
@@ -68,159 +68,163 @@ namespace General {
 		return false;
 	}
 
+	static int PauseContinue = DynAddress(0x0068CAA7);
+	static int PauseSkipAddr = DynAddress(0x0068CAFA);
+	static int UnkCutsceneAround = DynAddress(0x6C6870);
+
+	static int CutscenePauseContinue = DynAddress(0x006D8E10);
+	static int CutscenePauseSkipAddr = DynAddress(0x006D8F6F);
+
+	static int SOCallBackContinue = DynAddress(0x007787D5);
+	static int UnknownPTRSoCallback = DynAddress(0x7786E0);
+
+	static int DeletionModeCheckContinue = DynAddress(0x00779534);
+	static int DeletionModeCheckCall = DynAddress(0x778A40);
+
+	static int ReplaceSOMessageContinue = DynAddress(0x00778800);
+	static int ReplaceSOMessageCall = DynAddress(0x7F49E0);
+
+	static int SkipSavingContinue = DynAddress(0x007788C3);
+	static int SkipSavingSkipAddr = DynAddress(0x007788DC);
+
+	static int ShadowsFixContinue = DynAddress(0x00773783);
+
+	static int SaveDelCallbackAddr1 = DynAddress(0x25283B0);
+	static int SaveDelCallbackAddr2 = DynAddress(0x25283B1);
+
+	static int DeletionModeCheckPtr1 = DynAddress(0x2527C08);
+	static int DeletionModeCheckPtr2 = DynAddress(0x2528377);
+
+	static int ShadowsFixPtr1 = DynAddress(0xE98994);
+	static int ShadowsFixPtr2 = DynAddress(0x252A37C);
 
 	void __declspec(naked) CutscenePauseWorkaround()
 	{
-		static int Continue = 0x0068CAA7;
-		static int SkipAddr = 0x0068CAFA;
 		__asm {
 			jnz Check
 			jmp Resume
-
 			Check :
-			mov al, ds : byte ptr[0x2527D14]
-			cmp al, 0
-			jz Skip
-			jmp Resume
-
-			Skip :
-			jmp SkipAddr
-
-			Resume :
-			mov edi, dword ptr[0x6C6870]
-			call edi
-			jmp Continue
-
+			mov al, ds : byte ptr[InCutscene]
+				cmp al, 0
+				jz Skip
+				jmp Resume
+				Skip :
+			jmp PauseSkipAddr
+				Resume :
+				call UnkCutsceneAround
+				jmp PauseContinue
 		}
 	}
-
 	void __declspec(naked) CutscenePauseCheck()
 	{
-		static int Continue = 0x006D8E10;
-		static int SkipAddr = 0x006D8F6F;
 		__asm {
 			jnz Skip
-			mov edi, ds:dword ptr[0x2527C08]
+			mov edi, [DeletionModeCheckPtr1]
+			mov edi, [edi]
+
 			cmp edi, 0
 			jnz Skip
-			jmp Continue
-
+			jmp CutscenePauseContinue
 			Skip :
-			jmp SkipAddr
+			jmp CutscenePauseSkipAddr
 		}
 	}
-
 	void __cdecl SaveDelCallback(int Unk, bool Result, int Action) {
 		if (Action == 2) {
-			*(bool*)0x25283B0 = true;
-			*(bool*)0x25283B1 = Result ? false : true;
+			*(bool*)SaveDelCallbackAddr1 = true;
+			*(bool*)SaveDelCallbackAddr2 = Result ? false : true;
 			if (Result) {
 				DeletionMode = false;
 			}
 		}
 	}
-
 	void __declspec(naked) ChangeSOCallback()
 	{
-		static int Continue = 0x007787D5;
 		__asm {
 			mov		cl, byte ptr[DeletionMode]
 			test	cl, cl
 			jnz     Replace
-			mov     ecx, dword ptr[0x7786E0]
+			mov     ecx, dword ptr[UnknownPTRSoCallback]
 			push	ecx
-			jmp		Continue
-
+			jmp		SOCallBackContinue
 			Replace :
 			push SaveDelCallback
-			jmp Continue
+				jmp SOCallBackContinue
 		}
 	}
-
 	void __declspec(naked) DeletionModeCheck()
 	{
-		static int Continue = 0x00779534;
 		__asm {
 			mov		cl, byte ptr[DeletionMode]
 			test	cl, cl
 			jnz     Skip
-			mov		edx, 0x778A40
+			mov		edx, DeletionModeCheckCall
 			call	edx
-			jmp		Continue
+			jmp		DeletionModeCheckContinue
 		}
-		Skip:
-		__asm{
+	Skip:
+		__asm {
 			mov eax, 1
-			mov		ds: DeletionMode, 0
+			mov		ds : DeletionMode, 0
 			mov     ecx, [EnterPressed]
 			mov     ds : byte ptr[ecx], 0
-			jmp Continue
+			jmp DeletionModeCheckContinue
 		}
 	}
-
 	void __declspec(naked) ReplaceSOMessage()
 	{
-		static int Continue = 0x00778800;
 		__asm {
 			mov		cl, byte ptr[DeletionMode]
 			test	cl, cl
 			jnz     Skip
-			mov     ecx, dword ptr[0x7F49E0]
+			mov     ecx, dword ptr[ReplaceSOMessageCall]
 			call	ecx
-			jmp		Continue
-
+			jmp		ReplaceSOMessageContinue
 			Skip :
 			mov eax, SaveMessage
-			mov     ecx, [EnterPressed]
-			mov     ds : byte ptr[ecx], 0
-			jmp Continue
+				mov     ecx, [EnterPressed]
+				mov     ds : byte ptr[ecx], 0
+				jmp ReplaceSOMessageContinue
 		}
 	}
-
 	void __declspec(naked) SkipSaving()
 	{
-		static int Continue = 0x007788C3;
-		static int SkipAddr = 0x007788DC;
 		__asm {
 			mov		ecx, dword ptr[0x695150]
 			call	ecx
 			mov		cl, byte ptr[DeletionMode]
 			test	cl, cl
 			jnz     Skip
-			jmp		Continue
-
+			jmp		SkipSavingContinue
 			Skip :
 			add esp, 4
-			mov byte ptr[DeletionMode], 0
-			mov ds : byte ptr[0x2528377], 1
-			jmp SkipAddr
+				mov byte ptr[DeletionMode], 0
+				mov ds : byte ptr[DeletionModeCheckPtr2], 1
+				jmp SkipSavingSkipAddr
 		}
 	}
-
 	void __declspec(naked) ShadowsFix()
 	{
-		static int jmp_continue = 0x00773783;
 		__asm {
-			cmp ds : byte ptr[0xE98994], 0
+			cmp ds : byte ptr[ShadowsFixPtr1], 0
 			jz Skip
-			mov ds : byte ptr[0x252A37C], 1
-			jmp jmp_continue
-
+			mov ds : byte ptr[ShadowsFixPtr2], 1
+			jmp ShadowsFixContinue
 			Skip :
-			mov ds : byte ptr[0x252A37C], 0
-			jmp jmp_continue
+			mov ds : byte ptr[ShadowsFixPtr2], 0
+				jmp ShadowsFixContinue
 		}
 	}
 
 	typedef void __cdecl HudControlT(bool Hide);
-	HudControlT* HudControl = (HudControlT*)(0x793D60);
+	HudControlT* HudControl = (HudControlT*)(DynAddress(0x793D60));
 
 	bool isCoop() {
-		return ((bool(*)())0x007F7AD0)();
+		return ((bool(*)())DynAddress(0x007F7AD0))();
 	}
 
 	bool isMissionCompleted(const char* Name) {
-		return ((bool(__thiscall*)(const char*))0x006A6E50)(Name);
+		return ((bool(__thiscall*)(const char*))DynAddress(0x006A6E50))(Name);
 	}
 
 	void IdleFix(bool Hide) {
@@ -232,7 +236,7 @@ namespace General {
 	}
 
 	typedef int __cdecl TextureTestT(int idk1, int idk2);
-	TextureTestT* TextureTest = (TextureTestT*)(0xC080C0);
+	TextureTestT* TextureTest = (TextureTestT*)(DynAddress(0xC080C0));
 
 	int TextureCrashFix(int idk1, int idk2) {
 
@@ -241,7 +245,8 @@ namespace General {
 		__asm popad
 		return TextureTest(idk1, idk2);
 	}
-
+	static auto player_addr = UtilsGlobal::getplayer(true);
+	static auto SpawnNPC_Func = DynAddress(0x98E400);
 	char __declspec(naked) SpawnNPC(int NPCPointer) {
 		__asm {
 			push ebp
@@ -250,9 +255,11 @@ namespace General {
 
 			mov     eax, NPCPointer
 			push	eax
-			mov     eax, ds: 0x21703D4
-			mov     ecx, 0x98E400
-			call    ecx
+
+			mov eax, [player_addr]
+			mov eax, [eax]
+
+			call    SpawnNPC_Func
 
 			mov esp, ebp
 			pop ebp
@@ -665,8 +672,8 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	
 		std::string convertedBuff(buff,sz);
 #if !JLITE
-		int* resX = (int*)(0xE8DF14);
-		int* resY = (int*)(0xE8DF4C);
+		int* resX = (int*)(DynAddress(0xE8DF14));
+		int* resY = (int*)(DynAddress(0xE8DF4C));
 
 		patchedRes = std::to_string(resX[13]) + "x" + std::to_string(resY[13]);
 		std::string searchAA = "adv_antiali_slider_values \t\t\t= { [0] = { label = \"CONTROL_NO\" }, [1] = { label = \"2x\" },\t\t\t\t[2] = { label = \"4x\" },\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tnum_values = 3, cur_value = 0 }";
@@ -699,7 +706,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			replace_all(convertedBuff, "2048x1536", patchedRes); // easier to do it this way than to only patch if the user's res isn't found
 			replace_all(convertedBuff, sLibSuperUI, blankLib); // fixes the error logger from SuperUI in system_lib.lua from crashing our executor, if nclok fixes it we'll get rid of this
 
-			if (*(BYTE*)(0xE8C470) == 0) { // only patch these if the game's running in English
+			if (*(BYTE*)(DynAddress(0xE8C470)) == 0) { // only patch these if the game's running in English
 				replace_all(convertedBuff, "MENU_BLUR\",\t\t", "Pause Blur\",\t");
 				replace_all(convertedBuff, "MENU_DEPTH_OF_FIELD", "Depth of Field     ");
 				replace_all(convertedBuff, "ANISOTROPY_FILTERING\",\t\t", "Anisotropic Filtering\",\t");
@@ -960,6 +967,36 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			currentModifiedBuffer_general_lua = nullptr;
 		}
 	}
+	static void* VintStatePtr = DynAddress((void*)0x252A1B8);
+	static int VintGetGlobalBoolCall = DynAddress(0xCDD760);
+	static int VintSetGlobalBoolCall = DynAddress(0xCDD610);
+	static int LuaStatePtr = DynAddress(0x252983C);
+	static int LuaExecuteCall = DynAddress(0xCDA000);
+	static int VintExecuteCall = DynAddress(0xCDA000);
+	static int MSAAPtr = DynAddress(0x252A2DC);
+	static int MSAAContinue = DynAddress(0x007737E4);
+	static int ValidCharFixContinue = DynAddress(0x0075C8D5);
+	static int ValidCharFixXor = DynAddress(0x0075C8E7);
+	static int MouseFixContinue = DynAddress(0x00C1F4F2);
+	static int MouseFixPtr1 = DynAddress(0x234F460);
+	static int MouseFixPtr2 = DynAddress(0x0347B2F4);
+	static int MouseFixPtr3 = DynAddress(0x0234F473);
+	static int MouseFixPtr4 = DynAddress(0x0234F483);
+	static int StoreNPCPointerCall = DynAddress(0x9CFCE0);
+	static int StoreNPCPointerContinue = DynAddress(0x0098E498);
+	static int SpawningCheckSkip = DynAddress(0x0098EE3D);
+	static int SpawningCheckContinue = DynAddress(0x0098EE11);
+	static int RestoreFilteringContinue = DynAddress(0x00515974);
+	static int AddVintLibContinue = DynAddress(0x00B91553);
+	static int AddVintLibVintLib = DynAddress(0x00E4CEA8);
+	static int AddVintLibLoadLib = DynAddress(0xCDDF30);
+	static int AddStringsContinue = DynAddress(0x007F46F0);
+	static int AddStringsLoad = DynAddress(0x7F4780);
+	static int AddStringsPtr = DynAddress(0x00E26090);
+	static int RequestStringCall = DynAddress(0x7F49E0);
+	static int AddMessageCall = DynAddress(0x7E6250);
+	static int AddMessageCustomizedCall = DynAddress(0x753080);
+
 	bool __declspec(naked) VintGetGlobalBool(const char* Name)
 	{
 		_asm {
@@ -968,9 +1005,10 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			sub esp, __LOCAL_SIZE
 
 
-			mov ecx, ds: dword ptr[0x252A1B8] // Vint State
+			mov ecx, [VintStatePtr]
+			mov ecx, [ecx]
 			mov eax, Name
-			mov edx, 0xCDD760
+			mov edx, VintGetGlobalBoolCall
 			call edx
 
 			mov esp, ebp
@@ -987,11 +1025,12 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			sub esp, __LOCAL_SIZE
 
 
-			mov eax, ds: dword ptr[0x252A1B8] // Vint State
+			mov eax, [VintStatePtr]
+			mov eax, [eax]
 			push eax
 			push Value
 			push Name
-			mov edx, 0xCDD610
+			mov edx, VintSetGlobalBoolCall
 			call edx
 
 			mov esp, ebp
@@ -1008,9 +1047,10 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			sub esp, __LOCAL_SIZE
 
 
-			mov esi, ds:0x0252983C // Lua State
+			mov esi, [LuaStatePtr]
+			mov esi, [esi]
 			mov eax, command
-			mov edx, 0xCDA000
+			mov edx, LuaExecuteCall
 			call edx
 
 			mov esp, ebp
@@ -1026,9 +1066,10 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			mov ebp, esp
 			sub esp, __LOCAL_SIZE
 
-			mov esi, ds : 0x0252A1B8 // Vint State
+			mov esi, [VintStatePtr]
+			mov esi, [esi]
 			mov eax, command
-			mov edx, 0xCDA000
+			mov edx, VintExecuteCall
 			call edx
 
 
@@ -1045,71 +1086,62 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 	void __declspec(naked) MSAA()
 	{
-		static int jmp_continue = 0x007737E4;
 		__asm {
-			mov ds : dword ptr[0x252A2DC], 0
+			mov ds : dword ptr[MSAAPtr], 0
 			sub eax, 1
 			jz MSAA8
-			jmp jmp_continue
+			jmp MSAAContinue
 
 			MSAA8 :
-			mov ds : dword ptr[0x252A2DC], 8
-				jmp jmp_continue
+			mov ds : dword ptr[MSAAPtr], 8
+				jmp MSAAContinue
 		}
 	}
 
 	BOOL __declspec(naked) ValidCharFix()
 	{
-		static int jmp_continue = 0x0075C8D5;
-		static int jmp_xor = 0x0075C8E7;
-
 		__asm {
 			mov ax, [esp + 4]
 			cmp ax, 0x20
 			jb short skip
-			jmp jmp_continue
+			jmp ValidCharFixContinue
 
 			skip :
-			jmp jmp_xor
+			jmp ValidCharFixXor
 		}
 	}
 
 	void __declspec(naked) MouseFix()
 	{
-		static int jmp_continue = 0x00C1F4F2;
 		__asm {
-			mov ds : dword ptr[0x234F460], eax
-			mov ds : dword ptr[0x0347B2F4], eax // reset the missing old delta to fix ghost scrolling when tabbing in and out of the game
-			mov ds : dword ptr[0x0234F473], eax // reset left mouse button
-			mov ds : dword ptr[0x0234F483], eax // reset right mouse button
-			jmp jmp_continue
+			mov ds : dword ptr[MouseFixPtr1], eax
+			mov ds : dword ptr[MouseFixPtr2], eax
+			mov ds : dword ptr[MouseFixPtr3], eax
+			mov ds : dword ptr[MouseFixPtr4], eax
+			jmp MouseFixContinue
 		}
 	}
 	void __declspec(naked) StoreNPCPointer()
 	{
-		static int jmp_continue = 0x0098E498;
 		__asm {
-			mov		ecx, 0x9CFCE0
+			mov		ecx, StoreNPCPointerCall
 			call	ecx
 			mov		CurrentNPC, eax
-			jmp		jmp_continue
+			jmp		StoreNPCPointerContinue
 		}
 	}
 
 	void __declspec(naked) SpawningCheck()
 	{
-		static int jmp_skip = 0x0098EE3D;
-		static int jmp_continue = 0x0098EE11;
-
 		__asm {
 			cmp		IsSpawning, 0
 			jnz		skip
 			mov		eax, [esi + 3132]
-			jmp		jmp_continue
+			jmp		SpawningCheckContinue
 
 			skip :
 			mov		edx, [esi + 68]
-				jmp		jmp_skip
+				jmp		SpawningCheckSkip
 		}
 	}
 
@@ -1120,8 +1152,8 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		int statRC = stat(path, &info);
 		if (statRC != 0)
 		{
-			if (errno == ENOENT) { return 0; } // something along the path does not exist
-			if (errno == ENOTDIR) { return 0; } // something in path prefix is not a dir
+			if (errno == ENOENT) { return 0; }
+			if (errno == ENOTDIR) { return 0; }
 			return -1;
 		}
 
@@ -1130,56 +1162,48 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 	void __declspec(naked) RestoreFiltering()
 	{
-		static int jmp_continue = 0x00515974;
 		__asm {
 			fstp st(1)
 			push esp
 			add dword ptr[esp], 8
 			fstp st
-			jmp jmp_continue
+			jmp RestoreFilteringContinue
 		}
 	}
 
 	void __declspec(naked) AddVintLib()
 	{
-		static int Continue = 0x00B91553;
-		static int VintLib = 0x00E4CEA8;
-		static int LoadLib = 0xCDDF30;
-
 		__asm {
-			mov ecx, ds: 0x252A1B8
-			push VintLib
+			mov ecx, [VintStatePtr]
+			mov ecx, [ecx]
+			push AddVintLibVintLib
 			mov esi, ecx
-			call LoadLib
+			call AddVintLibLoadLib
 			add esp, 4
-			mov ecx, ds : 0x252A1B8
+			mov ecx, [VintStatePtr]
+			mov ecx, [ecx]
 			push JVLib
 			mov esi, ecx
-			call LoadLib
-			jmp Continue
+			call AddVintLibLoadLib
+			jmp AddVintLibContinue
 		}
 	}
 
 	void __declspec(naked) AddStrings()
 	{
-		static int Continue = 0x007F46F0;
-		static int StringsLoad = 0x7F4780;
-
-		// loading our strings first which lets not only add new ones but "overwrite" original ones too
-
 		__asm {
 			push 0
 			mov ecx, JStr
-			call StringsLoad
+			call AddStringsLoad
 			add esp, 4
 			push 0
-			mov ecx, dword ptr[0x00E26090]
-			call StringsLoad
-			jmp Continue
+			mov ecx, dword ptr[AddStringsPtr]
+			call AddStringsLoad
+			jmp AddStringsContinue
 		}
 	}
 
-	__declspec(naked) wchar_t* RequestString(const wchar_t* Dest, const char* Label) { // first arg is used to format an existing wchar string, pass nullptr if you just want to get a string (use pushad and popad)
+	__declspec(naked) wchar_t* RequestString(const wchar_t* Dest, const char* Label) {
 		__asm {
 			push ebp
 			mov ebp, esp
@@ -1187,7 +1211,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 			mov		edi, Dest
 			mov		esi, Label
-			mov     ecx, 0x7F49E0
+			mov     ecx, RequestStringCall
 			call    ecx
 
 			mov esp, ebp
@@ -1196,7 +1220,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		}
 	}
 
-	__declspec(naked) int AddMessage(const wchar_t* Title, const wchar_t* Desc) { // we can use this for juiced-related info prompts
+	__declspec(naked) int AddMessage(const wchar_t* Title, const wchar_t* Desc) {
 		__asm {
 			push ebp
 			mov ebp, esp
@@ -1208,7 +1232,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			mov esi, Title
 			push esi
 
-			mov eax, 0x7E6250
+			mov eax, AddMessageCall
 			call eax
 
 			mov esp, ebp
@@ -1217,7 +1241,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		}
 	}
 
-	__declspec(naked) int AddMessageCustomized(const wchar_t* Title, const wchar_t* Desc, const wchar_t* Options[], int OptionCount) { // same thing as above except we have freedom over everything
+	__declspec(naked) int AddMessageCustomized(const wchar_t* Title, const wchar_t* Desc, const wchar_t* Options[], int OptionCount) {
 		__asm {
 			push ebp
 			mov ebp, esp
@@ -1234,7 +1258,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			push eax
 			or eax, -1
 
-			mov ecx, 0x753080
+			mov ecx, AddMessageCustomizedCall
 			call ecx
 
 			mov esp, ebp
@@ -1266,7 +1290,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		if (!QuickSavePos.isNull()) {
 			*(vector3*)(ctx.esp + 0x20) = QuickSavePos;
 			memcpy((void*)ctx.ecx, (void*)&QuickSaveOrient, 0x24);
-			ctx.eip = 0x006938F0;
+			ctx.eip = DynAddress(0x006938F0);
 		}
 	}
 
@@ -1282,11 +1306,11 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	void NewSave() {
 		if (*GameLoaded) {
 			vint_message_struct SaveMessage;
-			*(bool*)(0x252740E) = 1; // ins. fraud sound
+			*(bool*)(DynAddress(0x252740E)) = 1; // ins. fraud sound
 			if (*InMission == 0 && !(*InCutscene) && !*LobbyCheck == 0 && *CurrentGamemode == -1) {
 				Game::HUD::vint_message(L"JUICED: Quicksaving...", &SaveMessage);
 				IsQuickSaving = true;
-				((void(__cdecl*)(int*, bool, bool))0x695A60)((int*)0x1F7A9C0, false, false);
+				((void(__cdecl*)(int*, bool, bool))DynAddress(0x695A60))((int*)DynAddress(0x1F7A9C0), false, false);
 				IsQuickSaving = false;
 			}
 			else {
@@ -1296,6 +1320,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	}
 	// Fixes the Low Gravity cheat ignoring if you have the no fall damage unlockable, stripping it away due to the float being saved in the save file.
 // Here we check if the reward is unlocked and thus setting it to 0.f, using ASM isn't required I just wanted a singular function handler for both apply/restore
+	static bool* low_gravity_cheat = (bool*)DynAddress(0x027DD27C);
 	void __declspec(naked) LowGravity_cheat_fix_basejumping() {
 		__asm {
 			fstp dword ptr[eax + 0x18B4]
@@ -1303,7 +1328,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		int player;
 		__asm
 		mov player, eax
-			if (*(bool*)0x027DD27C)
+			if (*low_gravity_cheat)
 				*(float*)(player + 0x18B4) = 0.f; // This is the damage multiplier or something.
 		__asm {
 			mov esp, ebp
