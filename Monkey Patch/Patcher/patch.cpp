@@ -135,6 +135,8 @@ void callFunc(void* addr) {
 
 void* copyFunc(uint32_t func_start, uint32_t func_end, void* new_func)
 {
+    func_start = DynAddress(func_start);
+    func_end = DynAddress(func_end);
     uint32_t func_size = func_end - func_start;
 
     void* copied = (void*)calloc(func_size, 1);

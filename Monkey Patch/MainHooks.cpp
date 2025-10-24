@@ -91,7 +91,7 @@ void SetDefaultGameSettings()
 	// 201 is Vanilla , 209 is Reloaded.
 	//patchBytesM((BYTE*)0x008D01F6, (BYTE*)"\x68\xB1", 2);
 #else
-	char* GameName = reinterpret_cast<char*>(0x0212AA08);
+	char* GameName = reinterpret_cast<char*>(DynAddress(0x0212AA08));
 	strcpy(GameName, (const char*)ServerNameSR2);
 #endif
 
@@ -249,14 +249,14 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	{
 		GetVersionExAFirstRun=false;
 		Logger::TypedLog(CHN_DLL, "Calling hooked GetVersionExA.\n");
-		UInt32 winmaindata=*((UInt32*)offset_addr(0x00520ba0));
+		UInt32 winmaindata=*((UInt32*)DynAddress(0x00520ba0));
 		if(winmaindata==0x83ec8b55)
 		{
 			// The Steam version of the executable is now unencrypted, so we can start patching.
 
 
 			Logger::TypedLog(CHN_DLL, "Hooking WinMain.\n");
-			WriteRelCall(offset_addr(0x00c9e1c0),(UInt32)&Hook_WinMain);
+			patchCall((void*)0x00c9e1c0,&Hook_WinMain);
 
 			// Add patch routines here for patches that need to be run at crt startup, usually for patching constructors.
 			// Be very careful you can break things easily.
@@ -1382,7 +1382,7 @@ void PrintGameFrametime() {
 	DWORD currentTime = GetTickCount();
 	if (currentTime - lastUpdate >= 500) {
 		lastUpdate = currentTime;
-		ft = *(float*)(0x02527DA4) * 1000;
+		ft = *(float*)DynAddress(0x02527DA4) * 1000;
 		//fr = static_cast<int>(1.0f / *(float*)(0xE84380));
 	}
 	char buffer[50];
@@ -1585,9 +1585,10 @@ int* sub_73D900() {
 }
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	WinMain_Type OldWinMain = (WinMain_Type)DynAddress(0x00520ba0);
 	patchJmp((void*)0x697339, sub_73D900);
 
-
+	
 	LUA_Key = GameConfig::GetValue("Debug", "ExecutorBind", VK_INSERT);
 	InGameConfig::AddOptions();
 	General::TopWinMain();
@@ -1625,7 +1626,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	PatchOpenSpy();
 	patch_metrics();
-
+	
 	if (GameConfig::GetValue("Debug", "PatchGameLoop", 1)) //THIS IS REQUIRED FOR RICH PRESENCE AND ERROR HANDLER
 	{
 		Logger::TypedLog(CHN_DEBUG, "Patching GameRenderLoop...\n");
@@ -1653,27 +1654,35 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((void*)0x520F65, 6);
 	}
 #endif
+	
 #if !JLITE
 	InternalPrint::Init();
 	RPCHandler::Init();
-
+	
 #if !RELOADED
 	BlingMenuInstall::AddOptions();
 #endif
 
 #endif
+	return (OldWinMain(hInstance, hPrevInstance, lpCmdLine, nShowCmd));
 	Gamespy::Init();
+
 	Input::Init();
+
 	Behavior::Init();
 	Memory::Init();
+	
 	Render3D::Init();
 	Render2D::Init();
+	
 	GLua::Init();
 	Audio::Init();
 	XACT::Init();
-	Debug::Init();
-	Render2D::InitMenVerNum();
 
+	Debug::Init();
+	
+	Render2D::InitMenVerNum();
+	
 #if RELOADED
 	Reloaded::Init();
 	Behavior::BetterMovement();
@@ -1694,10 +1703,10 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 #if !JLITE
 	General::BottomWinMain();
 #endif
+	
 	Game::Init();
 	// Continue to the program's WinMain.
-
-	WinMain_Type OldWinMain = (WinMain_Type)offset_addr(0x00520ba0);
-	return (OldWinMain(hInstance, hPrevInstance, lpCmdLine, nShowCmd));
+	
+	
 }
 

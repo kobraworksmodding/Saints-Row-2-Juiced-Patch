@@ -355,15 +355,15 @@ struct VPPFileData
 };
 
 int FileHashExists(const char* FileName) {
-	return ((int(__cdecl*)(const char*))0xC0A3B0)(FileName);
+	return ((int(__cdecl*)(const char*))DynAddress(0xC0A3B0))(FileName);
 }
 
 void AddFileHash(VPPFileData* Struct) {
-	((void(__cdecl*)(VPPFileData*))0xC0A350)(Struct);
+	((void(__cdecl*)(VPPFileData*))DynAddress(0xC0A350))(Struct);
 }
 
 int GetStringHash(const char* String) {
-	return ((int(__fastcall*)(int, const char*))0xBF2BD0)(0, String);
+	return ((int(__fastcall*)(int, const char*))DynAddress(0xBF2BD0))(0, String);
 }
 
 void InsertFileHashes(SafetyHookContext& ctx) {

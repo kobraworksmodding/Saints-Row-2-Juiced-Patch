@@ -18,6 +18,7 @@ static auto HandleDynAddress = GetModuleHandle(nullptr);
 template<typename AT>
 __declspec(noinline) AT DynAddress(AT address)
 {
+    printf("HandleDynAddress 0x%p\n", HandleDynAddress);
     static_assert(sizeof(AT) == sizeof(uintptr_t), "AT must be pointer sized");
 
     uintptr_t inputAddr = std::bit_cast<uintptr_t>(address);
@@ -31,6 +32,7 @@ __declspec(noinline) AT DynAddress(AT address)
 #else
         uintptr_t result = baseAddr - 0x400000UL + inputAddr;
 #endif
+        printf("return 0x%p\n", std::bit_cast<AT>(result));
         return std::bit_cast<AT>(result);
     }
 

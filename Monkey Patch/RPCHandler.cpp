@@ -8,6 +8,7 @@
 #include "GameConfig.h"
 #include "UtilsGlobal.h"
 #include "Game/Game.h"
+#include "Hooker.h"
 //#pragma comment (lib, "../Discord/discord_game_sdk.dll.lib")
 #define DISCORD_LIB_NAME "discord_game_sdk.dll"
 
@@ -88,7 +89,7 @@ namespace RPCHandler {
 	}
 
 	void MapDescAPI() {
-		char* chunkID = (CHAR*)0x00E99740;
+		char* chunkID = (CHAR*)DynAddress(0x00E99740);
 		int code = mapListAPI(chunkID);
 
 		switch (code) {
@@ -247,7 +248,7 @@ namespace RPCHandler {
 	};
 
 	typedef activities Activity_TypeT();
-	Activity_TypeT* Activity_Type = (Activity_TypeT*)(0x53C4D0);
+	Activity_TypeT* Activity_Type = (Activity_TypeT*)DynAddress(0x53C4D0);
 
 	std::unordered_map<gang, const char*> gangToString = {
 	{saints, "tss"},
@@ -291,13 +292,13 @@ namespace RPCHandler {
 	isCoopT isCoop = (isCoopT)0x007F7AD0;
 	// Updates state info for discord.
 	void UpdateDiscordParams() {
-		BYTE CurrentGamemode = *(BYTE*)0x00E8B210; // Parses the current gamemode from EXE
-		BYTE LobbyCheck = *(BYTE*)0x02528C14; // Checks lobby, technically this is another gamemode check but we'll use it for lobby
-		BYTE MatchType = *(BYTE*)0x00E8B20C; // Checks match type
-		char* playerName = (CHAR*)0x0212AB48; // parses player name
-		wchar_t* partnerName = (WCHAR*)0x02CD1870; // parses Co-op Partner name, usually
-		BYTE IsInCutscene = *(BYTE*)0x02527D14; // Checks if user is in a cutscene.
-		BYTE CurDifficulty = *(BYTE*)0x00E986F4; // Current Difficulty
+		BYTE CurrentGamemode = *(BYTE*)DynAddress(0x00E8B210); // Parses the current gamemode from EXE
+		BYTE LobbyCheck = *(BYTE*)DynAddress(0x02528C14); // Checks lobby, technically this is another gamemode check but we'll use it for lobby
+		BYTE MatchType = *(BYTE*)DynAddress(0x00E8B20C); // Checks match type
+		char* playerName = (CHAR*)DynAddress(0x0212AB48); // parses player name
+		wchar_t* partnerName = (WCHAR*)DynAddress(0x02CD1870); // parses Co-op Partner name, usually
+		BYTE IsInCutscene = *(BYTE*)DynAddress(0x02527D14); // Checks if user is in a cutscene.
+		BYTE CurDifficulty = *(BYTE*)DynAddress(0x00E986F4); // Current Difficulty
 
 		std::wstring wPartnerName = partnerName; // parse co-op partner name to a wstring
 		std::string f_PartnerName = wstring_to_string(wPartnerName); // THEN to a string

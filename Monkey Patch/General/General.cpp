@@ -1270,11 +1270,11 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	CMultiPatch CMPatches_TervelTextureCrashWorkaround_be_as_pe = {
 
 		[](CMultiPatch& mp) {
-			mp.AddWriteRelCall(0x00C0900D,(uintptr_t)TextureCrashFix);
+			mp.AddWriteRelCall(0x00C0900D,(uintptr_t)&TextureCrashFix);
 		},
 
 		[](CMultiPatch& mp) {
-			mp.AddWriteRelCall(0x00C08493,(uintptr_t)TextureCrashFix);
+			mp.AddWriteRelCall(0x00C08493,(uintptr_t)&TextureCrashFix);
 		},
 	};
 	SafetyHookInline D3D9CreateFunctionT{};

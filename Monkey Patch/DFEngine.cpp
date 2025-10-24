@@ -14,6 +14,7 @@
 #include <Windows.h>
 #include <direct.h>
 #include "Player\Input.h"
+#include "Hooker.h"
 static CDFEngine DFEngine;
 static CDFObjectInstance fake_CDFObject;
 
@@ -93,7 +94,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 			}
 			Logger::TypedLog(CHN_DLL, "Executable base doesn't match default. Base = 0x%08X offset %i\n", (unsigned int)main_handle, address_offset);
 		}
-		UInt32 winmaindata = *((UInt32*)offset_addr(0x00520ba0));
+		UInt32 winmaindata = *((UInt32*)DynAddress(0x00520ba0));
 		if (winmaindata != 0x83ec8b55) {
 			Logger::TypedLog(CHN_DLL, "WinMain sanity check failed. Probably running the Steam encrypted version.\n");
 

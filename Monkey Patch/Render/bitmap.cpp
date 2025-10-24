@@ -109,6 +109,7 @@ LPCRITICAL_SECTION Bm_add_lock = (LPCRITICAL_SECTION)DynAddress(0x33DA354);
 
 static auto BOGUS_PEG = DynAddress(0x0252A560);
 static auto Bogus_static_bitmap_entry_addr = DynAddress(0x252A564);
+static auto Bm_bitmaps_addr = DynAddress(0x234890C);
 int __cdecl bm_add_bitmap(const char* filename)
 {
     bitmap_entry* b;
@@ -127,7 +128,7 @@ int __cdecl bm_add_bitmap(const char* filename)
         set_thread_ownership(pool);
         set_thread_ownership((mempool*)Extra_bm_filename_hash_table);
         handle = (*Bm_bitmap_count)++;
-        bitmap_entry* Bm_bitmaps = (bitmap_entry*)*(uintptr_t*)(0x234890C);
+        bitmap_entry* Bm_bitmaps = (bitmap_entry*)*(uintptr_t*)(Bm_bitmaps_addr);
         b = (bitmap_entry*)&Bm_bitmaps[handle];;
         file_remove_extension(extension_less, 0x40u, filename);
         b->filename_ptr = (char*)add_string(Extra_bm_filename_hash_table, extension_less, handle);
@@ -209,7 +210,7 @@ bitmap_statusT bitmap_status{};
 
 
 void LoadExtraBitMapTable(const char* fileName) {
-    patchJmp((void*)0xB875B0, (void*)0xB875C4);
+    patchJmp((void*)0xB875B0, (void*)DynAddress(0xB875C4));
     LoadBitmapTableasm(fileName);
     patchDWord((void*)0xB875B0, 0xA1A005C7);
 }

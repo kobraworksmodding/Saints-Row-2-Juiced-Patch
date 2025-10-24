@@ -49,11 +49,12 @@ namespace Debug
 	int SIZE_MIN = 200;
 	int MAX = 1400;
 	void DynamicRenderDistance() {
-		int size = *(int*)0x02784990;
-		float* render_distance = (float*)0x00E996B4;
-		float* frametime = (float*)0xE8437C;
+		int size = *(int*)DynAddress(0x02784990);
+		float* render_distance = (float*)DynAddress(0x00E996B4);
+		float* frametime = (float*)DynAddress(0xE8437C);
 
 		if (UseDynamicRenderDistance) {
+
 			// Only make changes when size is at least 1
 			if (size < 1) {
 				return;
@@ -173,7 +174,7 @@ namespace Debug
 		{
 			Logger::TypedLog(CHN_DLL, "Skipping intros & legal disclaimers.\n");
 			patchNop((BYTE*)(0x005207B4), 6); // prevent intros from triggering
-			patchBytesM((BYTE*)0x0068C740, (BYTE*)"\x96\xC5\x68\x00", 4); // replace case 0 with case 4 to skip legal disclaimers
+			patchInt((BYTE*)0x0068C740,DynAddress(0x68C596) ); // replace case 0 with case 4 to skip legal disclaimers
 		}
 
 		if (GameConfig::GetValue("Gameplay", "DisableCheatFlag", 0))

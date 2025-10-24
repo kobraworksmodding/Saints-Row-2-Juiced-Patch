@@ -156,6 +156,7 @@ void CMultiPatch::Restore()
 std::vector<uint8_t> CMultiPatch::BuildRel32Patch(uint8_t opcode, std::uintptr_t src, std::uintptr_t tgt)
 {
     // JMP or CALL: 5 bytes total
+    src = DynAddress(src);
     std::int32_t disp = static_cast<std::int32_t>(tgt - (src + 5));
     std::vector<uint8_t> bytes;
     bytes.reserve(5);
@@ -169,6 +170,7 @@ std::vector<uint8_t> CMultiPatch::BuildRel32Patch(uint8_t opcode, std::uintptr_t
 
 std::vector<uint8_t> CMultiPatch::BuildRel32Patch(uint8_t opcode1, uint8_t opcode2, std::uintptr_t src, std::uintptr_t tgt)
 {
+    src = DynAddress(src);
     // JNZ / JLE: 6 bytes total
     std::int32_t disp = static_cast<std::int32_t>(tgt - (src + 6));
     std::vector<uint8_t> bytes;

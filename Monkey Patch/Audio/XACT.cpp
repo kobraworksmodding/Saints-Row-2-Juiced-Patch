@@ -61,7 +61,7 @@ namespace XACT
 	}
 
 	void __cdecl setup_audio_hook() {
-		((void(__cdecl*)())0x465020)();
+		((void(__cdecl*)())DynAddress(0x465020))();
 		HMODULE hXAct32 = GetModuleHandle(L"xactengine3_2.dll");
 
 		if (hXAct32 != NULL) {

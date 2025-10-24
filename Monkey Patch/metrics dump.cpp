@@ -1,5 +1,7 @@
 #include "metrics dump.h"
+#include "Hooker.h"
 
+static auto hook_metrics_get_name_addr = DynAddress(0x00C0CBF0);
 __declspec(naked) char * hook_metrics_get_name(int index)
 {
 	__asm
@@ -8,14 +10,14 @@ __declspec(naked) char * hook_metrics_get_name(int index)
 		mov	ebp, esp
 		push ecx
 		mov eax, DWORD PTR 8[ebp]
-		mov ecx, 0x00C0CBF0
-		call ecx
+
+		call hook_metrics_get_name_addr
 		pop ecx
 		pop	ebp
 		ret	0
 	}
 }
-
+static auto hook_metrics_get_frame_time_addr = DynAddress(0x00C0CC60);
 __declspec(naked) void hook_metrics_get_frame_time(int index, double *value_out)
 {
 	__asm
@@ -24,8 +26,8 @@ __declspec(naked) void hook_metrics_get_frame_time(int index, double *value_out)
 		mov	ebp, esp
 		push ecx
 		mov eax, DWORD PTR 8[ebp]
-		mov ecx, 0x00C0CC60
-		call ecx
+
+		call hook_metrics_get_frame_time_addr
 		mov ecx, DWORD PTR 12[ebp]
 		fstp QWORD PTR 0[ecx]
 		pop ecx

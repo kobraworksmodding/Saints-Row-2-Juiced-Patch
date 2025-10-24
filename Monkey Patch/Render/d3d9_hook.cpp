@@ -5,6 +5,7 @@
 #include "..\Hooker.h"
 #include "../FileLogger.h"
 #include "d3d9_hook.h"
+#include <safetyhook.hpp>
 
 typedef IDirect3D9* (WINAPI* Direct3DCreate9_t)(UINT SDKVersion);
 SafetyHookInline g_create_device_hook;
@@ -58,6 +59,6 @@ bool D3D9Hook::initialize() {
     void** vtable = *reinterpret_cast<void***>(pD3D);
     void* createDeviceAddr = vtable[16];
     pD3D->Release();
-    g_create_device_hook = create_inlinehook(createDeviceAddr, hooked_CreateDevice);
+    g_create_device_hook = safetyhook::create_inline(createDeviceAddr, hooked_CreateDevice);
     return g_create_device_hook.enabled();
 }

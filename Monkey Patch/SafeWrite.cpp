@@ -1,9 +1,12 @@
 #include "SafeWrite.h"
 #include "stdafx.h"
+#include "Patcher/patch.h"
 #include "Hooker.h"
 
 void SafeWrite8(UInt32 addr, UInt32 data)
 {
+	patchByte((void*)addr, data);
+	return;
 	addr = DynAddress(addr);
 	UInt32	oldProtect;
 
@@ -32,7 +35,7 @@ void SafeWrite32(UInt32 addr, UInt32 data)
 	VirtualProtect((void *)addr, 4, oldProtect, &oldProtect);
 }
 
-void SafeWriteBuf(UInt32 addr, void * data, UInt32 len)
+void SafeWriteBuf(UInt32 addr, void *data, UInt32 len)
 {
 	addr = DynAddress(addr);
 	UInt32	oldProtect;
@@ -44,6 +47,9 @@ void SafeWriteBuf(UInt32 addr, void * data, UInt32 len)
 
 void WriteRelJump(UInt32 jumpSrc, UInt32 jumpTgt)
 {
+	patchJmp((void*)jumpSrc, (void*)jumpTgt);
+	return;
+	jumpSrc = DynAddress(jumpSrc);
 	// jmp rel32
 	SafeWrite8(jumpSrc, 0xE9);
 	SafeWrite32(jumpSrc + 1, jumpTgt - jumpSrc - 1 - 4);
@@ -51,6 +57,10 @@ void WriteRelJump(UInt32 jumpSrc, UInt32 jumpTgt)
 
 void WriteRelCall(UInt32 jumpSrc, UInt32 jumpTgt)
 {
+	patchCall((void*)jumpSrc, (void*)jumpTgt);
+	return;
+
+	jumpSrc = DynAddress(jumpSrc);
 	// call rel32
 	SafeWrite8(jumpSrc, 0xE8);
 	SafeWrite32(jumpSrc + 1, jumpTgt - jumpSrc - 1 - 4);
@@ -58,6 +68,7 @@ void WriteRelCall(UInt32 jumpSrc, UInt32 jumpTgt)
 
 void WriteRelJnz(UInt32 jumpSrc, UInt32 jumpTgt)
 {
+	jumpSrc = DynAddress(jumpSrc);
 	// jnz rel32
 	SafeWrite16(jumpSrc, 0x850F);
 	SafeWrite32(jumpSrc + 2, jumpTgt - jumpSrc - 2 - 4);

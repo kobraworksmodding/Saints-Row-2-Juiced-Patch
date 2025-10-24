@@ -25,7 +25,7 @@ namespace Gamespy
 	}
 
 	void patchNetworkBind() { // Binds local ip to any instead of 127.0.0.1 which fucks up if you have more than 1 network adapter.
-		uint32_t* bindaddr = reinterpret_cast<uint32_t*>(0x00C1BC76 + 1);
+		uint32_t* bindaddr = reinterpret_cast<uint32_t*>(DynAddress(0x00C1BC76 + 1));
 
 		theirbind = reinterpret_cast<int(_stdcall*)(SOCKET, const struct sockaddr_in*, int)>(reinterpret_cast<intptr_t>(bindaddr) + 4 + *bindaddr);
 

@@ -29,7 +29,7 @@ inline bool RetFalse() {
 // 0x4 + 0x1 = 0x9, 
 // then ReadPointer(0x1,{0x2,0x1}); will return 0x9.
 inline uintptr_t ReadPointer(uintptr_t baseAddress, const std::vector<uintptr_t>& offsets) {
-    uintptr_t address = baseAddress;
+    uintptr_t address = DynAddress(baseAddress);
 
     if (address == 0) {
         return 0;
