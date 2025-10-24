@@ -191,48 +191,48 @@ namespace Math
 				const matrix* m = (matrix*)ctx.ecx;
 				result->multiply(thisa, m);
 				//matrix_multiply_safe(result, thisa, m);
-
-				ctx.eip = 0x00BE313F;
+				static auto this_return = DynAddress(0x00BE313F);
+				ctx.eip = this_return;
 				});
-			if (!allowMathFix)
-				return;
-			SSE_hack = 1;
-			//if (allowMathFix) {
-			//	if (sse2 && !sse4_1) {
-			//		sub_9EE620 = create_inlinehook(0x9EE620, &sub_9EE620_sse2);
-			//		Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE%d\n", 2);
-			//		//patchJmp((void*)0x9EE620, &sub_9EE620_sse2);
-			//	}
-			//	else if (sse4_1) {
-			//		sub_9EE620 = create_inlinehook(0x9EE620, &sub_9EE620_sse4);
-			//	//patchJmp((void*)0x9EE620, &sub_9EE620_sse4);
-			//	Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE%d\n", 4);
-			//		SSE_hack = 2;
-			//	}
-			//}
-			//else {
-			
-			// Okay for some reason the dbg switch case function is faster than letting it route to the SSE2/SSE4 functions?? -- Clippy95
+			if (allowMathFix) {
+
+				SSE_hack = 1;
+				//if (allowMathFix) {
+				//	if (sse2 && !sse4_1) {
+				//		sub_9EE620 = create_inlinehook(0x9EE620, &sub_9EE620_sse2);
+				//		Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE%d\n", 2);
+				//		//patchJmp((void*)0x9EE620, &sub_9EE620_sse2);
+				//	}
+				//	else if (sse4_1) {
+				//		sub_9EE620 = create_inlinehook(0x9EE620, &sub_9EE620_sse4);
+				//	//patchJmp((void*)0x9EE620, &sub_9EE620_sse4);
+				//	Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE%d\n", 4);
+				//		SSE_hack = 2;
+				//	}
+				//}
+				//else {
+
+				// Okay for some reason the dbg switch case function is faster than letting it route to the SSE2/SSE4 functions?? -- Clippy95
 				sub_9EE620 = create_inlinehook(0x9EE620, &sub_9EE620_dbg);
 				if (sse4_1)
 					SSE_hack = 2;
 				else if (sse2)
 					SSE_hack = 1;
 				Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE%d\n", 4);
-			if (sse4_1) {
-				auto static sub_BDB4F0_hook = create_midhook(0x00BDB4F1, [](SafetyHookContext& ctx) {
-					if (SSE_hack == 0)
-						return;
-					unsigned char* a1 = (unsigned char*)ctx.eax;
-					float* a2 = (float*)ctx.ecx;
-					float* a3 = (float*)(ctx.esp + 8);
-					sub_BDB4F0_SSE4(a1, a2, a3);
+				if (sse4_1) {
+					auto static sub_BDB4F0_hook = create_midhook(0x00BDB4F1, [](SafetyHookContext& ctx) {
+						if (SSE_hack == 0)
+							return;
+						unsigned char* a1 = (unsigned char*)ctx.eax;
+						float* a2 = (float*)ctx.ecx;
+						float* a3 = (float*)(ctx.esp + 8);
+						sub_BDB4F0_SSE4(a1, a2, a3);
 
-					static auto this_return = DynAddress(0x00BDB54E);
-					ctx.eip = this_return;
-					});
+						static auto this_return = DynAddress(0x00BDB54E);
+						ctx.eip = this_return;
+						});
+				}
 			}
-
 			static vector2 smoothed_cam_dir = vector2::zero();
 			static bool smooth_init = false;
 			static constexpr float SMOOTH_RATE = 0.08f;
