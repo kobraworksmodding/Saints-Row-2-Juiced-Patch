@@ -25,7 +25,7 @@ double animBlend = 3.0;
 namespace Behavior
 {
 	typedef int __cdecl character_set_anim_setT(DWORD* hp, uint32_t unk, char* name_of_human);
-	character_set_anim_setT* character_set_anim_set = (character_set_anim_setT*)(0x0096F940);
+	character_set_anim_setT* character_set_anim_set = (character_set_anim_setT*)DynAddress(0x0096F940);
 	int sticky_cam_timer_add = 0;
 	void BetterMovement()
 	{
@@ -55,13 +55,20 @@ namespace Behavior
 		else return FindMeleeTarget(NPCPointer);
 	}
 
+	uintptr_t getplayer_savectx(bool provideaddress = false) {
+		__asm pushad
+		auto player = UtilsGlobal::getplayer(provideaddress);
+		__asm popad
+	}
+
+	static auto Disable_Melee_LockOn2_Continue = DynAddress(0x00974D06);
 	void __declspec(naked) DisableMeleeLockon2() {
-		static int Continue = 0x00974D06;
+		
 		int NPCPointer;
 		__asm {
 			mov NPCPointer, eax
 		}
-		if (NPCPointer != UtilsGlobal::getplayer()) {
+		if (NPCPointer != getplayer_savectx()) {
 			__asm {
 				mov eax, NPCPointer
 				mov ecx, 0x973360
@@ -69,7 +76,7 @@ namespace Behavior
 			}
 		}
 		else __asm mov al, 1
-		__asm jmp Continue
+		__asm jmp Disable_Melee_LockOn2_Continue
 	}
 
 	void MovingAttacks() {
