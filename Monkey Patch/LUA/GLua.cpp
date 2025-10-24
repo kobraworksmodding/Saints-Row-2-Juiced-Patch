@@ -503,7 +503,7 @@ namespace GLua
 //#if !RELOADED
         SafeWrite32(0x00A4EC84 + 4, (UInt32)&lua_func_never_die);
         Logger::TypedLog("CHN_DBG", "address of lua func 0x%X \n", &lua_func_vint_get_avg_processing_time);
-        //static SafetyHookInline memoryutils = safetyhook::create_inline(0x00B907F0, &lua_func_vint_get_avg_processing_time);
+        //static SafetyHookInline memoryutils = create_inlinehook(0x00B907F0, &lua_func_vint_get_avg_processing_time);
         SafeWrite32(0x00B91212 + 7, (UInt32)&lua_func_vint_get_avg_processing_time);
         WriteRelCall(0x00789018, (uint32_t)&cellphone_dial_number_c_function);
 

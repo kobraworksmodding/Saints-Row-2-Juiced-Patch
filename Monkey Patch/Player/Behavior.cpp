@@ -371,7 +371,7 @@ CMultiPatch CMPatches_SR1Reloading = {
 	{
 		if (GameConfig::GetValue("Gameplay", "SR1VehicleCameraTransition", 0) != 0) {
 			patchNop((void*)0xB0CB81, 5);
-			static auto veh_enter_test = safetyhook::create_mid(0xB0ECBD, [](SafetyHookContext& ctx) {
+			static auto veh_enter_test = create_midhook(0xB0ECBD, [](SafetyHookContext& ctx) {
 				uintptr_t vehicle = *(uintptr_t*)(ctx.esp + 0x34);
 				uintptr_t human = *(uintptr_t*)(ctx.esp + 0x38);
 				if (human && vehicle && human == UtilsGlobal::getplayer()) {
@@ -385,7 +385,7 @@ CMultiPatch CMPatches_SR1Reloading = {
 			Logger::TypedLog(CHN_DEBUG, "DisableSprintCamShake..\n");
 			CDisableSprintCamShake.Apply();
 		}
-		LessCameraVehicleFollow = safetyhook::create_mid(0x498B5A, [](SafetyHookContext& ctx) {
+		LessCameraVehicleFollow = create_midhook(0x498B5A, [](SafetyHookContext& ctx) {
 			float* follow_camera = (float*)(ctx.ebx + 0x5C);
 			if (*follow_camera != -1.f)
 				*follow_camera = vehicle_camera_follow_modifier;
@@ -400,7 +400,7 @@ CMultiPatch CMPatches_SR1Reloading = {
 		vehicle_camera_follow_modifier = (float)GameConfig::GetDoubleValue("Gameplay", "vehicle_camera_follow_modifier", 1.f);
 		LessCameraVehicleFollow_hook_enable_disable();
 		if (GameConfig::GetValue("Debug", "FixGFL1_for_female_playas", 1))
-			player_data_loadT = safetyhook::create_inline(0x00693EB0, &player_data_load);
+			player_data_loadT = create_inlinehook(0x00693EB0, &player_data_load);
 		/*patchDWord((void*)(0x00D96A50 + 2), (uint32_t)&bogusRagForce);
 		patchDWord((void*)(0x00D974B0 + 2), (uint32_t)&bogusRagForce);
 		patchDWord((void*)(0x00D97AE8 + 2), (uint32_t)&bogusRagForce);
@@ -500,8 +500,8 @@ CMultiPatch CMPatches_SR1Reloading = {
 		{
 			HigherMaxSpeed();
 		}
-			slewmode_mousefix_rewrite = safetyhook::create_mid(0x00C011FB, &slewmode_control_rewrite);
-			cf_do_control_mode_sticky_MIDASMHOOK = safetyhook::create_mid(0x0049C102, &sticky_cam_modifier,safetyhook::MidHook::StartDisabled);
+			slewmode_mousefix_rewrite = create_midhook(0x00C011FB, &slewmode_control_rewrite);
+			cf_do_control_mode_sticky_MIDASMHOOK = create_midhook(0x0049C102, &sticky_cam_modifier,safetyhook::MidHook::StartDisabled);
 			// it's expecting time in ms, so 1000 = 1 second
 			if (int user_cam_modifier = GameConfig::GetValue("Gameplay", "VehicleAutoCenterModifer", 0); user_cam_modifier > 0) {
 				(void)cf_do_control_mode_sticky_MIDASMHOOK.enable();

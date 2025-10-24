@@ -599,7 +599,7 @@ void ApplyX360Gamma(color& col) {
 }
 
 void fix_screen_fade_notint() {
-	static auto screen_fade_notint_fix = safetyhook::create_mid(0x518F39, [](SafetyHookContext& ctx) {
+	static auto screen_fade_notint_fix = create_midhook(0x518F39, [](SafetyHookContext& ctx) {
 		vector3* tint = (vector3*)(ctx.eax + 0xC);
 		vector3* fade = (vector3*)DynAddress(0x00E9D670);
 		*tint *= *fade;
@@ -720,7 +720,7 @@ void __fastcall vint_sr2_render(void* thisa) {
 		// Fix vint UI speeding up at 1000?+ FPS
 		fix_screen_fade_notint();
 		patchNop((void*)0x00B8BC6B, 6);
-		final_2d_render = safetyhook::create_mid(0xD1DFAA, [](SafetyHookContext& ctx) {
+		final_2d_render = create_midhook(0xD1DFAA, [](SafetyHookContext& ctx) {
 			texture_2d* pass = (texture_2d*)ctx.eax;
 			ApplyX360Gamma(pass->color_info);
 			},safetyhook::MidHook::StartDisabled);

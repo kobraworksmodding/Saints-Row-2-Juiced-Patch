@@ -185,7 +185,7 @@ namespace Math
 			bool allowMathFix = (sse2 || sse4_1) && GameConfig::GetValue("Debug", "FastMath", 1);
 			bool allowMathFixdbg = (sse2 || sse4_1) && (GameConfig::GetValue("Debug", "FastMath", 1) == 255);
 			// Idea to fix issue #14 IK/Foot issue getting messed up, the actual call cause is at 0x0x00CE9600, but rn im doing this globally as it makes the most sense - Clippy95
-			matrix_operator_multiplication_midhook = safetyhook::create_mid(0x00BE2F57, [](SafetyHookContext& ctx) {
+			matrix_operator_multiplication_midhook = create_midhook(0x00BE2F57, [](SafetyHookContext& ctx) {
 				matrix* result = (matrix*)ctx.eax;
 				matrix* thisa = (matrix*)ctx.edx;
 				const matrix* m = (matrix*)ctx.ecx;
@@ -199,12 +199,12 @@ namespace Math
 			SSE_hack = 1;
 			//if (allowMathFix) {
 			//	if (sse2 && !sse4_1) {
-			//		sub_9EE620 = safetyhook::create_inline(0x9EE620, &sub_9EE620_sse2);
+			//		sub_9EE620 = create_inlinehook(0x9EE620, &sub_9EE620_sse2);
 			//		Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE%d\n", 2);
 			//		//patchJmp((void*)0x9EE620, &sub_9EE620_sse2);
 			//	}
 			//	else if (sse4_1) {
-			//		sub_9EE620 = safetyhook::create_inline(0x9EE620, &sub_9EE620_sse4);
+			//		sub_9EE620 = create_inlinehook(0x9EE620, &sub_9EE620_sse4);
 			//	//patchJmp((void*)0x9EE620, &sub_9EE620_sse4);
 			//	Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE%d\n", 4);
 			//		SSE_hack = 2;
@@ -213,14 +213,14 @@ namespace Math
 			//else {
 			
 			// Okay for some reason the dbg switch case function is faster than letting it route to the SSE2/SSE4 functions?? -- Clippy95
-				sub_9EE620 = safetyhook::create_inline(0x9EE620, &sub_9EE620_dbg);
+				sub_9EE620 = create_inlinehook(0x9EE620, &sub_9EE620_dbg);
 				if (sse4_1)
 					SSE_hack = 2;
 				else if (sse2)
 					SSE_hack = 1;
 				Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE%d\n", 4);
 			if (sse4_1) {
-				auto static sub_BDB4F0_hook = safetyhook::create_mid(0x00BDB4F1, [](SafetyHookContext& ctx) {
+				auto static sub_BDB4F0_hook = create_midhook(0x00BDB4F1, [](SafetyHookContext& ctx) {
 					if (SSE_hack == 0)
 						return;
 					unsigned char* a1 = (unsigned char*)ctx.eax;
@@ -240,7 +240,7 @@ namespace Math
 
 			// This is a work around and not a proper fix. -- Clippy
 			if(GameConfig::GetValue("Debug","FixWaterVolumeCameraBug",1))
-			static auto watervol_midhook1 = safetyhook::create_mid(0x72635C, [](SafetyHookContext& ctx) {
+			static auto watervol_midhook1 = create_midhook(0x72635C, [](SafetyHookContext& ctx) {
 				vector2* cam_forward = (vector2*)(ctx.esp + 0x14);
 
 				/*if (SimulateWaterBug) {

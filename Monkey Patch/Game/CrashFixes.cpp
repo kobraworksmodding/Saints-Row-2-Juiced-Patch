@@ -133,17 +133,17 @@ namespace CrashFixes {
 
 	void Init() {
 		AssertHandler::CvarFixCrashes = GameConfig::GetValue("Debug", "FixCrashes", 2);
-		static auto FixAudioLoop_null_crash1_hook = safetyhook::create_mid(0x0046EE64, &FixAudioLoop_null_crash1);
-		static auto player_vehicle_C4_crash = safetyhook::create_mid(0x4FA07B, [](SafetyHookContext& ctx) {
+		static auto FixAudioLoop_null_crash1_hook = create_midhook(0x0046EE64, &FixAudioLoop_null_crash1);
+		static auto player_vehicle_C4_crash = create_midhook(0x4FA07B, [](SafetyHookContext& ctx) {
 			if (ctx.eax == NULL)
 				ctx.eip = DynAddress(0x4FA09E);
 			});
 		// The one above should work always..
 		if (GameConfig::GetValue("Debug", "FixCrashes", 2)) {	
-			static auto Fix_0x0055B681_hook = safetyhook::create_mid(0x0055B681, &Fix_0x0055B681_crash);
-			static auto Fix_0x007B1D7E_hook = safetyhook::create_mid(0x007B1D7E, &Fix_0x007B1D7E_crash_weaponstore);
-			static auto Fix_0x007B510D_hook = safetyhook::create_mid(0x007B510D, &Fix_0x007B510D_crash);
-			static auto Fix_0x004B58B2_hook = safetyhook::create_mid(0x004B58B2, [](SafetyHookContext& ctx) {
+			static auto Fix_0x0055B681_hook = create_midhook(0x0055B681, &Fix_0x0055B681_crash);
+			static auto Fix_0x007B1D7E_hook = create_midhook(0x007B1D7E, &Fix_0x007B1D7E_crash_weaponstore);
+			static auto Fix_0x007B510D_hook = create_midhook(0x007B510D, &Fix_0x007B510D_crash);
+			static auto Fix_0x004B58B2_hook = create_midhook(0x004B58B2, [](SafetyHookContext& ctx) {
 				if (ctx.ecx == NULL) {
 					ctx.eip = DynAddress(0x4B58E9);
 					AssertHandler::AssertOnce("Fix_0x004B58B2_hook", "Crash prevented but still unsafe? (most likely cause is a modded install) ecx\n");
@@ -158,7 +158,7 @@ namespace CrashFixes {
 				}
 				});
 
-			static auto Fix_0x0x943711_hook = safetyhook::create_mid(0x943711, [](SafetyHookContext& ctx) {
+			static auto Fix_0x0x943711_hook = create_midhook(0x943711, [](SafetyHookContext& ctx) {
 				if (!ctx.ebp) {
 					ctx.eip = DynAddress(0x9436CA);
 					Logger::TypedLog(CHN_DEBUG, "Avoided 0x943711 crash?\n");
@@ -167,7 +167,7 @@ namespace CrashFixes {
 
 			WriteRelJump(0x0071447C, (int)&crash_0x0071447C_fix);
 
-			//static auto fix_0x0071447C_hook = safetyhook::create_mid(0x0071447C, [](SafetyHookContext& ctx) {
+			//static auto fix_0x0071447C_hook = create_midhook(0x0071447C, [](SafetyHookContext& ctx) {
 			//	if(ctx.edx == NULL)
 			//	ctx.eip = 0x714396;
 			//	});
@@ -176,9 +176,9 @@ namespace CrashFixes {
 		// I kind of want these seperated, idk why but let's say 2+ is confirmed by mods or modded setups?
 		if (GameConfig::GetValue("Debug", "FixCrashes", 1) >= 2) {
 			// Yes this is a modded crash, don't mess with preloads please. - this was caused by SidokuTHPS's modded preload.
-			static auto Fix_0x009AEDAD_hook = safetyhook::create_mid(0x009AED73, &Fix_009AEDAD_crash_cs_start_characters_for_shot);
+			static auto Fix_0x009AEDAD_hook = create_midhook(0x009AED73, &Fix_009AEDAD_crash_cs_start_characters_for_shot);
 			// This one hasn't really crashed but it seems to be sameish?
-			static auto Fix_0x009AEE86_hook = safetyhook::create_mid(0x009AEE86, &Fix_009AEE86_crash_cs_start_characters_for_shot);
+			static auto Fix_0x009AEE86_hook = create_midhook(0x009AEE86, &Fix_009AEE86_crash_cs_start_characters_for_shot);
 		}
 	}
 }

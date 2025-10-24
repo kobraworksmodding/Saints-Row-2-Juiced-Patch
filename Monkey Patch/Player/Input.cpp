@@ -698,7 +698,7 @@ namespace Input {
 	volatile char KEY_inventory_right = 'D';
 	inline void patch_zoom_aware_interior_pause_map() {
 		patchNop((void*)0x771DB7, 0x2E);
-		static auto zoom_aware_interior_pause_map = safetyhook::create_mid(0x771DB7, [](SafetyHookContext& ctx) {
+		static auto zoom_aware_interior_pause_map = create_midhook(0x771DB7, [](SafetyHookContext& ctx) {
 			using namespace UtilsGlobal;
 			vector2* pause_map_crosshair = (vector2*)DynAddress(0x29C8E1C);
 			float zoom_modifier = 1.f;
@@ -951,7 +951,7 @@ namespace Input {
 			patchJmp((void*)0xC13C80, &input_pc_poll_sdl);
 		}
 		patch_zoom_aware_interior_pause_map();
-		static auto tag_shake_frametimefix = safetyhook::create_mid(0x621C04, [](SafetyHookContext& ctx) {
+		static auto tag_shake_frametimefix = create_midhook(0x621C04, [](SafetyHookContext& ctx) {
 			if (g_lastInput == MOUSE) {
 				*(float*)(ctx.esp + 0x10) *= Game::Timer::Get33msOverFrameTime_Fix();
 			}
@@ -964,7 +964,7 @@ namespace Input {
 		KEY_inventory_left = GameConfig::GetChar("Input", "KEY_inventory_left", KEY_inventory_left);
 		KEY_inventory_right = GameConfig::GetChar("Input", "KEY_inventory_right", KEY_inventory_right);
 		if (GameConfig::GetValue("Input", "better_inventory_keyboard", 1)) {
-			static auto properInventory_keyboard = safetyhook::create_mid(0xB997F3, [](SafetyHookContext& ctx) {
+			static auto properInventory_keyboard = create_midhook(0xB997F3, [](SafetyHookContext& ctx) {
 				if (!ctx.ebx || *is_controller_connect) // shouldn't allow this to work while a controller is connected, vanilla game bug but having a controller connected + using WASD will move the weapon wheel as if it's LS. -- Clippy95
 					return;
 				float& value = *(float*)(ctx.esp + 0x10);
@@ -986,12 +986,12 @@ namespace Input {
 			OptionsManager::registerOption("Input", "ForceInputPrompt", &ForceInput, 0);
 			OptionsManager::registerOption("Input", "ForcedControllerPrompts", (int*)&forced_current_controller_type, 0);
 			//SetThreadPriority(CreateThread(0, 0, LastInputCheck, 0, 0, 0),-1);
-			pc_get_action_pad_pure_text_T = safetyhook::create_inline(0xC11A90, &pc_get_action_pad_pure_text_hook);
-			getpckeyboardimage_T = safetyhook::create_inline(0xC11C00, &getpckeyboardimage_hook);
+			pc_get_action_pad_pure_text_T = create_inlinehook(0xC11A90, &pc_get_action_pad_pure_text_hook);
+			getpckeyboardimage_T = create_inlinehook(0xC11C00, &getpckeyboardimage_hook);
 
 			// currently I add mouse4 and mouse5 support, requires getpckeyboardimage_T hook.
-			static auto key_held_hook = safetyhook::create_mid(0xC11214, &key_held_midhook_special_mousecase_midhook1);
-			static auto special_mouse_cases_midhook = safetyhook::create_mid(0xC12A74, &special_mouse_cases_midhook1);
+			static auto key_held_hook = create_midhook(0xC11214, &key_held_midhook_special_mousecase_midhook1);
+			static auto special_mouse_cases_midhook = create_midhook(0xC12A74, &special_mouse_cases_midhook1);
 			//patchDWord((void*)(0xC119B0 + 2), (uint32_t)&specialKeys[0].key_code);
 			//patchDWord((void*)(0xC119C2 + 2), (uint32_t)&specialKeys[0].localization_name);
 			//patchDWord((void*)(0xC119CD + 3), (uint32_t)&specialKeys[0].localization_name);
@@ -1011,7 +1011,7 @@ namespace Input {
 		}
 		LoadXInputDLL();
 
-			player_autoaim_do_assisted_aiming_midhook = safetyhook::create_mid(0x009D7752, &player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse);
+			player_autoaim_do_assisted_aiming_midhook = create_midhook(0x009D7752, &player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse);
 			Logger::TypedLog(CHN_MOD, "Disabling Aim Assist while using mouse...\n");
 			disable_aim_assist_noMatterInput = (BYTE)std::clamp((int)GameConfig::GetValue("Gameplay", "DisableAimAssist", 1), 0, 2);
 		DisableXInput();
@@ -1043,7 +1043,7 @@ namespace Input {
 
 			patchBytesM((BYTE*)0x00C1F0F7, (BYTE*)"\x29", 1); // opcode for sub, add previously.
 		}
-		static auto map_zoom_fps_controller_fix = safetyhook::create_mid(0x770D5A, [](SafetyHookContext& ctx) {
+		static auto map_zoom_fps_controller_fix = create_midhook(0x770D5A, [](SafetyHookContext& ctx) {
 			using namespace Game::Timer;
 			if (Input::LastInput() != Input::CONTROLLER)
 				return;

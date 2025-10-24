@@ -759,7 +759,7 @@ void __declspec(naked) StrengthWorkaround() {
 
 	// Current hooks the parsing function for shaders_pc to only DELETE lines.. it can be expanded to do addition by using a new buffer, but that isn't really a use-case right now. - Clippy
 	void shaders_pc_hook() {
-		static auto shaders_pc_parse_hook = safetyhook::create_mid(0x00D1B67F, [](SafetyHookContext& ctx) {
+		static auto shaders_pc_parse_hook = create_midhook(0x00D1B67F, [](SafetyHookContext& ctx) {
 			char* buffer = (char*)ctx.ebx;
 			size_t& buffer_size1 = ctx.eax;
 			size_t& buffer_size2 = ctx.edi;
@@ -868,7 +868,7 @@ void __declspec(naked) StrengthWorkaround() {
 
 		patchCall((void*)0x522A05, sub_522D00_signal_frame_done);
 
-		static auto sync_hack = safetyhook::create_mid(0x00521FAB, [](SafetyHookContext& ctx) {
+		static auto sync_hack = create_midhook(0x00521FAB, [](SafetyHookContext& ctx) {
 
 			WaitForSingleObject(render_handshake_event, INFINITE);
 
@@ -897,17 +897,17 @@ void __declspec(naked) StrengthWorkaround() {
 		if(GameConfig::GetValue("Graphics","RemovePixelationShader",0))
 		shaders_pc_hook();
 		OptionsManager::registerOption("Graphics", "ShaderOverride", &OVERRIDE_SHADER_LOD,1);
-		static auto GiveLOD = safetyhook::create_mid(0x00D19D1B,&SETLOD);
-		//static auto RenderLOD1 = safetyhook::create_mid(0x00D0681D, &LODtest);
-		//static auto RenderLOD2 = safetyhook::create_mid(0x00D0582C, &LODtest);
-		//static auto gr_effect_set = safetyhook::create_mid(0x00D1A884, &LODtest);
+		static auto GiveLOD = create_midhook(0x00D19D1B,&SETLOD);
+		//static auto RenderLOD1 = create_midhook(0x00D0681D, &LODtest);
+		//static auto RenderLOD2 = create_midhook(0x00D0582C, &LODtest);
+		//static auto gr_effect_set = create_midhook(0x00D1A884, &LODtest);
 		if (GameConfig::GetValue("Graphics", "X360Gamma", 1)) {
 			ShaderOptions.X360Gamma = 1;
 		}
 		if (GameConfig::GetValue("Graphics", "ShadowFiltering", 1)) {
 			ShaderOptions.ShadowFilter = 1;
 		}
-		add_to_entry_test = safetyhook::create_mid(0x00C080EC, &add_to_entry_crashaddr_hook,safetyhook::MidHook::StartDisabled);
+		add_to_entry_test = create_midhook(0x00C080EC, &add_to_entry_crashaddr_hook,safetyhook::MidHook::StartDisabled);
 		if (GameConfig::GetValue("Debug", "ClippyTextureCrashExceptionHandle", 1)) {
 			add_to_entry_test.enable();
 		}
@@ -975,7 +975,7 @@ void __declspec(naked) StrengthWorkaround() {
 
 		WriteRelJump(0x00494080, (UInt32)&GetFOV);
 		// CLIPPY TODO MAKE THIS A TOGGLEABLE OPTION!!!
-		screen_3d_to_2d_midhook = safetyhook::create_mid(0xD22BE8, [](SafetyHookContext& ctx) {
+		screen_3d_to_2d_midhook = create_midhook(0xD22BE8, [](SafetyHookContext& ctx) {
 			if (UltrawideFixRatio == 1.0)
 				return;
 			float x_bound = 1.0f / UltrawideFixRatio;

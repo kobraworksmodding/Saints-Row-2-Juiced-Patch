@@ -243,7 +243,7 @@ namespace bitmap_loader {
 #define GB (size_t)(1024 * MB)
     void Init() {
         if (GameConfig::GetValue("Modding", "addon_bitmaps", 1)) {
-            static auto interface_gpu_increase = safetyhook::create_mid(0x51E322, [](SafetyHookContext& ctx) {
+            static auto interface_gpu_increase = create_midhook(0x51E322, [](SafetyHookContext& ctx) {
                 if (double interface_gpu_new_size = GameConfig::GetDoubleValue("Mempool", "interface_gpu_multi", 1.5); interface_gpu_new_size >= 1.0) {
                     ctx.esi *= interface_gpu_new_size;
                     Logger::TypedLog("Mempool", "Patched interface_gpu size to 0x%X\n", ctx.esi);
@@ -266,12 +266,12 @@ namespace bitmap_loader {
 
 
 
-            load_pegT = safetyhook::create_inline(0x522450, &load_peg_hook);
-            sub_51D290T = safetyhook::create_inline(0x51D290, sub_51D290Lang);
+            load_pegT = create_inlinehook(0x522450, &load_peg_hook);
+            sub_51D290T = create_inlinehook(0x51D290, sub_51D290Lang);
             SafeWrite32(0x00C08803 + 1, 1806336);
             SafeWrite32(0x00C08817 + 1, 1806336);
-            bm_findT = safetyhook::create_inline(0xC07160, &bm_find);
-            static auto bitmap_test = safetyhook::create_mid(0xC083AB, &bitmap_testf);
+            bm_findT = create_inlinehook(0xC07160, &bm_find);
+            static auto bitmap_test = create_midhook(0xC083AB, &bitmap_testf);
             if (GameConfig::GetValue("Modding", "addon_bitmaps", 0) == 180) {
                 WriteRelCall(0xC08421, (int)&bm_find_og);
                 WriteRelCall(0xC08F69, (int)&bm_find_og);

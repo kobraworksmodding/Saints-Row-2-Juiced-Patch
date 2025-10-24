@@ -223,9 +223,9 @@ namespace Game
 		return open_chat_T.call<char>();
 	}
 	void chat_box_cursor_support_hooks(){
-		open_chat_T = safetyhook::create_inline(0x75C8F0, open_chat_hook);
+		open_chat_T = create_inlinehook(0x75C8F0, open_chat_hook);
 
-		static auto cursor_render = safetyhook::create_mid(0x75D6B6, [](SafetyHookContext& ctx) {
+		static auto cursor_render = create_midhook(0x75D6B6, [](SafetyHookContext& ctx) {
 			wchar_t* a3 = (wchar_t*)(ctx.esp + 0x20);
 
 			wchar_t* message_start = wcsstr(a3, L"> ");
@@ -245,7 +245,7 @@ namespace Game
 			ctx.eip = DynAddress(0x75D6D3);
 			});
 
-		static auto cursor_chat = safetyhook::create_mid(0x75CCFE, [](SafetyHookContext& ctx) {
+		static auto cursor_chat = create_midhook(0x75CCFE, [](SafetyHookContext& ctx) {
 			wchar_t& new_char = (wchar_t&)ctx.eax;
 			size_t current_length = wcslen(chat_message);
 			wmemmove(&chat_message[s_CursorPosition + 1],
@@ -256,7 +256,7 @@ namespace Game
 			ctx.eip = DynAddress(0x75CD03);
 			});
 		// arrow_move and backspace_chat can be combined but i cant be bothered with it rn, -- Clippy95
-		static auto arrow_move = safetyhook::create_mid(0x75CBA5, [](SafetyHookContext& ctx) {
+		static auto arrow_move = create_midhook(0x75CBA5, [](SafetyHookContext& ctx) {
 			auto character = ctx.edi;
 			if (character == 203) {
 				if (s_CursorPosition > 0) {
@@ -269,7 +269,7 @@ namespace Game
 				}
 			}
 			});
-		static auto backspace_chat = safetyhook::create_mid(0x75CBB6, [](SafetyHookContext& ctx) {
+		static auto backspace_chat = create_midhook(0x75CBB6, [](SafetyHookContext& ctx) {
 			if (s_CursorPosition > 0) { // Can only backspace if not at start
 				size_t current_length = wcslen(chat_message);
 				wmemmove(&chat_message[s_CursorPosition - 1],
@@ -296,7 +296,7 @@ namespace Game
 		if(GameConfig::GetValue("Gameplay","ForceMetricSystem",0))
 		force_metric_measurements();
 		chat_box_cursor_support_hooks();
-		FixFrametimeVehicleSkids = safetyhook::create_mid(0xA9DDB3, [](SafetyHookContext& ctx) {
+		FixFrametimeVehicleSkids = create_midhook(0xA9DDB3, [](SafetyHookContext& ctx) {
 			using namespace Timer;
 			float* wheel_force_local = (float*)(ctx.esp + 0xC);
 			if (*wheel_force_local == 0.f)
@@ -307,7 +307,7 @@ namespace Game
 
 		static bool unhook_after_patching_xtbl_read_and_parse_file = GameConfig::GetValue("Debug", "unhook_after_patching_xtbl_read_and_parse_file", 1);
 
-		xtbl_read_and_parse_file_hook = safetyhook::create_mid(0xBFBA44, [](SafetyHookContext& ctx) {
+		xtbl_read_and_parse_file_hook = create_midhook(0xBFBA44, [](SafetyHookContext& ctx) {
 			char* xtbl_filename = (char*)ctx.edi;
 			char* buffer = (char*)ctx.esi;
 
@@ -468,7 +468,7 @@ namespace Game
 			CDisable_Tutorials.Apply();
 
 		using namespace Physical;
-		motorcycle_should_eject_passengers_MIDASMHOOK = safetyhook::create_mid(0x00AB599F, &motorcycle_should_eject_passengers_asmhook);
+		motorcycle_should_eject_passengers_MIDASMHOOK = create_midhook(0x00AB599F, &motorcycle_should_eject_passengers_asmhook);
 	}
 	namespace HUD
 	{

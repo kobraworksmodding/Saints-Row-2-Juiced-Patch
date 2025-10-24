@@ -1346,9 +1346,9 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		patchNop((BYTE*)0x004D6795, 5); // Fix for the sun flare disappearing upon reloading a save. Prevents the game from deallocating the flare.
 		if(GameConfig::GetValue("Debug","AllowMultipleSR2Windows",1)) // in case this fucks up or something
 		SafeWrite8(0x00BFA6B6, 0xEB);
-		static SafetyHookMid LoadPosHook = safetyhook::create_mid(0x006938EB, &LoadSaveSetPos);
-		static SafetyHookMid SavePosHook = safetyhook::create_mid(0x00695BBF, &SaveCurrentPos);
-		D3D9CreateFunctionT = safetyhook::create_inline(0xD1F3F0, &CreateD3D9DeviceFunction);
+		static SafetyHookMid LoadPosHook = create_midhook(0x006938EB, &LoadSaveSetPos);
+		static SafetyHookMid SavePosHook = create_midhook(0x00695BBF, &SaveCurrentPos);
+		D3D9CreateFunctionT = create_inlinehook(0xD1F3F0, &CreateD3D9DeviceFunction);
 		WriteRelJump(0x007F46E4, (UInt32)&AddStrings); // add custom string loading - the game automatically appends the string so it will load the right string file based on your language, eg - juiced_us.le_strings
 #if !JLITE
 		WriteRelJump(0x00B91541, (UInt32)&AddVintLib); // allows us to add our own side lib for vint to add new global variables without messing up mod support
@@ -1392,21 +1392,21 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #if !JLITE
 		if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1)) {
 #endif
-			cleanupBufferHook = safetyhook::create_mid(0x00CDE388, [](safetyhook::Context32& ctx) {
+			cleanupBufferHook = create_midhook(0x00CDE388, [](safetyhook::Context32& ctx) {
 				General::CleanupModifiedScript();
 				},safetyhook::MidHook::Default);
-			luaLoadBuffHook = safetyhook::create_mid(0x00CDE379, &VINT_DOC_luaLoadBuff
+			luaLoadBuffHook = create_midhook(0x00CDE379, &VINT_DOC_luaLoadBuff
 );
 			if (Input::EnableDynamicPrompts) {
-				static auto cleanupBufferHook_general = safetyhook::create_mid(0xCD9FF7, [](safetyhook::Context32& ctx) {
+				static auto cleanupBufferHook_general = create_midhook(0xCD9FF7, [](safetyhook::Context32& ctx) {
 					General::CleanupModifiedScript_general();
 					}, safetyhook::MidHook::Default);
-				static auto luaLoadBuffHookGeneral = safetyhook::create_mid(0xCD9FD9, &generalluaLoadBuff);
+				static auto luaLoadBuffHookGeneral = create_midhook(0xCD9FD9, &generalluaLoadBuff);
 			}
 			if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1) {
 				Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 1);
 				using namespace Render2D;
-				//SR2Ultrawide_hook = safetyhook::create_inline(0xD1C910, &SR2Ultrawide_HUDScale);
+				//SR2Ultrawide_hook = create_inlinehook(0xD1C910, &SR2Ultrawide_HUDScale);
 				// Lets 3:2 act as 4:3 at least..
 				patchDouble((void*)0x00E5C080, 1.55f);
 				WriteRelCall(0x00D1EF2F, (UInt32)&SR2Ultrawide_HUDScale);
@@ -1415,7 +1415,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #if !JLITE
 		}
 #endif
-		Render2D::vint_create_process_hook = safetyhook::create_mid(0x00B8BCC6, &Render2D::create_process_hook,safetyhook::MidHook::StartDisabled);
+		Render2D::vint_create_process_hook = create_midhook(0x00B8BCC6, &Render2D::create_process_hook,safetyhook::MidHook::StartDisabled);
 		if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) >= 2) {
 			Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 2);
 			using namespace Render2D;

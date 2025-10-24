@@ -2,7 +2,7 @@
 #define NOMINMAX
 #include <Windows.h>
 #include <d3d9.h>
-#include <safetyhook.hpp>
+#include "..\Hooker.h"
 #include "../FileLogger.h"
 #include "d3d9_hook.h"
 
@@ -58,6 +58,6 @@ bool D3D9Hook::initialize() {
     void** vtable = *reinterpret_cast<void***>(pD3D);
     void* createDeviceAddr = vtable[16];
     pD3D->Release();
-    g_create_device_hook = safetyhook::create_inline(createDeviceAddr, hooked_CreateDevice);
+    g_create_device_hook = create_inlinehook(createDeviceAddr, hooked_CreateDevice);
     return g_create_device_hook.enabled();
 }

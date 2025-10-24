@@ -9,7 +9,7 @@
 #include "../loose files.h"
 #include "Debug.h"
 #include "../Render/Render2D.h"
-#include <safetyhook.hpp>
+#include "..\Hooker.h"
 
 import OptionsManager;
 
@@ -36,7 +36,7 @@ namespace Debug
 			CacheConflicts();
 			patchJmp((void*)0x0051DAC0, (void*)hook_loose_files);						// Allow the loading of loose files
 			patchCall((void*)0x00BFD8F5, (void*)hook_raw_get_file_info_by_name);		// Add optional search in the ./loose directory
-			static SafetyHookMid InsertHashes = safetyhook::create_mid(0x00C0A8E0, &InsertFileHashes);
+			static SafetyHookMid InsertHashes = create_midhook(0x00C0A8E0, &InsertFileHashes);
 		}
 		else
 			Logger::TypedLog(CHN_DLL, "Create loose file cache failed.\n");
