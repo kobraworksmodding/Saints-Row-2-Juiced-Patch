@@ -1,6 +1,7 @@
 ﻿#include "loose files.h"
 #include "FileLogger.h"
 #include <algorithm>
+#include "Hooker.h"
 
 
 #pragma warning(disable : 4996) // remove fopen warning
@@ -86,7 +87,7 @@ bool __stdcall raw_get_file_info_by_name_inner(FILE_INFO* file_info, char* filen
 	auto result = raw_get_file_info_by_name_inner_wrapped(file_info, filename, override_check);
 
 	int MAX_LINES = 41;
-	if (!*(bool*)0x025272DD) {
+	if (!*(bool*)DynAddress(0x025272DD)) {
 		MAX_LINES = 26;
 	}
 
@@ -132,21 +133,24 @@ bool __declspec(naked) hook_raw_get_file_info_by_name(char* filename, BOOL overr
 
 // Changes the order in which files are searched. With loose files being the highest priority instead of the lowest.
 
+
+static auto register_file_search_method_addr = DynAddress(0x00BFDB50);
+static auto hook_loose_files_jmp_continue = DynAddress(0x0051DAC9);
 _declspec(naked) void hook_loose_files()
 {
 	__asm {
 		mov cl, 1
 		mov edi, 1
 		xor esi, esi
-		mov eax, 0x00BFDB50
-		call eax
+
+		call register_file_search_method_addr
 		mov cl, 1
 		xor edi, edi
 		mov esi, 0
-		mov eax, 0x00BFDB50
-		call eax
-		mov eax, 0x0051DAC9
-		jmp eax
+
+		call register_file_search_method_addr
+
+		jmp hook_loose_files_jmp_continue
 	}
 }
 
@@ -351,15 +355,15 @@ struct VPPFileData
 };
 
 int FileHashExists(const char* FileName) {
-	return ((int(__cdecl*)(const char*))0xC0A3B0)(FileName);
+	return ((int(__cdecl*)(const char*))DynAddress(0xC0A3B0))(FileName);
 }
 
 void AddFileHash(VPPFileData* Struct) {
-	((void(__cdecl*)(VPPFileData*))0xC0A350)(Struct);
+	((void(__cdecl*)(VPPFileData*))DynAddress(0xC0A350))(Struct);
 }
 
 int GetStringHash(const char* String) {
-	return ((int(__fastcall*)(int, const char*))0xBF2BD0)(0, String);
+	return ((int(__fastcall*)(int, const char*))DynAddress(0xBF2BD0))(0, String);
 }
 
 void InsertFileHashes(SafetyHookContext& ctx) {

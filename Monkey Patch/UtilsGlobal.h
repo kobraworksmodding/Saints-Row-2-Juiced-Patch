@@ -2,6 +2,7 @@
 #include <corecrt_math_defines.h>
 #include "..\Generated\BuildInfo.h"
 #include "Math\Math.h"
+#include "Hooker.h"
 #pragma warning( disable : 4219)
 using namespace Math;
 
@@ -9,8 +10,8 @@ namespace UtilsGlobal {
 
 inline uintptr_t getplayer(bool provideaddress = false) {
     if (!provideaddress)
-        return *(uintptr_t*)(0x21703D4);
-    else return 0x21703D4;
+        return *(uintptr_t*)(DynAddress(0x21703D4));
+    else return DynAddress(0x21703D4);
 
 }
 
@@ -28,7 +29,7 @@ inline bool RetFalse() {
 // 0x4 + 0x1 = 0x9, 
 // then ReadPointer(0x1,{0x2,0x1}); will return 0x9.
 inline uintptr_t ReadPointer(uintptr_t baseAddress, const std::vector<uintptr_t>& offsets) {
-    uintptr_t address = baseAddress;
+    uintptr_t address = DynAddress(baseAddress);
 
     if (address == 0) {
         return 0;
@@ -46,7 +47,7 @@ inline uintptr_t ReadPointer(uintptr_t baseAddress, const std::vector<uintptr_t>
 }
 
 inline void GetPlayerXYZ(vector3* Dest) {
-    memcpy(Dest, (void*)(0x25F5BB4), sizeof(vector3));
+    memcpy(Dest, (void*)(DynAddress(0x25F5BB4)), sizeof(vector3));
 }
 
 inline void GetPlayerOrient(matrix* Dest) {
@@ -77,10 +78,11 @@ inline std::string getShortCommitHash(size_t length = 7) {
     return std::string(GIT_COMMIT_HASH).substr(0, length);
 }
 
+
+    static auto x_delta_address = DynAddress(0x234F45C);
+    static auto y_delta_address = DynAddress(0x234F458);
+    static auto scroll_delta_address = DynAddress(0x234EA34);
 struct mouse {
-    static constexpr uintptr_t x_delta_address = 0x234F45C;
-    static constexpr uintptr_t y_delta_address = 0x234F458;
-    static constexpr uintptr_t scroll_delta_address = 0x234EA34;
     // Returns Mouse X delta in signed int32.
     inline int32_t getXdelta() const {
         return *reinterpret_cast<const int32_t*>(x_delta_address);
@@ -94,10 +96,10 @@ struct mouse {
         return *reinterpret_cast<const int32_t*>(scroll_delta_address);
     }
     inline float getMouseX_sens() const {
-        return *reinterpret_cast<const float*>(0x025F5C98);
+        return *reinterpret_cast<const float*>(DynAddress(0x025F5C98));
     }
     inline float getMouseY_sens() const {
-        return *reinterpret_cast<const float*>(0x025F5C9C);
+        return *reinterpret_cast<const float*>(DynAddress(0x025F5C9C));
     }
 };
 

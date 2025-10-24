@@ -9,7 +9,7 @@
 #include "../loose files.h"
 #include "Debug.h"
 #include "../Render/Render2D.h"
-#include <safetyhook.hpp>
+#include "..\Hooker.h"
 
 import OptionsManager;
 
@@ -36,7 +36,7 @@ namespace Debug
 			CacheConflicts();
 			patchJmp((void*)0x0051DAC0, (void*)hook_loose_files);						// Allow the loading of loose files
 			patchCall((void*)0x00BFD8F5, (void*)hook_raw_get_file_info_by_name);		// Add optional search in the ./loose directory
-			static SafetyHookMid InsertHashes = safetyhook::create_mid(0x00C0A8E0, &InsertFileHashes);
+			static SafetyHookMid InsertHashes = create_midhook(0x00C0A8E0, &InsertFileHashes);
 		}
 		else
 			Logger::TypedLog(CHN_DLL, "Create loose file cache failed.\n");
@@ -49,11 +49,12 @@ namespace Debug
 	int SIZE_MIN = 200;
 	int MAX = 1400;
 	void DynamicRenderDistance() {
-		int size = *(int*)0x02784990;
-		float* render_distance = (float*)0x00E996B4;
-		float* frametime = (float*)0xE8437C;
+		int size = *(int*)DynAddress(0x02784990);
+		float* render_distance = (float*)DynAddress(0x00E996B4);
+		float* frametime = (float*)DynAddress(0xE8437C);
 
 		if (UseDynamicRenderDistance) {
+
 			// Only make changes when size is at least 1
 			if (size < 1) {
 				return;
@@ -173,7 +174,7 @@ namespace Debug
 		{
 			Logger::TypedLog(CHN_DLL, "Skipping intros & legal disclaimers.\n");
 			patchNop((BYTE*)(0x005207B4), 6); // prevent intros from triggering
-			patchBytesM((BYTE*)0x0068C740, (BYTE*)"\x96\xC5\x68\x00", 4); // replace case 0 with case 4 to skip legal disclaimers
+			patchInt((BYTE*)0x0068C740,DynAddress(0x68C596) ); // replace case 0 with case 4 to skip legal disclaimers
 		}
 
 		if (GameConfig::GetValue("Gameplay", "DisableCheatFlag", 0))

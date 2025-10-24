@@ -41,7 +41,7 @@ namespace Render3D
 	const double fourbythreeAR = 1.333333373069763;
 
 	void AspectRatioFix(bool update_aspect_ratio) {
-		float currentAR = *(float*)0x022FD8EC;
+		float currentAR = *(float*)DynAddress(0x022FD8EC);
 		const float a169 = 1.777777791;
 		const double defaultFOV = 1.33333337306976;
 		//double currentFOV = *(double*)0x0E5C808;
@@ -87,11 +87,14 @@ namespace Render3D
 		// Convert back to degrees
 		return atan(adjusted) * 2.0 * 57.29582977294922;
 	}
+	static auto unkFOV_addr = DynAddress(0x2527D10);
 	double GetFOV() {
-		bool* is_cutscene_active = (bool*)0x02527D14;
-		bool* unk = (bool*)((*(int*)0x2527D10) + 0xAFF);
-		float* cf_real_fov_deg = (float*)0x025F5BA4;
-		bool* r_is_widescreen = (bool*)0x025272DD;
+		static bool* is_cutscene_active = (bool*)DynAddress(0x02527D14);
+
+		bool* unk = (bool*)((*(int*)unkFOV_addr) + 0xAFF);
+
+		static float* cf_real_fov_deg = (float*)DynAddress(0x025F5BA4);
+		static bool* r_is_widescreen = (bool*)DynAddress(0x025272DD);
 
 		bool isCutsceneMode = *is_cutscene_active && !*unk;
 		// HUD Ultrawide HUD fix needs to be active so I can get this bool.
@@ -104,8 +107,9 @@ namespace Render3D
 
 		return *cf_real_fov_deg;
 	}
+
+	static auto LoadShadersHook_Continue = DynAddress(0x00D1B7D3);
 	void __declspec(naked) LoadShadersHook() {
-		static int Continue = 0x00D1B7D3;
 		static int* ShaderPointer;
 		static const char* ShaderName;
 		__asm {
@@ -127,7 +131,7 @@ namespace Render3D
 
 		__asm {
 			add esp, 8
-			jmp Continue
+			jmp LoadShadersHook_Continue
 		}
 	}
 
@@ -229,18 +233,18 @@ namespace Render3D
 	}
 
 	void FPSCamHack() {
-		BYTE PlayerStatus = *(BYTE*)0x00E9A5BC; // Status Byte for the Players Actions.
-		FLOAT* WalkCamZoom = (FLOAT*)0x025F6334;
-		BYTE ActorFade = *(BYTE*)0x00E8825F;
+		BYTE PlayerStatus = *(BYTE*)DynAddress(0x00E9A5BC); // Status Byte for the Players Actions.
+		FLOAT* WalkCamZoom = (FLOAT*)DynAddress(0x025F6334);
+		BYTE ActorFade = *(BYTE*)DynAddress(0x00E8825F);
 
 		if (*(FLOAT*)WalkCamZoom > -0.5) {
-			*(FLOAT*)0x025F6334 = -0.6; // Force camera zoom to chest/in front of player.
+			*(FLOAT*)DynAddress(0x025F6334) = -0.6; // Force camera zoom to chest/in front of player.
 		}
 		if (ActorFade == 0x01) {
-			*(BYTE*)0x00E8825F = 0x00; // Force ActorFade to off.
+			*(BYTE*)DynAddress(0x00E8825F) = 0x00; // Force ActorFade to off.
 		}
 		if (PlayerStatus == 0x01 || PlayerStatus == 0x10 || PlayerStatus == 0x02 || PlayerStatus == 0x17) {
-			*(BYTE*)0x00E9A5BC = 0x00; // Force the cam(?) state to 0x00 -- (Walking Outside) if got Running Outside, Running Inside or Walking Inside.
+			*(BYTE*)DynAddress(0x00E9A5BC) = 0x00; // Force the cam(?) state to 0x00 -- (Walking Outside) if got Running Outside, Running Inside or Walking Inside.
 		}
 	}
 	CPatch CUncapFPS = CPatch::PatchNop(0x00D20E3E, 7);
@@ -430,21 +434,32 @@ namespace Render3D
 
 	double FilteringStrength;
 
-	void __declspec(naked) StrengthWorkaround() {
-		static int Continue = 0x00515CA0;
-		__asm {
-			cmp ebx, 3
-			jnz Skip
-			cmp ds : byte ptr[0x2527D14], 1
-			jnz Skip
-			fld FilteringStrength
-			jmp Continue
+static auto Cutscene_is_playing = DynAddress((bool*)0x2527D14);
+static auto StrengthUnk = DynAddress((float*)0x00E849AC);
+static int StrenghtWorkAround_Continue = DynAddress(0x00515CA0);
 
-			Skip :
-			fld ds : dword ptr[0x00E849AC]
-				jmp Continue
-		}
-	}
+
+void __declspec(naked) StrengthWorkaround() {
+    __asm {
+        push eax
+        
+        cmp ebx, 3
+        jnz Skip
+        
+        mov eax, Cutscene_is_playing
+        cmp byte ptr[eax], 1
+        jnz Skip
+        
+        fld FilteringStrength
+        pop eax
+		jmp StrenghtWorkAround_Continue
+    Skip:
+        mov eax, StrengthUnk
+        fld dword ptr[eax]
+        pop eax
+        jmp StrenghtWorkAround_Continue
+    }
+}
 
 	void SetAORes(int X, int Y) {
 
@@ -537,11 +552,11 @@ namespace Render3D
 	}
 
 	typedef int SetGraphicsT();
-	SetGraphicsT* SetGraphics = (SetGraphicsT*)(0x7735C0);
+	SetGraphicsT* SetGraphics = (SetGraphicsT*)DynAddress(0x7735C0);
 
 	void ResizeEffects() {
-		int CurrentX = *(int*)0x22FD84C;
-		int CurrentY = *(int*)0x22FD850;
+		int CurrentX = *(int*)DynAddress(0x22FD84C);
+		int CurrentY = *(int*)DynAddress(0x22FD850);
 
 		float aspectRatio = (float)CurrentX / (float)CurrentY;
 
@@ -665,7 +680,7 @@ namespace Render3D
 	}
 	bool crash;
 
-	constexpr uintptr_t add_to_entry_func_addr = 0xC080C0;
+	static auto add_to_entry_func_addr = DynAddress(0xC080C0);
 
 // This whole thing might have a performance hit.
 // SafeAddToEntry might be a bit redundant? since it seems to have not worked at all. but I'll keep it.
@@ -684,7 +699,7 @@ namespace Render3D
 		if (!IsMemoryReadable(width) || !IsMemoryReadable(wtf)) {
 			AssertHandler::AssertOnce("the other add_to_entry hook", "Crashed prevented due to an invalid be->current_peg_entry in add_to_entry, it's recommended to make a save of your game at this point as the game still has a high chance to crash! \n");
 			Logger::TypedLog("the other add_to_entry hook", "!!!Invalid result->width: %p\n", width);
-			ctx.eip = 0x00C08101;
+			ctx.eip = DynAddress(0x00C08101);
 		}
 		
 
@@ -693,7 +708,7 @@ namespace Render3D
 
 		if (!IsMemoryReadable((void*)ctx.ecx)) {
 			AssertHandler::AssertOnce("possible_unload_entry_func", "Crashed prevented due to an invalid be->current_peg_entry in add_to_entry, it's recommended to make a save of your game at this point as the game still has a high chance to crash! \n");
-			ctx.eip = 0x00BD8665;
+			ctx.eip = DynAddress(0x00BD8665);
 		}
 	}
 #if !JLITE
@@ -729,10 +744,12 @@ namespace Render3D
 		SetPSConstF(187, &arr4[0], 1);
 		SetPSConstF(188, &Res[0], 1);
 	}
+
+	static auto SETLOD_EXIT = DynAddress(0x00D19D24);
 	void SETLOD(SafetyHookContext& ctx) {
 		if (OVERRIDE_SHADER_LOD == 1) {
 			ctx.eax = SHADER_LOD;
-			ctx.eip = 0x00D19D24;
+			ctx.eip = SETLOD_EXIT;
 		}
 		else if (OVERRIDE_SHADER_LOD == 2) {
 			float* distance_squared = (float*)(ctx.esp + 0xC);
@@ -742,7 +759,7 @@ namespace Render3D
 
 	// Current hooks the parsing function for shaders_pc to only DELETE lines.. it can be expanded to do addition by using a new buffer, but that isn't really a use-case right now. - Clippy
 	void shaders_pc_hook() {
-		static auto shaders_pc_parse_hook = safetyhook::create_mid(0x00D1B67F, [](SafetyHookContext& ctx) {
+		static auto shaders_pc_parse_hook = create_midhook(0x00D1B67F, [](SafetyHookContext& ctx) {
 			char* buffer = (char*)ctx.ebx;
 			size_t& buffer_size1 = ctx.eax;
 			size_t& buffer_size2 = ctx.edi;
@@ -841,7 +858,7 @@ namespace Render3D
 		SafeWrite8(0x005285A3, 0);
 		render_handshake_event = CreateEvent(NULL, FALSE, FALSE, NULL);
 		render_frame_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-		memcpy(oldbytes, (void*)0x00521FAB, 0x48);
+		memcpy(oldbytes, (void*)DynAddress(0x00521FAB), 0x48);
 		oldbytes[0x16] = 0;
 		oldbytes[0x3B] = 0;
 
@@ -851,7 +868,7 @@ namespace Render3D
 
 		patchCall((void*)0x522A05, sub_522D00_signal_frame_done);
 
-		static auto sync_hack = safetyhook::create_mid(0x00521FAB, [](SafetyHookContext& ctx) {
+		static auto sync_hack = create_midhook(0x00521FAB, [](SafetyHookContext& ctx) {
 
 			WaitForSingleObject(render_handshake_event, INFINITE);
 
@@ -859,7 +876,7 @@ namespace Render3D
 				WaitForSingleObject(render_frame_event, INFINITE);
 			}
 			});
-		memcpy(newbytes, (void*)0x00521FAB, 0x48);
+		memcpy(newbytes, (void*)DynAddress(0x00521FAB), 0x48);
 
 	}
 
@@ -880,17 +897,17 @@ namespace Render3D
 		if(GameConfig::GetValue("Graphics","RemovePixelationShader",0))
 		shaders_pc_hook();
 		OptionsManager::registerOption("Graphics", "ShaderOverride", &OVERRIDE_SHADER_LOD,1);
-		static auto GiveLOD = safetyhook::create_mid(0x00D19D1B,&SETLOD);
-		//static auto RenderLOD1 = safetyhook::create_mid(0x00D0681D, &LODtest);
-		//static auto RenderLOD2 = safetyhook::create_mid(0x00D0582C, &LODtest);
-		//static auto gr_effect_set = safetyhook::create_mid(0x00D1A884, &LODtest);
+		static auto GiveLOD = create_midhook(0x00D19D1B,&SETLOD);
+		//static auto RenderLOD1 = create_midhook(0x00D0681D, &LODtest);
+		//static auto RenderLOD2 = create_midhook(0x00D0582C, &LODtest);
+		//static auto gr_effect_set = create_midhook(0x00D1A884, &LODtest);
 		if (GameConfig::GetValue("Graphics", "X360Gamma", 1)) {
 			ShaderOptions.X360Gamma = 1;
 		}
 		if (GameConfig::GetValue("Graphics", "ShadowFiltering", 1)) {
 			ShaderOptions.ShadowFilter = 1;
 		}
-		add_to_entry_test = safetyhook::create_mid(0x00C080EC, &add_to_entry_crashaddr_hook,safetyhook::MidHook::StartDisabled);
+		add_to_entry_test = create_midhook(0x00C080EC, &add_to_entry_crashaddr_hook,safetyhook::MidHook::StartDisabled);
 		if (GameConfig::GetValue("Debug", "ClippyTextureCrashExceptionHandle", 1)) {
 			add_to_entry_test.enable();
 		}
@@ -958,7 +975,7 @@ namespace Render3D
 
 		WriteRelJump(0x00494080, (UInt32)&GetFOV);
 		// CLIPPY TODO MAKE THIS A TOGGLEABLE OPTION!!!
-		screen_3d_to_2d_midhook = safetyhook::create_mid(0xD22BE8, [](SafetyHookContext& ctx) {
+		screen_3d_to_2d_midhook = create_midhook(0xD22BE8, [](SafetyHookContext& ctx) {
 			if (UltrawideFixRatio == 1.0)
 				return;
 			float x_bound = 1.0f / UltrawideFixRatio;

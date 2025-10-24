@@ -14,6 +14,7 @@
 #include "../BlingMenu_public.h"
 #include "../UtilsGlobal.h"
 #include "..\Game\Game.h"
+#include "../Hooker.h"
 #pragma warning( disable : 4834)
 // Use me to store garbagedata when NOP doesn't work.
 static float garbagedata = 0;
@@ -24,7 +25,7 @@ double animBlend = 3.0;
 namespace Behavior
 {
 	typedef int __cdecl character_set_anim_setT(DWORD* hp, uint32_t unk, char* name_of_human);
-	character_set_anim_setT* character_set_anim_set = (character_set_anim_setT*)(0x0096F940);
+	character_set_anim_setT* character_set_anim_set = (character_set_anim_setT*)DynAddress(0x0096F940);
 	int sticky_cam_timer_add = 0;
 	void BetterMovement()
 	{
@@ -42,11 +43,11 @@ namespace Behavior
 	}
 	
 	int FindMeleeTarget(int NPCPointer) {
-		return ((int(__cdecl*)(int))0x974FB0)(NPCPointer);
+		return ((int(__cdecl*)(int))DynAddress(0x974FB0))(NPCPointer);
 	}
 
 	bool IsNPCDead(int NPCPointer) {
-		return ((bool(__fastcall*)(int))0x9855F0)(NPCPointer);
+		return ((bool(__fastcall*)(int))DynAddress(0x9855F0))(NPCPointer);
 	}
 
 	int __cdecl DisableMeleeLockon1(int NPCPointer) {
@@ -54,13 +55,20 @@ namespace Behavior
 		else return FindMeleeTarget(NPCPointer);
 	}
 
+	uintptr_t getplayer_savectx(bool provideaddress = false) {
+		__asm pushad
+		auto player = UtilsGlobal::getplayer(provideaddress);
+		__asm popad
+	}
+
+	static auto Disable_Melee_LockOn2_Continue = DynAddress(0x00974D06);
 	void __declspec(naked) DisableMeleeLockon2() {
-		static int Continue = 0x00974D06;
+		
 		int NPCPointer;
 		__asm {
 			mov NPCPointer, eax
 		}
-		if (NPCPointer != UtilsGlobal::getplayer()) {
+		if (NPCPointer != getplayer_savectx()) {
 			__asm {
 				mov eax, NPCPointer
 				mov ecx, 0x973360
@@ -68,7 +76,7 @@ namespace Behavior
 			}
 		}
 		else __asm mov al, 1
-		__asm jmp Continue
+		__asm jmp Disable_Melee_LockOn2_Continue
 	}
 
 	void MovingAttacks() {
@@ -140,9 +148,10 @@ CMultiPatch CMPatches_SR1Reloading = {
 		CMPatches_SR1QuickSwitch.Apply();
 	}
 
+	static auto TauntLeft_jmp_continue = DynAddress(0x004F8323);
 	void __declspec(naked) TauntLeft()
 	{
-		static int jmp_continue = 0x004F8323;
+
 		__asm {
 			push 1
 			push 1
@@ -152,13 +161,13 @@ CMultiPatch CMPatches_SR1Reloading = {
 			push 1
 			push 1
 			push 1
-			jmp jmp_continue
+			jmp TauntLeft_jmp_continue
 		}
 	}
 
+	static auto TauntRight_jmp_continue = DynAddress(0x004F833F);
 	void __declspec(naked) TauntRight()
 	{
-		static int jmp_continue = 0x004F833F;
 		__asm {
 			push 1
 			push 1
@@ -168,7 +177,7 @@ CMultiPatch CMPatches_SR1Reloading = {
 			push 1
 			push 1
 			push 0
-			jmp jmp_continue
+			jmp TauntRight_jmp_continue
 		}
 	}
 	CMultiPatch CMPatches_TauntCancelling = {
@@ -279,9 +288,9 @@ CMultiPatch CMPatches_SR1Reloading = {
 		float mouse_x = (mouse().getXdelta() / 30.f) * mouse().getMouseX_sens();
 		// re-inverted because Tervel inverted it somewhere.
 		float mouse_y = (-mouse().getYdelta() / 30.f) * mouse().getMouseY_sens();
-		float* rs_x = (float*)(0x023485B4);
-		float* rs_y = (float*)(0x023485B8);
-		float& FOV = *(float*)0x25F5BA8;
+		float* rs_x = (float*)DynAddress(0x023485B4);
+		float* rs_y = (float*)DynAddress(0x023485B8);
+		float& FOV = *(float*)DynAddress(0x25F5BA8);
 		mouse_x *= Game::Timer::Get33msOverFrameTime_Fix();
 
 		mouse_y *= Game::Timer::Get33msOverFrameTime_Fix();
@@ -316,15 +325,16 @@ CMultiPatch CMPatches_SR1Reloading = {
 	}
 
 	void __fastcall vehicle_get_velocity(void* vehicle, vector3* velocity, uint32_t sub_object_id = -1) {
-		((vector3*(__thiscall*)(void*,vector3*,uint32_t))0xAA5150)(vehicle,velocity,sub_object_id);
+		((vector3*(__thiscall*)(void*,vector3*,uint32_t))DynAddress(0xAA5150))(vehicle,velocity,sub_object_id);
 	}
 
 	inline double __fastcall vehicle_get_brake_value(void* a1, void* a2) {
-		return ((double(__fastcall*)(void*, void*))0xAA64A0)(a1, a2);
+		return ((double(__fastcall*)(void*, void*))DynAddress(0xAA64A0))(a1, a2);
 	}
 
+	static auto vehicle_get_accelerator_value_addr = DynAddress(0xAA63A0);
 	double __declspec(naked) vehicle_get_accelerator_value(int vehicle_handle) {
-		static uintptr_t vehicle_get_accelerator_value_addr = 0xAA63A0;
+
 		__asm {
 			push ebp
 			mov ebp, esp
@@ -368,7 +378,7 @@ CMultiPatch CMPatches_SR1Reloading = {
 	{
 		if (GameConfig::GetValue("Gameplay", "SR1VehicleCameraTransition", 0) != 0) {
 			patchNop((void*)0xB0CB81, 5);
-			static auto veh_enter_test = safetyhook::create_mid(0xB0ECBD, [](SafetyHookContext& ctx) {
+			static auto veh_enter_test = create_midhook(0xB0ECBD, [](SafetyHookContext& ctx) {
 				uintptr_t vehicle = *(uintptr_t*)(ctx.esp + 0x34);
 				uintptr_t human = *(uintptr_t*)(ctx.esp + 0x38);
 				if (human && vehicle && human == UtilsGlobal::getplayer()) {
@@ -382,22 +392,22 @@ CMultiPatch CMPatches_SR1Reloading = {
 			Logger::TypedLog(CHN_DEBUG, "DisableSprintCamShake..\n");
 			CDisableSprintCamShake.Apply();
 		}
-		LessCameraVehicleFollow = safetyhook::create_mid(0x498B5A, [](SafetyHookContext& ctx) {
+		LessCameraVehicleFollow = create_midhook(0x498B5A, [](SafetyHookContext& ctx) {
 			float* follow_camera = (float*)(ctx.ebx + 0x5C);
 			if (*follow_camera != -1.f)
 				*follow_camera = vehicle_camera_follow_modifier;
 			if (*follow_camera != -1.f) {
-				ctx.eip = 0x498B60;
+				ctx.eip = DynAddress(0x498B60);
 			}
 			else {
-				ctx.eip = 0x498D14;
+				ctx.eip = DynAddress(0x498D14);
 			}
 			},safetyhook::MidHook::StartDisabled);
 		// Lower values = camera slower panning around car
 		vehicle_camera_follow_modifier = (float)GameConfig::GetDoubleValue("Gameplay", "vehicle_camera_follow_modifier", 1.f);
 		LessCameraVehicleFollow_hook_enable_disable();
 		if (GameConfig::GetValue("Debug", "FixGFL1_for_female_playas", 1))
-			player_data_loadT = safetyhook::create_inline(0x00693EB0, &player_data_load);
+			player_data_loadT = create_inlinehook(0x00693EB0, &player_data_load);
 		/*patchDWord((void*)(0x00D96A50 + 2), (uint32_t)&bogusRagForce);
 		patchDWord((void*)(0x00D974B0 + 2), (uint32_t)&bogusRagForce);
 		patchDWord((void*)(0x00D97AE8 + 2), (uint32_t)&bogusRagForce);
@@ -497,8 +507,8 @@ CMultiPatch CMPatches_SR1Reloading = {
 		{
 			HigherMaxSpeed();
 		}
-			slewmode_mousefix_rewrite = safetyhook::create_mid(0x00C011FB, &slewmode_control_rewrite);
-			cf_do_control_mode_sticky_MIDASMHOOK = safetyhook::create_mid(0x0049C102, &sticky_cam_modifier,safetyhook::MidHook::StartDisabled);
+			slewmode_mousefix_rewrite = create_midhook(0x00C011FB, &slewmode_control_rewrite);
+			cf_do_control_mode_sticky_MIDASMHOOK = create_midhook(0x0049C102, &sticky_cam_modifier,safetyhook::MidHook::StartDisabled);
 			// it's expecting time in ms, so 1000 = 1 second
 			if (int user_cam_modifier = GameConfig::GetValue("Gameplay", "VehicleAutoCenterModifer", 0); user_cam_modifier > 0) {
 				(void)cf_do_control_mode_sticky_MIDASMHOOK.enable();

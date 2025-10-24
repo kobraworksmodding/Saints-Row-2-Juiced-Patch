@@ -9,10 +9,11 @@
 #include "GOG No FPS limiter.h"
 #include "../FileLogger.h"
 #include "../SafeWrite.h"
+#include "../Hooker.h"
 
 void PatchGOGNoFPSLimit()
 {
 	Logger::TypedLog(CHN_DLL, "Patching GOG No FPS Limit.\n");
-	WriteRelCall(0x00d20d5a,0x00d20230);
+	WriteRelCall(0x00d20d5a,DynAddress(0x00d20230));
 	return;
 }

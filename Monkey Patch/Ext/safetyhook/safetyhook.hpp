@@ -549,7 +549,7 @@ public:
     /// @param flags The flags to use.
     /// @return The InlineHook or an InlineHook::Error if an error occurred.
     /// @note This will use the default global Allocator.
-    /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
+    /// @note If you don't care about error handling, use the easy API (create_inlinehook).
     [[nodiscard]] static std::expected<InlineHook, Error> create(
         void* target, void* destination, Flags flags = Default);
 
@@ -559,7 +559,7 @@ public:
     /// @param flags The flags to use.
     /// @return The InlineHook or an InlineHook::Error if an error occurred.
     /// @note This will use the default global Allocator.
-    /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
+    /// @note If you don't care about error handling, use the easy API (create_inlinehook).
     template <typename T, typename U>
     [[nodiscard]] static std::expected<InlineHook, Error> create(T target, U destination, Flags flags = Default) {
         return create(reinterpret_cast<void*>(target), reinterpret_cast<void*>(destination), flags);
@@ -571,7 +571,7 @@ public:
     /// @param destination The destination address.
     /// @param flags The flags to use.
     /// @return The InlineHook or an InlineHook::Error if an error occurred.
-    /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
+    /// @note If you don't care about error handling, use the easy API (create_inlinehook).
     [[nodiscard]] static std::expected<InlineHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, void* target, void* destination, Flags flags = Default);
 
@@ -581,7 +581,7 @@ public:
     /// @param destination The destination address.
     /// @param flags The flags to use.
     /// @return The InlineHook or an InlineHook::Error if an error occurred.
-    /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
+    /// @note If you don't care about error handling, use the easy API (create_inlinehook).
     template <typename T, typename U>
     [[nodiscard]] static std::expected<InlineHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, T target, U destination, Flags flags = Default) {
@@ -929,7 +929,7 @@ public:
     /// @param flags The flags to use.
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note This will use the default global Allocator.
-    /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
+    /// @note If you don't care about error handling, use the easy API (create_midhook).
     [[nodiscard]] static std::expected<MidHook, Error> create(
         void* target, MidHookFn destination_fn, Flags flags = Default);
 
@@ -939,7 +939,7 @@ public:
     /// @param flags The flags to use.
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note This will use the default global Allocator.
-    /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
+    /// @note If you don't care about error handling, use the easy API (create_midhook).
     template <typename T>
     [[nodiscard]] static std::expected<MidHook, Error> create(
         T target, MidHookFn destination_fn, Flags flags = Default) {
@@ -952,7 +952,7 @@ public:
     /// @param destination_fn The destination function.
     /// @param flags The flags to use.
     /// @return The MidHook object or a MidHook::Error if an error occurred.
-    /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
+    /// @note If you don't care about error handling, use the easy API (create_midhook).
     [[nodiscard]] static std::expected<MidHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, void* target, MidHookFn destination_fn, Flags flags = Default);
 
@@ -963,7 +963,7 @@ public:
     /// @param destination_fn The destination function.
     /// @param flags The flags to use.
     /// @return The MidHook object or a MidHook::Error if an error occurred.
-    /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
+    /// @note If you don't care about error handling, use the easy API (create_midhook).
     template <typename T>
     [[nodiscard]] static std::expected<MidHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, T target, MidHookFn destination_fn, Flags flags = Default) {

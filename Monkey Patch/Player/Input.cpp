@@ -18,6 +18,8 @@ import OptionsManager;
 #include <Hooking.Patterns.h>
 #include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_init.h>
+#include "..\Hooker.h"
+
 bool IsKeyPressed(unsigned char Key, bool Hold);
 int __fastcall subT_6218F0(DWORD* a1);
 namespace Input {
@@ -98,35 +100,37 @@ namespace Input {
 	}
 
 
-
+	static const DWORD key_held_func_addr = DynAddress(0xC111D0);
 	bool __declspec(naked) key_held(int keycode) {
-		static const DWORD func_addr = 0xC111D0;
+
 		__asm {
 			push ebp
 			mov ebp, esp
 			sub esp, __LOCAL_SIZE
 			mov     eax, keycode
-			call func_addr
+			call key_held_func_addr
 			mov esp, ebp
 			pop ebp
 			ret
 		}
 	}
 	inline int refreshVintStrings() {
-		return ((int(*)(void))0x00BA2F90)();
+		return ((int(*)(void))DynAddress(0x00BA2F90))();
 	}
 	GAME_LAST_INPUT g_lastInputPrevFrame = MOUSE;
 	GAME_LAST_INPUT g_lastInput = UNKNOWN;
-	bool* is_controller_connect = (bool*)(0x0252A58E);
+	bool* is_controller_connect = (bool*)DynAddress(0x0252A58E);
+
+	uintptr_t* di_buttons = DynAddress((uintptr_t*)0x2348810);
 	GAME_LAST_INPUT LastInput() {
 		using namespace UtilsGlobal;
 		if (!*is_controller_connect) {
 			g_lastInput = MOUSE;
 			return g_lastInput;
 		}
-		if (*(uintptr_t*)0x2348810) {
+		if (*di_buttons) {
 			for (int c = 0; c <= 19; ++c) {
-				BYTE* buttons = (BYTE*)*(uintptr_t*)0x2348810;
+				BYTE* buttons = (BYTE*)*di_buttons;
 				if (buttons[c] != 0) {
 					g_lastInput = CONTROLLER;
 					break;
@@ -134,10 +138,13 @@ namespace Input {
 				
 			}
 		}
-		float LeftStickX = *(float*)0x23485F4;
-		float LeftStickY = *(float*)0x23485F8;
-		float RightStickX = *(float*)0x023485B4;
-		float RightStickY = *(float*)0x023485B8;
+
+		static float* LeftStick = DynAddress((float*)0x23485F4);
+		static float* RightStick = DynAddress((float*)0x023485B4);
+		float LeftStickX = LeftStick[0];
+		float LeftStickY = LeftStick[1];
+		float RightStickX = RightStick[0];
+		float RightStickY = RightStick[1];
 
 		const float deadzone = 0.01f;
 
@@ -177,7 +184,7 @@ namespace Input {
 	}
 #pragma warning( disable : 4995)
 	typedef int(__stdcall* XInputEnableT)(bool Enable); // this is a deprecated feature and I couldn't get it to register through the XInput lib
-	XInputEnableT XInputEnable = (XInputEnableT)0x00CCD4F8;
+	XInputEnableT XInputEnable = (XInputEnableT)DynAddress(0x00CCD4F8);
 
 	int controllerConnected[4] = { 1, 1, 1, 1 };
 	bool NoControllers = false;
@@ -325,14 +332,17 @@ namespace Input {
 	}
 
 	typedef int __cdecl PlayerSpin(float a1);
-	PlayerSpin* UpdatePlayerSpin = (PlayerSpin*)(0x0073FB20); //0x00BD4A80
+	PlayerSpin* UpdatePlayerSpin = (PlayerSpin*)DynAddress(0x0073FB20); //0x00BD4A80
 	// If we need an empty global buffer we could use that, but it has to be 0.
 	//volatile float aim_assist_empty_buffer[19]{};
 	SafetyHookMid player_autoaim_do_assisted_aiming_midhook;
 	BYTE disable_aim_assist_noMatterInput;
+
+	static auto player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse_exit = DynAddress(0x9D7757);
 	SAFETYHOOK_NOINLINE void player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse(safetyhook::Context32& ctx) {
-		if((disable_aim_assist_noMatterInput >= 1 && g_lastInput == GAME_LAST_INPUT::MOUSE) || disable_aim_assist_noMatterInput >= 2)
-		ctx.eip = 0x9D7757;
+		if ((disable_aim_assist_noMatterInput >= 1 && g_lastInput == GAME_LAST_INPUT::MOUSE) || disable_aim_assist_noMatterInput >= 2)
+			
+		ctx.eip = player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse_exit;
 	}
 	struct PC_port_controller_keys
 	{
@@ -340,7 +350,7 @@ namespace Input {
 		int keyboard_button;
 		int controller_button;
 	};
-	PC_port_controller_keys* PC_port_key_for_controler_assignments = (PC_port_controller_keys*)0x234E768;
+	PC_port_controller_keys* PC_port_key_for_controler_assignments = (PC_port_controller_keys*)DynAddress(0x234E768);
 	SafetyHookInline getpckeyboardimage_T{};
 	wchar_t prompt_image_buffer[10000]{};
 	int prompt_image_buffer_index = 0;
@@ -592,9 +602,10 @@ namespace Input {
 
 		return &prompt_image_buffer[start_index];
 	}
-	int* input_capturing = (int*)0xE82F6C;
+	int* input_capturing = (int*)DynAddress(0xE82F6C);
+
+	static DWORD pc_port_action_register_maybe_addr = DynAddress(0xC12450);
 	int __declspec(naked) pc_port_action_register_maybe(int button) {
-		static const DWORD pc_port_action_register_maybe_addr = 0xC12450;
 		__asm pushad
 		__asm {
 			push ebp
@@ -667,16 +678,17 @@ namespace Input {
 	{"PCKEY_UNASSIGNED", 0xFFFFFFFF}
 	};
 
+	static auto key_held_midhook_special_mousecase_midhook1_exit = DynAddress(0xC11220);
 	SAFETYHOOK_NOINLINE void key_held_midhook_special_mousecase_midhook1(SafetyHookContext& ctx) {
 		int key = ctx.eax;
 		if (key == 0x103) {
 			setAL(ctx, IsKeyPressed(VK_XBUTTON1, true));
 			// do a ret
-			ctx.eip = 0xC11220;
+			ctx.eip = key_held_midhook_special_mousecase_midhook1_exit;
 		} else if (key == 0x104) {
 			setAL(ctx, IsKeyPressed(VK_XBUTTON2, true));
 			// do a ret
-			ctx.eip = 0xC11220;
+			ctx.eip = key_held_midhook_special_mousecase_midhook1_exit;
 		}
 
 	}
@@ -686,23 +698,25 @@ namespace Input {
 	volatile char KEY_inventory_right = 'D';
 	inline void patch_zoom_aware_interior_pause_map() {
 		patchNop((void*)0x771DB7, 0x2E);
-		static auto zoom_aware_interior_pause_map = safetyhook::create_mid(0x771DB7, [](SafetyHookContext& ctx) {
+		static auto zoom_aware_interior_pause_map = create_midhook(0x771DB7, [](SafetyHookContext& ctx) {
 			using namespace UtilsGlobal;
-			vector2* pause_map_crosshair = (vector2*)(0x29C8E1C);
+			vector2* pause_map_crosshair = (vector2*)DynAddress(0x29C8E1C);
 			float zoom_modifier = 1.f;
-			if (*(bool*)0x2528269)
-				zoom_modifier = (*(float*)0x1F7A8CC / *(float*)0x00E8DFA8) * 0.8f;
+			if (*(bool*)DynAddress(0x2528269))
+				zoom_modifier = (*(float*)DynAddress(0x1F7A8CC) / *(float*)DynAddress(0x00E8DFA8)) * 0.8f;
 			pause_map_crosshair->x -= ((float)mouse().getXdelta() * mouse().getMouseX_sens()) * zoom_modifier;
 			pause_map_crosshair->y += ((float)mouse().getYdelta() * mouse().getMouseY_sens()) * zoom_modifier;
 			});
 	}
 
 	inline void controller_disconect_dialog_prevframe() {
-		*(bool*)0xE8DFBF = false;
+		*(bool*)DynAddress(0xE8DFBF) = false;
 	}
 
+
+	static DWORD controllerflush_addr = DynAddress(0x75C700);
 	int __declspec(naked) controller_flushasm(controller* a1) {
-		static const DWORD controllerflush_addr = 0x75C700;
+		
 		__asm {
 			push ebp
 			mov ebp, esp
@@ -723,8 +737,8 @@ namespace Input {
 		__asm popad
 	}
 
+	static DWORD set_deadzone_addr = DynAddress(0xC13A90);
 	int __declspec(naked) set_deadzoneasm(float* x, float* y, float deadzone) {
-		static const DWORD set_deadzone_addr = 0xC13A90;
 		__asm {
 			push ebp
 			mov ebp, esp
@@ -751,9 +765,10 @@ namespace Input {
 		__asm popad
 	}
 
+	bool* pad_is_connected_addr = (bool*)DynAddress(0x0252A58E);
 	void __cdecl input_pc_poll_sdl(controller* cntrl)
 	{
-		bool& pad_is_connected = *(bool*)0x0252A58E;
+		bool& pad_is_connected = *pad_is_connected_addr;
 		SDL_Event event;
 		const char* GamepadName = NULL;
 		while (SDL_PollEvent(&event)) {
@@ -846,9 +861,10 @@ namespace Input {
 		cntrl->di_buttons[18] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT) ? 128 : 0;   // bit 4 = LEFT  
 		cntrl->di_buttons[19] = SDL_GetGamepadButton(g_gamepad, SDL_GAMEPAD_BUTTON_DPAD_DOWN) ? 128 : 0;   // bit 2 = DOWN
 		//printf("cntrl all di_buttons %p\n", cntrl);
-		bool& g_CapturePadInput = *(bool*)0x252A5B0;
-		bool* g_PadCaptureStates = (bool*)0x2349808;
-		if (g_CapturePadInput) {
+		static bool* g_CapturePadInput = DynAddress((bool*)0x252A5B0);
+
+		static bool* g_PadCaptureStates = DynAddress((bool*)0x2349808);
+		if (*g_CapturePadInput) {
 			for (unsigned int i = 0; i < cntrl->di_num_buttons; ++i) {
 				g_PadCaptureStates[i] = cntrl->di_buttons[i] != 0;
 			}
@@ -864,7 +880,7 @@ namespace Input {
 			axis_reading[2] = -(float)SDL_GetGamepadAxis(g_gamepad, SDL_GAMEPAD_AXIS_RIGHTY) / 32767.0f;   // Right Y (inverted)
 			axis_reading[3] = (float)SDL_GetGamepadAxis(g_gamepad, SDL_GAMEPAD_AXIS_RIGHTX) / 32767.0f;    // Right X
 
-			int* axis_bind = (int*)0x234E768;
+			static int* axis_bind = DynAddress((int*)0x234E768);
 
 			cntrl->joys[4].x_val = axis_reading[axis_bind[0]];
 			cntrl->joys[4].y_val = axis_reading[axis_bind[1]];
@@ -935,7 +951,7 @@ namespace Input {
 			patchJmp((void*)0xC13C80, &input_pc_poll_sdl);
 		}
 		patch_zoom_aware_interior_pause_map();
-		static auto tag_shake_frametimefix = safetyhook::create_mid(0x621C04, [](SafetyHookContext& ctx) {
+		static auto tag_shake_frametimefix = create_midhook(0x621C04, [](SafetyHookContext& ctx) {
 			if (g_lastInput == MOUSE) {
 				*(float*)(ctx.esp + 0x10) *= Game::Timer::Get33msOverFrameTime_Fix();
 			}
@@ -948,7 +964,7 @@ namespace Input {
 		KEY_inventory_left = GameConfig::GetChar("Input", "KEY_inventory_left", KEY_inventory_left);
 		KEY_inventory_right = GameConfig::GetChar("Input", "KEY_inventory_right", KEY_inventory_right);
 		if (GameConfig::GetValue("Input", "better_inventory_keyboard", 1)) {
-			static auto properInventory_keyboard = safetyhook::create_mid(0xB997F3, [](SafetyHookContext& ctx) {
+			static auto properInventory_keyboard = create_midhook(0xB997F3, [](SafetyHookContext& ctx) {
 				if (!ctx.ebx || *is_controller_connect) // shouldn't allow this to work while a controller is connected, vanilla game bug but having a controller connected + using WASD will move the weapon wheel as if it's LS. -- Clippy95
 					return;
 				float& value = *(float*)(ctx.esp + 0x10);
@@ -970,12 +986,12 @@ namespace Input {
 			OptionsManager::registerOption("Input", "ForceInputPrompt", &ForceInput, 0);
 			OptionsManager::registerOption("Input", "ForcedControllerPrompts", (int*)&forced_current_controller_type, 0);
 			//SetThreadPriority(CreateThread(0, 0, LastInputCheck, 0, 0, 0),-1);
-			pc_get_action_pad_pure_text_T = safetyhook::create_inline(0xC11A90, &pc_get_action_pad_pure_text_hook);
-			getpckeyboardimage_T = safetyhook::create_inline(0xC11C00, &getpckeyboardimage_hook);
+			pc_get_action_pad_pure_text_T = create_inlinehook(0xC11A90, &pc_get_action_pad_pure_text_hook);
+			getpckeyboardimage_T = create_inlinehook(0xC11C00, &getpckeyboardimage_hook);
 
 			// currently I add mouse4 and mouse5 support, requires getpckeyboardimage_T hook.
-			static auto key_held_hook = safetyhook::create_mid(0xC11214, &key_held_midhook_special_mousecase_midhook1);
-			static auto special_mouse_cases_midhook = safetyhook::create_mid(0xC12A74, &special_mouse_cases_midhook1);
+			static auto key_held_hook = create_midhook(0xC11214, &key_held_midhook_special_mousecase_midhook1);
+			static auto special_mouse_cases_midhook = create_midhook(0xC12A74, &special_mouse_cases_midhook1);
 			//patchDWord((void*)(0xC119B0 + 2), (uint32_t)&specialKeys[0].key_code);
 			//patchDWord((void*)(0xC119C2 + 2), (uint32_t)&specialKeys[0].localization_name);
 			//patchDWord((void*)(0xC119CD + 3), (uint32_t)&specialKeys[0].localization_name);
@@ -995,7 +1011,7 @@ namespace Input {
 		}
 		LoadXInputDLL();
 
-			player_autoaim_do_assisted_aiming_midhook = safetyhook::create_mid(0x009D7752, &player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse);
+			player_autoaim_do_assisted_aiming_midhook = create_midhook(0x009D7752, &player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse);
 			Logger::TypedLog(CHN_MOD, "Disabling Aim Assist while using mouse...\n");
 			disable_aim_assist_noMatterInput = (BYTE)std::clamp((int)GameConfig::GetValue("Gameplay", "DisableAimAssist", 1), 0, 2);
 		DisableXInput();
@@ -1017,7 +1033,7 @@ namespace Input {
 		if (GameConfig::GetValue("Gameplay", "BetterPlayerWardrobeRotate", 1))
 		{
 			Logger::TypedLog(CHN_MOD, "Patching better player rotation for wardrobes.\n");
-			patchCall((int*)0x007CE170, (int*)0x0073FA80);
+			patchCall((int*)0x007CE170, DynAddress((int*)0x0073FA80));
 			patchNop((int*)0x7CE168, 2);
 		}
 
@@ -1027,7 +1043,7 @@ namespace Input {
 
 			patchBytesM((BYTE*)0x00C1F0F7, (BYTE*)"\x29", 1); // opcode for sub, add previously.
 		}
-		static auto map_zoom_fps_controller_fix = safetyhook::create_mid(0x770D5A, [](SafetyHookContext& ctx) {
+		static auto map_zoom_fps_controller_fix = create_midhook(0x770D5A, [](SafetyHookContext& ctx) {
 			using namespace Game::Timer;
 			if (Input::LastInput() != Input::CONTROLLER)
 				return;

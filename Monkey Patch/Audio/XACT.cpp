@@ -12,6 +12,7 @@
 #include <safetyhook.hpp>
 #include "Hooking.Patterns.h"
 #include "../Game/CrashFixes.h"
+#include "../Hooker.h"
 namespace XACT
 {
 
@@ -28,7 +29,7 @@ namespace XACT
 		if (GameConfig::GetValue("Debug", "FixAudio", 0)) // solid workaround for making cutscenes play with directional/3D audio (breaks the volume sliders)
 														  // keep the name unchanged as we could use this in the future for fixing music or other audio issues?
 		{
-			static SafetyHookMid XACT3DAudioHack = safetyhook::create_mid(0x0047EA5E, &Cutscene3DAudio);
+			static SafetyHookMid XACT3DAudioHack = create_midhook(0x0047EA5E, &Cutscene3DAudio);
 		}
 #endif
 	}
@@ -60,7 +61,7 @@ namespace XACT
 	}
 
 	void __cdecl setup_audio_hook() {
-		((void(__cdecl*)())0x465020)();
+		((void(__cdecl*)())DynAddress(0x465020))();
 		HMODULE hXAct32 = GetModuleHandle(L"xactengine3_2.dll");
 
 		if (hXAct32 != NULL) {

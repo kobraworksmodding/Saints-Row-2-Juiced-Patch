@@ -17,7 +17,7 @@ namespace Game
 	namespace Timer {
 		// Returns game's frametime in ms
 		float GetFrameTime() {
-			return *(float*)0xE84380;
+			return *(float*)DynAddress(0xE84380);
 		}
 		// Returns frametime / 33 ms,
 		// use this to fix calculations that are calculated FASTER than they should when game is running at a higher FPS.
@@ -31,7 +31,7 @@ namespace Game
 		}
 		// Returns Havok's frametime, by default this is stuck to 16.6ms but with Havok ticker it'll tick correctly.
 		float GetHavokFrameTime() {
-			return *(float*)0x02527DA4;
+			return *(float*)DynAddress(0x02527DA4);
 		}
 		// Returns havok frametime / 16.6 ms,
 		// use this to fix calculations that are calculated FASTER than they should when game is running at a higher HAVOK FPS.
@@ -215,7 +215,7 @@ namespace Game
 	SafetyHookMid xtbl_read_and_parse_file_hook{};
 	SafetyHookMid FixFrametimeVehicleSkids{};
 	XTBLScanStatus xtbl_scan_status = {};
-	wchar_t* chat_message = (wchar_t*)0x1F76948;
+	wchar_t* chat_message = (wchar_t*)DynAddress(0x1F76948);
 	SafetyHookInline open_chat_T;
 	int s_CursorPosition = 0;
 	char open_chat_hook() {
@@ -223,9 +223,9 @@ namespace Game
 		return open_chat_T.call<char>();
 	}
 	void chat_box_cursor_support_hooks(){
-		open_chat_T = safetyhook::create_inline(0x75C8F0, open_chat_hook);
+		open_chat_T = create_inlinehook(0x75C8F0, open_chat_hook);
 
-		static auto cursor_render = safetyhook::create_mid(0x75D6B6, [](SafetyHookContext& ctx) {
+		static auto cursor_render = create_midhook(0x75D6B6, [](SafetyHookContext& ctx) {
 			wchar_t* a3 = (wchar_t*)(ctx.esp + 0x20);
 
 			wchar_t* message_start = wcsstr(a3, L"> ");
@@ -242,10 +242,10 @@ namespace Game
 					a3[cursor_pos] = L'|';
 				}
 			}
-			ctx.eip = 0x75D6D3;
+			ctx.eip = DynAddress(0x75D6D3);
 			});
 
-		static auto cursor_chat = safetyhook::create_mid(0x75CCFE, [](SafetyHookContext& ctx) {
+		static auto cursor_chat = create_midhook(0x75CCFE, [](SafetyHookContext& ctx) {
 			wchar_t& new_char = (wchar_t&)ctx.eax;
 			size_t current_length = wcslen(chat_message);
 			wmemmove(&chat_message[s_CursorPosition + 1],
@@ -253,10 +253,10 @@ namespace Game
 				(current_length - s_CursorPosition + 1) * sizeof(wchar_t));
 			chat_message[s_CursorPosition] = new_char;
 			s_CursorPosition++;
-			ctx.eip = 0x75CD03;
+			ctx.eip = DynAddress(0x75CD03);
 			});
 		// arrow_move and backspace_chat can be combined but i cant be bothered with it rn, -- Clippy95
-		static auto arrow_move = safetyhook::create_mid(0x75CBA5, [](SafetyHookContext& ctx) {
+		static auto arrow_move = create_midhook(0x75CBA5, [](SafetyHookContext& ctx) {
 			auto character = ctx.edi;
 			if (character == 203) {
 				if (s_CursorPosition > 0) {
@@ -269,17 +269,17 @@ namespace Game
 				}
 			}
 			});
-		static auto backspace_chat = safetyhook::create_mid(0x75CBB6, [](SafetyHookContext& ctx) {
+		static auto backspace_chat = create_midhook(0x75CBB6, [](SafetyHookContext& ctx) {
 			if (s_CursorPosition > 0) { // Can only backspace if not at start
 				size_t current_length = wcslen(chat_message);
 				wmemmove(&chat_message[s_CursorPosition - 1],
 					&chat_message[s_CursorPosition],
 					(current_length - s_CursorPosition + 1) * sizeof(wchar_t));
 				s_CursorPosition--;
-				ctx.eip = 0x75CBC0;
+				ctx.eip = DynAddress(0x75CBC0);
 			}
 			else {
-				ctx.eip = 0x75CBC0;
+				ctx.eip = DynAddress(0x75CBC0);
 			}
 			});
 	}
@@ -296,7 +296,7 @@ namespace Game
 		if(GameConfig::GetValue("Gameplay","ForceMetricSystem",0))
 		force_metric_measurements();
 		chat_box_cursor_support_hooks();
-		FixFrametimeVehicleSkids = safetyhook::create_mid(0xA9DDB3, [](SafetyHookContext& ctx) {
+		FixFrametimeVehicleSkids = create_midhook(0xA9DDB3, [](SafetyHookContext& ctx) {
 			using namespace Timer;
 			float* wheel_force_local = (float*)(ctx.esp + 0xC);
 			if (*wheel_force_local == 0.f)
@@ -307,7 +307,7 @@ namespace Game
 
 		static bool unhook_after_patching_xtbl_read_and_parse_file = GameConfig::GetValue("Debug", "unhook_after_patching_xtbl_read_and_parse_file", 1);
 
-		xtbl_read_and_parse_file_hook = safetyhook::create_mid(0xBFBA44, [](SafetyHookContext& ctx) {
+		xtbl_read_and_parse_file_hook = create_midhook(0xBFBA44, [](SafetyHookContext& ctx) {
 			char* xtbl_filename = (char*)ctx.edi;
 			char* buffer = (char*)ctx.esi;
 
@@ -468,10 +468,11 @@ namespace Game
 			CDisable_Tutorials.Apply();
 
 		using namespace Physical;
-		motorcycle_should_eject_passengers_MIDASMHOOK = safetyhook::create_mid(0x00AB599F, &motorcycle_should_eject_passengers_asmhook);
+		motorcycle_should_eject_passengers_MIDASMHOOK = create_midhook(0x00AB599F, &motorcycle_should_eject_passengers_asmhook);
 	}
 	namespace HUD
 	{
+		static auto vint_message_addr = DynAddress(0x0079CD40);
 		int __declspec(naked) vint_message(const wchar_t* message_text, vint_message_struct* a2) {
 			__asm {
 				push ebp
@@ -484,8 +485,7 @@ namespace Game
 				mov edi, a2
 				push edi
 
-				mov edx, 0x0079CD40
-				call edx
+				call vint_message_addr
 
 				mov esp, ebp
 				pop ebp
@@ -529,13 +529,13 @@ namespace Game
 #endif
 
 		void FrameChecks() { // Updates some specific stuff we need to loop all the time
-			BYTE CurrentGamemode = *(BYTE*)0x00E8B210; // Parses the current gamemode from EXE
-			BYTE LobbyCheck = *(BYTE*)0x02528C14; // Checks lobby, technically this is another gamemode check but we'll use it for lobby
-			BYTE MatchType = *(BYTE*)0x00E8B20C; // Checks match type
-			BYTE AbleToStartGame = *(BYTE*)0x02528D90; // Determines whether the gamemode is able to start or not (we'll force this on when we can, nice QOL feature.)
-			BYTE IsInCutscene = *(BYTE*)0x02527D14; // Checks if user is in a cutscene.
-			char* playerName = (CHAR*)0x0212AB48; // parses player name
-			BYTE GamespyStatus = *(BYTE*)0x02529334; // Checks the current gamespy status.
+			BYTE CurrentGamemode = *(BYTE*)DynAddress(0x00E8B210); // Parses the current gamemode from EXE
+			BYTE LobbyCheck = *(BYTE*)DynAddress(0x02528C14); // Checks lobby, technically this is another gamemode check but we'll use it for lobby
+			BYTE MatchType = *(BYTE*)DynAddress(0x00E8B20C); // Checks match type
+			BYTE AbleToStartGame = *(BYTE*)DynAddress(0x02528D90); // Determines whether the gamemode is able to start or not (we'll force this on when we can, nice QOL feature.)
+			BYTE IsInCutscene = *(BYTE*)DynAddress(0x02527D14); // Checks if user is in a cutscene.
+			char* playerName = (CHAR*)DynAddress(0x0212AB48); // parses player name
+			BYTE GamespyStatus = *(BYTE*)DynAddress(0x02529334); // Checks the current gamespy status.
 
 			static DWORD lastTick2 = 0;
 
@@ -564,7 +564,7 @@ namespace Game
 #endif
 					if (MatchType == (BYTE)2) { // If in ranked
 #if RELOADED
-						* (BYTE*)0x02A4D134 = 0x1; // Force Friendly Fire to Full Damage.
+						* (BYTE*)DynAddress(0x02A4D134) = 0x1; // Force Friendly Fire to Full Damage.
 #endif
 						if (!CurrentGamemode == 0xD || !CurrentGamemode == 0xC || CurrentGamemode == 0xB) // And gamemode is not TGB or Strong Arm but is Gangsta Brawl
 						{
@@ -601,7 +601,7 @@ namespace Game
 							}
 						}
 					}
-					*(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
+					*(BYTE*)DynAddress(0x02A4D134) = 0x0; // Force Friendly Fire to Off.
 #endif
 					AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
 				}
@@ -613,7 +613,7 @@ namespace Game
 				{
 					IsCoopOrSP = false;
 				}
-				*(BYTE*)0x02528D90 = AbleToStartGame;
+				*(BYTE*)DynAddress(0x02528D90) = AbleToStartGame;
 			}
 		}
 	}
@@ -621,7 +621,7 @@ namespace Game
 	// maybe expose read_and_parse_file for outside reloaded but currently I don't have a use for it in Juiced -- Clippy95
 #if RELOADED
 	namespace xml {
-		read_and_parse_fileT read_and_parse_file = (read_and_parse_fileT)0x00966720;
+		read_and_parse_fileT read_and_parse_file = (read_and_parse_fileT)DynAddress(0x00966720);
 
 		uint32_t checksum(xtbl_node* root, uint32_t accumulator)
 		{
@@ -641,6 +641,7 @@ namespace Game
 			}
 			return result;
 		}
+		static auto parse_table_node_addr = DynAddress(0x00B743F0);
 		__declspec(naked) xtbl_node* parse_table_node(const char* filename, int* override_xtbl_mempool) {
 			__asm {
 				push ebp
@@ -649,8 +650,7 @@ namespace Game
 
 				mov eax, filename
 				mov ecx, override_xtbl_mempool
-				mov edx, 0x00B743F0
-				call edx
+				call parse_table_node_addr
 
 				mov esp, ebp
 				pop ebp
@@ -659,7 +659,7 @@ namespace Game
 		}
 	}
 	namespace utils {
-		crc_strT str_to_hash = (crc_strT)0x00BDC9B0;
+		crc_strT str_to_hash = (crc_strT)DynAddress(0x00BDC9B0);
 	}
 #endif
 };

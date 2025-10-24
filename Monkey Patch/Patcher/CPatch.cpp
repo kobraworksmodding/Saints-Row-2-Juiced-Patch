@@ -1,12 +1,14 @@
 #include "CPatch.h"
 #include <windows.h>
 #include <cstring>
+#include "../Hooker.h"
 
 CPatch::CPatch(std::uintptr_t address, const std::vector<uint8_t>& patchBytes)
-    : m_address(address),
+    : m_address(address = DynAddress(address)),
     m_patchBytes(patchBytes),
     m_isApplied(false)
 {
+    address = DynAddress(address);
     m_originalBytes.resize(m_patchBytes.size());
 
 
@@ -113,6 +115,7 @@ CPatch CPatch::WriteRelJnz(std::uintptr_t jumpSrc, std::uintptr_t jumpTgt)
 
 CPatch CPatch::WriteRelJle(std::uintptr_t jumpSrc, std::uintptr_t jumpTgt)
 {
+
     // jle rel32 has opcodes 0x0F, 0x8E, then disp32
     //   0F 8E [disp32]
     return CPatch(jumpSrc, BuildRel32Patch(0x0F, 0x8E, jumpSrc, jumpTgt));
@@ -125,6 +128,7 @@ CPatch CPatch::WriteRelJle(std::uintptr_t jumpSrc, std::uintptr_t jumpTgt)
 // Single-byte opcode version (JMP or CALL)
 std::vector<uint8_t> CPatch::BuildRel32Patch(uint8_t opcode, std::uintptr_t src, std::uintptr_t tgt)
 {
+    src = DynAddress(src);
     // For JMP or CALL, we have a 1-byte opcode followed by a 4-byte disp
     // disp = target - (src + 5)
     std::int32_t disp = static_cast<std::int32_t>(tgt - (src + 5));
@@ -144,6 +148,7 @@ std::vector<uint8_t> CPatch::BuildRel32Patch(uint8_t opcode, std::uintptr_t src,
 // Two-byte opcode version (e.g. 0x0F, 0x85 for jnz, 0x0F, 0x8E for jle)
 std::vector<uint8_t> CPatch::BuildRel32Patch(uint8_t opcode1, uint8_t opcode2, std::uintptr_t src, std::uintptr_t tgt)
 {
+    src = DynAddress(src);
     // For jnz/jle, we have 2 bytes of opcode, then 4 bytes disp
     // length is 6 in this case
     std::int32_t disp = static_cast<std::int32_t>(tgt - (src + 6));
@@ -162,7 +167,6 @@ std::vector<uint8_t> CPatch::BuildRel32Patch(uint8_t opcode1, uint8_t opcode2, s
 
 CPatch CPatch::PatchNop(std::uintptr_t addr, size_t size)
 {
-
     std::vector<uint8_t> patchBytes(size, 0x90);
 
     return CPatch(addr, patchBytes);

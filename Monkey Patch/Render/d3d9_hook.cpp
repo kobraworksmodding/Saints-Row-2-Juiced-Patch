@@ -2,9 +2,10 @@
 #define NOMINMAX
 #include <Windows.h>
 #include <d3d9.h>
-#include <safetyhook.hpp>
+#include "..\Hooker.h"
 #include "../FileLogger.h"
 #include "d3d9_hook.h"
+#include <safetyhook.hpp>
 
 typedef IDirect3D9* (WINAPI* Direct3DCreate9_t)(UINT SDKVersion);
 SafetyHookInline g_create_device_hook;

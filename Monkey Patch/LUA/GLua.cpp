@@ -11,7 +11,7 @@
 #include "..\General\General.h"
 #include "InGameConfig.h"
 #include "../Player/Input.h"
-
+#include "../UtilsGlobal.h"
 struct luaL_Reg
 {
     const char* name;
@@ -208,7 +208,7 @@ public:
 };
 
 typedef void(__stdcall* NeverDieT)(int character,uint8_t status);
-NeverDieT NeverDie = (NeverDieT)0x00966720;
+NeverDieT NeverDie = (NeverDieT)DynAddress(0x00966720);
 
 namespace GLua
 {
@@ -217,7 +217,7 @@ namespace GLua
         LuaArgs args(L);
         LuaReturns returns(L);
 
-        int player = *(int*)0x21703D4;
+        int player = UtilsGlobal::getplayer();
 
         if (!player) {
             returns.push(false);
@@ -480,20 +480,20 @@ namespace GLua
             lua_settable(L, LUA_GLOBALSINDEX);
         }
     }
-    lua_CFunction register_vint_lua_funcsT = (lua_CFunction)0x7F35A0;
+    lua_CFunction register_vint_lua_funcsT = (lua_CFunction)DynAddress(0x7F35A0);
     void __cdecl register_vint_lua_funcs(lua_State* L) {
         (void)register_vint_lua_funcsT(L);
         register_custom_vint_functions(L);
     }
 
     typedef char(__thiscall* cellphone_dial_numberT)(const char* number);
-    cellphone_dial_numberT cellphone_dial_number = (cellphone_dial_numberT)0x788840;
+    cellphone_dial_numberT cellphone_dial_number = (cellphone_dial_numberT)DynAddress(0x788840);
 
     char __fastcall cellphone_dial_number_c_function(const char* number, void* arg) {
         const char* JuicedUnlockAllPhoneNumber1 = "#2008";
         const char* JuicedUnlockAllPhoneNumber2 = "588444222333";
         if (!strncmp(number, JuicedUnlockAllPhoneNumber1, sizeof(JuicedUnlockAllPhoneNumber1) - 1) || !strncmp(number, JuicedUnlockAllPhoneNumber2, sizeof(JuicedUnlockAllPhoneNumber2) - 1)) {
-            ((void(*)())0x6849F0)();
+            ((void(*)())DynAddress(0x6849F0))();
             // -- Clippy, there is a proper way to have the game show up a proper cellphone message but for now we'll have to do AddMessage.
             General::AddMessage(L"Juiced", L"All cheats have been unlocked!");
         }
@@ -503,7 +503,7 @@ namespace GLua
 //#if !RELOADED
         SafeWrite32(0x00A4EC84 + 4, (UInt32)&lua_func_never_die);
         Logger::TypedLog("CHN_DBG", "address of lua func 0x%X \n", &lua_func_vint_get_avg_processing_time);
-        //static SafetyHookInline memoryutils = safetyhook::create_inline(0x00B907F0, &lua_func_vint_get_avg_processing_time);
+        //static SafetyHookInline memoryutils = create_inlinehook(0x00B907F0, &lua_func_vint_get_avg_processing_time);
         SafeWrite32(0x00B91212 + 7, (UInt32)&lua_func_vint_get_avg_processing_time);
         WriteRelCall(0x00789018, (uint32_t)&cellphone_dial_number_c_function);
 
