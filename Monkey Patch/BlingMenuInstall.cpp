@@ -407,7 +407,9 @@ namespace BlingMenuInstall
        BlingMenuAddFuncCustom("Juiced Debug", "screen_3d_to_2d_midhook", NULL, &BM_screen_3d_to_2d_midhook, NULL);
        BlingMenuAddBool("Juiced Debug", "useTextPrompts", &Input::useTextPrompts, NULL);
        BlingMenuAddInt("Juiced Debug", "Use PS3 Prompts", &Input::usePS3Prompts, NULL, 1, 0, 1);
-       BlingMenuAddFloat("Juiced Debug", "Render Distance", (float*)0x00E996B4, NULL, 0.65f, 1.f, 500.f);
+       BlingMenuAddFloat("Juiced Debug", "Render Distance", (float*)0x00E996B4, []() {
+           Render3D::RenderDistance_old = *(float*)0x00E996B4;
+           }, 0.65f, 1.f, 500.f);
        BlingMenuAddBool("Juiced Debug", "push_back_force_old_size", &Render3D::push_back_force_old_size, NULL);
        //BlingMenuAddInt8("Juiced Debug", "Fix mouse water", &Math::Fixes::FixWater, NULL,1,0,2);
        //BlingMenuAddBool("Juiced Debug", "Simulate mouse water", &Math::Fixes::SimulateWaterBug, NULL);

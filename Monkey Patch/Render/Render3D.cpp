@@ -1156,19 +1156,28 @@ constexpr auto new_size_n = 5000;
 		return Result;
 	}
 
-	void Init()
+	float RenderDistance_old;
+
+	int __cdecl cutscene_func_city_render_fade_dist_scale(int a1)
 	{
-		patchJmp((void*)DynAddress(0x00D755F0), &AlphaMaskAvailable);
-		Shadows::Init();
+		int result; // eax
+
+		result = a1;
+		float& value = *(float*)(a1 + 8);
+		if(value != 1.f)
+		*(float*)0xE996B4 = value;
+		else {
+			*(float*)0xE996B4 = RenderDistance_old;
+		}
+		return result;
+	}
+
+	void render_batch_increase() {
+
+
 		patchDWord((void*)(0xC0BD0B + 1), Instance_pool_buffer_new_size);
 		patchDWord((void*)(0xC0BD13 + 1), (uintptr_t)&Instance_pool_buffer);
-		//static auto whatever = safetyhook::create_mid(0xD098B0, [](SafetyHookContext& ctx) {
-		//	void* return_addr = _ReturnAddress();
 
-		//	printf("num lod %d %p\n", ctx.ecx, return_addr);
-
-		//	});
-		//ScanRender();
 		PatchRenderBatch<1536, new_size_n>("Main", 0x0277D190, main_render_bigger);
 		PatchRenderBatch<1024, Alpha_Size_New>("Alpha", 0x02784998, Alpha_Render_batch);
 		PatchRenderBatch<512, Supp_pass_Size_New>("Supp", 0x027899A0, Supp_pass_increased);
@@ -1177,13 +1186,32 @@ constexpr auto new_size_n = 5000;
 		patchCall((void*)0x52E912, push_back_alpha);
 		patchCall((void*)0x52E967, push_back_Supp_Pass);
 
+		patchDWord((void*)0x00DD28F8, (uintptr_t)&cutscene_func_city_render_fade_dist_scale);
+
+		patchNop((void*)0x006C6297, 6);
+		static auto update_render = safetyhook::create_mid(0x006C6297, [](SafetyHookContext& ctx) {
+			*(float*)0xE996B4 = RenderDistance_old;
+			});
+		
+	}
+
+	void Init()
+	{
+		patchJmp((void*)DynAddress(0x00D755F0), &AlphaMaskAvailable);
+		Shadows::Init();
+
+		*(float*)0xE996B4 = std::clamp((float)GameConfig::GetDoubleValue("Graphics", "RenderDistance", 1.0), 1.f,500.f);
+		RenderDistance_old = *(float*)0xE996B4;
+
+		//if (RenderDistance_old > 1.f)
+			render_batch_increase();
+		
+
 		if(GameConfig::GetValue("Graphics","RemovePixelationShader",0))
 		shaders_pc_hook();
 		OptionsManager::registerOption("Graphics", "ShaderOverride", &OVERRIDE_SHADER_LOD,1);
 		static auto GiveLOD = safetyhook::create_mid(0x00D19D1B,&SETLOD);
-		//static auto RenderLOD1 = safetyhook::create_mid(0x00D0681D, &LODtest);
-		//static auto RenderLOD2 = safetyhook::create_mid(0x00D0582C, &LODtest);
-		//static auto gr_effect_set = safetyhook::create_mid(0x00D1A884, &LODtest);
+
 		if (GameConfig::GetValue("Graphics", "X360Gamma", 1)) {
 			ShaderOptions.X360Gamma = 1;
 		}

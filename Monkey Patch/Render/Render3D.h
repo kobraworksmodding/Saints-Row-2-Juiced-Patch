@@ -46,4 +46,5 @@ namespace Render3D
     extern bool use_old;
     extern void apply_old();
     extern bool push_back_force_old_size;
+    extern float RenderDistance_old;
 }
