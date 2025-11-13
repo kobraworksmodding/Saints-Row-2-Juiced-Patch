@@ -1073,6 +1073,10 @@ void DLCGlobals() { // this was done in LUA because they assumed they'd add more
 
 void DLC::Init() {
 #if !RELOADED
+    // Patch max memory for Cust Data to prevent mod crashes with DLC.
+    patchByte((BYTE*)0x0051EE15, 0x0C);
+    patchByte((BYTE*)0x0051EE53, 0x0C);
+    // -- 737280 > 802816 (This is enough to have GOTR work, which is main priority i suppose.)
     DLCSaveSetup();
     if (!UtilsGlobal::FolderExists("DLC") || !GameConfig::GetValue("DLC", "EnableDLC", 1)) return;
     AppendSetup();
