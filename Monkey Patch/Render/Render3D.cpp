@@ -1213,7 +1213,7 @@ constexpr auto new_size_n = 5000;
 	{
 		OptionsManager::registerOption("Graphics", "ExtendedRenderDistance", (int*)&UseExtendedRenderBatch, 0);
 		patchJmp((void*)DynAddress(0x00D755F0), &AlphaMaskAvailable);
-		Shadows::Init();
+		// ~ Shadows::Init(); // Don't know if this is needed, this gets called again at the end of init. (Uzis)
 
 		render_batch_increase();		
 
