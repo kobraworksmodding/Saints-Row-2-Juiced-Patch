@@ -18,6 +18,7 @@ namespace Render3D
     void PatchHQTreeShadows();
     extern void HookSleep();
     extern void UnHookSleep();
+    extern void patch_render_batch();
     extern bool ARfov;
     extern double FOVMultiplier;
     extern const double fourbythreeAR;

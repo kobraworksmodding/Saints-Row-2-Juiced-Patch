@@ -1195,17 +1195,27 @@ constexpr auto new_size_n = 5000;
 		
 	}
 
-	void Init()
-	{
-		patchJmp((void*)DynAddress(0x00D755F0), &AlphaMaskAvailable);
-		Shadows::Init();
-
-		*(float*)0xE996B4 = std::clamp((float)GameConfig::GetDoubleValue("Graphics", "RenderDistance", 1.0), 1.f,500.f);
+	int UseExtendedRenderBatch = 0;
+	void patch_render_batch() {
+		if (UseExtendedRenderBatch == 0) {
+			*(float*)0xE996B4 = 1.0f;
+		}
+		if (UseExtendedRenderBatch == 1) {
+			*(float*)0xE996B4 = 3.0f;
+		}
 		RenderDistance_old = *(float*)0xE996B4;
 
 		//if (RenderDistance_old > 1.f)
-			render_batch_increase();
-		
+		//render_batch_increase();
+	}
+
+	void Init()
+	{
+		OptionsManager::registerOption("Graphics", "ExtendedRenderDistance", (int*)&UseExtendedRenderBatch, 0);
+		patchJmp((void*)DynAddress(0x00D755F0), &AlphaMaskAvailable);
+		Shadows::Init();
+
+		render_batch_increase();		
 
 		if(GameConfig::GetValue("Graphics","RemovePixelationShader",0))
 		shaders_pc_hook();
