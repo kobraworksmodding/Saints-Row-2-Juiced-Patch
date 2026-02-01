@@ -834,6 +834,23 @@ namespace Game
 			else
 				return 0;
 		}
+
+		// adding some validations this might be good but it's good enough for now
+		float xtbl_get_float_lazy(xtbl_node* root, const char* attribute_name) {
+			return(float)atof(xtbl_get_req_string_ref(root, attribute_name));
+		}
+
+		void xtbl_get_vector(vector3* vec, xtbl_node* root, const char* attribute_name)
+		{
+			xtbl_node* vector_node = xtbl_find(root, attribute_name);
+			vec->x = vec->y = vec->z = 0.0f;
+			if (vector_node) {
+				vec->x = xtbl_get_float_lazy(vector_node, "X");
+				vec->y = xtbl_get_float_lazy(vector_node, "Y");
+				vec->z = xtbl_get_float_lazy(vector_node, "Z");
+			}
+		}
+
 	}
 	namespace utils {
 		crc_strT str_to_hash = (crc_strT)0x00BDC9B0;
