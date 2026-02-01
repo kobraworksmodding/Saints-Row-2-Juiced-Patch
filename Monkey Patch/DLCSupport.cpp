@@ -617,6 +617,96 @@ void AppendBitmaps() {
         });
 }
 
+struct VehFineAim {
+    unsigned int Hash;
+    vector3 Lookat_Offset;
+    float Min_Pitch;
+    float Max_Pitch;
+    float X_Shift;
+    float Heading_Range;
+    float Heading_Center;
+    float base_fov;
+    float z_dist;
+    float y_dist;
+    uint8_t Flags;
+};
+
+void __stdcall ParseVehicleFineAim(xtbl_node* XML)
+{
+    VehFineAim* Entry = nullptr;
+    xtbl_node* VehFineAimNode = xtbl_find(XML, "Vehicle_Fine_Aim");
+    int Index = 0;
+    VehFineAim* VehFineAimCameras = (VehFineAim*)0x25F6738;
+    bool IsGameWidescreen = *(bool*)0x025272DD;
+
+    while (VehFineAimNode) {
+
+        if ((_strcmpi(xtbl_get_req_string_ref(VehFineAimNode, "Aspect"), "widescreen") == 0) == IsGameWidescreen) {
+            //MessageBoxA(0, 0, 0, 0);
+            Entry = &VehFineAimCameras[Index++];
+            Entry->Hash = Game::utils::str_to_hash((char*)xtbl_get_req_string_ref(VehFineAimNode, "name"));
+            xtbl_get_vector(&Entry->Lookat_Offset, VehFineAimNode, "Lookat_Offset");
+            Entry->Min_Pitch = xtbl_get_float_lazy(VehFineAimNode, "Min_Pitch");
+            Entry->Max_Pitch = xtbl_get_float_lazy(VehFineAimNode, "Max_pitch");
+            Entry->X_Shift = xtbl_get_float_lazy(VehFineAimNode, "X_Shift");
+            Entry->Heading_Center = xtbl_get_float_lazy(VehFineAimNode, "Heading_Center");
+            Entry->Heading_Range = xtbl_get_float_lazy(VehFineAimNode, "Heading_Range");
+            Entry->base_fov = xtbl_get_float_lazy(VehFineAimNode, "base_fov");
+            Entry->y_dist = xtbl_get_float_lazy(VehFineAimNode, "y_dist");
+            Entry->z_dist = xtbl_get_float_lazy(VehFineAimNode, "z_dist");
+            Entry->Flags = 0;
+           
+            xtbl_node* FlagNode = xtbl_find(VehFineAimNode, "flags");
+
+            if (FlagNode) {
+
+                xtbl_node* CurrentFlag = xtbl_find(FlagNode, "Flag");
+                
+                while (CurrentFlag) {
+                    const char* FlagName = xtbl_get_req_string_ref(CurrentFlag, 0);
+
+                    if (_stricmp(FlagName, "limit_heading_range") == 0) Entry->Flags |= 1;
+                    else if (_stricmp(FlagName, "turn_player_toward_camera") == 0) Entry->Flags |= 2;
+                    else if (_stricmp(FlagName, "turn_camera_with_vehicle") == 0) Entry->Flags |= 4;
+
+                    CurrentFlag = xtbl_find_next(FlagNode, CurrentFlag, "Flag");
+                }
+            }
+
+            Entry->Min_Pitch = UtilsGlobal::DegreetoRadians(Entry->Min_Pitch);
+            Entry->Max_Pitch = UtilsGlobal::DegreetoRadians(Entry->Max_Pitch);
+            Entry->Heading_Center = UtilsGlobal::DegreetoRadians(Entry->Heading_Center);
+            Entry->Heading_Range = UtilsGlobal::DegreetoRadians(Entry->Heading_Range);
+            VehFineAimNode = xtbl_find_next(XML, VehFineAimNode, "Vehicle_Fine_Aim");
+        }
+
+        else VehFineAimNode = xtbl_find_next(XML, VehFineAimNode, "Vehicle_Fine_Aim");
+    }
+
+    for (int j = 0; j < 2; ++j) { // this was the bright idea they came up with for the DLC flatbed truck
+        Entry = &VehFineAimCameras[Index++];
+
+        if (j == 0) {
+            Entry->Hash = Game::utils::str_to_hash((char*)"Flatbed Primary");
+            Entry->Lookat_Offset = { -0.5f, 1.45f, -1.62f };
+        }
+        else {
+            Entry->Hash = Game::utils::str_to_hash((char*)"Flatbed Secondary");
+            Entry->Lookat_Offset = { 0.5f, 1.45f, -1.62f };
+        }
+
+        Entry->Min_Pitch = -1.134464f;
+        Entry->Max_Pitch = 0.61086524f;
+        Entry->X_Shift = 0.5f;
+        Entry->Heading_Center = 3.1415927f;
+        Entry->Heading_Range = 0.0f;
+        Entry->base_fov = IsGameWidescreen ? 40.0f : 50.0f;
+        Entry->y_dist = 0.0f;
+        Entry->z_dist = 1.75f;
+        Entry->Flags = (Entry->Flags & 0xF8) | 0x06;
+    }
+}
+
 void ParseVehicle(xtbl_node* TablePointer, int Unk) {
     ((void(__cdecl*)(xtbl_node*, int))0xAEDA10)(TablePointer, Unk);
 }
@@ -665,7 +755,7 @@ void AppendVehicleCameras() {
         {
             if (!IsDLC) {
                 IsDLC = true;
-                ctx.eip = 0x0000AEE8A0;
+                ctx.eip = 0x00AEE8A0;
             }
         });
 
@@ -673,6 +763,8 @@ void AppendVehicleCameras() {
         {
             if (IsDLC) IsDLC = false;
         });
+
+    patchJmp((void*)0x00496490, &ParseVehicleFineAim);
 }
 
 SafetyHookInline ParseVIAnim{};
@@ -1093,5 +1185,6 @@ void DLC::Init() {
         if (ctx.eax)
             if (*(short*)ctx.eax == 0x0001) ctx.ebp = ctx.eax + 2; // eax + 2 so we can get the image tags displaying in the outfits section of the wardrobe like in TU3
         });
+
 #endif
 }

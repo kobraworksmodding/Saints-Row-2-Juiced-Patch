@@ -1,6 +1,7 @@
 #pragma once
 #include "../Patcher/CPatch.h"
 #include <safetyhook.hpp>
+#include "../Math/Math.h"
 enum vint_message_type {
 	top_of_screen = 0,
 	middle_of_screen = 1,
@@ -103,6 +104,8 @@ namespace Game
 		xtbl_node* xtbl_find_next(xtbl_node* element, xtbl_node* current, const char* tag);
 		void xtbl_free();
 		const char* xtbl_get_req_string_ref(xtbl_node* root, const char* attribute_name);
+		float xtbl_get_float_lazy(xtbl_node* root, const char* attribute_name);
+		void xtbl_get_vector(vector3* vec, xtbl_node* root, const char* attribute_name);
 	}
 	namespace utils {
 		typedef uint32_t(__thiscall* crc_strT)(const char* text);
