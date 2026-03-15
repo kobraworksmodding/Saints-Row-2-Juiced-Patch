@@ -17,6 +17,7 @@ using namespace Game::xml;
 
 #define MAX_VEH 168
 #define STORE_ITEM_LIMIT 512
+#define MAX_VEHICLES_PER_UNLOCK 6 // there are more things preventing it from going above 6 and I do not want to see the unlockable code ever again
 
 struct VehiclePadding {
     unsigned char Padding[2000];
@@ -275,7 +276,45 @@ void DLC_Unlocks() {
     }
 }
 
+struct VehRewards
+{
+    uint32_t Flags;
+    int Vehicles[MAX_VEHICLES_PER_UNLOCK];
+};
+
+VehRewards* VehRewardsNew;
+
 void CHooks_unlockable() {
+
+    patchByte((void*)0x006BB213, MAX_VEHICLES_PER_UNLOCK);
+    patchByte((void*)0x006BBFC0, MAX_VEHICLES_PER_UNLOCK);
+
+    VehRewardsNew = (VehRewards*)UtilsGlobal::calloc_game(1, sizeof(VehRewards));
+
+    const std::pair<unsigned int, std::vector<unsigned int>> Mappings[] = {
+    { 0x000000, {
+        0x006BBED8, 0x006BBEFA, 0x006BC5E3, 0x006BC5F7, 0x006BC6FD, 0x006BC7C5, 0x006BCBDB, 0x006BCC3E,
+        0x006BCC62, 0x006BCCDB, 0x0076228B, 0x00762492
+    }},
+    { 0x000001, {
+        0x006BBEDF, 0x006BBF01, 0x006BCBE0, 0x006BCC44
+    }},
+    { 0x000004, {
+        0x006BBF57, 0x006BC61A
+    }}
+    };
+
+    for (const auto& Entry : Mappings) {
+        unsigned int Offset = Entry.first;
+        for (unsigned int Address : Entry.second) SafeWrite32(Address, (UInt32)VehRewardsNew + Offset);
+    }
+
+    const unsigned int OffsetAddresses[] = {
+        0x006BB1AB, 0x006BB212, 0x006BB295, 0x006BB29C,
+        0x006BB332, 0x006BB339, 0x006BC004, 0x006BBF23
+    };
+
+    for (unsigned int Address : OffsetAddresses) SafeWrite8(Address, 0x38);
 
     static auto unlock_hack1 = safetyhook::create_mid(0x006BAD0D, [](SafetyHookContext& ctx) {
         unlockables* current_unlockable = (unlockables*)ctx.ebp;
