@@ -1,6 +1,30 @@
 <root>
 <Table>
 	<BitmapSheets>
+		<Name>ui_juiced_credits</Name>
+		<Images>
+			<Properties>
+				<Name>ui_credits_mike_watson</Name>
+				<StartX>3</StartX>
+				<StartY>2</StartY>
+				<ImageWidth>507</ImageWidth>
+				<ImageHeight>253</ImageHeight>
+				<PersistFilename>D:\projects\sr2art\Interface\bms\main_menu\ui_credits_mike_watson.tga</PersistFilename>
+				</Properties>
+			<Properties>
+				<Name>ui_credits_logo_kobraworks</Name>
+				<StartX>3</StartX>
+				<StartY>265</StartY>
+				<ImageWidth>240</ImageWidth>
+				<ImageHeight>96</ImageHeight>
+				<PersistFilename>D:\projects\sr2art\Interface\bms\main_menu\ui_credits_logo_kobraworks.tga</PersistFilename>
+				</Properties>
+			</Images>
+		<_Editor>
+			<Category>Entries</Category>
+			</_Editor>
+		</BitmapSheets>
+	<BitmapSheets>
 		<Name>ui_bms_sdl3</Name>
 		<Images>
 			<Properties>
