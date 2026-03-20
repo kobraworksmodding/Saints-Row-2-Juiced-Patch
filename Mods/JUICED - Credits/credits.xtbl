@@ -1,21 +1,7 @@
 <root>
 	<Table>
 	    <Credits>
-			<Name>INMEMIDOL</Name>
-			<section_title>IN MEMORY OF MIKE WATSON (IDOLNINJA)</section_title>
-			<headings>
-				<headings>
-					<heading>Community Manager and Gentleman of the Row</heading>
-					<type>Music</type>
-					<items>
-						<items>
-							<name>1971 - 2021</name>
-						</items>
-						<items>
-						</items>
-					</items>
-				</headings>
-			</headings>
+			<Name>IMG_IDOL</Name>
 			<_Editor>
 				<Category>Entries</Category>
 			</_Editor>
@@ -109,7 +95,7 @@
 							<desc>Playtesting for tha Row</desc>
 						</items>
 						<items>
-							<name>cats</name>
+							<name>ithinkimcats</name>
 							<desc>Tha Row Logo</desc>
 						</items>
 						<items>
@@ -133,6 +119,12 @@
 					</items>
 				</headings>
 			</headings>
+			<_Editor>
+				<Category>Entries</Category>
+			</_Editor>
+		</Credits>
+	    <Credits>
+			<Name>IMG_KOBRA</Name>
 			<_Editor>
 				<Category>Entries</Category>
 			</_Editor>
