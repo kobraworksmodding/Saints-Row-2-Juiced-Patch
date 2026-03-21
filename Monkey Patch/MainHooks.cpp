@@ -833,6 +833,7 @@ void cus_FrameToggles() {
 
 	if (IsKeyPressed(VK_F8, false)) { // F8
 		Render3D::FOVMultiplier -= 0.1;
+		Render3D::FOVMultiplier = std::clamp(Render3D::FOVMultiplier, 1.0, 10.0);
 		Render3D::AspectRatioFix();
 		Logger::TypedLog(CHN_DEBUG, "-FOV Multiplier: %f,\n", Render3D::FOVMultiplier);
 		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);

@@ -1452,6 +1452,7 @@ constexpr auto new_size_n = 5000;
 		if (GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", 1.0)) // 1.0 isn't go anywhere.
 		{
 			FOVMultiplier = GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
+			FOVMultiplier = std::clamp(Render3D::FOVMultiplier, 1.0, 10.0);
 			if (FOVMultiplier > 1.0) {
 				ARfov = 1;
 				Logger::TypedLog(CHN_DEBUG, "Applying FOV Multiplier.\n");
