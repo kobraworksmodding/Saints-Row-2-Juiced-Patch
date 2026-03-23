@@ -45,7 +45,42 @@ namespace Game
 		extern float Get33msOverFrameTime_Fix();
 		extern float GetHavokFrameTime();
 		extern float GetHavokFrameTimeOver16ms_Fix();
+		extern int GetFrameCount();
 	}
+
+	class hzlimiter {
+		float m_accumulator = 0.0f;
+		float m_interval;
+		unsigned int m_last_frame = 0;
+		bool m_tick_this_frame = false;
+
+
+	public:
+		hzlimiter(float target_fps) : m_interval(1.0f / target_fps) {}
+		bool b_enabled = true;
+
+		bool ShouldTick() {
+
+			if (!b_enabled) {
+				return true;
+			}
+
+			unsigned int frame = Timer::GetFrameCount();
+			if (m_last_frame != frame) {
+				m_last_frame = frame;
+				m_accumulator += Timer::GetFrameTime();
+				if (m_accumulator >= m_interval) {
+					m_accumulator = 0.0f;
+					m_tick_this_frame = true;
+				}
+				else {
+					m_tick_this_frame = false;
+				}
+			}
+			return m_tick_this_frame;
+		}
+	};
+
 	namespace HUD {
 		extern int vint_message(const wchar_t* message_text, vint_message_struct *a2);
 	};

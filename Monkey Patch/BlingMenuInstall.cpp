@@ -294,7 +294,7 @@ namespace BlingMenuInstall
        //BlingMenuAddFuncCustom("Juiced", "SleepHack", NULL, &BM_SleepHacks, NULL);
        BlingMenuAddBool("Juiced", "Fix Havok Frametime",&Debug::fixFrametime, BM_restoreHavok);
        BlingMenuAddFuncCustom("Juiced", "FixFrametimeVehicleSkids",NULL ,&BM_FixFrametimeVehicleSkids, NULL);
-       BlingMenuAddBool("Juiced", "bFixTireDirtFPS", &Game::bFixTireDirtFPS, NULL);
+       BlingMenuAddBool("Juiced", "bFixTireDirtAndWaterFPS", &Game::bFixTireDirtFPS, NULL);
        BlingMenuAddFuncCustom("Juiced", "Uncap FPS", NULL, &BM_UncapFPS, NULL);
        BlingMenuAddInt8("Juiced", "OSD", (signed char*)&useJuicedOSD, NULL, 1, 0, 3);
        BlingMenuAddFuncCustom("Juiced", "VanillaFXPlus", NULL, &BM_VFXPlus, NULL);

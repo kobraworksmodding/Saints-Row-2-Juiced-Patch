@@ -54,10 +54,13 @@ namespace Game
 
 		havok_get_time_this_frameT havok_get_time_this_frame = (havok_get_time_this_frameT)0x6FF860;
 	}
+
+	hzlimiter hz_30_fps(30.f);
+
 	namespace Physical {
 		using namespace Timer;
 
-		// Maybe should figure out how GTA modders use makeinline from ThirtneenAG's fork of injector which uses SafetyHook? I'm happy with this though.
+
 
 		SafetyHookMid motorcycle_should_eject_passengers_MIDASMHOOK;
 		// improves/fixes bike ejection when Havok Frametime is being ticked.
@@ -298,6 +301,7 @@ namespace Game
 
 	bool bFixTireDirtFPS = true;
 
+
 	SafetyHookInline vehicle_effects_handle_tire_dirtD;
 	void vehicle_effects_handle_tire_dirt(void* vehicle) {
 
@@ -309,22 +313,7 @@ namespace Game
 		// by accumlating frametime and checking if it's over 0.033 we can know it's a 30hz tick and allow particle handling.
 		if (bFixTireDirtFPS) {
 
-			if (Tire_dirt_last_frame != Timer::GetFrameCount())
-			{
-				Tire_dirt_last_frame = Timer::GetFrameCount();
-				Tire_dirt_accumulator += Timer::GetFrameTime();
-				if (Tire_dirt_accumulator >= (1.0f / 30.0f))
-				{
-					Tire_dirt_accumulator = 0.0f;
-					Tire_dirt_tick_this_frame = true;
-				}
-				else
-				{
-					Tire_dirt_tick_this_frame = false;
-				}
-			}
-
-			if (!Tire_dirt_tick_this_frame)
+			if (!hz_30_fps.ShouldTick())
 				return;
 
 		}
@@ -332,8 +321,24 @@ namespace Game
 		vehicle_effects_handle_tire_dirtD.unsafe_ccall(vehicle);
 	}
 
+	SafetyHookInline vehicle_effects_handle_tire_waterD;
+	void vehicle_effects_handle_tire_water(void* vehicle) {
+
+		// (clippy95) game created too many particles at higher framerates which hits the limit of 16, making it common for one side of the vehicle to have missing dirt
+		// by accumlating frametime and checking if it's over 0.033 we can know it's a 30hz tick and allow particle handling.
+		if (bFixTireDirtFPS) {
+
+			if (!hz_30_fps.ShouldTick())
+				return;
+
+		}
+
+		vehicle_effects_handle_tire_waterD.unsafe_ccall(vehicle);
+	}
+
 	void Init() {
 		vehicle_effects_handle_tire_dirtD = safetyhook::create_inline(0xAD09E0, vehicle_effects_handle_tire_dirt);
+		vehicle_effects_handle_tire_waterD = safetyhook::create_inline(0xAD0CF0, vehicle_effects_handle_tire_water);
 		if (GameConfig::GetValue("Debug", "DisableDistantPeds", 0)) DisableDistantPeds.Apply();
 		if (GameConfig::GetValue("Debug", "DisableDistantVehicles", 0)) DisableDistantVehicles.Apply();
 		if(GameConfig::GetValue("Gameplay","ForceMetricSystem",0))
