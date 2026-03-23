@@ -249,6 +249,14 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 		GetVersionExAFirstRun=false;
 		Logger::TypedLog(CHN_DLL, "Calling hooked GetVersionExA.\n");
 		UInt32 winmaindata=*((UInt32*)offset_addr(0x00520ba0));
+
+		bool b_verIs1_2 = strcmp((const char*)0xE66958_g, "g:\\Projects\\SaintsRow\\sr2\\main\\code\\SR2___Win32_Final\\SR2_pc_final.pdb") == 0;
+
+		if (!b_verIs1_2) {
+			MessageBoxA(NULL, "Incompatible version, only supported version of the game is patch 1.2\nGerman binaries do not work with Juiced", "Juiced Patch", MB_ICONERROR);
+			exit(0);
+		}
+
 		if(winmaindata==0x83ec8b55)
 		{
 			// The Steam version of the executable is now unencrypted, so we can start patching.
