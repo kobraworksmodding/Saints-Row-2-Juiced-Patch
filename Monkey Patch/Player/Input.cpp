@@ -1007,8 +1007,9 @@ namespace Input {
 		DisableXInput();
 		ForceNoVibration();
 
-		if (GameConfig::GetValue("Debug", "DisableDInput", 1))
+		//if (GameConfig::GetValue("Debug", "DisableDInput", 1))
 		{
+			// Disables DirectInput
 			patchByte((void*)0xC147D4, 0xC); // jnz 0xC147E1
 		}
 
