@@ -315,7 +315,7 @@ namespace Game
 				Tire_dirt_accumulator += Timer::GetFrameTime();
 				if (Tire_dirt_accumulator >= (1.0f / 30.0f))
 				{
-					Tire_dirt_accumulator -= (1.0f / 30.0f);
+					Tire_dirt_accumulator = 0.0f;
 					Tire_dirt_tick_this_frame = true;
 				}
 				else
