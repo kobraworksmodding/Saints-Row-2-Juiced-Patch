@@ -364,8 +364,34 @@ CMultiPatch CMPatches_SR1Reloading = {
 		((void(__cdecl*)(uintptr_t player, uintptr_t vehicle, bool tp))0xB19F40)(player,vehicle, tp);
 	}
 
+	void effect_stop(int param_effect_handle, BOOL hard_stop, int player_sync, int instance_id) {
+		static uintptr_t effect_stop_addr = 0x50DDB0;
+
+		__asm {
+			pushad
+			mov esi, param_effect_handle
+			push instance_id
+			push player_sync
+			push hard_stop
+			call effect_stop_addr
+			add esp,0xC
+			popad
+		}
+
+	}
+
 	void Init()
 	{
+		// (clippy95) fixes https://github.com/kobraworksmodding/SR2IssuesList/issues/46
+		// Kneecapper visuals weren't stopped when vehicle is stopped.
+		static auto vehicle_kneecapper_unequip_midhook = safetyhook::create_mid(0xADDD92, [](SafetyHookContext& ctx) {
+
+			uintptr_t kneecapper_feature = ctx.edx;
+			int* m_effect_handles = (int*)(kneecapper_feature + 0x38);
+			auto& wheel_index = ctx.edi;
+			effect_stop(m_effect_handles[wheel_index], true, 1, 0);
+
+			});
 		if (GameConfig::GetValue("Gameplay", "SR1VehicleCameraTransition", 0) != 0) {
 			patchNop((void*)0xB0CB81, 5);
 			static auto veh_enter_test = safetyhook::create_mid(0xB0ECBD, [](SafetyHookContext& ctx) {
