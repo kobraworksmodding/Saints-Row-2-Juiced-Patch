@@ -47,6 +47,11 @@ namespace Game
 		bool isHavokFrameTimeTicked() {
 			return Debug::fixFrametime;
 		}
+
+		int GetFrameCount() {
+			return *(int*)0x0252A3C4;
+		}
+
 		havok_get_time_this_frameT havok_get_time_this_frame = (havok_get_time_this_frameT)0x6FF860;
 	}
 	namespace Physical {
@@ -291,7 +296,44 @@ namespace Game
 		SafeWrite8(0x64B685, 0xEB);
 	}
 
+	bool bFixTireDirtFPS = true;
+
+	SafetyHookInline vehicle_effects_handle_tire_dirtD;
+	void vehicle_effects_handle_tire_dirt(void* vehicle) {
+
+		static float Tire_dirt_accumulator = 0.0f;
+		static unsigned int Tire_dirt_last_frame = 0;
+		static bool Tire_dirt_tick_this_frame = false;
+
+		// (clippy95) game created too many particles at higher framerates which hits the limit of 16, making it common for one side of the vehicle to have missing dirt
+		// by accumlating frametime and checking if it's over 0.033 we can know it's a 30hz tick and allow particle handling.
+		if (bFixTireDirtFPS) {
+
+			if (Tire_dirt_last_frame != Timer::GetFrameCount())
+			{
+				Tire_dirt_last_frame = Timer::GetFrameCount();
+				Tire_dirt_accumulator += Timer::GetFrameTime();
+				if (Tire_dirt_accumulator >= (1.0f / 30.0f))
+				{
+					Tire_dirt_accumulator -= (1.0f / 30.0f);
+					Tire_dirt_tick_this_frame = true;
+				}
+				else
+				{
+					Tire_dirt_tick_this_frame = false;
+				}
+			}
+
+			if (!Tire_dirt_tick_this_frame)
+				return;
+
+		}
+
+		vehicle_effects_handle_tire_dirtD.unsafe_ccall(vehicle);
+	}
+
 	void Init() {
+		vehicle_effects_handle_tire_dirtD = safetyhook::create_inline(0xAD09E0, vehicle_effects_handle_tire_dirt);
 		if (GameConfig::GetValue("Debug", "DisableDistantPeds", 0)) DisableDistantPeds.Apply();
 		if (GameConfig::GetValue("Debug", "DisableDistantVehicles", 0)) DisableDistantVehicles.Apply();
 		if(GameConfig::GetValue("Gameplay","ForceMetricSystem",0))

@@ -84,5 +84,6 @@ namespace Game
 	extern int s_CursorPosition;
 	extern CPatch DisableDistantPeds;
 	extern CPatch DisableDistantVehicles;
+	extern bool bFixTireDirtFPS;
 };
 
