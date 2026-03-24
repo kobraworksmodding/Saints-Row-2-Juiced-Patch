@@ -13,6 +13,7 @@
 #include "Hooking.Patterns.h"
 #include "../Game/CrashFixes.h"
 #include "..\UtilsGlobal.h"
+#include "XACT.h"
 namespace XACT
 {
 
@@ -102,8 +103,115 @@ namespace XACT
 
 		}
 	}
+	uintptr_t X3DAudioInitialize_og;
+	HRESULT _cdecl X3DAudioInitialize_hook(int SpeakerMask, float SpeedOfSound, int Instance) {
+		printf("called agoksdkfljasfkg;asjfkladsjfkldasjf\n\n\n\n\n\n\n\n\n");
+		SpeakerMask = 0x60F;
+
+		return ((HRESULT(__cdecl*)(int, float, int))X3DAudioInitialize_og)(SpeakerMask, SpeedOfSound, Instance);
+	}
+
+	double apply_lpf_scalars(uintptr_t audio_channel, float a2)
+	{
+		double v2; // st6
+		double v3; // st7
+
+		v2 = 1.0;
+		v3 = 1.0 - (1.0 - *(float*)(audio_channel + 0x30)) * (1.0 - *(float*)(audio_channel + 0x2C)) * (1.0 - a2);
+		if (v3 > 0.0 && v3 >= 1.0)
+			return (float)v2;
+		v2 = 0.0;
+		if (v3 <= 0.0)
+			return (float)v2;
+		else
+			return (float)v3;
+	}
+
+	enum lpf_state : __int32
+	{
+		LPF_STATE_INSTANCE = 0x0,
+		LPF_STATE_GLOBAL = 0x1,
+		NUM_LPF_STATES = 0x2,
+	};
+
+
+	lpf_state xaudio_setup_dry_submix_lpf_path(uintptr_t a1, float a2) {
+
+		lpf_state result;
+		static uintptr_t xaudio_setup_dry_submix_lpf_path_addr = 0x482F40;
+		__asm {
+			mov edx, a1
+			push a2
+			call xaudio_setup_dry_submix_lpf_path_addr
+			add esp,4
+			mov result,eax
+		}
+		return result;
+	}
+
+	struct IXAudio2;
+
+	struct IXAudio2_vt
+	{
+		HRESULT(__stdcall* QueryInterface)(IXAudio2* thisa, IID* riid, void** ppvInterface);
+		unsigned int(__stdcall* AddRef)(IXAudio2* thisa);
+		unsigned int(__stdcall* Release)(IXAudio2* thisa);
+		HRESULT(__stdcall* GetDeviceCount)(IXAudio2* thisa, UINT32* pCount);
+		HRESULT(__stdcall* GetDeviceDetails)(IXAudio2* thisa, UINT32 Index, XAUDIO2_DEVICE_DETAILS* pDeviceDetails);
+		HRESULT(__stdcall* Initialize)(IXAudio2* thisa, UINT32 Flags, XAUDIO2_PROCESSOR XAudio2Processor);
+		HRESULT(__stdcall* RegisterForCallbacks)(IXAudio2* thisa, IXAudio2EngineCallback* Callback);
+		void(__stdcall* UnregisterForCallbacks)(IXAudio2* thisa, IXAudio2EngineCallback* Callback);
+		HRESULT(__stdcall* CreateSourceVoice)(IXAudio2* thisa, IXAudio2SourceVoice** ppSourceVoice, WAVEFORMATEX* pSourceFormat, UINT32 Flags, float MaxFrequencyRatio, IXAudio2VoiceCallback* pCallback, XAUDIO2_VOICE_SENDS* pSendList, XAUDIO2_EFFECT_CHAIN* pEffectChain);
+		HRESULT(__stdcall* CreateSubmixVoice)(IXAudio2* thisa, IXAudio2SubmixVoice** ppSubmixVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, UINT32 ProcessingStage, XAUDIO2_VOICE_SENDS* pSendList, XAUDIO2_EFFECT_CHAIN* pEffectChain);
+		HRESULT(__stdcall* CreateMasteringVoice)(IXAudio2* thisa, IXAudio2MasteringVoice** ppMasteringVoice, UINT32 InputChannels, UINT32 InputSampleRate, UINT32 Flags, UINT32 DeviceIndex, XAUDIO2_EFFECT_CHAIN* pEffectChain);
+		HRESULT(__stdcall* StartEngine)(IXAudio2* thisa);
+		void(__stdcall* StopEngine)(IXAudio2* thisa);
+		HRESULT(__stdcall* CommitChanges)(IXAudio2* thisa, UINT32 OperationSet);
+		void(__stdcall* GetPerformanceData)(IXAudio2* thisa, XAUDIO2_PERFORMANCE_DATA* pPerfData);
+		void(__stdcall* SetDebugConfiguration)(IXAudio2* thisa, XAUDIO2_DEBUG_CONFIGURATION* pDebugConfiguration, void* pReserved);
+	};
+
+
+	struct IXAudio2
+	{
+		IXAudio2_vt* vt;
+	};
+
+
 	void ChangeSpeakerCount()
 	{
+		X3DAudioInitialize_og = *(uintptr_t*)0xDB83AC;
+		if (GameConfig::GetValue("Audio", "Fix3DAudio", 1))
+		{
+			Logger::TypedLog(CHN_AUDIO, "Using Fix3DAudio...\n");
+			SafeWrite32(0xDB83AC, (uintptr_t)&X3DAudioInitialize_hook);
+		}
+		
+		static auto huh = safetyhook::create_mid(0x4818EC, [](SafetyHookContext& ctx) {
+
+			IXAudio2* pXAudio2 = *(IXAudio2**)0x00F52E34;
+			XAUDIO2_DEVICE_DETAILS details{};
+			pXAudio2->vt->GetDeviceDetails(pXAudio2, 0, &details);
+
+			printf("channel mask from it is %p %p\n", details.OutputFormat.dwChannelMask,&details);
+			//MessageBoxA(NULL, "FG", "FG", 0);
+
+
+			});
+
+		//static auto X360_LPF = safetyhook::create_mid(0x482296, [](SafetyHookContext& ctx) {
+
+		//	uintptr_t audio_channel = ctx.esi;
+		//	printf("audio_channel %p\n", audio_channel);
+		//	if ((*(BYTE*)(audio_channel + 406) & 4) != 0)
+		//	{
+		//		float final_lpf = apply_lpf_scalars(audio_channel, 0.0);
+		//		xaudio_setup_dry_submix_lpf_path(*(DWORD*)(audio_channel + 392), final_lpf);
+		//		*(WORD*)(audio_channel + 406) &= ~4u;
+		//	}
+
+		//	});
+
 		if (GameConfig::GetValue("Audio", "51Surround", 0) == 1)
 		{
 			Logger::TypedLog(CHN_AUDIO, "Using 5.1 Surround Sound...\n");
