@@ -1321,7 +1321,7 @@ int RenderLoopStuff_Hacked()
 
 	if (Debug::fixFrametime)
 	    havokFrameTicker();
-
+	Game::SetTauCallMe();
 	if (Render2D::BetterChatTest) {
 		LessRetardedChat();
 	}

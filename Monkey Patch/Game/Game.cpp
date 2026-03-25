@@ -336,7 +336,32 @@ namespace Game
 		vehicle_effects_handle_tire_waterD.unsafe_ccall(vehicle);
 	}
 
+	uintptr_t tauThis = NULL;
+	float savedTau;
+	float SavedDamping;
+
+	void __fastcall setTauAndDampingHook(uintptr_t thisa, void* pad,float tau, float damping) {
+		tauThis = thisa;
+		savedTau = tau;
+		SavedDamping = damping;
+		((void(__thiscall*)(uintptr_t,float,float))0xBB30E0)(thisa,tau,damping);
+	}
+
+	bool FrametimeTauDampingHack = true;
+
+	void SetTauCallMe() {
+		if (!tauThis)
+			return;
+		float adjusted_tau = savedTau * Timer::GetHavokFrameTimeOver16ms_Fix();
+
+		if (!FrametimeTauDampingHack)
+			adjusted_tau = savedTau;
+
+		((void(__thiscall*)(uintptr_t, float, float))0xBB30E0)(tauThis, adjusted_tau, SavedDamping);
+	}
+
 	void Init() {
+		patchCall((void*)0xD5E9B2, setTauAndDampingHook);
 		vehicle_effects_handle_tire_dirtD = safetyhook::create_inline(0xAD09E0, vehicle_effects_handle_tire_dirt);
 		vehicle_effects_handle_tire_waterD = safetyhook::create_inline(0xAD0CF0, vehicle_effects_handle_tire_water);
 		if (GameConfig::GetValue("Debug", "DisableDistantPeds", 0)) DisableDistantPeds.Apply();

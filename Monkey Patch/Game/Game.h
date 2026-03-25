@@ -120,5 +120,7 @@ namespace Game
 	extern CPatch DisableDistantPeds;
 	extern CPatch DisableDistantVehicles;
 	extern bool bFixTireDirtFPS;
+	extern void SetTauCallMe();
+	extern bool FrametimeTauDampingHack;
 };
 
