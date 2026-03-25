@@ -189,6 +189,16 @@ std::string getCPUName() {
 #include <d3d9.h>
 #pragma comment(lib, "d3d9.lib")
 
+// (clippy95) Attempt to fix 0x00CA08AA called by 0xD01DF8 crash, seems like it's overflowing, render buffer size was too small maybe? at 33 MB previously
+#define NEW_RENDER_BUFFER_SIZE 0x2000000 * 4
+void* render_buffer_malloc(size_t size) {
+
+	auto block = ((void*(__cdecl*)(size_t))0xC96CFF)((NEW_RENDER_BUFFER_SIZE));
+	memset(block, 0, NEW_RENDER_BUFFER_SIZE);
+	patchDWord((void*)0xDB3998, NEW_RENDER_BUFFER_SIZE);
+	return block;
+
+}
 
 BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 {
@@ -269,6 +279,9 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 			// Be very careful you can break things easily.
 
 			// The game timer constructor sets up the game's timing so this needs to patch before the constructor is called.
+
+			patchCall((void*)0xDB3985, render_buffer_malloc);
+
 			PatchQueryPerformance();
 			//Render3D::render_batch_increase();
 		}
