@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <regex>
+#include "../loose files.h"
 
 namespace CModLoader {
     namespace Audio {
@@ -196,6 +197,32 @@ namespace CModLoader {
             return sections;
         }
 
+        std::vector<Section> parse_auto(const std::string& filepath) {
+            std::ifstream file(filepath);
+            if (!file.is_open()) return {};
+
+            std::string line;
+            // Skip leading empty lines / the count line
+            while (std::getline(file, line)) {
+                line.erase(0, line.find_first_not_of(" \t\r\n"));
+                line.erase(line.find_last_not_of(" \t\r\n") + 1);
+                if (line.empty()) continue;
+                // Skip pure number lines
+                if (std::regex_match(line, std::regex("^\\d+$"))) continue;
+                // First meaningful line tells us the format
+                break;
+            }
+
+            file.seekg(0); // rewind
+
+            if (line.front() == '[')
+                return parse_mod_file(filepath);
+            else if (line.front() == '"')
+                return parse_special_file(filepath);
+            else
+                return {}; // unknown
+        }
+
         // Generate merged content string
         std::string generate_merged_content(const std::vector<Section>& all_sections) {
             std::ostringstream result;
@@ -226,37 +253,19 @@ namespace CModLoader {
                 // Parse existing content
                 std::vector<Section> all_sections = parse_existing_content(current->TXT);
 
-                // Read mod files from mods/CModLoader/Audio/
-                std::string mod_audio_path = "mods/CModLoader/Audio/";
 
-                if (std::filesystem::exists(mod_audio_path)) {
-                    for (const auto& entry : std::filesystem::directory_iterator(mod_audio_path)) {
-                        if (entry.is_regular_file()) {
-                            std::string filename = entry.path().filename().string();
-                            std::string extension = entry.path().extension().string();
+                for (auto& entry : DirCache) {
+                    const std::string& filename = entry.first;  // lowercase
+                    const std::string& filepath = entry.second.FilePath;
 
-                            // Skip the main audio files
-                            if (filename == "audio_boot.idx_map" || filename == "audio_level.idx_map") {
-                                continue;
-                            }
+                    // skip the originals
+                    if (filename == "audio_boot.idx_map" || filename == "audio_level.idx_map")
+                        continue;
 
-                            std::vector<Section> mod_sections;
-
-                            if (extension == ".idx_map") {
-                                mod_sections = parse_mod_file(entry.path().string());
-                            }
-                            else if (filename.ends_with(".idx_map_iformat")) {
-                                mod_sections = parse_special_file(entry.path().string());
-                            }
-                            else {
-                                continue; // Skip other file types
-                            }
-
-                            // Add all sections from this mod file
-                            for (const auto& mod_section : mod_sections) {
-                                all_sections.push_back(mod_section);
-                            }
-                        }
+                    if (filename.ends_with(".idx_map")) {
+                        auto mod_sections = parse_auto(filepath);
+                        for (auto& s : mod_sections)
+                            all_sections.push_back(s);  
                     }
                 }
 
