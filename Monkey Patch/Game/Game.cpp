@@ -348,6 +348,30 @@ namespace Game
 	}
 
 	bool FrametimeTauDampingHack = true;
+	bool b_train_havok_frametime_extra_fix = true;
+
+	// vft
+	SafetyHookInline sub_95B480D;
+	// track buildJacobian
+	float* __fastcall sub_95B480(uintptr_t thisa, void* pad,float* a2,float* a3) {
+		
+		float* thing = a2;
+
+		float s1 = thing[7];
+		float s2 = thing[9];
+
+		if (b_train_havok_frametime_extra_fix) {
+			thing[9] *= Timer::GetHavokFrameTimeOver16ms_Fix();
+			thing[7] *= Timer::GetHavokFrameTimeOver16ms_Fix();
+		}
+
+		auto result = sub_95B480D.unsafe_thiscall<float*>(thisa, a2, a3);
+
+		thing[7] = s1;
+		thing[9] = s2;
+
+		return result;
+	}
 
 	void SetTauCallMe() {
 		if (!tauThis)
@@ -362,6 +386,9 @@ namespace Game
 
 	void Init() {
 		patchCall((void*)0xD5E9B2, setTauAndDampingHook);
+
+		//patchDWord((void*)0x00E3AB70, (uintptr_t)sub_95B480);
+		sub_95B480D = safetyhook::create_inline(0x95B480, sub_95B480);
 		vehicle_effects_handle_tire_dirtD = safetyhook::create_inline(0xAD09E0, vehicle_effects_handle_tire_dirt);
 		vehicle_effects_handle_tire_waterD = safetyhook::create_inline(0xAD0CF0, vehicle_effects_handle_tire_water);
 		if (GameConfig::GetValue("Debug", "DisableDistantPeds", 0)) DisableDistantPeds.Apply();

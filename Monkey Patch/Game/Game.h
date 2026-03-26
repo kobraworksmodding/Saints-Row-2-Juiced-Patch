@@ -122,5 +122,6 @@ namespace Game
 	extern bool bFixTireDirtFPS;
 	extern void SetTauCallMe();
 	extern bool FrametimeTauDampingHack;
+	extern bool b_train_havok_frametime_extra_fix;
 };
 
