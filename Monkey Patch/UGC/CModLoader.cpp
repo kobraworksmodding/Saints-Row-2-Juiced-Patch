@@ -8,6 +8,7 @@
 #include <string>
 #include <regex>
 #include "../loose files.h"
+#include "../FileLogger.h"
 
 namespace CModLoader {
     namespace Audio {
@@ -264,6 +265,8 @@ namespace CModLoader {
 
                     if (filename.ends_with(".idx_map")) {
                         auto mod_sections = parse_auto(filepath);
+                        std::string log = "[CModLoader Hook] " + filepath;
+                        loaded_files_push_filename(log.c_str());
                         for (auto& s : mod_sections)
                             all_sections.push_back(s);  
                     }

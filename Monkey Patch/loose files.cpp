@@ -85,18 +85,23 @@ void trim_to_max_lines(std::string& str, int max_lines) {
 bool __stdcall raw_get_file_info_by_name_inner(FILE_INFO* file_info, char* filename, BOOL override_check) {
 	auto result = raw_get_file_info_by_name_inner_wrapped(file_info, filename, override_check);
 
+
+
+	if (file_info && file_info->filename[0]) {
+		loaded_files_push_filename(file_info->filename);
+	}
+	return result;
+}
+
+void loaded_files_push_filename(const char* string) {
 	int MAX_LINES = 41;
 	if (!*(bool*)0x025272DD) {
 		MAX_LINES = 26;
 	}
-
-	if (file_info && file_info->filename[0]) {
-		loaded_files_to_render += std::string(file_info->filename) + "\n";
-		Logger::TypedLog("LOOSE_FILE", "%s\n", file_info->filename);
-		// Trim to maximum lines to prevent infinite growth
-		trim_to_max_lines(loaded_files_to_render, MAX_LINES);
-	}
-	return result;
+	loaded_files_to_render += std::string(string) + "\n";
+	Logger::TypedLog("LOOSE_FILE", "%s\n", string);
+	// Trim to maximum lines to prevent infinite growth
+	trim_to_max_lines(loaded_files_to_render, MAX_LINES);
 }
 
 void* raw_get_file_info_by_name_inner_cb = &raw_get_file_info_by_name_inner;

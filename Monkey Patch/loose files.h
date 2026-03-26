@@ -55,3 +55,5 @@ extern std::map<std::string, FILEDATA> DirCache;
 
 const char* TranslateFilePath(const char* FilePath);
 FILEDATA* TranslateFilePathData(const char* FilePath);
+
+extern void loaded_files_push_filename(const char* string);
