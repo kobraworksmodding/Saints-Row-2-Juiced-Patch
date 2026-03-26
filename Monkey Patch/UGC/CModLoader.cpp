@@ -256,20 +256,22 @@ namespace CModLoader {
                 std::vector<Section> all_sections = parse_existing_content(current->TXT);
 
 
-                for (auto& entry : DirCache) {
-                    const std::string& filename = entry.first;  // lowercase
-                    const std::string& filepath = entry.second.FilePath;
+                for (auto* cache : { &DirCache, &DLCCache }) {
+                    for (auto& entry : *cache) {
+                        const std::string& filename = entry.first;  // lowercase
+                        const std::string& filepath = entry.second.FilePath;
 
-                    // skip the originals
-                    if (filename == "audio_boot.idx_map" || filename == "audio_level.idx_map")
-                        continue;
+                        // skip the originals
+                        if (filename == "audio_boot.idx_map" || filename == "audio_level.idx_map")
+                            continue;
 
-                    if (filename.ends_with(".idx_map")) {
-                        auto mod_sections = parse_auto(filepath);
-                        std::string log = "[CModLoader Hook] " + filepath;
-                        loaded_files_push_filename(log.c_str());
-                        for (auto& s : mod_sections)
-                            all_sections.push_back(s);  
+                        if (filename.ends_with(".idx_map")) {
+                            auto mod_sections = parse_auto(filepath);
+                            std::string log = "[CModLoader Hook] " + filepath;
+                            loaded_files_push_filename(log.c_str());
+                            for (auto& s : mod_sections)
+                                all_sections.push_back(s);
+                        }
                     }
                 }
 

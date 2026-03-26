@@ -53,7 +53,7 @@ void ClearDirCache();
 void InsertFileHashes(SafetyHookContext& ctx);
 
 extern std::map<std::string, FILEDATA> DirCache;
-
+extern std::map<std::string, FILEDATA> DLCCache;
 const char* TranslateFilePath(const char* FilePath);
 FILEDATA* TranslateFilePathData(const char* FilePath);
 
