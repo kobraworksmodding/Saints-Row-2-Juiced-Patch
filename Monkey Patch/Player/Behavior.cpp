@@ -113,10 +113,6 @@ CMultiPatch CMPatches_SR1Reloading = {
 			[](CMultiPatch& mp) {
 				mp.AddPatchNop(0x004F943E, 14);
 			},
-
-			[](CMultiPatch& mp) {
-				mp.AddPatchNop(0x00797003, 5);
-			},
 	};
 
 	CMultiPatch CMPatches_NoMeleeLockOn = {
@@ -134,10 +130,15 @@ CMultiPatch CMPatches_SR1Reloading = {
 		// Fixes broken weapon wheel implementation and brings back quick switching.
 
 		Logger::TypedLog(CHN_MOD, "Patching in Weapon Quick Switching...\n");
-		/*patchNop((BYTE*)0x0079266D, 6);
-		patchNop((BYTE*)0x004F943E, 14);
-		patchNop((BYTE*)0x00797003, 5);*/
 		CMPatches_SR1QuickSwitch.Apply();
+		static auto AllowShootSwitch = safetyhook::create_mid(0x00797008, [](SafetyHookContext& ctx) {
+			if (CMPatches_SR1QuickSwitch.IsApplied()) {
+				uintptr_t Weapon = *(uintptr_t*)(ctx.edx + 0xC4);
+				static uintptr_t PrevWeapon;
+				if (Weapon && Weapon != PrevWeapon) PrevWeapon = Weapon;
+				else ctx.eax = -1;
+			}
+			});
 	}
 
 	void __declspec(naked) TauntLeft()
