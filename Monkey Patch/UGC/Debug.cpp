@@ -126,7 +126,7 @@ namespace Debug
 		bool updated_this_session = false;
 	};
 
-	mempool_to_ini_s mempool_to_ini[] = { {"perm mesh cpu","perm_mesh_cpu"},{ "audio - wavebank","audio_wavebank"} };
+	mempool_to_ini_s mempool_to_ini[] = { {"perm mesh cpu","perm_mesh_cpu"},{ "audio - wavebank","audio_wavebank"},{"animation","animation"} };
 
 	int __cdecl printf_mempool_hook(const char* const Format, ...) {
 		static bool ignore_session = false;

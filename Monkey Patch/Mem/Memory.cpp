@@ -171,14 +171,14 @@ namespace Memory
 #endif
 #if !JLITE
 
-			int perm_mesh_cpu_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "perm_mesh_cpu", 1114112  * 2), 1114112,INT32_MAX);
+			int perm_mesh_cpu_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "perm_mesh_cpu", 1114112  * 2), 1114112,INT32_MAX / 4);
 
 			patchInt((void*)(0x0051DED7 + 1), perm_mesh_cpu_new_size);
 			patchInt((void*)(0x0051DF0F + 1), perm_mesh_cpu_new_size);
 			if(perm_mesh_cpu_new_size != 1114112)
 			Logger::TypedLog(CHN_DEBUG, "Expanded perm mesh cpu to %d\n", perm_mesh_cpu_new_size);
 
-			int audio_wavebank_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "audio_wavebank", 102760448), 102760448, INT32_MAX);
+			int audio_wavebank_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "audio_wavebank", 102760448), 102760448, INT32_MAX / 4);
 			if (audio_wavebank_new_size != 102760448) {
 				patchInt((void*)(0x0051EBD7 + 1), audio_wavebank_new_size);
 				patchInt((void*)(0x0051EC19 + 1), audio_wavebank_new_size);
@@ -186,6 +186,15 @@ namespace Memory
 				Logger::TypedLog(CHN_DEBUG, "Expanded audio - wavebank to %d\n", audio_wavebank_new_size);
 
 			}
+
+			int animation_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "animation", 17293312 * 2), 17293312, INT32_MAX / 4);
+			if (animation_new_size != 17293312) {
+				patchInt((void*)(0x51FB30 + 1), animation_new_size);
+
+				Logger::TypedLog(CHN_DEBUG, "Expanded animation to %d\n", animation_new_size);
+
+			}
+
 		//if (GameConfig::GetValue("Graphics", "ExtendedTreeFadeDistance", 0))
 		//{
 		//	ExpandTreeDist();
