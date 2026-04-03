@@ -176,7 +176,7 @@ namespace Render3D
 	};
 	void PatchLowSleepHack()
 	{
-		if (GameConfig::GetValue("Debug", "FixPerformance", 1) != 0)
+	if (GameConfig::GetValue("Debug", "FixPerformance", 1, "Fixes performance by waiting properly between main game thread and render thread.\nrecommended to be used alongside sync_shadows_threads=1 (Clippy95)") != 0)
 			return;
 		// Woohoo, this is a dirty patch, but we'll include it for people who want it and CAN actually run it.
 		// This will destroy older and weaker pcs, but we'll make sure to let the people who are on that, know that.
@@ -330,7 +330,7 @@ namespace Render3D
 		[](CMultiPatch& mp) {
 		// lol
 		mp.AddSafeWrite8((uintptr_t)&VFXP_fixFog,1);
-		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) == 0) {
+	if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 1, "2 = Maps the resolution to your screens resolution\n1 = Same as above but half res (Example: 1920x1080 > 1280x720 resolution scale.)\n0 = Vanilla Resolution\nIncreases resolution of Depth-of-field, skydive blur, reflections and bloom (Tervel)") == 0) {
 			mp.AddSafeWriteBuf(0x005170EF, (BYTE*)"\x75", 1); // prevent bloom from appearing without breaking glow
 		}
 		}
@@ -351,7 +351,7 @@ namespace Render3D
 		patchBytesM((BYTE*)0x00517051, (BYTE*)"\x8B", 1); // flip the logic for the HDR strength (or radius?) float check
 		//patchNop((BYTE*)0x00533C25, 5); // disable sky refl (prevent the absurd blue tint on reflections)
 
-		if (GameConfig::GetValue("Graphics", "X360Gamma", 1)) {
+	if (GameConfig::GetValue("Graphics", "X360Gamma", 1, "Accurately replicates the XBOX 360 gamma visuals. (Tervel)")) {
 			patchFloat((BYTE*)0x027B2C7F, 1.32f); //Bright
 			patchFloat((BYTE*)0x027B2C83, 0.8f); //Sat
 			patchFloat((BYTE*)0x027B2C87, 1.58f); //Contr
@@ -368,7 +368,7 @@ namespace Render3D
 		patchBytesM((BYTE*)0x00D1A3A3, (BYTE*)"\xD9\x05\xBE\x2C\x7B\x02", 6);
 		VFXP_fixFog = 1;
 
-		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 2) == 0) {
+	if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 1, "2 = Maps the resolution to your screens resolution\n1 = Same as above but half res (Example: 1920x1080 > 1280x720 resolution scale.)\n0 = Vanilla Resolution\nIncreases resolution of Depth-of-field, skydive blur, reflections and bloom (Tervel)") == 0) {
 			patchBytesM((BYTE*)0x005170EF, (BYTE*)"\x75", 1); // prevent bloom from appearing without breaking glow
 		}
 	}
@@ -812,7 +812,7 @@ namespace Render3D
 				return false;
 				};
 
-				if (GameConfig::GetValue("Graphics", "RemovePixelationShader", 0)) {
+	if (GameConfig::GetValue("Graphics", "RemovePixelationShader", 0, "Removes Pixelation/censor filter from the game. (Clippy95)")) {
 					remove_line("data\\shaders\\standard\\sr2-pixelate_c.fxo_pc");
 					Logger::TypedLog(CHN_MOD, "Patching shaders_pc to remove %s\n", "data\\shaders\\standard\\sr2-pixelate_c.fxo_pc");
 				}
@@ -1146,7 +1146,7 @@ constexpr auto new_size_n = 5000;
 	}
 
 	void sync_handhake_render() {
-		if (GameConfig::GetValue("Debug", "FixPerformance", 1) == 0) {
+	if (GameConfig::GetValue("Debug", "FixPerformance", 1, "Fixes performance by waiting properly between main game thread and render thread.\nrecommended to be used alongside sync_shadows_threads=1 (Clippy95)") == 0) {
 			return;
 		}
 		SafeWrite8(0x005285A3, 0);
@@ -1350,19 +1350,19 @@ constexpr auto new_size_n = 5000;
 		patchJmp((void*)DynAddress(0x00D755F0), &AlphaMaskAvailable);
 		// ~ Shadows::Init(); // Don't know if this is needed, this gets called again at the end of init. (Uzis)
 
-		if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1)) { // cuz rn this just patches in the resolutions, if init is expanded, please move this check inside
+		if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1, "Patches in Juiced Patch custom updates to settings adding MSAA 8x Support and fixing up label names, required for Ultrawide support.")) { // cuz rn this just patches in the resolutions, if init is expanded, please move this check inside
 			patchCall((void*)0xD1526E, init_directx9);
 		}	
 
-		if(GameConfig::GetValue("Graphics","RemovePixelationShader",0))
+		if(GameConfig::GetValue("Graphics","RemovePixelationShader",0, "Removes Pixelation/censor filter from the game. (Clippy95)"))
 		shaders_pc_hook();
 		OptionsManager::registerOption("Graphics", "ShaderOverride", &OVERRIDE_SHADER_LOD,1);
 		static auto GiveLOD = safetyhook::create_mid(0x00D19D1B,&SETLOD);
 
-		if (GameConfig::GetValue("Graphics", "X360Gamma", 1)) {
+		if (GameConfig::GetValue("Graphics", "X360Gamma", 1, "Accurately replicates the XBOX 360 gamma visuals. (Tervel)")) {
 			ShaderOptions.X360Gamma = 1;
 		}
-		if (GameConfig::GetValue("Graphics", "ShadowFiltering", 1)) {
+		if (GameConfig::GetValue("Graphics", "ShadowFiltering", 0, "Applies a smooth filtering shader to shadows (Tervel)")) {
 			ShaderOptions.ShadowFilter = 1;
 		}
 		add_to_entry_test = safetyhook::create_mid(0x00C080EC, &add_to_entry_crashaddr_hook,safetyhook::MidHook::StartDisabled);
@@ -1370,17 +1370,17 @@ constexpr auto new_size_n = 5000;
 			add_to_entry_test.enable();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "IncreaseVehicleFadeDistance", 1)) {
+		if (GameConfig::GetValue("Gameplay", "IncreaseVehicleFadeDistance", 1, "Increases the distance where vehicles fade if you are not looking at them")) {
 			CIncreaseVehicleDespawnDistance.Apply();
 		}
 
 #if !JLITE
-		if (GameConfig::GetValue("Graphics", "RemoveVignette", 0))
+		if (GameConfig::GetValue("Graphics", "RemoveVignette", 0, "Removes the Vignette screen effect (Creds to Clippy95 and Tervel)"))
 		{
 			Render3D::RemoveVignette();
 		}
 
-		if (GameConfig::GetValue("Graphics", "DisableScreenBlur", 0))
+		if (GameConfig::GetValue("Graphics", "DisableScreenBlur", 1, "Disables an FXAA like effect that runs on the game"))
 		{
 			Logger::TypedLog(CHN_MOD, "Disabling Screen Blur...\n");
 			patchByte((BYTE*)0x02527297, 0x0);
@@ -1392,25 +1392,25 @@ constexpr auto new_size_n = 5000;
 
 		}
 
-		if (GameConfig::GetValue("Graphics", "VanillaFXPlus", 0))
+		if (GameConfig::GetValue("Graphics", "VanillaFXPlus", 0, "Overhauls the lighting, keeping the SR2 feel while removing the orangey/yellow screen filter and sharpening up the look of everything.\n(MAY INTERFERE WITH GRAPHICS/TIME OF DAY MODS FOR SR2)"))
 		{
 			Render3D::VFXPlus();
 		}
 
 
-		if (GameConfig::GetValue("Graphics", "DisableFog", 0)) // Option for the 2 psychopaths that think no fog looks better.
+		if (GameConfig::GetValue("Graphics", "DisableFog", 0, "Disables Distance Fog (Creds to Tervel)")) // Option for the 2 psychopaths that think no fog looks better.
 		{
 			Render3D::DisableFog();
 		}
 
-		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1)
+		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0, "Uses a custom first person mode camera on-foot. 2 has viewmodel, 1 has no viewmodel.") == 1)
 		{
 			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS...\n");
 			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
 			patchNop((BYTE*)0x0099453D, 2);
 			CMPatches_ClassicGTAIdleCam.Apply();
 		}
-		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
+		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0, "Uses a custom first person mode camera on-foot. 2 has viewmodel, 1 has no viewmodel.") == 2)
 		{
 			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS with Viewmodel...\n");
 			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
@@ -1418,9 +1418,9 @@ constexpr auto new_size_n = 5000;
 			CMPatches_ClassicGTAIdleCam.Apply();
 			useFPSCam = 1;
 		}
-		if (GameConfig::GetValue("Graphics", "ClassicGTAIdle", 0) &&
-			!GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 1
-			|| !GameConfig::GetValue("Graphics", "FirstPersonCamera", 0) == 2)
+		if (GameConfig::GetValue("Graphics", "ClassicGTAIdle", 0, "Makes idle animations snap to where the camera is pointing (like GTA3/VC)") &&
+			!GameConfig::GetValue("Graphics", "FirstPersonCamera", 0, "Uses a custom first person mode camera on-foot. 2 has viewmodel, 1 has no viewmodel.") == 1
+			|| !GameConfig::GetValue("Graphics", "FirstPersonCamera", 0, "Uses a custom first person mode camera on-foot. 2 has viewmodel, 1 has no viewmodel.") == 2)
 		{
 			Logger::TypedLog(CHN_MOD, "Patching in Classic GTA Idle...\n");
 			//patchByte((BYTE*)0x00960C30, 0xC3);
@@ -1449,9 +1449,9 @@ constexpr auto new_size_n = 5000;
 		{
 			ARfov = 1;
 		}
-		if (GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", 1.0)) // 1.0 isn't go anywhere.
+		if (GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", 1.0, "Field of View, affects cutscenes and gameplay.")) // 1.0 isn't go anywhere.
 		{
-			FOVMultiplier = GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier);
+			FOVMultiplier = GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier, "Field of View, affects cutscenes and gameplay.");
 			FOVMultiplier = std::clamp(Render3D::FOVMultiplier, 1.0, 10.0);
 			if (FOVMultiplier > 1.0) {
 				ARfov = 1;
@@ -1461,32 +1461,32 @@ constexpr auto new_size_n = 5000;
 			Logger::TypedLog(CHN_DEBUG, "FOV Multiplier: %f,\n", FOVMultiplier);
 		}
 
-		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 1))
+		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 1, "2 = Maps the resolution to your screens resolution\n1 = Same as above but half res (Example: 1920x1080 > 1280x720 resolution scale.)\n0 = Vanilla Resolution\nIncreases resolution of Depth-of-field, skydive blur, reflections and bloom (Tervel)"))
 		{
 			UHQEffects();
 		}
 
-		if (GameConfig::GetValue("Graphics", "RemoveBlackBars", 0)) // Another Tervel moment
+		if (GameConfig::GetValue("Graphics", "RemoveBlackBars", 0, "Removes Cutscene Black Bars (By Tervel)")) // Another Tervel moment
 		{
 			RemBlackBars();
 		}
 
-		if (GameConfig::GetValue("Graphics", "DisableSkyRefl", 0))
+		if (GameConfig::GetValue("Graphics", "DisableSkyRefl", 0, "Disables the blue sky reflections in building windows (Tervel)"))
 		{
 			Render3D::DisableSkyRefl();
 		}
 
-		if (GameConfig::GetValue("Graphics", "BetterAmbientOcclusion", 1))
+		if (GameConfig::GetValue("Graphics", "BetterAmbientOcclusion", 1, "Smoothens the Ambient occlusion, crushing the noisy output the base games AO has."))
 		{
 	 		BetterAO();
 	    }
 
-		if (GameConfig::GetValue("Debug", "AltTabFPS", 1)) // Removes a sleep call in main render loop, this one seems to slow the game to below 25 fps when the game is alt-tabbed.
+		if (GameConfig::GetValue("Debug", "AltTabFPS", 1, "Uncaps the fps from sub-30 when alt-tabbed.")) // Removes a sleep call in main render loop, this one seems to slow the game to below 25 fps when the game is alt-tabbed.
 		{
 			Render3D::AltTabFPS();
 		}
 
-		if (GameConfig::GetValue("Debug", "UncapFPS", 0)) // Removes a sleep call in main render loop, this one seems to slow the game to below 25 fps when the game is alt-tabbed.
+		if (GameConfig::GetValue("Debug", "UncapFPS", 0, "UncapFPS quite literally Uncaps the Framerate past the 100 fps limit on the base game. !!!! THIS WILL ALSO INCREASE CPU USAGE !!!!")) // Removes a sleep call in main render loop, this one seems to slow the game to below 25 fps when the game is alt-tabbed.
 		{  // Uncapping frames can lead to broken doors among other issues not yet noted.
 			Render3D::UncapFPS();
 		}
@@ -1503,22 +1503,22 @@ constexpr auto new_size_n = 5000;
 		{
 			Render3D::PatchMediumSleepHack();
 		}
-		if (GameConfig::GetValue("Debug", "SleepHook", 0) == 1)
+		if (GameConfig::GetValue("Debug", "SleepHook", 0, "This will hook sleep and divide sleep-time by half, NOT RECOMMENDED, no support will be provided for playing with this option toggled on!, EXPECT ISSUES!") == 1)
 		{
 			Logger::TypedLog(CHN_DLL, "Hooking sleep...\n");
 			Render3D::HookSleep();
 		}
 
-		if (GameConfig::GetValue("Debug", "FasterLoading", 1))
+		if (GameConfig::GetValue("Debug", "FasterLoading", 1, "Raises fps cap in Legal/Loading screens to 60 from 30 to make those screens slightly faster.\nAlso removes a sleep call during world/asset streaming, hopefully reducing stuttering and bringing parity with the X360 version."))
 		{
 			Render3D::FasterLoading();
 		}
 
-		if (GameConfig::GetValue("Graphics", "FixGlares", 1)) {
+		if (GameConfig::GetValue("Graphics", "FixGlares", 1, "Fixes the glares not showing up when you drive up to a chunk as opposed to teleporting or loading into one (Tervel)")) {
 			patchByte((void*)0x004AFBA2, 0xEB);
 		}
 
-		DitherFilter = GameConfig::GetValue("Graphics", "DitherFiltering", 1);
+		DitherFilter = GameConfig::GetValue("Graphics", "DitherFiltering", 1, "Adds a PostFX filter to smooth out the fallback dithering with MSAA off/no alpha mask available, but blurs the screen slightly (Tervel)");
 
 		Shadows::Init();
 	}

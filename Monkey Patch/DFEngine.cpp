@@ -57,7 +57,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 {
 	if(ul_reason_for_call==DLL_PROCESS_ATTACH)
 	{
-		if (GameConfig::GetValue("Logger", "ExceptionHandler", 1))
+	if (GameConfig::GetValue("Logger", "ExceptionHandler", 1, "Exception Handler shows a useful text box of crash addresses as soon as the game crashes"))
 		{
 			Logger::TypedLog(CHN_DLL, "Enabling ExceptionHandler.\n");
 #if !RELOADED
@@ -89,7 +89,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		{
 			address_offset = (unsigned int)main_handle - 0x0400000;
 			Logger::TypedLog(CHN_DLL, "Executable base doesn't match default. Base = 0x%08X offset %i\n", (unsigned int)main_handle, address_offset);
-			if (GameConfig::GetValue("Debug", "DisableASLRWarning", 0) == 0) {
+	if (GameConfig::GetValue("Debug", "DisableASLRWarning", 0, "disables ASLR warning") == 0) {
 				MessageBoxA(NULL, "Executable base doesn't match default most likely caused by Windows's setting \"Mandatory ASLR\" it's recommended to turn it off for Juiced Patch.\ngame will most likely crash after this message\nSet DisableASLRWarning=1 in config file to remove this warning.", "Juiced Patch", MB_ICONEXCLAMATION);
 			}
 		}

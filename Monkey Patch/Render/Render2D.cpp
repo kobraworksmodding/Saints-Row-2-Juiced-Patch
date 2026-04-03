@@ -386,7 +386,7 @@ int processtextwidth(int width) {
 	*/
 
 	void InitMenVerNum() {
-		if (GameConfig::GetValue("Debug", "MenuVersionNumber", 1))
+	if (GameConfig::GetValue("Debug", "MenuVersionNumber", 1, "Shows Version Number on Main Menu and/or Pause Menu. (Tervel)\n1 = on\n0 = off"))
 		{
 			Logger::TypedLog(CHN_MOD, "Patching MenuVersionNumber...\n");
 			//patchCall((void*)0x0052050C, (void*)SomeMMFunc_Hacked);
@@ -404,7 +404,7 @@ int processtextwidth(int width) {
 
 	void SetupBorderless()
 	{
-		int l_IsBorderless = GameConfig::GetValue("Graphics", "Borderless", 0);
+	int l_IsBorderless = GameConfig::GetValue("Graphics", "Borderless", 1, "Borderless windowed, this replaces Windowed mode in-game.");
 		uint32_t window_style = l_IsBorderless ? (WS_POPUP) : (WS_CAPTION | WS_BORDER);
 		patchDWord((void*)(0x00BFA35A + 4), window_style);
 		patchBytesM((BYTE*)0x00BFA494, (BYTE*)"\x6A\x03", 2); //Maximise Borderless so it fits perfectly.
@@ -490,7 +490,7 @@ char SR2Ultrawide_HUDScale() {
 		// Fix reflections being broken at ultrawide.
 		*(float*)(0x0E86388) = aspectRatio;
 #if !JLITE
-		if (GameConfig::GetValue("Graphics", "IVRadarScaling", 0)) {
+	if (GameConfig::GetValue("Graphics", "IVRadarScaling", 0, "Makes the minimap scaling more in line with GTA IV (Clippy95)")) {
 			IVRadarScaling = true;
 			RadarScaling();
 		}
@@ -702,9 +702,9 @@ void __fastcall vint_sr2_render(void* thisa) {
 }
 
 	void Init() {
-		if(GameConfig::GetValue("Debug","DisplayLooseFilesLoading",1))
+	if(GameConfig::GetValue("Debug","DisplayLooseFilesLoading",1, "Renders the loose files that load during the initial loading screen (Clippy95)"))
 		patchCall((void*)0x68C607, vint_sr2_render);
-		if(GameConfig::GetValue("Graphics","mini_pause_map_PlayerRotation",1))
+	if(GameConfig::GetValue("Graphics","mini_pause_map_PlayerRotation",1, "Ties player cursor in minimap and pause map to the actual player orientation rather than camera when using the \"Minimap view: Rotational\" setting (Clippy95)"))
 		CMPatches_ProperPlayerCursor.Apply();
 		patchCall((void*)0x688C7A, bink_render_hook);
 		// Fix vint UI speeding up at 1000?+ FPS
@@ -714,9 +714,9 @@ void __fastcall vint_sr2_render(void* thisa) {
 			texture_2d* pass = (texture_2d*)ctx.eax;
 			ApplyX360Gamma(pass->color_info);
 			},safetyhook::MidHook::StartDisabled);
-		if (GameConfig::GetValue("Graphics", "X360GammaUI", 0))
+	if (GameConfig::GetValue("Graphics", "X360GammaUI", 0, "Applies XBOX 360 gamma on HUD elements. (Clippy95)"))
 			final_2d_render.enable();
-		if (GameConfig::GetValue("Graphics", "Borderless", 0))
+	if (GameConfig::GetValue("Graphics", "Borderless", 1, "Borderless windowed, this replaces Windowed mode in-game."))
 		{
 			SetupBorderless();
 			Logger::TypedLog(CHN_DEBUG, "Enabling Borderless Windowed.\n");
@@ -727,7 +727,7 @@ void __fastcall vint_sr2_render(void* thisa) {
 			Logger::TypedLog(CHN_DEBUG, "Fixing Windowed Mode.\n");
 		}
 
-		if (GameConfig::GetValue("Gameplay", "BetterChat", 1)) // changes char limit from 64 to 128 and formats the input after the 64th character
+	if (GameConfig::GetValue("Gameplay", "BetterChat", 1, "Increases character limit for Text Chat in Multiplayer (Creds to Tervel)")) // changes char limit from 64 to 128 and formats the input after the 64th character
 		{
 			BetterChatTest = 1;
 			patchBytesM((BYTE*)0x0075C91E, (BYTE*)"\xC7\x05\x1C\x69\xF7\x01\x80\x00\00\x00", 10); // change chat char limit from 64 to 128

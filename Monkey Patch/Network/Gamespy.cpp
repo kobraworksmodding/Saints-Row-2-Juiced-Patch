@@ -63,21 +63,21 @@ namespace Gamespy
 			// ----
 		}
 
-		if (GameConfig::GetValue("Multiplayer", "FixNetworkBinding", 1))
+	if (GameConfig::GetValue("Multiplayer", "FixNetworkBinding", 1, "Fixes the multiple network adapter issue which makes it so you can't use online functionalities if you had more than 1 network adapter."))
 		{
 			Logger::TypedLog(CHN_NET, "Fixing Network Adapter Binding...\n");
 			patchNetworkBind();
 		}
 #if !JLITE
-		if (GameConfig::GetValue("Multiplayer", "NewLobbyList", 1))
+	if (GameConfig::GetValue("Multiplayer", "NewLobbyList", 1, "Changes the lobby maps."))
 		{
 			static char newLobby1[MAX_PATH];
 			static char newLobby2[MAX_PATH];
 
 			Logger::TypedLog(CHN_DEBUG, "Changing Lobby List...\n");
 
-			GameConfig::GetStringValue("Multiplayer", "Lobby1", "sr2_mp_lobby03", newLobby1);
-			GameConfig::GetStringValue("Multiplayer", "Lobby2", "sr2_mp_lobby02", newLobby2);
+	GameConfig::GetStringValue("Multiplayer", "Lobby1", "sr2_mp_lobby02", newLobby1);
+	GameConfig::GetStringValue("Multiplayer", "Lobby2", "sr2_mp_lobby03", newLobby2);
 
 			Logger::TypedLog(CHN_DEBUG, "Lobby Map 1 Found: %s\n", newLobby1);
 			Logger::TypedLog(CHN_DEBUG, "Lobby Map 2 Found: %s\n", newLobby2);
@@ -98,7 +98,7 @@ namespace Gamespy
 		if (*(int*)0x819570 == 0x0104EC81)
 			patchJmp((void*)0x819570, &UtilsGlobal::RetZero);
 
-		if (GameConfig::GetValue("Multiplayer", "FreeMPClothing", 1))
+	if (GameConfig::GetValue("Multiplayer", "FreeMPClothing", 0, "Makes all clothing free in Multiplayer."))
 		{
 			Logger::TypedLog(CHN_DEBUG, "Making MP Clothing Free...\n");
 			patchNop((BYTE*)0x0088DDBD, 5); // nop the float call from xtbl > exe that parses clothing prices.

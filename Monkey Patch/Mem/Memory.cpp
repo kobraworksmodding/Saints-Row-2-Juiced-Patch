@@ -159,7 +159,7 @@ namespace Memory
 	void Init()
 	{
 		// ~ PatchLogos();
-		if (GameConfig::GetValue("Debug", "ExpandClothingLimit", 1))
+	if (GameConfig::GetValue("Debug", "ExpandClothingLimit", 0, "Expands customization_items.xtbl limit to about 3050 items. Disable this if you're experiencing memory crashing issues with alot of clothing mods."))
 		{
 			ExpandCustItemsPool();
 		}
@@ -171,14 +171,14 @@ namespace Memory
 #endif
 #if !JLITE
 
-			int perm_mesh_cpu_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "perm_mesh_cpu", 1114112  * 2), 1114112,INT32_MAX / 4);
+	int perm_mesh_cpu_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "perm_mesh_cpu", 1114112  * 2, "Default 1114112"), 1114112,INT32_MAX / 4);
 
 			patchInt((void*)(0x0051DED7 + 1), perm_mesh_cpu_new_size);
 			patchInt((void*)(0x0051DF0F + 1), perm_mesh_cpu_new_size);
 			if(perm_mesh_cpu_new_size != 1114112)
 			Logger::TypedLog(CHN_DEBUG, "Expanded perm mesh cpu to %d\n", perm_mesh_cpu_new_size);
 
-			int audio_wavebank_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "audio_wavebank", 102760448), 102760448, INT32_MAX / 4);
+	int audio_wavebank_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "audio_wavebank", 102760448, "Default 102760448"), 102760448, INT32_MAX / 4);
 			if (audio_wavebank_new_size != 102760448) {
 				patchInt((void*)(0x0051EBD7 + 1), audio_wavebank_new_size);
 				patchInt((void*)(0x0051EC19 + 1), audio_wavebank_new_size);
@@ -187,7 +187,7 @@ namespace Memory
 
 			}
 
-			int animation_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "animation", 17293312 * 2), 17293312, INT32_MAX / 4);
+	int animation_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "animation", 17293312 * 2, "Default 17293312"), 17293312, INT32_MAX / 4);
 			if (animation_new_size != 17293312) {
 				patchInt((void*)(0x51FB30 + 1), animation_new_size);
 

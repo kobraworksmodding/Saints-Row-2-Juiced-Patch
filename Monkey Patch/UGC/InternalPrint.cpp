@@ -65,13 +65,13 @@ namespace InternalPrint
 
 	void Init() {
 
-		if (GameConfig::GetValue("Debug", "LUADebugPrintF", 1)) // Rewrites the DebugPrint LUA function to our own.
+	if (GameConfig::GetValue("Debug", "LUADebugPrintF", 1, "Prints mission and lua scripting printf calls to the debug console.")) // Rewrites the DebugPrint LUA function to our own.
 		{
 			Logger::TypedLog(CHN_DEBUG, "Re-writing Debug_Print...\n");
 			copyFunc((uint32_t)0x00D74BA0, 0x00D74BD8, HookedDebugPrint); // Overwrite vanilla debug_print LUA function with ours.
 		}
 
-		if (GameConfig::GetValue("Logger", "AssetLoadPrint", 0))
+	if (GameConfig::GetValue("Logger", "AssetLoadPrint", 0, "Prints a line of text into Console/debug.txt every single time an asset is read by the game. (This can spam logs and make debug.txt file size large.)"))
 		{
 			Logger::TypedLog(CHN_INTPR, "Printing Asset Loads...\n");
 			patchNop((BYTE*)0x00C0ADEF, 5); // asset load

@@ -300,7 +300,7 @@ namespace Input {
 	}
 
 	void DisableXInput() {
-		if (GameConfig::GetValue("Debug", "DisableXInput", 0))
+	if (GameConfig::GetValue("Debug", "DisableXInput", 0, "Disables Controller Inputs Completely. If you aren't planning on using a controller and are experiencing load/new game crashes, use this with the option below."))
 		{
 			patchBytesM((BYTE*)0x00BFA090, (BYTE*)"\x6A\x00", 2);
 			patchBytesM((BYTE*)0x00BFA0C8, (BYTE*)"\x6A\x00", 2);
@@ -319,7 +319,7 @@ namespace Input {
 
 	void ForceNoVibration()
 	{
-		if (GameConfig::GetValue("Debug", "ForceDisableVibration", 0)) // Fixes load/new save insta-crash due to broken / shitty joystick drivers.
+	if (GameConfig::GetValue("Debug", "ForceDisableVibration", 0, "Forces Vibration to be disabled. This will most likely fix the rare load/new game save crashes some users have.")) // Fixes load/new save insta-crash due to broken / shitty joystick drivers.
 		{
 			patchBytesM((BYTE*)0x00C14930, (BYTE*)"\xC3\x00", 2);
 			Logger::TypedLog(CHN_DEBUG, "Vibration Forced to OFF.\n");
@@ -936,7 +936,7 @@ namespace Input {
 		return ((HRESULT(__cdecl*)())0xC13910)();
 	}
 	void Init() {
-		if (GameConfig::GetValue("Input", "SDL", 1) != 0) {
+	if (GameConfig::GetValue("Input", "SDL", 1, "Swaps xinput with SDL") != 0) {
 			patchCall((void*)0x51F47C, input_pc_init_hook);
 			patchJmp((void*)0xC13C80, &input_pc_poll_sdl);
 		}
@@ -946,14 +946,14 @@ namespace Input {
 				*(float*)(ctx.esp + 0x10) *= Game::Timer::Get33msOverFrameTime_Fix();
 			}
 			});
-		if (GameConfig::GetValue("Gameplay", "allow_reloading_in_cars", 0) != 0) {
+	if (GameConfig::GetValue("Gameplay", "allow_reloading_in_cars", 0, "Allows for manual reloading of weapons while in vehicles. (Clippy95)") != 0) {
 			patchDWord((void*)(0x4F61D6 + 6), 0xC20100);
 		}
 		KEY_inventory_up = GameConfig::GetChar("Input", "KEY_inventory_up", KEY_inventory_up);
 		KEY_inventory_down = GameConfig::GetChar("Input", "KEY_inventory_down", KEY_inventory_down);
 		KEY_inventory_left = GameConfig::GetChar("Input", "KEY_inventory_left", KEY_inventory_left);
 		KEY_inventory_right = GameConfig::GetChar("Input", "KEY_inventory_right", KEY_inventory_right);
-		if (GameConfig::GetValue("Input", "better_inventory_keyboard", 1)) {
+	if (GameConfig::GetValue("Input", "better_inventory_keyboard", 1, "Allows extra binding for within the radial menu (food/drink menu) (Clippy95)")) {
 			static auto properInventory_keyboard = safetyhook::create_mid(0xB997F3, [](SafetyHookContext& ctx) {
 				if (!ctx.ebx || *is_controller_connect) // shouldn't allow this to work while a controller is connected, vanilla game bug but having a controller connected + using WASD will move the weapon wheel as if it's LS. -- Clippy95
 					return;
@@ -1003,7 +1003,7 @@ namespace Input {
 
 			player_autoaim_do_assisted_aiming_midhook = safetyhook::create_mid(0x009D7752, &player_autoaim_do_assisted_aiming_midhookfunc_disableaimassistmouse);
 			Logger::TypedLog(CHN_MOD, "Disabling Aim Assist while using mouse...\n");
-			disable_aim_assist_noMatterInput = (BYTE)std::clamp((int)GameConfig::GetValue("Gameplay", "DisableAimAssist", 1), 0, 2);
+	disable_aim_assist_noMatterInput = (BYTE)std::clamp((int)GameConfig::GetValue("Gameplay", "DisableAimAssist", 1, "Disables Aim Assist (Creds to Clippy95 and Tervel)\n0 - Vanilla behaviour\n1 - Disables for Mouse Only\n2 - Disables entirely"), 0, 2);
 		DisableXInput();
 		ForceNoVibration();
 
@@ -1013,7 +1013,7 @@ namespace Input {
 			patchByte((void*)0xC147D4, 0xC); // jnz 0xC147E1
 		}
 
-		if (GameConfig::GetValue("Gameplay", "TagHook", 1))
+	if (GameConfig::GetValue("Gameplay", "TagHook", 1, "Fixes Massive Deadzone issues while Spray Tagging Walls. (Creds to Clippy95)"))
 		{
 			patchDWord((void*)0xDF77FC, (uint32_t)&subT_6218F0);
 			patchNop((BYTE*)0x006221AA, 6); // Original stores for Tags, X and Y.
@@ -1021,7 +1021,7 @@ namespace Input {
 			Logger::TypedLog(CHN_DEBUG, "Replaced Tags controls with TagHook\n");
 		}
 
-		if (GameConfig::GetValue("Gameplay", "BetterPlayerWardrobeRotate", 1))
+	if (GameConfig::GetValue("Gameplay", "BetterPlayerWardrobeRotate", 1, "Maps the turning speed in wardrobe/shop to your native mouse/controller analog input (Clippy95)\n0 - Base Game behaviour\n1 - Updated behaviour "))
 		{
 			Logger::TypedLog(CHN_MOD, "Patching better player rotation for wardrobes.\n");
 			patchCall((int*)0x007CE170, (int*)0x0073FA80);
