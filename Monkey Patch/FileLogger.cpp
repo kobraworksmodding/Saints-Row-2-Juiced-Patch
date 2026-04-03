@@ -59,7 +59,7 @@ namespace Logger
 			if (l_UseConsole)
 			{
 				auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-				consoleSink->set_pattern("[%n] %v");
+				consoleSink->set_pattern("%v");
 				sinks.push_back(consoleSink);
 			}
 
