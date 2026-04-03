@@ -275,7 +275,7 @@ namespace GLua
         return returns.count();
 
         //if(bogus)
-        //printf("%s\n", bogus);
+        //printf("{}\n", bogus);
         //controller_values control_image_id = (controller_values)args.get<int>();
         //if (control_image_id < max_values) {
         //    auto it = Input::char_SDLButtons_lua.find(control_image_id);
@@ -359,7 +359,7 @@ namespace GLua
             unsigned int address = (unsigned int)lua_tonumber(L, 2);
             int value = *(int*)address;
             lua_pushnumber(L, value);
-            Logger::TypedLog(CHN_LUA, "game called %s it read 0x%X and got %d", "ReadInt", address, value);
+            Logger::TypedLog(CHN_LUA, "game called {} it read 0x{:X} and got {}", "ReadInt", address, value);
             return 1;
         }
         else if (strcmp(cmd, "WriteInt") == 0) {
@@ -502,7 +502,7 @@ namespace GLua
     void Init() {
 //#if !RELOADED
         SafeWrite32(0x00A4EC84 + 4, (UInt32)&lua_func_never_die);
-        Logger::TypedLog("CHN_DBG", "address of lua func 0x%X \n", &lua_func_vint_get_avg_processing_time);
+        Logger::TypedLog("CHN_DBG", "address of lua func 0x{:X} \n", reinterpret_cast<uintptr_t>(&lua_func_vint_get_avg_processing_time));
         //static SafetyHookInline memoryutils = safetyhook::create_inline(0x00B907F0, &lua_func_vint_get_avg_processing_time);
         SafeWrite32(0x00B91212 + 7, (UInt32)&lua_func_vint_get_avg_processing_time);
         WriteRelCall(0x00789018, (uint32_t)&cellphone_dial_number_c_function);

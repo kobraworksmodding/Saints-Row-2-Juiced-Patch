@@ -569,7 +569,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				size_t pos = finalContent.find(searchPattern);
 
 				if (pos == std::string::npos) {
-					Logger::TypedLog(CHN_LUA, "Search pattern not found for %s: '%s'\n",
+					Logger::TypedLog(CHN_LUA, "Search pattern not found for {}: '{}'\n",
 						funcName.c_str(), searchPattern.c_str());
 					return;
 				}
@@ -1419,7 +1419,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 	}
 	void TopWinMain() {
-		Logger::TypedLog("D3D9", "D3D9 Hook: %d\n", D3D9Hook::initialize());
+		Logger::TypedLog("D3D9", "D3D9 Hook: {}\n", D3D9Hook::initialize());
 		CModLoader::Init();
 		allowJuicedAPI = GameConfig::GetValue("API", "JuicedAPI", 1);
 		bitmap_loader::Init();
@@ -1444,7 +1444,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			SafeWrite32(0x774112 + 6, userResX);
 			SafeWrite32(0x77411C + 6, userResY);
 		}
-		Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: %s\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
+		Logger::TypedLog(CHN_DLL, "SetProcessDPIAware result: {}\n", SetProcessDPIAware() ? "TRUE" : "FALSE");
 #if !RELOADED
 		/*if (FileExists("gotr.txt"))
 			modpackread = 1;
@@ -1485,7 +1485,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				static auto luaLoadBuffHookGeneral = safetyhook::create_mid(0xCD9FD9, &generalluaLoadBuff);
 			}
 			if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1) {
-				Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 1);
+				Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD {} \n", 1);
 				using namespace Render2D;
 				//SR2Ultrawide_hook = safetyhook::create_inline(0xD1C910, &SR2Ultrawide_HUDScale);
 				// Lets 3:2 act as 4:3 at least..
@@ -1498,7 +1498,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #endif
 		Render2D::vint_create_process_hook = safetyhook::create_mid(0x00B8BCC6, &Render2D::create_process_hook,safetyhook::MidHook::StartDisabled);
 		if (GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) >= 2) {
-			Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD %d \n", 2);
+			Logger::TypedLog(CHN_MOD, "Patching Ultrawide HUD {} \n", 2);
 			using namespace Render2D;
 			// Lets 3:2 act as 4:3 at least..
 			patchDouble((void*)0x00E5C080, 1.55f);

@@ -1,4 +1,4 @@
-﻿#include "loose files.h"
+#include "loose files.h"
 #include "FileLogger.h"
 #include <algorithm>
 
@@ -99,7 +99,7 @@ void loaded_files_push_filename(const char* string) {
 		MAX_LINES = 26;
 	}
 	loaded_files_to_render += std::string(string) + "\n";
-	Logger::TypedLog("LOOSE_FILE", "%s\n", string);
+	Logger::TypedLog("LOOSE_FILE", "{}\n", string);
 	// Trim to maximum lines to prevent infinite growth
 	trim_to_max_lines(loaded_files_to_render, MAX_LINES);
 }
@@ -178,11 +178,11 @@ bool CreateCache(char* DirListFile)
 	FILE *DirListHandle = fopen(DirListFile, "r");
 	if (!DirListHandle)
 	{
-		Logger::TypedLog(CHN_DLL, "Failed to open directory list file %s\n", DirListFile);
+		Logger::TypedLog(CHN_DLL, "Failed to open directory list file {}\n", DirListFile);
 		return(false);
 	}
 
-	Logger::TypedLog(CHN_DLL, "Creating cache directory data from %s\n", DirListFile);
+	Logger::TypedLog(CHN_DLL, "Creating cache directory data from {}\n", DirListFile);
 
 	char CurrentDirectory[MAX_PATH];
 	char CurrentSearch[MAX_PATH];
@@ -224,11 +224,11 @@ bool CreateCache(char* DirListFile)
 		// Check for errors searching the directory
 		if (SearchDirHandle == INVALID_HANDLE_VALUE)
 		{
-			Logger::TypedLog(CHN_DLL, "Unable to find directory %s\n", CurrentDirectory);
+			Logger::TypedLog(CHN_DLL, "Unable to find directory {}\n", CurrentDirectory);
 			continue;
 		}
 
-		Logger::TypedLog(CHN_DLL, "Adding contents of directory %s\n", CurrentDirectory);
+		Logger::TypedLog(CHN_DLL, "Adding contents of directory {}\n", CurrentDirectory);
 		
 		do
 		{
@@ -282,9 +282,9 @@ void DumpCache()
 	for (std::map<std::string, FILEDATA>::iterator DumpRecord = DirCache.begin(), itr_end = DirCache.end(); DumpRecord != itr_end; ++DumpRecord)
 	{
 		if (DumpRecord->second.MultiDef)
-			Logger::TypedLog(CHN_DLL, "%s -> %s (Multiple definitions)\n", DumpRecord->first.c_str(), DumpRecord->second.FilePath.c_str());
+			Logger::TypedLog(CHN_DLL, "{} -> {} (Multiple definitions)\n", DumpRecord->first.c_str(), DumpRecord->second.FilePath.c_str());
 		else
-			Logger::TypedLog(CHN_DLL, "%s -> %s\n", DumpRecord->first.c_str(), DumpRecord->second.FilePath.c_str());
+			Logger::TypedLog(CHN_DLL, "{} -> {}\n", DumpRecord->first.c_str(), DumpRecord->second.FilePath.c_str());
 	}
 	Logger::TypedLog(CHN_DLL, "*** End of Directory Cache ***\n");
 	return;
@@ -297,7 +297,7 @@ void CacheConflicts()
 	for(std::map<std::string, FILEDATA>::iterator DumpRecord = DirCache.begin(), itr_end = DirCache.end(); DumpRecord != itr_end; ++DumpRecord)
 		if (DumpRecord->second.MultiDef)
 		{
-			Logger::TypedLog(CHN_DEBUG, "    %s\n", DumpRecord->first.c_str());
+			Logger::TypedLog(CHN_DEBUG, "    {}\n", DumpRecord->first.c_str());
 			has_conflicts = true;
 		}
 	if (!has_conflicts)

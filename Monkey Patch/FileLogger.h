@@ -4,8 +4,12 @@
 #include <cstring>
 #include <float.h>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <windows.h>
 #include <iostream>
+
+#include <spdlog/fmt/fmt.h>
 
 #define CHN_METRICS                     "Metrics"
 #define CHN_MEMORY                      "Mem"
@@ -33,16 +37,60 @@
 #define CHN_XTBL					"XTBL"
  
 extern HWND ConsoleWindow;
+// Legacy exports retained so existing code can still link without call-site changes.
 extern FILE* f_logger;
 extern FILE* f_tracer;
 namespace Logger
 {
-	void Log(const char* Format, ...);
+	namespace Detail
+	{
+		void WriteMessage(const char* category, std::string_view message);
+		[[noreturn]] void RaiseError(std::string_view message);
+	}
 
-	void Warn(const char* Format, ...);
+	inline void Log(std::string_view message)
+	{
+		Detail::WriteMessage(CHN_LOG, message);
+	}
 
-	void TypedLog(const char* category, const char* Format, ...);
-	void Error(const char* Format, ...);
+	template <typename... Args>
+	inline void Log(fmt::format_string<Args...> format, Args&&... args)
+	{
+		Detail::WriteMessage(CHN_LOG, fmt::format(format, std::forward<Args>(args)...));
+	}
+
+	inline void Warn(std::string_view message)
+	{
+		Detail::WriteMessage(CHN_DEBUG, message);
+	}
+
+	template <typename... Args>
+	inline void Warn(fmt::format_string<Args...> format, Args&&... args)
+	{
+		Detail::WriteMessage(CHN_DEBUG, fmt::format(format, std::forward<Args>(args)...));
+	}
+
+	inline void TypedLog(const char* category, std::string_view message)
+	{
+		Detail::WriteMessage(category, message);
+	}
+
+	template <typename... Args>
+	inline void TypedLog(const char* category, fmt::format_string<Args...> format, Args&&... args)
+	{
+		Detail::WriteMessage(category, fmt::format(format, std::forward<Args>(args)...));
+	}
+
+	inline void Error(std::string_view message)
+	{
+		Detail::RaiseError(message);
+	}
+
+	template <typename... Args>
+	inline void Error(fmt::format_string<Args...> format, Args&&... args)
+	{
+		Detail::RaiseError(fmt::format(format, std::forward<Args>(args)...));
+	}
 
 	void Initialize();
 	void PatchCFuncs();

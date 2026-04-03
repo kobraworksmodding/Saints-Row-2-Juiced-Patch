@@ -238,7 +238,7 @@ constexpr size_t permanent_default = 0x00800000;
             static auto interface_gpu_increase = safetyhook::create_mid(0x51E322, [](SafetyHookContext& ctx) {
                 if (double interface_gpu_new_size = GameConfig::GetDoubleValue("Mempool", "interface_gpu_multi", 1.5); interface_gpu_new_size >= 1.0) {
                     ctx.esi *= interface_gpu_new_size;
-                    Logger::TypedLog("Mempool", "Patched interface_gpu size to 0x%X\n", ctx.esi);
+                    Logger::TypedLog("Mempool", "Patched interface_gpu size to 0x{:X}\n", ctx.esi);
                 }
                 });
             size_t new_permanent_size = std::clamp(GameConfig::GetValue("Mempool", "permanent", permanent_default * 1.5), permanent_default,GB / 2);
@@ -247,9 +247,9 @@ constexpr size_t permanent_default = 0x00800000;
 
             size_t second_increase_BitMap_Image_names = std::clamp(GameConfig::GetValue("Mempool", "Bitmap_Image_Names", (size_t)second_increase), (size_t)49152, GB);
 
-            Logger::TypedLog("Mempool", "Patched permanent to %d\n", new_permanent_size);
-            Logger::TypedLog("Mempool", "Patched Bitmap_Image_Names_hashtable to %d\n", first_increase_hastable);
-            Logger::TypedLog("Mempool", "Patched Bitmap_Image_Names to %d\n", second_increase_BitMap_Image_names);
+            Logger::TypedLog("Mempool", "Patched permanent to {}\n", new_permanent_size);
+            Logger::TypedLog("Mempool", "Patched Bitmap_Image_Names_hashtable to {}\n", first_increase_hastable);
+            Logger::TypedLog("Mempool", "Patched Bitmap_Image_Names to {}\n", second_increase_BitMap_Image_names);
 
             SafeWrite32((0x51DCB4 + 1), new_permanent_size);
             SafeWrite32((0x51DDC8 + 1), new_permanent_size);

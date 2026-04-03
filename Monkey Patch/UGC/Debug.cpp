@@ -201,7 +201,7 @@ namespace Debug
 					MessageBoxA(NULL, buffer, "Juiced Patch", MB_OK | MB_ICONERROR);
 				}
 
-				result = printf("%s", buffer);
+	result = printf("%s", buffer);
 				free(buffer);
 			}
 		}

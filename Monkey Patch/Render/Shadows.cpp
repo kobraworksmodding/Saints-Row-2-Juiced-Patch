@@ -225,7 +225,7 @@ namespace Shadows {
 
     void PatchShadowMapRes(int Res)
     {
-        Logger::TypedLog(CHN_DEBUG, "Setting the shadow map resolution to: %dx%d\n", Res, Res);
+        Logger::TypedLog(CHN_DEBUG, "Setting the shadow map resolution to: {}x{}\n", Res, Res);
         patchInt((void*)(0x0053833F + 1), Res);
         patchInt((void*)(0x00538344 + 1), Res);
         patchInt((void*)(0x0051CE75 + 1), Res);
@@ -245,7 +245,7 @@ namespace Shadows {
                 SignalWorkAvailable();
                 });
         }
-        Logger::TypedLog(CHN_DEBUG, "Patching amount of Shadow job threads to be %d\n", std::clamp((int)GameConfig::GetValue("Debug", "ShadowThreadCount", 4), 1, (int)std::thread::hardware_concurrency()));
+        Logger::TypedLog(CHN_DEBUG, "Patching amount of Shadow job threads to be {}\n", std::clamp((int)GameConfig::GetValue("Debug", "ShadowThreadCount", 4), 1, (int)std::thread::hardware_concurrency()));
 	SafeWrite32(0x528524, std::clamp((int)GameConfig::GetValue("Debug", "ShadowThreadCount", 4, "Dedicates amount of Shadow Jobs threads that should be created, game by default creates 4 threads. (Clippy95)\n!!!!With sync_shadows_threads on, it's recommended to keep it at 4!!!!"), 1, (int)std::thread::hardware_concurrency()));
         static auto ShadowMapBBoxFix = safetyhook::create_mid(0x00536373_g, [](SafetyHookContext& ctx)
             {

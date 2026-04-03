@@ -40,7 +40,7 @@ void InitQueryPerformance()
 	QueryPerformanceFrequency(&system_freq);
 	query_perf_mult=(double)FAKE_PERF_FREQ/system_freq.QuadPart;
 
-	Logger::TypedLog(CHN_DLL, "QueryPerformance multiplier is %f\n",query_perf_mult);
+	Logger::TypedLog(CHN_DLL, "QueryPerformance multiplier is {:f}\n",query_perf_mult);
 	return;
 }
 

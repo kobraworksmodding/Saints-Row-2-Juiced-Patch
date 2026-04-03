@@ -199,13 +199,13 @@ namespace Math
 			//if (allowMathFix) {
 			//	if (sse2 && !sse4_1) {
 			//		sub_9EE620 = safetyhook::create_inline(0x9EE620, &sub_9EE620_sse2);
-			//		Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE%d\n", 2);
+			//		Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE{}\n", 2);
 			//		//patchJmp((void*)0x9EE620, &sub_9EE620_sse2);
 			//	}
 			//	else if (sse4_1) {
 			//		sub_9EE620 = safetyhook::create_inline(0x9EE620, &sub_9EE620_sse4);
 			//	//patchJmp((void*)0x9EE620, &sub_9EE620_sse4);
-			//	Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE%d\n", 4);
+			//	Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE{}\n", 4);
 			//		SSE_hack = 2;
 			//	}
 			//}
@@ -217,7 +217,7 @@ namespace Math
 					SSE_hack = 2;
 				else if (sse2)
 					SSE_hack = 1;
-				Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE%d\n", 4);
+				Logger::TypedLog("MATH", "Patching several math functions for better performance: SSE{}\n", 4);
 			if (sse4_1) {
 				auto static sub_BDB4F0_hook = safetyhook::create_mid(0x00BDB4F1, [](SafetyHookContext& ctx) {
 					if (SSE_hack == 0)

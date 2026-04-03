@@ -176,14 +176,14 @@ namespace Memory
 			patchInt((void*)(0x0051DED7 + 1), perm_mesh_cpu_new_size);
 			patchInt((void*)(0x0051DF0F + 1), perm_mesh_cpu_new_size);
 			if(perm_mesh_cpu_new_size != 1114112)
-			Logger::TypedLog(CHN_DEBUG, "Expanded perm mesh cpu to %d\n", perm_mesh_cpu_new_size);
+			Logger::TypedLog(CHN_DEBUG, "Expanded perm mesh cpu to {}\n", perm_mesh_cpu_new_size);
 
 	int audio_wavebank_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "audio_wavebank", 102760448, "Default 102760448"), 102760448, INT32_MAX / 4);
 			if (audio_wavebank_new_size != 102760448) {
 				patchInt((void*)(0x0051EBD7 + 1), audio_wavebank_new_size);
 				patchInt((void*)(0x0051EC19 + 1), audio_wavebank_new_size);
 
-				Logger::TypedLog(CHN_DEBUG, "Expanded audio - wavebank to %d\n", audio_wavebank_new_size);
+				Logger::TypedLog(CHN_DEBUG, "Expanded audio - wavebank to {}\n", audio_wavebank_new_size);
 
 			}
 
@@ -191,7 +191,7 @@ namespace Memory
 			if (animation_new_size != 17293312) {
 				patchInt((void*)(0x51FB30 + 1), animation_new_size);
 
-				Logger::TypedLog(CHN_DEBUG, "Expanded animation to %d\n", animation_new_size);
+				Logger::TypedLog(CHN_DEBUG, "Expanded animation to {}\n", animation_new_size);
 
 			}
 

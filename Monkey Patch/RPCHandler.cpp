@@ -332,7 +332,7 @@ namespace RPCHandler {
 				strcpy_s(pres.assets.small_image, "");
 			}
 			if (mission_name) {
-				sprintf(smalltxtmission, "%s", wchar_to_utf8(mission_name).c_str());
+	sprintf(smalltxtmission, "%s", wchar_to_utf8(mission_name).c_str());
 				strcpy_s(pres.assets.small_text, smalltxtmission);
 			}
 	    }
@@ -353,7 +353,7 @@ namespace RPCHandler {
 			Difficulty = "Hardcore";
 		}
 		//BYTE IsInMission = *(BYTE*)0x27B3C60; // parses mission (?)
-		sprintf(finalUsername, "%s", playerName);
+	sprintf(finalUsername, "%s", playerName);
 		sprintf(finalMPDesc, "%s (In Map: %s)", playerName, *FancyChunkName);
 		sprintf(finalCOOPDescCutsc, "Watching a Cutscene with %s", COOPPartner);
 		sprintf(finalCOOPDesc, "Exploring %s with %s - %s", wchar_to_utf8(district_test).c_str(), COOPPartner, Difficulty.c_str());
@@ -520,7 +520,7 @@ namespace RPCHandler {
 		if (fail)
 		{
 			Logger::TypedLog(CHN_RPC, "Discord RPC Initialization failed !!!!!!!!\n");
-			Logger::TypedLog(CHN_RPC, "Error code: %d\n", fail);
+			Logger::TypedLog(CHN_RPC, "Error code: {}\n", fail);
 			Enabled = 0;
 		}
 		else
@@ -563,7 +563,7 @@ namespace RPCHandler {
 		if (fail)
 		{
 			Logger::TypedLog(CHN_RPC, "Discord RPC Initialization failed !!!!!!!!\n");
-			Logger::TypedLog(CHN_RPC, "Error code: %d\n", fail);
+			Logger::TypedLog(CHN_RPC, "Error code: {}\n", fail);
 			Enabled = 0;
 		}
 		else

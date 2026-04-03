@@ -1,4 +1,4 @@
-﻿#include "../FileLogger.h"
+#include "../FileLogger.h"
 #include "../Patcher/patch.h"
 #include "../SafeWrite.h"
 #include "../GameConfig.h"
@@ -559,7 +559,7 @@ namespace Game
 				xtbl_scan_status.cheats_scanned && 
 				xtbl_scan_status.trees_scanned && 
 				xtbl_scan_status.audio_constants_scanned) {
-				Logger::TypedLog(CHN_XTBL, "All XTBL files processed. GOTR status: %s. Disabling hook.\n",
+				Logger::TypedLog(CHN_XTBL, "All XTBL files processed. GOTR status: {}. Disabling hook.\n",
 					xtbl_scan_status.gotr_detected ? "DETECTED" : "NOT DETECTED");
 				(void)xtbl_read_and_parse_file_hook.disable();
 			}
