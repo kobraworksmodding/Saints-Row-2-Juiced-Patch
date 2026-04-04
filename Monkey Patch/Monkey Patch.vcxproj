@@ -137,8 +137,9 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
+	  <AdditionalOptions>/utf-8</AdditionalOptions> 
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
     </ClCompile>
@@ -166,11 +167,12 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+	  <AdditionalOptions>/utf-8</AdditionalOptions> 
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)DFEngine.dll</OutputFile>
@@ -208,10 +210,11 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <Optimization>MaxSpeed</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+	  <AdditionalOptions>/utf-8</AdditionalOptions> 
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)DFEngine.dll</OutputFile>
@@ -244,9 +247,10 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+	  <AdditionalOptions>/utf-8</AdditionalOptions> 
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)RLEngine.dll</OutputFile>
@@ -276,9 +280,10 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+	  <AdditionalOptions>/utf-8</AdditionalOptions> 
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)RLEngine.dll</OutputFile>
@@ -308,9 +313,10 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+	  <AdditionalOptions>/utf-8</AdditionalOptions> 
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)DFEngine.dll</OutputFile>

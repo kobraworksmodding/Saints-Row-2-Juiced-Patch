@@ -230,12 +230,12 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	Logger::TypedLog(CHN_DLL, " --- Welcome to thaRow ---\n");
 #endif
 	std::string cpu = getCPUName();
-	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: %s\n", &executableDirectory);
-	Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: %s\n", &timeString);
+	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: {}\n", static_cast<const char*>((LPSTR)executableDirectory));
+	Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: {}\n", std::string_view(timeString));
 	Logger::TypedLog(CHN_DLL, "--- DLL Based on MonkeyPatch by scanti, additional work by Uzis, Tervel, jason098 and Clippy95. ---\n\n");
 
 	// ~~~ SPECS ~~~
-	Logger::TypedLog(CHN_DLL, "--- Specs: ---\nCPU: %s\n", cpu);
+	Logger::TypedLog(CHN_DLL, "--- Specs: ---\nCPU: {}\n", cpu);
 	IDirect3D9* d3d = Direct3DCreate9(D3D_SDK_VERSION);
 	if (!d3d) {
 		Logger::TypedLog(CHN_DLL, "GPU: Direct3DCreate9 failed (DirectX 9 runtime missing?)\n\n");
@@ -251,7 +251,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 		Logger::TypedLog(CHN_DLL, "GPU: GetAdapterIdentifier failed\n\n");
 	}
 
-	Logger::TypedLog(CHN_DLL, "GPU: %s\n\n", identifier.Description);
+	Logger::TypedLog(CHN_DLL, "GPU: {}\n\n", identifier.Description);
 	// ~~~~~~~~~~~~~
 
 	if(GetVersionExAFirstRun)
@@ -848,7 +848,7 @@ void cus_FrameToggles() {
 	if (IsKeyPressed(VK_F9, false)) { // F9
 		Render3D::FOVMultiplier += 0.1;
 		Render3D::AspectRatioFix();
-		Logger::TypedLog(CHN_DEBUG, "+FOV Multiplier: %f,\n", Render3D::FOVMultiplier);
+		Logger::TypedLog(CHN_DEBUG, "+FOV Multiplier: {:f},\n", Render3D::FOVMultiplier);
 		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
 	}
 
@@ -856,7 +856,7 @@ void cus_FrameToggles() {
 		Render3D::FOVMultiplier -= 0.1;
 		Render3D::FOVMultiplier = std::clamp(Render3D::FOVMultiplier, 1.0, 10.0);
 		Render3D::AspectRatioFix();
-		Logger::TypedLog(CHN_DEBUG, "-FOV Multiplier: %f,\n", Render3D::FOVMultiplier);
+		Logger::TypedLog(CHN_DEBUG, "-FOV Multiplier: {:f},\n", Render3D::FOVMultiplier);
 		GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
 
 	}
@@ -870,7 +870,7 @@ void cus_FrameToggles() {
 
 		std::wstring subtitles = (L"Player Position & Orient Printed to Console!");
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
-		Logger::TypedLog(CHN_DEBUG, "Player Pos + Orient: <%0.6f %0.6f %0.6f> [%0.6f]\n", hkg_playerPosition[0], hkg_playerPosition[1], hkg_playerPosition[2], hkg_camOrient);
+		Logger::TypedLog(CHN_DEBUG, "Player Pos + Orient: <{:.6f} {:.6f} {:.6f}> [{:.6f}]\n", hkg_playerPosition[0], hkg_playerPosition[1], hkg_playerPosition[2], hkg_camOrient);
 	}
 #if !RELOADED // change this up later when thaRow gets 3+ player co-op?
 	if (IsKeyPressed(VK_F7, false)) {
@@ -1552,7 +1552,7 @@ int* sub_73D900() {
 	if(GameConfig::GetValue("Misc", "UpdateChecks", 1)){
 	auto result = PatchNotifier::checkForPatchUpdate();
 	if (!result.errorMessage.empty()) {
-		Logger::TypedLog(CHN_DEBUG, "Updater error %s\n", result.errorMessage.c_str());
+		Logger::TypedLog(CHN_DEBUG, "Updater error {}\n", result.errorMessage.c_str());
 	}
 	if (result.checkSuccessful) {
 		Logger::TypedLog(CHN_DEBUG, result.latestVersion.c_str());
@@ -1625,14 +1625,14 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 
 	main_handle = GetModuleHandleA(NULL);
 	GetModuleFileNameA(main_handle, NameBuffer, 260);
-	Logger::TypedLog(CHN_DLL, "Module name = %s\n", NameBuffer);
+	Logger::TypedLog(CHN_DLL, "Module name = {}\n", std::string_view(NameBuffer));
 	dos_header = (PIMAGE_DOS_HEADER)main_handle;
 	nt_header = (PIMAGE_NT_HEADERS)((DWORD)main_handle + dos_header->e_lfanew);
 
 
 	memory_info.dwLength = sizeof(memory_info);
 	GlobalMemoryStatusEx(&memory_info);
-	Logger::TypedLog(CHN_DLL, "Memory allocated to process at startup = %I64dMB, memory free = %I64dMB.\n", memory_info.ullTotalVirtual / 1048576, memory_info.ullAvailVirtual / 1048576);
+	Logger::TypedLog(CHN_DLL, "Memory allocated to process at startup = {}MB, memory free = {}MB.\n", memory_info.ullTotalVirtual / 1048576, memory_info.ullAvailVirtual / 1048576);
 
 	for (int i = 1; i < *pargc; i++)
 	{
@@ -1661,7 +1661,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 #if !RELOADED
 	if (GameConfig::GetValue("Misc", "portable", 0, "Turning this option on makes it so saved games and settings load from \"SR2 GAME DIRECTORY//userdata\"") && PathRemoveFileSpecA(NameBuffer) && PathAppendA(NameBuffer, "userdata")) {
 		CreateDirectoryA(NameBuffer, NULL);
-		Logger::TypedLog(CHN_DLL, "Final Path: %s \n", NameBuffer);
+		Logger::TypedLog(CHN_DLL, "Final Path: {} \n", std::string_view(NameBuffer));
 		SafeWriteBuf(0x0144E650, NameBuffer, MAX_PATH);
 		patchNop((void*)0x00520FCD, 5);
 		patchNop((void*)0x520F65, 6);
@@ -1669,7 +1669,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 #else
 	if (PathRemoveFileSpecA(NameBuffer) && PathAppendA(NameBuffer, "\\thaRow\\userData")) {
 		CreateDirectoryA(NameBuffer, NULL);
-		Logger::TypedLog(CHN_DLL, "Final Path: %s \n", NameBuffer);
+		Logger::TypedLog(CHN_DLL, "Final Path: {} \n", std::string_view(NameBuffer));
 		SafeWriteBuf(0x0144E650, NameBuffer, MAX_PATH);
 		patchNop((void*)0x00520FCD, 5);
 		patchNop((void*)0x520F65, 6);

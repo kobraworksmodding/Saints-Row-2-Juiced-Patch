@@ -65,7 +65,7 @@ namespace XACT
 		HMODULE hXAct32 = GetModuleHandle(L"xactengine3_2.dll");
 
 		if (hXAct32 != NULL) {
-			Logger::TypedLog(CHN_XACT,"xactengine3_2.dll is loaded at: 0x%p\n", hXAct32);
+			Logger::TypedLog(CHN_XACT,"xactengine3_2.dll is loaded at: {}\n", fmt::ptr(hXAct32));
 		}
 		else {
 			Logger::TypedLog(CHN_XACT,"xactengine3_2.dll is not loaded\n");

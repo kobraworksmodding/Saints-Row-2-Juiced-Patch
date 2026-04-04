@@ -468,14 +468,14 @@ bool UltrawideFix = false;
 // Clippy TODO, maybe handle 16:10?
 std::thread RefreshHUD_thread;
 void RefreshHUD_loop() {
-	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n",2);
+	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD {}\n",2);
 	vint_create_process_hook.enable();
 	std::this_thread::sleep_for(std::chrono::seconds(4));
 	vint_create_process_hook.disable();
 }
 
 char SR2Ultrawide_HUDScale() {
-	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 1);
+	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD {}\n", 1);
 	float currentX = (float)(*(unsigned int*)0x022f63f8);
 	float currentY = (float)(*(unsigned int*)0x022f63fc);
 	char result;
@@ -510,7 +510,7 @@ char SR2Ultrawide_HUDScale() {
 	SafeWrite32(0x00625D09 + 2, (UInt32)&var2);
 	SafeWrite32(0x0062597F + 2, (UInt32)&var2);
 	
-		Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 3);
+		Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD {}\n", 3);
 		RefreshHUD_thread = std::thread(RefreshHUD_loop);
 		RefreshHUD_thread.detach();
 	}
@@ -524,7 +524,7 @@ char SR2Ultrawide_HUDScale() {
 		}
 		else {
 
-			Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD %d\n", 4);
+			Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD {}\n", 4);
 			if(aspectRatio != 1.5f)
 			UltrawideFix = true;
 			if (aspectRatio == 1.5f) {
@@ -552,7 +552,7 @@ char SR2Ultrawide_HUDScale() {
 		*(float*)0x022fdcc0 = adjustedX;
 		*(float*)0x022fdcbc = currentY / 720.0f;
 	}
-	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: %f Y: %f bool: %d \n", adjustedX, currentY / 720.0f, UltrawideFix);
+	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: {:f} Y: {:f} bool: {} \n", adjustedX, currentY / 720.0f, UltrawideFix);
 	return result;
 }
 float saturate(float x) {

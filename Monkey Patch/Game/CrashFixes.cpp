@@ -20,7 +20,7 @@ namespace AssertHandler {
 				return;
 			active_asserts.insert(id);
 		}
-		Logger::TypedLog(CHN_DEBUG, "[Assert ID: %s] %s", id, message);
+		Logger::TypedLog(CHN_DEBUG, "[Assert ID: {}] {}", id, message);
 		if ((CvarFixCrashes >= 200) || (hide_by_default && (CvarFixCrashes != 201)))
 			return;
 		std::string id_copy(id);

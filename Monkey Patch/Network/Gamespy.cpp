@@ -59,7 +59,7 @@ namespace Gamespy
 
 			std::string natType = detectNatType(localPort, publicIp, publicPort);
 			UtilsGlobal::mynat_type = natType;
-			Logger::TypedLog(CHN_NET, "%s\n", UtilsGlobal::mynat_type.c_str());
+			Logger::TypedLog(CHN_NET, "{}\n", UtilsGlobal::mynat_type.c_str());
 			// ----
 		}
 
@@ -79,8 +79,8 @@ namespace Gamespy
 	GameConfig::GetStringValue("Multiplayer", "Lobby1", "sr2_mp_lobby02", newLobby1);
 	GameConfig::GetStringValue("Multiplayer", "Lobby2", "sr2_mp_lobby03", newLobby2);
 
-			Logger::TypedLog(CHN_DEBUG, "Lobby Map 1 Found: %s\n", newLobby1);
-			Logger::TypedLog(CHN_DEBUG, "Lobby Map 2 Found: %s\n", newLobby2);
+			Logger::TypedLog(CHN_DEBUG, "Lobby Map 1 Found: {}\n", newLobby1);
+			Logger::TypedLog(CHN_DEBUG, "Lobby Map 2 Found: {}\n", newLobby2);
 			lobby_list[0] = newLobby1;
 			lobby_list[1] = newLobby2;
 

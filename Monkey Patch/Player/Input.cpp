@@ -1,4 +1,4 @@
-﻿// Input.cpp (uzis, Clippy95)
+// Input.cpp (uzis, Clippy95)
 // --------------------
 // Created: 22/02/2025
 
@@ -13,6 +13,7 @@ import OptionsManager;
 
 #include "Input.h"
 #include "../UtilsGlobal.h"
+#include <filesystem>
 #include <safetyhook.hpp>
 #include "../Game/Game.h"
 #include <Hooking.Patterns.h>
@@ -207,7 +208,7 @@ namespace Input {
 		for (int i = 0; XInputLibraryNames[i] != NULL; i++) {
 			g_XInputDLL.handle = LoadLibraryW(XInputLibraryNames[i]);
 			if (g_XInputDLL.handle != NULL) {
-				Logger::TypedLog(CHN_DLL,"Successfully loaded XInput DLL: %ls\n", XInputLibraryNames[i]);
+				Logger::TypedLog(CHN_DLL,"Successfully loaded XInput DLL: {}\n", std::filesystem::path(XInputLibraryNames[i]).string());
 				break;
 			}
 		}
@@ -548,7 +549,7 @@ namespace Input {
 			}
 			else {
 				wsprintf(&prompt_image_buffer[prompt_image_buffer_index], L"[format][scale:0.7]Pad %d[/format]", controller_key + 1);
-				Logger::TypedLog("ERROR", "Was supposed to give an item out! pad_button %d actions %d button %d ,mouse %d\n", controller_key, *action_index, keyboard_key, mouse);
+				Logger::TypedLog("ERROR", "Was supposed to give an item out! pad_button {} actions {} button {} ,mouse {}\n", controller_key, *action_index, keyboard_key, mouse);
 			}
 
 			prompt_image_buffer_index += wcslen(&prompt_image_buffer[start_index]) + 1;
@@ -769,7 +770,7 @@ namespace Input {
 						pad_is_connected = 1;
 						GamepadName = SDL_GetGamepadName(g_gamepad);
 						if(GamepadName)
-						Logger::TypedLog("SDL", "%s connected\n", GamepadName);
+						Logger::TypedLog("SDL", "{} connected\n", GamepadName);
 					}
 				}
 			}
@@ -777,7 +778,7 @@ namespace Input {
 				if (g_gamepad && event.gdevice.which == SDL_GetGamepadID(g_gamepad)) {
 					GamepadName = SDL_GetGamepadName(g_gamepad);
 					if (GamepadName)
-						Logger::TypedLog("SDL", "%s disconnected\n", GamepadName);
+						Logger::TypedLog("SDL", "{} disconnected\n", GamepadName);
 					SDL_CloseGamepad(g_gamepad);
 					g_gamepad = NULL;
 					if (pad_is_connected) {
@@ -920,7 +921,7 @@ namespace Input {
 	int input_pc_init_sdl()
 	{
 		if (SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt") == -1) {
-			Logger::TypedLog("SDL", "Could not load gamecontrollerdb.txt: %s\n", SDL_GetError());
+			Logger::TypedLog("SDL", "Could not load gamecontrollerdb.txt: {}\n", SDL_GetError());
 		}
 		patchNop((void*)0xC131CF, 2);
 		patchNop((void*)0xC133A2, 0xA);

@@ -88,7 +88,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		if ((unsigned int)main_handle != 0x0400000)
 		{
 			address_offset = (unsigned int)main_handle - 0x0400000;
-			Logger::TypedLog(CHN_DLL, "Executable base doesn't match default. Base = 0x%08X offset %i\n", (unsigned int)main_handle, address_offset);
+			Logger::TypedLog(CHN_DLL, "Executable base doesn't match default. Base = 0x{:08X} offset %i\n", (unsigned int)main_handle, address_offset);
 	if (GameConfig::GetValue("Debug", "DisableASLRWarning", 0, "disables ASLR warning") == 0) {
 				MessageBoxA(NULL, "Executable base doesn't match default most likely caused by Windows's setting \"Mandatory ASLR\" it's recommended to turn it off for Juiced Patch.\ngame will most likely crash after this message\nSet DisableASLRWarning=1 in config file to remove this warning.", "Juiced Patch", MB_ICONEXCLAMATION);
 			}
@@ -201,7 +201,7 @@ void set_up_billboard_stuff()
 		number_of_billboard_files = find_billboards_list.size();
 	}
 
-	Logger::TypedLog(CHN_MOD, "Found %i billboard files\n", number_of_billboard_files);
+	Logger::TypedLog(CHN_MOD, "Found {} billboard files\n", number_of_billboard_files);
 
 	FindClose(find_handle);
 	return;

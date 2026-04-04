@@ -3,12 +3,18 @@
 #include "GameConfig.h"
 #include "Patcher/patch.h"
 
-#include <windows.h>
-#include <iostream>
-#include <cstdio>
-#include <cstdarg>
-#include <stdio.h>
+#include <spdlog/async.h>
+#include <spdlog/async_logger.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
+#include <filesystem>
+#include <iostream>
+#include <memory>
+#include <stdio.h>
+#include <string>
+#include <vector>
+#include <windows.h>
 
 bool l_PrintScriptNames = false;
 bool l_ExitOnAssert = true;
@@ -22,22 +28,83 @@ HWND ConsoleWindow = nullptr;
 
 namespace Logger
 {
+	namespace
+	{
+		constexpr size_t kLogQueueSize = 8192;
+
+		std::shared_ptr<spdlog::async_logger> g_Logger;
+		bool g_ThreadPoolReady = false;
+
+		void EnsureThreadPool()
+		{
+			if (!g_ThreadPoolReady)
+			{
+				spdlog::init_thread_pool(kLogQueueSize, 1);
+				g_ThreadPoolReady = true;
+			}
+		}
+
+		std::string TrimTrailingLineEndings(std::string_view message)
+		{
+			std::string trimmed(message);
+			while (!trimmed.empty() && (trimmed.back() == '\n' || trimmed.back() == '\r'))
+				trimmed.pop_back();
+			return trimmed;
+		}
+
+		std::shared_ptr<spdlog::async_logger> CreateLogger()
+		{
+			std::vector<spdlog::sink_ptr> sinks;
+
+			if (l_UseConsole)
+			{
+				auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+				consoleSink->set_pattern("%v");
+				sinks.push_back(consoleSink);
+			}
+
+			if (l_DebugOutput)
+			{
+				auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("debug.txt", true);
+				fileSink->set_pattern("%v");
+				sinks.push_back(fileSink);
+			}
+
+			if (sinks.empty())
+				return {};
+
+			EnsureThreadPool();
+
+			auto logger = std::make_shared<spdlog::async_logger>(
+				"Log",
+				sinks.begin(),
+				sinks.end(),
+				spdlog::thread_pool(),
+				spdlog::async_overflow_policy::block);
+
+			logger->set_level(spdlog::level::trace);
+			logger->flush_on(spdlog::level::info);
+			return logger;
+		}
+
+		void ResetLogger()
+		{
+			if (g_Logger)
+			{
+				g_Logger->flush();
+				g_Logger.reset();
+			}
+		}
+	}
+
 	bool ConsoleAllowed() { return l_UseConsole; }
 	bool OutputAllowed() { return l_DebugOutput; }
 
-	// Ported from WTDE, fix this in the future if desired
-	// (For now, we'll just spit all logs to console)
-	bool ChannelAllowed(const char* category) { return true; }
 
-	//------------------------
-	// Prepare the logger
-	//------------------------
+	bool ChannelAllowed(std::string_view category) { return true; }
 
 	void Initialize()
 	{
-		char logpath[MAX_PATH];
-		char tracepath[MAX_PATH];
-
 		if (GameConfig::GetValue("Logger", "Console", 1, "Debug Console"))
 			l_UseConsole = true;
 		if (GameConfig::GetValue("Logger", "PrintScriptNames", 0))
@@ -47,7 +114,6 @@ namespace Logger
 
 		l_ExitOnAssert = GameConfig::GetValue("Logger", "ExitOnAssert", 1);
 
-		// Create console?
 		if (l_UseConsole)
 		{
 			AllocConsole();
@@ -61,149 +127,51 @@ namespace Logger
 			consoleHandle = GetStdHandle(STD_INPUT_HANDLE);
 		}
 
-		// Write to debug file?
 		if (l_DebugOutput)
 		{
-			//Log("Logger file output initialized.\n");
-			fopen_s(&f_logger, "debug.txt", "w");
-			fopen_s(&f_tracer, "trace.txt", "w");
-
-			if (!f_logger)
-				Log("Failed to create debug.txt file.\n");
-			if (!f_tracer)
-				Log("Failed to create trace.txt file.\n");
+			std::error_code ec;
+			std::filesystem::remove("debug.txt", ec);
 		}
-	}
 
-	//------------------------
-	// Save a copy of the debug log at time of crash
-	//------------------------
+		f_logger = nullptr;
+		f_tracer = nullptr;
+		g_Logger = CreateLogger();
+
+		if (l_DebugOutput && !g_Logger)
+			Log("Failed to initialize debug logger.");
+	}
 
 	bool SaveDebugLogCopy(const wchar_t* destPath)
 	{
-		bool success = false;
+		if (!OutputAllowed())
+			return false;
 
-		// Make sure all current logs are written to disk
-		if (f_logger) {
-			fflush(f_logger);
-		}
-
-		// Close the current debug.txt file temporarily
-		FILE* tempLogger = f_logger;
-		f_logger = nullptr;
-
-		if (tempLogger) {
-			fclose(tempLogger);
-		}
-
-		if (CopyFileW(L"debug.txt", destPath, FALSE)) {
-			success = true;
-		}
-
-		// Reopen the debug.txt file for append
-		_wfopen_s(&f_logger, L"debug.txt", L"a");
-
+		ResetLogger();
+		const bool success = CopyFileW(L"debug.txt", destPath, FALSE) != FALSE;
+		g_Logger = CreateLogger();
 		return success;
 	}
 
-
-	//------------------------
-	// Prints message to console and log!
-	//------------------------
-
-	void CoreLog(const char* to_log, const char* category = CHN_LOG)
+	namespace Detail
 	{
-		// Output to console
-		if (ConsoleAllowed())
+		void WriteMessage(const char* category, std::string_view message)
 		{
-			if (ChannelAllowed(category))
-				printf("[%s] %s", category, to_log);
+			if (!g_Logger || !ChannelAllowed(category))
+				return;
+
+			g_Logger->info("[{}] {}", category, TrimTrailingLineEndings(message));
 		}
 
-		// Also write to .txt file!
-		if (OutputAllowed() && f_logger)
+		[[noreturn]] void RaiseError(std::string_view message)
 		{
-			fputs(to_log, f_logger);
-			fflush(f_logger);
+			Log("CRITICAL: {}", message);
+			ResetLogger();
+
+			const std::string errorText(message);
+			MessageBoxA(NULL, errorText.c_str(), "Critical Error", MB_ICONERROR);
+			ExitProcess(0);
 		}
 	}
-
-	//------------------------
-	// Prints log message, with arguments!
-	//------------------------
-
-	void Log(const char* Format, ...)
-	{
-		char final_buffer[2000];
-
-		va_list args;
-		va_start(args, Format);
-		vsnprintf(final_buffer, 2000, Format, args);
-		va_end(args);
-
-		CoreLog(final_buffer, CHN_LOG);
-	}
-
-	//------------------------
-	// Typed log
-	//------------------------
-
-	void TypedLog(const char* category, const char* Format, ...)
-	{
-		char final_buffer[3000];
-
-		va_list args;
-		va_start(args, Format);
-		vsnprintf(final_buffer, 3000, Format, args);
-		va_end(args);
-
-		CoreLog(final_buffer, category);
-	}
-
-	//------------------------
-	// Warn
-	//------------------------
-
-	void Warn(const char* Format, ...)
-	{
-		char final_buffer[3000];
-		memset(&final_buffer, 0, sizeof(final_buffer));
-
-		va_list args;
-		va_start(args, Format);
-		vsnprintf(final_buffer, 3000, Format, args);
-		va_end(args);
-
-	}
-
-
-	//------------------------
-	// Print a nasty error!
-	//------------------------
-
-	void Error(const char* Format, ...)
-	{
-		//THAWPlus::DebugScriptCallstack();
-
-		char final_buffer[2000];
-
-		va_list args;
-		va_start(args, Format);
-		vsnprintf(final_buffer, 2000, Format, args);
-		va_end(args);
-
-		char finalString[2048];
-		sprintf(finalString, "CRITICAL: %s", final_buffer);
-		Log("%s\n\n", finalString);
-
-		MessageBoxA(NULL, final_buffer, "Critical Error", MB_ICONERROR);
-
-		ExitProcess(0);
-	}
-
-	//------------------------
-	// Indented log
-	//------------------------
 
 	int struct_indent;
 
@@ -215,13 +183,14 @@ namespace Logger
 		{
 			memset(final_log, 0x20, struct_indent);
 			final_log[struct_indent] = '\0';
-			TypedLog(CHN_DLL, "%s%s", final_log, to_log);
+			TypedLog(CHN_DLL, "{}{}", final_log, to_log);
 		}
 		else
+		{
 			TypedLog(CHN_DLL, to_log);
+		}
 
-		if (final_log)
-			delete[] final_log;
+		delete[] final_log;
 	}
 
 }

@@ -54,7 +54,7 @@ void hook_metrics_dump()
 		hook_metrics_get_frame_time(i, &frame_time);
 		frame_time = frame_time * 1000.00;
 		if (frame_time > 500.0 && frame_time < 1000000.00)
-			Logger::TypedLog(CHN_DEBUG, "Exceeded frame delay in metric %s (%.2fms)\n", name, frame_time);
+			Logger::TypedLog(CHN_DEBUG, "Exceeded frame delay in metric {} ({:.2f}ms)\n", name, frame_time);
 	}
 	return;
 }

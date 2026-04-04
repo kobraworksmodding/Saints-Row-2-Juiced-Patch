@@ -392,7 +392,7 @@ namespace GameConfig
 		char checkString[256];
 		snprintf(checkString, sizeof(checkString), "Fix%s", featureName);
 
-		Logger::TypedLog(CHN_DLL, "Performing %s...\n", featureName);
+		Logger::TypedLog(CHN_DLL, "Performing {}...\n", featureName);
 
 		if (GetValue("Debug", checkString, defaultValue))
 			return true;

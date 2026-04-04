@@ -1,4 +1,4 @@
-﻿#include "InGameConfig.h"
+#include "InGameConfig.h"
 #include "..\Render\Render3D.h"
 #include "..\Render\Render2D.h"
 #include <unordered_set>
@@ -369,7 +369,7 @@ namespace InGameConfig {
         // Add this ID to our used set
         g_usedIds.insert(nextId);
 
-        Logger::TypedLog(CHN_LUA, "Assigned new menu ID: %d", nextId);
+        Logger::TypedLog(CHN_LUA, "Assigned new menu ID: {}", nextId);
 
         return nextId;
     }

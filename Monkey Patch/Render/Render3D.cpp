@@ -696,7 +696,7 @@ namespace Render3D
 		// gtfo out of function
 		if (!IsMemoryReadable(width) || !IsMemoryReadable(wtf)) {
 			AssertHandler::AssertOnce("the other add_to_entry hook", "Crashed prevented due to an invalid be->current_peg_entry in add_to_entry, it's recommended to make a save of your game at this point as the game still has a high chance to crash! \n");
-			Logger::TypedLog("the other add_to_entry hook", "!!!Invalid result->width: %p\n", width);
+			Logger::TypedLog("the other add_to_entry hook", "!!!Invalid result->width: {}\n", fmt::ptr(width));
 			ctx.eip = 0x00C08101;
 		}
 		
@@ -814,7 +814,7 @@ namespace Render3D
 
 	if (GameConfig::GetValue("Graphics", "RemovePixelationShader", 0, "Removes Pixelation/censor filter from the game. (Clippy95)")) {
 					remove_line("data\\shaders\\standard\\sr2-pixelate_c.fxo_pc");
-					Logger::TypedLog(CHN_MOD, "Patching shaders_pc to remove %s\n", "data\\shaders\\standard\\sr2-pixelate_c.fxo_pc");
+					Logger::TypedLog(CHN_MOD, "Patching shaders_pc to remove {}\n", "data\\shaders\\standard\\sr2-pixelate_c.fxo_pc");
 				}
 			});
 	}
@@ -1249,10 +1249,10 @@ constexpr auto new_size_n = 5000;
 				return a.second < b.second;
 			});
 
-		Logger::TypedLog(CHN_MOD, "Found %d unique resolutions for adapter %d:\n",
+		Logger::TypedLog(CHN_MOD, "Found {} unique resolutions for adapter {}:\n",
 			(int)AdapterModes.size(), selectedAdapter);
 		for (const auto& res : AdapterModes) {
-			Logger::TypedLog(CHN_MOD, "  %dx%d\n", res.first, res.second);
+			Logger::TypedLog(CHN_MOD, "  {}x{}\n", res.first, res.second);
 		}
 
 		patchByte((BYTE*)0x775F56, (uint8_t)AdapterModes.size());
@@ -1458,7 +1458,7 @@ constexpr auto new_size_n = 5000;
 				Logger::TypedLog(CHN_DEBUG, "Applying FOV Multiplier.\n");
 			}
 			SafeWrite32(0x00AA5648 + 0x2, (UInt32)&fourbythreeAR); // patch vehicle turning radius, this read from the FOV and the radius gets smaller if FOV is lower than 4/3
-			Logger::TypedLog(CHN_DEBUG, "FOV Multiplier: %f,\n", FOVMultiplier);
+			Logger::TypedLog(CHN_DEBUG, "FOV Multiplier: {:f},\n", FOVMultiplier);
 		}
 
 		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 1, "2 = Maps the resolution to your screens resolution\n1 = Same as above but half res (Example: 1920x1080 > 1280x720 resolution scale.)\n0 = Vanilla Resolution\nIncreases resolution of Depth-of-field, skydive blur, reflections and bloom (Tervel)"))
