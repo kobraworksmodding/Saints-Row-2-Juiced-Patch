@@ -237,7 +237,7 @@ namespace Shadows {
     }
 
     void Init() {
-        if (GameConfig::GetValue("Debug", "sync_shadows_threads", 1) || GameConfig::GetValue("Debug", "FixPerformance", 1) >= 2) {
+	if (GameConfig::GetValue("Debug", "sync_shadows_threads", 1, "Implements proper thread synchronization for shadow jobs, makes SleepHack 2 obsolete as threads are in sync properely now.\nAlso heavily reduces CPU usage compared to this setting turned off + Sleephack 2. (Clippy95, Silent)") || GameConfig::GetValue("Debug", "FixPerformance", 1, "Fixes performance by waiting properly between main game thread and render thread.\nrecommended to be used alongside sync_shadows_threads=1 (Clippy95)") >= 2) {
             render_1 = (render_load*)*(uintptr_t*)(((0x0052434E + 2)));
             InitializeShadowWorkerSync();
             SafeWrite32((0x00528539 + 1), (uint32_t)&shadow_job_thread);
@@ -246,7 +246,7 @@ namespace Shadows {
                 });
         }
         Logger::TypedLog(CHN_DEBUG, "Patching amount of Shadow job threads to be %d\n", std::clamp((int)GameConfig::GetValue("Debug", "ShadowThreadCount", 4), 1, (int)std::thread::hardware_concurrency()));
-        SafeWrite32(0x528524, std::clamp((int)GameConfig::GetValue("Debug", "ShadowThreadCount", 4), 1, (int)std::thread::hardware_concurrency()));
+	SafeWrite32(0x528524, std::clamp((int)GameConfig::GetValue("Debug", "ShadowThreadCount", 4, "Dedicates amount of Shadow Jobs threads that should be created, game by default creates 4 threads. (Clippy95)\n!!!!With sync_shadows_threads on, it's recommended to keep it at 4!!!!"), 1, (int)std::thread::hardware_concurrency()));
         static auto ShadowMapBBoxFix = safetyhook::create_mid(0x00536373_g, [](SafetyHookContext& ctx)
             {
                 float* Min = (float*)ctx.edx;
@@ -263,7 +263,7 @@ namespace Shadows {
                 Max[1] = Camera.y + Radius;
                 Max[2] = Camera.z + Radius;
             });
-        PatchShadowMapRes(std::clamp((int)GameConfig::GetValue("Graphics", "ShadowMapRes", 960), 960, 9600));
+	PatchShadowMapRes(std::clamp((int)GameConfig::GetValue("Graphics", "ShadowMapRes", 960, "Sets the shadow map resolution to anything from the vanilla 960x960 up to 10x the vanilla resolution. (Tervel)\nSome recommened values: 2048, 4096, 8192"), 960, 9600));
     }
 
     void Cleanup() {

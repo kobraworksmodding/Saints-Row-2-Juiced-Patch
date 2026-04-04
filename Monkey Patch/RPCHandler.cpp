@@ -476,7 +476,7 @@ namespace RPCHandler {
 
 	}
 	void Init() {
-		Enabled = GameConfig::GetValue("Misc", "RichPresence", 0);
+	Enabled = GameConfig::GetValue("Misc", "RichPresence", 1, "Discord Rich Presence");
 
 		if (Enabled)
 		{

@@ -391,8 +391,8 @@ namespace Game
 		sub_95B480D = safetyhook::create_inline(0x95B480, sub_95B480);
 		vehicle_effects_handle_tire_dirtD = safetyhook::create_inline(0xAD09E0, vehicle_effects_handle_tire_dirt);
 		vehicle_effects_handle_tire_waterD = safetyhook::create_inline(0xAD0CF0, vehicle_effects_handle_tire_water);
-		if (GameConfig::GetValue("Debug", "DisableDistantPeds", 0)) DisableDistantPeds.Apply();
-		if (GameConfig::GetValue("Debug", "DisableDistantVehicles", 0)) DisableDistantVehicles.Apply();
+	if (GameConfig::GetValue("Debug", "DisableDistantPeds", 0, "Both of these patches will disable the fake distant models for either the peds or the vehicles. (Tervel)")) DisableDistantPeds.Apply();
+	if (GameConfig::GetValue("Debug", "DisableDistantVehicles", 0, "Both of these patches will disable the fake distant models for either the peds or the vehicles. (Tervel)")) DisableDistantVehicles.Apply();
 		if(GameConfig::GetValue("Gameplay","ForceMetricSystem",0))
 		force_metric_measurements();
 		chat_box_cursor_support_hooks();

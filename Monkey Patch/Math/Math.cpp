@@ -181,8 +181,8 @@ namespace Math
 			bool sse4_1 = cpuinfo[2] & (1 << 19) || false;
 			bool sse4_2 = cpuinfo[2] & (1 << 20) || false;
 
-			bool allowMathFix = (sse2 || sse4_1) && GameConfig::GetValue("Debug", "FastMath", 1);
-			bool allowMathFixdbg = (sse2 || sse4_1) && (GameConfig::GetValue("Debug", "FastMath", 1) == 255);
+	bool allowMathFix = (sse2 || sse4_1) && GameConfig::GetValue("Debug", "FastMath", 1, "Replaces old in-game math functions with more optimized SSE2+ functions, provides a major FPS boost in certain areas of the game\nAlso helps achieve better performance parity between AMD and Intel CPUs, as AMD CPUs previously had worse performance with the original functions compared to Intel CPUs. (Clippy95 & Tervel)");
+	bool allowMathFixdbg = (sse2 || sse4_1) && (GameConfig::GetValue("Debug", "FastMath", 1, "Replaces old in-game math functions with more optimized SSE2+ functions, provides a major FPS boost in certain areas of the game\nAlso helps achieve better performance parity between AMD and Intel CPUs, as AMD CPUs previously had worse performance with the original functions compared to Intel CPUs. (Clippy95 & Tervel)") == 255);
 			// Idea to fix issue #14 IK/Foot issue getting messed up, the actual call cause is at 0x0x00CE9600, but rn im doing this globally as it makes the most sense - Clippy95
 			matrix_operator_multiplication_midhook = safetyhook::create_mid(0x00BE2F57, [](SafetyHookContext& ctx) {
 				matrix* result = (matrix*)ctx.eax;
@@ -236,7 +236,7 @@ namespace Math
 			static float bug_timer = 0.0f;
 
 			// This is a work around and not a proper fix. -- Clippy
-			if(GameConfig::GetValue("Debug","FixWaterVolumeCameraBug",1))
+	if(GameConfig::GetValue("Debug","FixWaterVolumeCameraBug",1, "Implements a workaround to water volume causing tsunami like waves when flicking camera orientation around for a few seconds (only was possible with mouse) (Clippy95)"))
 			static auto watervol_midhook1 = safetyhook::create_mid(0x72635C, [](SafetyHookContext& ctx) {
 				vector2* cam_forward = (vector2*)(ctx.esp + 0x14);
 

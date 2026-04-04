@@ -403,9 +403,9 @@ CMultiPatch CMPatches_SR1Reloading = {
 				}
 				});
 		}
-		if(GameConfig::GetValue("Graphics","ProperBrakeLights",1) != 0)
+	if(GameConfig::GetValue("Graphics","ProperBrakeLights",1, "Makes Brake lights visible when a running vehicle is at a full stop while the engine is running (Clippy95)") != 0)
 		patchCall((void*)0xAD5C29, vehicle_brakelight_fix);
-		if (GameConfig::GetValue("Gameplay", "DisableSprintCamShake", 0)) {
+	if (GameConfig::GetValue("Gameplay", "DisableSprintCamShake", 0, "Disables camera shake while sprinting (Clippy95)")) {
 			Logger::TypedLog(CHN_DEBUG, "DisableSprintCamShake..\n");
 			CDisableSprintCamShake.Apply();
 		}
@@ -421,7 +421,7 @@ CMultiPatch CMPatches_SR1Reloading = {
 			}
 			},safetyhook::MidHook::StartDisabled);
 		// Lower values = camera slower panning around car
-		vehicle_camera_follow_modifier = (float)GameConfig::GetDoubleValue("Gameplay", "vehicle_camera_follow_modifier", 1.f);
+	vehicle_camera_follow_modifier = (float)GameConfig::GetDoubleValue("Gameplay", "vehicle_camera_follow_modifier", 1.f, "Changes the auto center camera timer while in a vehicle (in milliseconds) (Clippy95)\nRemove \";\" from below if you would like to use this feature.\nVehicleAutoCenterModifier=25\nChanges the camera turning speed back to the center.");
 		LessCameraVehicleFollow_hook_enable_disable();
 		if (GameConfig::GetValue("Debug", "FixGFL1_for_female_playas", 1))
 			player_data_loadT = safetyhook::create_inline(0x00693EB0, &player_data_load);
@@ -435,80 +435,80 @@ CMultiPatch CMPatches_SR1Reloading = {
 		//}
 #if !JLITE
 #if !RELOADED
-		if (GameConfig::GetValue("Gameplay", "AlwaysDisarmOnRagdoll", 0))
+	if (GameConfig::GetValue("Gameplay", "AlwaysDisarmOnRagdoll", 0, "Disarms characters and the player everytime ragdoll is initiated."))
 		{
 			patchNop((BYTE*)0x009AC517, 11); // NOP out an if statement that holsters on ragdoll.
 			patchNop((BYTE*)0x009AC52B, 8);
 			patchByte((BYTE*)0x009C3AB8, 0xEB); // jmp a check in can drop weapons.
 		}
 #endif
-		if (GameConfig::GetValue("Gameplay", "SprintWhileOnFire", 0))
+	if (GameConfig::GetValue("Gameplay", "SprintWhileOnFire", 0, "Allows you to sprint while on fire, just like in SR1! (Clippy95)"))
 		{
 			patchCall((BYTE*)0x004F8B45, UtilsGlobal::RetZero);
 		}
-		if (GameConfig::GetValue("Gameplay", "AllowWeaponSwitchInAllCases", 0))
+	if (GameConfig::GetValue("Gameplay", "AllowWeaponSwitchInAllCases", 0, "Allows weapon switching when sprinting, etc (Clippy95)"))
 		{
 			CAllowWeaponSwitchInAllCases_KBM.Apply();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "BetterAnimBlend", 0))
+	if (GameConfig::GetValue("Gameplay", "BetterAnimBlend", 0, "Makes animation situations like swapping weapons appear smoother."))
 		{
 			CAnimBlend.Apply();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "BetterHandbrakeCam", 0)) // Fixes Car CAM Axis while doing handbrakes.
+	if (GameConfig::GetValue("Gameplay", "BetterHandbrakeCam", 0, "Makes it so the cam doesnt chase the car when you do a powerslide/handbrake. (Creds to Clippy95)")) // Fixes Car CAM Axis while doing handbrakes.
 		{
 			BetterHBC();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "BetterDriveByCam", 1)) // Fixes Car CAM Axis while doing drive-bys.
+	if (GameConfig::GetValue("Gameplay", "BetterDriveByCam", 1, "Fixes the drive-by camera by making it unlocked from the front forward axis of the car. (Makes it easier to aim) (Creds to Clippy95)")) // Fixes Car CAM Axis while doing drive-bys.
 		{
 			BetterDBC();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "AllowToggleCrouchWhileWalk", 1))
+	if (GameConfig::GetValue("Gameplay", "AllowToggleCrouchWhileWalk", 1, "Allows you to crouch while jogging (Clippy95)"))
 		{
 			AllowToggleCrouchWhileWalk();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "DisableCameraLockForClimb", 1))
+	if (GameConfig::GetValue("Gameplay", "DisableCameraLockForClimb", 1, "Disables Camera locking when Mantling/Climbing over walls. (Clippy95)"))
 		{
 			DisableLockedClimbCam();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "FastDoors", 0)) // removes the anim for kicking or opening doors.
+	if (GameConfig::GetValue("Gameplay", "FastDoors", 0, "Skips the open/kick animation for opening doors.")) // removes the anim for kicking or opening doors.
 		{
 			FasterDoors();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "SR1Reloading", 0))
+	if (GameConfig::GetValue("Gameplay", "SR1Reloading", 0, "Allows you to reload while sprinting (Tervel)"))
 		{
 			SR1Reloading();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "NoMeleeLockOn", 0))
+	if (GameConfig::GetValue("Gameplay", "NoMeleeLockOn", 0, "Disables the forced player orientation change when attacking while next to an NPC - takedowns will not work with this option due to them heavily depending on a lock-on target. (Tervel)"))
 		{
 			CMPatches_NoMeleeLockOn.Apply();	
 		}
 
-		if (GameConfig::GetValue("Gameplay", "SR1CrouchCam",1)) {
+	if (GameConfig::GetValue("Gameplay", "SR1CrouchCam",1, "Crouch camera acts the same regardless if you're armed or unarmed (Clippy95)")) {
 			Logger::TypedLog(CHN_DEBUG, "Patching SR1CrouchCam...\n");
 			CSR1CrouchCam.Apply();
 		}
-		if (GameConfig::GetValue("Gameplay", "SR1QuickSwitch", 1))
+	if (GameConfig::GetValue("Gameplay", "SR1QuickSwitch", 0, "Restores the quick switching technique from SR1 (Tervel)"))
 		{
 			SR1QuickSwitch();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "TauntCancelling", 1))
+	if (GameConfig::GetValue("Gameplay", "TauntCancelling", 1, "Allows you to cancel taunt/compliment by simply pressing the taunt/compliment button again. (Tervel)"))
 		{
 			TauntCancelling();
 		}
-		if (GameConfig::GetValue("Gameplay", "UseWeaponAfterEmpty", 1))
+	if (GameConfig::GetValue("Gameplay", "UseWeaponAfterEmpty", 1, "Keeps your empty weapon equipped after you've run out of ammo for that weapon (Tervel)"))
 		{
 			WeaponJam();
 		}
-		if (GameConfig::GetValue("Gameplay", "BetterMovementBehaviour", 0))
+	if (GameConfig::GetValue("Gameplay", "BetterMovementBehaviour", 0, "Stops some animation events from running, more notably the 180 turn anims that add extra movement delay. Feels like SR1 movement."))
 		{
 			BetterMovement();
 		}
@@ -516,7 +516,7 @@ CMultiPatch CMPatches_SR1Reloading = {
 		{
 			MovingAttacks();
 		}
-		if (GameConfig::GetValue("Gameplay", "HigherMaxSpeed", 0))
+	if (GameConfig::GetValue("Gameplay", "HigherMaxSpeed", 0, "Removes xtbl's 100 mph hardcoded limit on vehicle speeds (ithinkimcats, Clippy95)"))
 		{
 			HigherMaxSpeed();
 		}

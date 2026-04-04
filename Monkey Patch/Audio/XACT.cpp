@@ -26,7 +26,7 @@ namespace XACT
 	void FixAudioHack()
 	{
 #if !JLITE
-		if (GameConfig::GetValue("Debug", "FixAudio", 0)) // solid workaround for making cutscenes play with directional/3D audio (breaks the volume sliders)
+	if (GameConfig::GetValue("Debug", "FixAudio", 0, "[EXPERIMENTAL] Fixes stereo output in cutscenes, very experimental in its current state.")) // solid workaround for making cutscenes play with directional/3D audio (breaks the volume sliders)
 														  // keep the name unchanged as we could use this in the future for fixing music or other audio issues?
 		{
 			static SafetyHookMid XACT3DAudioHack = safetyhook::create_mid(0x0047EA5E, &Cutscene3DAudio);
@@ -85,7 +85,7 @@ namespace XACT
 	void UpdateToNewerXACT()
 	{
 		int turn = UtilsGlobal::is_wine() ? 2 : 1;
-		if (GameConfig::GetValue("Audio", "UseFixedXAudio", 1) >= turn) // Scanti the Goat
+	if (GameConfig::GetValue("Audio", "UseFixedXAudio", 1, "Fixes audio playback across the board, Replaces the ingame XAudio 2.2 to XAudio 2.3. (Creds to Scanti)\nSetting this to 1 enables it for Windows Systems, requires 2 for Linux/Wine and proper XACT install (use winetricks or protontricks)") >= turn) // Scanti the Goat
 		{
 			// Forces the game to use a newer version of XACT which in turn fixes all of the audio issues
 			// in SR2 aside from 3D Panning.
@@ -104,7 +104,7 @@ namespace XACT
 	}
 	void ChangeSpeakerCount()
 	{
-		if (GameConfig::GetValue("Audio", "51Surround", 0) == 1)
+	if (GameConfig::GetValue("Audio", "51Surround", 0, "Toggles the games in-built 5.1 Surround Support. (Scanti)") == 1)
 		{
 			Logger::TypedLog(CHN_AUDIO, "Using 5.1 Surround Sound...\n");
 		}

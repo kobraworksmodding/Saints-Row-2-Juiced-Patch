@@ -1471,7 +1471,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 		}
 #if !JLITE
-		if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1)) {
+	if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1, "Patches in Juiced Patch custom updates to settings adding MSAA 8x Support and fixing up label names, required for Ultrawide support.")) {
 #endif
 			cleanupBufferHook = safetyhook::create_mid(0x00CDE388, [](safetyhook::Context32& ctx) {
 				General::CleanupModifiedScript();
@@ -1513,7 +1513,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		WriteRelJump(0x007737DA, (UInt32)&MSAA); // 8x MSAA support; requires modded pause_menu.lua but won't cause issues without
 		WriteRelJump(0x0075C8D0, (UInt32)&ValidCharFix); // add check for control keys to avoid pasting issues in the executor
 		WriteRelJump(0x00C1F4ED, (UInt32)&MouseFix); // fix ghost mouse scroll inputs when tabbing in and out
-		if (GameConfig::GetValue("Input", "FixVerticalMouseSensitivity", 1)) {
+	if (GameConfig::GetValue("Input", "FixVerticalMouseSensitivity", 1, "Fixes Y mouse sensitivity being tied to aspect ratio. (Clippy95)")) {
 
 			patchBytesM((BYTE*)0x00498331, (BYTE*)"\xD9\xE8\x90", 3); // fld1 nop
 			

@@ -38,11 +38,11 @@ namespace Logger
 		char logpath[MAX_PATH];
 		char tracepath[MAX_PATH];
 
-		if (GameConfig::GetValue("Logger", "Console", 0))
+		if (GameConfig::GetValue("Logger", "Console", 1, "Debug Console"))
 			l_UseConsole = true;
 		if (GameConfig::GetValue("Logger", "PrintScriptNames", 0))
 			l_PrintScriptNames = true;
-		if (GameConfig::GetValue("Logger", "WriteFile", 1))
+		if (GameConfig::GetValue("Logger", "WriteFile", 1, "Prints to debug.txt file in game directory."))
 			l_DebugOutput = true;
 
 		l_ExitOnAssert = GameConfig::GetValue("Logger", "ExitOnAssert", 1);

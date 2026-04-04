@@ -1610,7 +1610,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	patchJmp((void*)0x697339, sub_73D900);
 
 
-	LUA_Key = GameConfig::GetValue("Debug", "ExecutorBind", VK_INSERT);
+		LUA_Key = GameConfig::GetValue("Debug", "ExecutorBind", VK_INSERT, "Changes the keybind for Lua Executor. refer to https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes for the key \"value\"s. (Clippy95)");
 	InGameConfig::AddOptions();
 	General::TopWinMain();
 	CrashFixes::Init();
@@ -1659,7 +1659,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	
 	// Instead of data being in %LOCALAPPDATA%\\THQ\\Saints Row 2, move it to current direcetory\\userdata
 #if !RELOADED
-	if (GameConfig::GetValue("Misc", "portable", 0) && PathRemoveFileSpecA(NameBuffer) && PathAppendA(NameBuffer, "userdata")) {
+	if (GameConfig::GetValue("Misc", "portable", 0, "Turning this option on makes it so saved games and settings load from \"SR2 GAME DIRECTORY//userdata\"") && PathRemoveFileSpecA(NameBuffer) && PathAppendA(NameBuffer, "userdata")) {
 		CreateDirectoryA(NameBuffer, NULL);
 		Logger::TypedLog(CHN_DLL, "Final Path: %s \n", NameBuffer);
 		SafeWriteBuf(0x0144E650, NameBuffer, MAX_PATH);

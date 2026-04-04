@@ -214,14 +214,14 @@ namespace Debug
 	void Init() {
 		//OptionsManager::registerOption("Graphics", "DynamicRenderDistance", (int*)&UseDynamicRenderDistance, 0);
 #if !JLITE
-		if (GameConfig::GetValue("Gameplay", "SkipIntros", 0)) // can't stop Tervel won't stop Tervel
+	if (GameConfig::GetValue("Gameplay", "SkipIntros", 0, "Skips Startup Logos and Disclaimers (Creds to Tervel)")) // can't stop Tervel won't stop Tervel
 		{
 			Logger::TypedLog(CHN_DLL, "Skipping intros & legal disclaimers.\n");
 			patchNop((BYTE*)(0x005207B4), 6); // prevent intros from triggering
 			patchBytesM((BYTE*)0x0068C740, (BYTE*)"\x96\xC5\x68\x00", 4); // replace case 0 with case 4 to skip legal disclaimers
 		}
 
-		if (GameConfig::GetValue("Gameplay", "DisableCheatFlag", 0))
+	if (GameConfig::GetValue("Gameplay", "DisableCheatFlag", 0, "Disables Cheat Flagging (Creds to Clippy95)"))
 		{
 			//patchNop((BYTE*)0x00687e12, 6);
 			//patchNop((BYTE*)0x00687e18, 6);
@@ -229,7 +229,7 @@ namespace Debug
 		}
 
 
-		if (GameConfig::GetValue("Debug", "AddBindToggles", 1))
+	if (GameConfig::GetValue("Debug", "AddBindToggles", 0, "Adds Custom Option Binds to the F Keys [F1-F9]"))
 		{
 			Logger::TypedLog(CHN_DEBUG, "Adding Custom Key Toggles...\n");
 			addBindToggles = 1;
@@ -238,20 +238,20 @@ namespace Debug
 			patchBytesM((BYTE*)0x00C01AC8, (BYTE*)"\xDC\x64\x24\x20", 4); // invert Y axis in slew 
 		}
 
-		if (GameConfig::GetValue("Gameplay", "LoadLastSave", 0)) // great for testing stuff faster and also for an optional feature in gen
+	if (GameConfig::GetValue("Gameplay", "LoadLastSave", 0, "Automatically Loads your last saved game upon main menu boot up. (Creds to Tervel)")) // great for testing stuff faster and also for an optional feature in gen
 		{
 			LoadLastSave = 1;
 			Logger::TypedLog(CHN_DEBUG, "Skipping main menu...\n");
 		}
 
 #endif 
-		if (GameConfig::GetValue("Debug", "FixFrametime", 1))
+	if (GameConfig::GetValue("Debug", "FixFrametime", 1, "Fixes Cutscene Object Syncage and Doors teleporting on high fps."))
 		{
 			Logger::TypedLog(CHN_DEBUG, "Fixing Frametime issues...\n");
 			fixFrametime = 1;
 		}
 
-		if (GameConfig::GetValue("Mempool", "mempool_print_error", 1) != 0) {
+	if (GameConfig::GetValue("Mempool", "mempool_print_error", 1, "Opens a popup when mempool alloc fails (Clippy95)") != 0) {
 			patchCall((void*)0xBFCA9E, printf_mempool_hook);
 			patchCall((void*)0xBFCB5F, printf_mempool_hook);
 			patchCall((void*)0xBFCBBE, printf_mempool_hook);
