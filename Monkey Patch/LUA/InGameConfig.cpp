@@ -212,8 +212,8 @@ namespace InGameConfig {
                 Behavior::sticky_cam_timer_add = (*value * 500);
                 GameConfig::SetValue("Gameplay", "VehicleAutoCenterModifer", Behavior::sticky_cam_timer_add);
                 if (Behavior::sticky_cam_timer_add != 0)
-                    Behavior::cf_do_control_mode_sticky_MIDASMHOOK.enable();
-                else Behavior::cf_do_control_mode_sticky_MIDASMHOOK.disable();
+                    (void)Behavior::cf_do_control_mode_sticky_MIDASMHOOK.enable();
+                else (void)Behavior::cf_do_control_mode_sticky_MIDASMHOOK.disable();
             }
         }
         if (strcmp(var, "X360GammaUI") == 0) {
@@ -221,7 +221,10 @@ namespace InGameConfig {
                 *value = Render2D::final_2d_render.enabled();
             }
             else {
-                *value ? Render2D::final_2d_render.enable() : Render2D::final_2d_render.disable();
+                if (*value)
+                    (void)Render2D::final_2d_render.enable();
+                else
+                    (void)Render2D::final_2d_render.disable();
                 GameConfig::SetValue("Graphics", "X360GammaUI", *value);
 
             }

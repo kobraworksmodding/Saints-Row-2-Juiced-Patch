@@ -139,9 +139,6 @@ WinMain entry point.
 
 CDFEngine* CreateDFEngine(void)
 {
-	HMODULE dll_loaded;
-	typedef CDFEngine* (__stdcall* CreateDFEngine_type)();
-	CreateDFEngine_type redirect_CreateDFEngine;
 	Logger::TypedLog(CHN_MOD, "Calling CreateDFEngine.\n");
 
 

@@ -6,7 +6,7 @@ void SafeWrite8(UInt32 addr, UInt32 data)
 	UInt32	oldProtect;
 
 	VirtualProtect((void *)addr, 4, PAGE_EXECUTE_READWRITE, &oldProtect);
-	*((UInt8 *)addr) = data;
+	*((UInt8 *)addr) = static_cast<UInt8>(data);
 	VirtualProtect((void *)addr, 4, oldProtect, &oldProtect);
 }
 
@@ -15,7 +15,7 @@ void SafeWrite16(UInt32 addr, UInt32 data)
 	UInt32	oldProtect;
 
 	VirtualProtect((void *)addr, 4, PAGE_EXECUTE_READWRITE, &oldProtect);
-	*((UInt16 *)addr) = data;
+	*((UInt16 *)addr) = static_cast<UInt16>(data);
 	VirtualProtect((void *)addr, 4, oldProtect, &oldProtect);
 }
 

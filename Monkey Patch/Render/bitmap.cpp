@@ -74,8 +74,8 @@ void __cdecl file_remove_extension(char* filename, size_t ext, const char* new_f
     new_filename = strrchr(new_filename_array_size, 46);
     if (new_filename)
     {
-        num_characters_to_copy = new_filename - new_filename_array_size;
-        if (new_filename - new_filename_array_size > ext - 1)
+        num_characters_to_copy = static_cast<size_t>(new_filename - new_filename_array_size);
+        if (num_characters_to_copy > ext - 1)
             num_characters_to_copy = ext - 1;
         strncpy(filename, new_filename_array_size, num_characters_to_copy);
         filename[num_characters_to_copy] = 0;
@@ -106,7 +106,7 @@ LPCRITICAL_SECTION Bm_add_lock = (LPCRITICAL_SECTION)0x33DA354;
 
 int __cdecl bm_add_bitmap(const char* filename)
 {
-    bitmap_entry* b;
+    bitmap_entry* b = nullptr;
     int handle = 0;
     if (filename == NULL)
         return -1;
@@ -237,11 +237,11 @@ constexpr size_t permanent_default = 0x00800000;
         if (GameConfig::GetValue("Modding", "addon_bitmaps", 1)) {
             static auto interface_gpu_increase = safetyhook::create_mid(0x51E322, [](SafetyHookContext& ctx) {
                 if (double interface_gpu_new_size = GameConfig::GetDoubleValue("Mempool", "interface_gpu_multi", 1.5); interface_gpu_new_size >= 1.0) {
-                    ctx.esi *= interface_gpu_new_size;
-                    Logger::TypedLog("Mempool", "Patched interface_gpu size to 0x{:X}\n", ctx.esi);
+                    ctx.esi = static_cast<uintptr_t>(ctx.esi * interface_gpu_new_size);
+                    Logger::TypedLog("Mempool", "Patched interface_gpu size to 0x%X\n", ctx.esi);
                 }
                 });
-            size_t new_permanent_size = std::clamp(GameConfig::GetValue("Mempool", "permanent", permanent_default * 1.5), permanent_default,GB / 2);
+            size_t new_permanent_size = std::clamp(GameConfig::GetValue("Mempool", "permanent", permanent_default + (permanent_default / 2)), permanent_default, GB / 2);
 
             size_t first_increase_hastable = std::clamp(GameConfig::GetValue("Mempool", "Bitmap_Image_Names_hashtable", (size_t)first_increase), (size_t)12000, GB);
 

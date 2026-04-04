@@ -289,7 +289,7 @@ namespace CModLoader {
                 current->size = static_cast<int>(merged_buffer_size - 1); // Exclude null terminator
 
             }
-            catch (const std::exception& e) {
+            catch (const std::exception&) {
                 // Log error or handle gracefully
                 // For now, just continue with original content
                 return;

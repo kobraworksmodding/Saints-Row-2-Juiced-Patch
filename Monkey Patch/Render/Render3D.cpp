@@ -50,7 +50,7 @@ namespace Render3D
 
 	void AspectRatioFix(bool update_aspect_ratio) {
 		float currentAR = *(float*)0x022FD8EC;
-		const float a169 = 1.777777791;
+		const float a169 = 1.777777791f;
 		const double defaultFOV = 1.33333337306976;
 		//double currentFOV = *(double*)0x0E5C808;
 		double FOVmulti;
@@ -83,13 +83,13 @@ namespace Render3D
 	}
 	double __cdecl ConvertVerticalFOVToHorizontal_fixwidescreen(float verticalFOV, bool cutscene)
 	{
-		float radians = verticalFOV * 0.01745299994945526;  // Convert to radians
-		float tangent = tan(radians * 0.5);
+		float radians = verticalFOV * 0.01745299994945526f;  // Convert to radians
+		float tangent = tanf(radians * 0.5f);
 
 		// Apply aspect ratio adjustment
-		float adjusted = tangent * UltrawideFixRatio;
+		float adjusted = tangent * static_cast<float>(UltrawideFixRatio);
 		if (!cutscene) {
-			adjusted *= 1.333333373069763 * Render3D::FOVMultiplier;
+			adjusted *= static_cast<float>(1.333333373069763 * Render3D::FOVMultiplier);
 		}
 
 		// Convert back to degrees
@@ -212,7 +212,7 @@ namespace Render3D
 			return;
 		}
 		else {
-			OriginalSleep(dwMilliseconds / 1.5);
+			OriginalSleep(static_cast<DWORD>(dwMilliseconds / 1.5f));
 		}
 	}
 	bool IsSleepHooked = false;
@@ -234,8 +234,6 @@ namespace Render3D
 			return;
 		HMODULE main_handle = GetModuleHandleA(NULL);
 
-		void* old_proc;
-
 		if (PatchIat(main_handle, (char*)"Kernel32.dll", (char*)"Sleep", OriginalSleep, NULL) == S_OK) {
 			IsSleepHooked = false;
 		}
@@ -246,8 +244,8 @@ namespace Render3D
 		FLOAT* WalkCamZoom = (FLOAT*)0x025F6334;
 		BYTE ActorFade = *(BYTE*)0x00E8825F;
 
-		if (*(FLOAT*)WalkCamZoom > -0.5) {
-			*(FLOAT*)0x025F6334 = -0.6; // Force camera zoom to chest/in front of player.
+		if (*(FLOAT*)WalkCamZoom > -0.5f) {
+			*(FLOAT*)0x025F6334 = -0.6f; // Force camera zoom to chest/in front of player.
 		}
 		if (ActorFade == 0x01) {
 			*(BYTE*)0x00E8825F = 0x00; // Force ActorFade to off.
@@ -1179,7 +1177,7 @@ constexpr auto new_size_n = 5000;
 		unsigned char AlphaMaskVal = *(unsigned char*)DynAddress(0x0252A2EC);
 
 		bool Result = MSAA && AlphaMaskVal;
-		float AlphaMask[4] = { Result, DitherFilter, 0.0f, 0.0f };
+		float AlphaMask[4] = { Result ? 1.0f : 0.0f, DitherFilter ? 1.0f : 0.0f, 0.0f, 0.0f };
 		ChangeShaderOptions();
 		SetPSConstF(189, &AlphaMask[0], 1);
 		return Result;
@@ -1367,7 +1365,7 @@ constexpr auto new_size_n = 5000;
 		}
 		add_to_entry_test = safetyhook::create_mid(0x00C080EC, &add_to_entry_crashaddr_hook,safetyhook::MidHook::StartDisabled);
 		if (GameConfig::GetValue("Debug", "ClippyTextureCrashExceptionHandle", 1)) {
-			add_to_entry_test.enable();
+			(void)add_to_entry_test.enable();
 		}
 
 		if (GameConfig::GetValue("Gameplay", "IncreaseVehicleFadeDistance", 1, "Increases the distance where vehicles fade if you are not looking at them")) {
@@ -1418,9 +1416,10 @@ constexpr auto new_size_n = 5000;
 			CMPatches_ClassicGTAIdleCam.Apply();
 			useFPSCam = 1;
 		}
+		const uint32_t firstPersonCameraMode = GameConfig::GetValue("Graphics", "FirstPersonCamera", 0, "Uses a custom first person mode camera on-foot. 2 has viewmodel, 1 has no viewmodel.");
 		if (GameConfig::GetValue("Graphics", "ClassicGTAIdle", 0, "Makes idle animations snap to where the camera is pointing (like GTA3/VC)") &&
-			!GameConfig::GetValue("Graphics", "FirstPersonCamera", 0, "Uses a custom first person mode camera on-foot. 2 has viewmodel, 1 has no viewmodel.") == 1
-			|| !GameConfig::GetValue("Graphics", "FirstPersonCamera", 0, "Uses a custom first person mode camera on-foot. 2 has viewmodel, 1 has no viewmodel.") == 2)
+			firstPersonCameraMode != 1 &&
+			firstPersonCameraMode != 2)
 		{
 			Logger::TypedLog(CHN_MOD, "Patching in Classic GTA Idle...\n");
 			//patchByte((BYTE*)0x00960C30, 0xC3);
@@ -1436,13 +1435,13 @@ constexpr auto new_size_n = 5000;
 		screen_3d_to_2d_midhook = safetyhook::create_mid(0xD22BE8, [](SafetyHookContext& ctx) {
 			if (UltrawideFixRatio == 1.0)
 				return;
-			float x_bound = 1.0f / UltrawideFixRatio;
+			float x_bound = 1.0f / static_cast<float>(UltrawideFixRatio);
 			float& x = *(float*)(ctx.esp + 0x10);
 			bool ultrawide = x < -x_bound || x > x_bound;
 			if (ultrawide) {
 				setBL(ctx, false);
 			}
-			x *= Render3D::UltrawideFixRatio;
+			x *= static_cast<float>(Render3D::UltrawideFixRatio);
 			});
 
 		if (GameConfig::GetValue("Gameplay", "FixUltrawideFOV", 1))

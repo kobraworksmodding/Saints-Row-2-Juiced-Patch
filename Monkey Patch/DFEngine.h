@@ -63,5 +63,11 @@ public:
 	virtual void* dtor(void* param_1, bool bFreeMemory) { return param_1; }
 };
 
-extern "C" __declspec(dllimport) CDFEngine * CreateDFEngine(void);
+#ifdef BLANKDFENGINE_EXPORTS
+#define DFENGINE_API __declspec(dllexport)
+#else
+#define DFENGINE_API __declspec(dllimport)
+#endif
+
+extern "C" DFENGINE_API CDFEngine* CreateDFEngine(void);
 

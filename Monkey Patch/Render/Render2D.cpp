@@ -647,8 +647,9 @@ char __cdecl bitmap_minimap_render_player(
 		angle = angle - playerAngle;
 
 		if (isfinite(angle)) {
-			angle = fmodf(angle, 2.0f * M_PI);
-			if (angle < 0) angle += 2.0f * M_PI;
+			const float twoPi = 2.0f * static_cast<float>(M_PI);
+			angle = fmodf(angle, twoPi);
+			if (angle < 0) angle += twoPi;
 		}
 	}
 
@@ -672,8 +673,9 @@ char __cdecl bitmap_pause_map_render_player(
 		angle = -playerAngle;
 
 		if (isfinite(angle)) {
-			angle = fmodf(angle, 2.0f * M_PI);
-			if (angle < 0) angle += 2.0f * M_PI;
+			const float twoPi = 2.0f * static_cast<float>(M_PI);
+			angle = fmodf(angle, twoPi);
+			if (angle < 0) angle += twoPi;
 		}
 	}
 		return ((char(__cdecl*)(uint32_t, float, float, float, float, DWORD))0xB87C10)(id, x, y, angle, scale, unk);

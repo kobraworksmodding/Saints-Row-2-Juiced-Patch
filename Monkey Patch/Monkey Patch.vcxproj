@@ -98,38 +98,44 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>DFEngine</TargetName>
     <LibraryPath>C:\Users\Uzis\Desktop\sr2mprw-dev\DLL\source\Discord;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>DFEngine</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug - LITE|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>DFEngine</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RELOADED|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>RLEngine</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RELOADED - DEV|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>RLEngine</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Reloaded Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>DFEngine</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -140,8 +146,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
 	  <AdditionalOptions>/utf-8</AdditionalOptions> 
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -161,7 +166,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
@@ -169,8 +174,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
 	  <AdditionalOptions>/utf-8</AdditionalOptions> 
     </ClCompile>
@@ -200,7 +204,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug - LITE|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;JLITE;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;JLITE;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -212,8 +216,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+<DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
 	  <AdditionalOptions>/utf-8</AdditionalOptions> 
     </ClCompile>
     <Link>
@@ -240,7 +243,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RELOADED|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;RELOADED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;RELOADED;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -248,8 +251,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+<DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
 	  <AdditionalOptions>/utf-8</AdditionalOptions> 
     </ClCompile>
     <Link>
@@ -273,7 +275,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RELOADED - DEV|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;RELOADED;RLDEV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;RELOADED;RLDEV;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -281,8 +283,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
 	  <AdditionalOptions>/utf-8</AdditionalOptions> 
     </ClCompile>
     <Link>
@@ -306,7 +307,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Reloaded Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -314,8 +315,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>
-      </DisableSpecificWarnings>
+      <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
 	  <AdditionalOptions>/utf-8</AdditionalOptions> 
     </ClCompile>
     <Link>

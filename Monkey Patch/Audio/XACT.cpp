@@ -85,7 +85,7 @@ namespace XACT
 	void UpdateToNewerXACT()
 	{
 		int turn = UtilsGlobal::is_wine() ? 2 : 1;
-	if (GameConfig::GetValue("Audio", "UseFixedXAudio", 1, "Fixes audio playback across the board, Replaces the ingame XAudio 2.2 to XAudio 2.3. (Creds to Scanti)\nSetting this to 1 enables it for Windows Systems, requires 2 for Linux/Wine and proper XACT install (use winetricks or protontricks)") >= turn) // Scanti the Goat
+	if (static_cast<int>(GameConfig::GetValue("Audio", "UseFixedXAudio", 1, "Fixes audio playback across the board, Replaces the ingame XAudio 2.2 to XAudio 2.3. (Creds to Scanti)\nSetting this to 1 enables it for Windows Systems, requires 2 for Linux/Wine and proper XACT install (use winetricks or protontricks)")) >= turn) // Scanti the Goat
 		{
 			// Forces the game to use a newer version of XACT which in turn fixes all of the audio issues
 			// in SR2 aside from 3D Panning.

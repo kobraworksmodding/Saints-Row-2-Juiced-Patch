@@ -122,7 +122,6 @@ void __stdcall shadow_job_thread(LPVOID lpThreadParameter)
 {
     void* v1;
     int indexing_1;
-    int v3;
     int u2;
     render_load* shadow_job_class;
     mempool shadow_job_pool{};

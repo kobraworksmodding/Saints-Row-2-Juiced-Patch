@@ -25,7 +25,7 @@ namespace Memory
 	{
 		// Increases the Tree Fade Distance from 250000 to 500000
 		Logger::TypedLog(CHN_MEMORY, "Increasing Tree Fade Distance to 500000.\n");
-		patchFloat((BYTE*)0x0252A058, NewTreeDist);
+		patchFloat((BYTE*)0x0252A058, static_cast<float>(NewTreeDist));
 	}
 
 	void ExpandShadowRenderDist()
