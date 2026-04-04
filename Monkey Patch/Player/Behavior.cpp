@@ -128,9 +128,11 @@ CMultiPatch CMPatches_SR1Reloading = {
 	void SR1QuickSwitch()
 	{
 		// Fixes broken weapon wheel implementation and brings back quick switching.
-
-		Logger::TypedLog(CHN_MOD, "Patching in Weapon Quick Switching...\n");
-		CMPatches_SR1QuickSwitch.Apply();
+		if (GameConfig::GetValue("Gameplay", "SR1QuickSwitch", 0, "Restores the quick switching technique from SR1 (Tervel)"))
+		{
+			Logger::TypedLog(CHN_MOD, "Patching in Weapon Quick Switching...\n");
+			CMPatches_SR1QuickSwitch.Apply();
+		}
 		static auto AllowShootSwitch = safetyhook::create_mid(0x00797008, [](SafetyHookContext& ctx) {
 			if (CMPatches_SR1QuickSwitch.IsApplied()) {
 				uintptr_t Weapon = *(uintptr_t*)(ctx.edx + 0xC4);
@@ -495,10 +497,9 @@ CMultiPatch CMPatches_SR1Reloading = {
 			Logger::TypedLog(CHN_DEBUG, "Patching SR1CrouchCam...\n");
 			CSR1CrouchCam.Apply();
 		}
-	if (GameConfig::GetValue("Gameplay", "SR1QuickSwitch", 0, "Restores the quick switching technique from SR1 (Tervel)"))
-		{
+
 			SR1QuickSwitch();
-		}
+		
 
 	if (GameConfig::GetValue("Gameplay", "TauntCancelling", 1, "Allows you to cancel taunt/compliment by simply pressing the taunt/compliment button again. (Tervel)"))
 		{
