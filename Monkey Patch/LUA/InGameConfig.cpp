@@ -121,7 +121,7 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("SR1Reloading", "SR1Reloading", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("SR1QuickSwitch", "SR1QuickSwitch", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("SR1CrouchCam", "SR1CrouchCam", InGameConfig::MenuType::CONTROLS);
-        InGameConfig::RegisterBoolSlider("AllowWeaponSwitchInAllCases", "AllowWeaponSwitchInAllCases", InGameConfig::MenuType::CONTROLS);
+        //InGameConfig::RegisterBoolSlider("AllowWeaponSwitchInAllCases", "AllowWeaponSwitchInAllCases", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("NoMeleeLockOn", "NoMeleeLockOn", InGameConfig::MenuType::CONTROLS);
         InGameConfig::RegisterBoolSlider("DisableDistantPeds", "DisableDistantPeds");
         InGameConfig::RegisterBoolSlider("DisableDistantVehicles", "DisableDistantVehicles");
