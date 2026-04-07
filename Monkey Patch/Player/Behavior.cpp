@@ -294,7 +294,6 @@ CMultiPatch CMPatches_SR1Reloading = {
 	}
 
 #if !JLITE
-	CPatch CAnimBlend = CPatch::SafeWrite32(0x006F1CA6 + 2, (uint32_t)&animBlend);
 	CPatch CAllowWeaponSwitchInAllCases_KBM = CPatch::PatchNop(0x004F7F1E, 0x23);
 #endif
 	SafetyHookInline player_data_loadT{};
@@ -451,11 +450,6 @@ CMultiPatch CMPatches_SR1Reloading = {
 	if (GameConfig::GetValue("Gameplay", "AllowWeaponSwitchInAllCases", 0, "Allows weapon switching when sprinting, etc (Clippy95)"))
 		{
 			CAllowWeaponSwitchInAllCases_KBM.Apply();
-		}
-
-	if (GameConfig::GetValue("Gameplay", "BetterAnimBlend", 0, "Makes animation situations like swapping weapons appear smoother."))
-		{
-			CAnimBlend.Apply();
 		}
 
 	if (GameConfig::GetValue("Gameplay", "BetterHandbrakeCam", 0, "Makes it so the cam doesnt chase the car when you do a powerslide/handbrake. (Creds to Clippy95)")) // Fixes Car CAM Axis while doing handbrakes.

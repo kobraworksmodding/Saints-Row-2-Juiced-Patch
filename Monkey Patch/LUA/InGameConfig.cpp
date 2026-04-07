@@ -55,7 +55,6 @@ namespace InGameConfig {
     {"NoMeleeLockOn",&Behavior::CMPatches_NoMeleeLockOn,nullptr,"Gameplay","NoMeleeLockOn"},
     {"DisableDistantPeds",nullptr, &Game::DisableDistantPeds, "Debug","DisableDistantPeds"},
     {"DisableDistantVehicles",nullptr, &Game::DisableDistantVehicles, "Debug","DisableDistantVehicles"},
-    {"BetterAnimBlend",nullptr,&Behavior::CAnimBlend,"Gameplay","BetterAnimBlend"},
     {"UseWeaponAfterEmpty",&Behavior::CMPatches_UseWeaponAfterEmpty,nullptr,"Gameplay","Keep Weapon After Empty"},
     {"TauntCancelling",&Behavior::CMPatches_UseWeaponAfterEmpty,nullptr,"Gameplay","TauntCancelling"},
     {"DisableTutorials",nullptr,&Game::CDisable_Tutorials,"Gameplay","DisableTutorials"},
@@ -126,9 +125,6 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("DisableDistantPeds", "DisableDistantPeds");
         InGameConfig::RegisterBoolSlider("DisableDistantVehicles", "DisableDistantVehicles");
         InGameConfig::RegisterBoolSlider("mini_pause_map_PlayerRotation", "Ingame-map player rotation");
-#endif
-#if !JLITE
-        InGameConfig::RegisterBoolSlider("BetterAnimBlend", "Better Anim Blend");
 #endif
         for (const auto& opt : restart_option) {
             std::string label = std::string(opt.keyname) + " (R)";
