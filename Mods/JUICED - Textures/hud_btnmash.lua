@@ -25,7 +25,7 @@ function hud_btnmash_init()
 		Hud_btnmash.handles.platform = "pc"
 	end
 	
-	
+	--eh - Clippy95
 	local SDL_type = vint_get_avg_processing_time("INPUT_PROMPT")
 	
 	if SDL_type == 1 then
@@ -159,10 +159,23 @@ function hud_btnmash_init()
 	vint_set_property(Hud_btnmash.handles.meter_grit_h, "image", "ui_btnmash_meter_grit_" .. platform  )
 	]]
 	--Load platform specific images
+	
+	-- hack, ithinkiamcats got it wrong in the xtbl, fix peg/xtbl ok, but this works too, oh & i cba to touch the values in XTBL D: (clippy95)
+	local SDL_type = vint_get_avg_processing_time("INPUT_PROMPT")
+	if SDL_type ~= 0 then
+	vint_set_property(Hud_btnmash.handles.btn_dn_1_h, "image", "ui_btnmash_b2_dn_" .. platform )
+	vint_set_property(Hud_btnmash.handles.btn_up_1_h, "image", "ui_btnmash_b2_up_" .. platform )
+	vint_set_property(Hud_btnmash.handles.btn_dn_2_h, "image", "ui_btnmash_b1_dn_" .. platform  )
+	vint_set_property(Hud_btnmash.handles.btn_up_2_h, "image", "ui_btnmash_b1_up_" .. platform  )
+	else
+	
 	vint_set_property(Hud_btnmash.handles.btn_dn_1_h, "image", "ui_btnmash_b1_dn_" .. platform )
 	vint_set_property(Hud_btnmash.handles.btn_up_1_h, "image", "ui_btnmash_b1_up_" .. platform )
 	vint_set_property(Hud_btnmash.handles.btn_dn_2_h, "image", "ui_btnmash_b2_dn_" .. platform  )
 	vint_set_property(Hud_btnmash.handles.btn_up_2_h, "image", "ui_btnmash_b2_up_" .. platform  )
+	
+	end
+	
 	vint_set_property(Hud_btnmash.handles.sticks_l_base_h, "image", "ui_btnmash_base_" .. platform  )
 	vint_set_property(Hud_btnmash.handles.sticks_l_pad_h, "image", "ui_btnmash_stick_" .. platform  )
 	if platform == "pc" then
