@@ -145,7 +145,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
-	  <AdditionalOptions>/utf-8</AdditionalOptions> 
+      <AdditionalOptions>/utf-8</AdditionalOptions>
       <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -176,7 +176,7 @@
       <StringPooling>true</StringPooling>
       <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-	  <AdditionalOptions>/utf-8</AdditionalOptions> 
+      <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)DFEngine.dll</OutputFile>
@@ -190,12 +190,10 @@
       <AdditionalLibraryDirectories>;$(ProjectDir)ext\lib\x86</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>if not defined GITHUB_ACTIONS (
-copy /Y "$(TargetDir)DFEngine.dll" "C:\Games\GOG\Saints Row 2\DFEngine.dll" || ^
-copy /Y "$(TargetDir)DFEngine.dll" "C:\Program Files (x86)\Steam\steamapps\common\Saints Row 2\DFEngine.dll" || ^
-copy /Y "$(TargetDir)DFEngine.dll" "F:\Steam\steamapps\common\Saints Row 2\DFEngine.dll" || ^
-copy /Y "$(TargetDir)DFEngine.dll" "Z:\Games\Saints Row 2\DFEngine.dll" ||  ^
-copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2"
+      <Command>if defined SR2_PATH (
+    if not defined GITHUB_ACTIONS (
+        xcopy /Y /I "$(TargetPath)" "$(SR2_PATH)" &gt;nul 2&gt;nul
+    )
 )</Command>
     </PostBuildEvent>
     <PreBuildEvent>
@@ -216,8 +214,8 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
-<DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-	  <AdditionalOptions>/utf-8</AdditionalOptions> 
+      <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)DFEngine.dll</OutputFile>
@@ -251,8 +249,8 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-<DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-	  <AdditionalOptions>/utf-8</AdditionalOptions> 
+      <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)RLEngine.dll</OutputFile>
@@ -284,7 +282,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-	  <AdditionalOptions>/utf-8</AdditionalOptions> 
+      <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)RLEngine.dll</OutputFile>
@@ -316,7 +314,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-	  <AdditionalOptions>/utf-8</AdditionalOptions> 
+      <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)DFEngine.dll</OutputFile>
