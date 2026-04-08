@@ -248,7 +248,7 @@ namespace BlingMenuInstall
         BM_MakeCPatchFunction(DisableFog, CMPatches_DisableFog, Render3D)
         BM_MakeCPatchFunction(DBC, CBetterDBC, Behavior)
         BM_MakeCPatchFunction(HBC, CBetterHBC, Behavior)
-        BM_MakeCPatchFunction(AnimBlend, CAnimBlend, Behavior)
+        //BM_MakeCPatchFunction(AnimBlend, CAnimBlend, Behavior)
         BM_MakeCPatchFunction(SR1Reloading, CMPatches_SR1Reloading, Behavior)
         BM_MakeCPatchFunction(SR1QuickSwitch, CMPatches_SR1QuickSwitch, Behavior)
         BM_MakeCPatchFunctionSaveConfig(DisableCutSceneBlackBars, CRemoveBlackBars, Render3D, "Graphics", "RemoveBlackBars")
@@ -321,7 +321,7 @@ namespace BlingMenuInstall
        BlingMenuAddFloat("Juiced", "vehicle_camera_follow_modifier", &Behavior::vehicle_camera_follow_modifier, &Behavior::LessCameraVehicleFollow_hook_enable_disable, 1.25f, -100.f, 100.f);
        BlingMenuAddFuncCustom("Juiced", "Better Drive-by Cam", NULL, &BM_DBC, NULL);
        BlingMenuAddFuncCustom("Juiced", "Better Handbrake Cam", NULL, &BM_HBC, NULL);
-       BlingMenuAddFuncCustom("Juiced", "Anim Blend", NULL, &BM_AnimBlend, NULL);
+       //BlingMenuAddFuncCustom("Juiced", "Anim Blend", NULL, &BM_AnimBlend, NULL);
        BlingMenuAddFuncCustom("Juiced", "Classic GTA Idle Cam", NULL, &BM_ClassicGTAIdleCam, NULL);
        BlingMenuAddFuncCustom("Juiced", "SR1 Reloading", NULL, &BM_SR1Reloading, NULL);
        BlingMenuAddFuncCustom("Juiced", "SR1 Quick Switching", NULL, &BM_SR1QuickSwitch, NULL);
