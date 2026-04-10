@@ -10,6 +10,7 @@
 #include "Debug.h"
 #include "../Render/Render2D.h"
 #include <safetyhook.hpp>
+#include "../Mem/Memory.h"
 
 import OptionsManager;
 
@@ -120,92 +121,60 @@ namespace Debug
 		}
 	}
 
-	struct mempool_to_ini_s {
-		const char* internal_name;
-		const char* ini_name;
-		bool updated_this_session = false;
-	};
-
-	mempool_to_ini_s mempool_to_ini[] = { {"perm mesh cpu","perm_mesh_cpu"},{ "audio - wavebank","audio_wavebank"},{"animation","animation"} };
-
 	int __cdecl printf_mempool_hook(const char* const Format, ...) {
 		static bool ignore_session = false;
-
 		va_list args;
 		va_list args_copy;
 		int result = 0;
-
 		if (ignore_session) {
 			va_start(args, Format);
 			result = vprintf(Format, args);
 			va_end(args);
 			return result;
 		}
-
 		va_start(args, Format);
 		va_copy(args_copy, args);
 		int size = vsnprintf(NULL, 0, Format, args) + 1;
-
 		if (size > 0) {
 			char* buffer = (char*)malloc(size);
 			if (buffer) {
 				vsnprintf(buffer, size, Format, args_copy);
 				const char* extra_prefix = "[MEMPOOL ERROR/WARNING]\n";
 				const char* extra_suffix = "Most likely caused by an installed mod, please attempt to increase original mempool size, expect issues otherwise.\n\nIgnore future errors this session?";
-
 				std::string auto_update_string = "\n";
-
-				for (int i = 0; i < std::size(mempool_to_ini); i++) {
-					if (std::string_view(buffer).contains(mempool_to_ini[i].internal_name) && !mempool_to_ini[i].updated_this_session) {
-						auto old_value = GameConfig::GetValue("Mempool", mempool_to_ini[i].ini_name, 0);
+				for (int i = 0; i < (int)mempool_registry.size(); i++) {
+					if (std::string_view(buffer).contains(mempool_registry[i].name) && !mempool_registry[i].updated_this_session) {
+						auto old_value = GameConfig::GetValue("Mempool", mempool_registry[i].name, 0);
 						if (old_value > 0) {
-							mempool_to_ini[i].updated_this_session = true;
-							const char* internal_name = mempool_to_ini[i].internal_name;
-							auto_update_string = "\n\nAs Juiced already has a way to increase this mempool it automatically the updated size of ";
-							auto_update_string += internal_name;
-							auto_update_string += " with the .ini name of ";
-							auto_update_string += mempool_to_ini[i].ini_name;
-
-
+							mempool_registry[i].updated_this_session = true;
 							auto new_value = (uint32_t)(old_value * 1.5);
-
+							auto_update_string = "\n\nAs Juiced already has a way to increase this mempool it automatically updated the size of ";
+							auto_update_string += mempool_registry[i].name;
 							auto_update_string += " from " + std::to_string(old_value) + " to " + std::to_string(new_value);
-
-							GameConfig::SetValue("Mempool", mempool_to_ini[i].ini_name, new_value);
-
 							auto_update_string += "\nThis will require a restart to apply.";
-							break;
+							GameConfig::SetValue("Mempool", mempool_registry[i].name, new_value);
 						}
-						else {
-							break;
-						}
+						break;
 					}
 				}
-
 				int extended_size = strlen(extra_prefix) + strlen(buffer) + strlen(extra_suffix) + auto_update_string.length() + 1;
 				char* extended_buffer = (char*)malloc(extended_size);
-
 				if (extended_buffer) {
 					snprintf(extended_buffer, extended_size, "%s%s%s%s",
 						extra_prefix, buffer, extra_suffix, auto_update_string.c_str());
-
 					int response = MessageBoxA(NULL, extended_buffer, "Juiced Patch", MB_YESNO | MB_ICONERROR);
-
 					if (response == IDYES) {
 						ignore_session = true;
 					}
-
 					free(extended_buffer);
 				}
 				else {
 					MessageBoxA(NULL, buffer, "Juiced Patch", MB_OK | MB_ICONERROR);
 				}
-
-	result = printf("%s", buffer);
+				result = printf("%s", buffer);
 				free(buffer);
 			}
 		}
-
 		va_end(args_copy);
 		va_end(args);
 		return result;

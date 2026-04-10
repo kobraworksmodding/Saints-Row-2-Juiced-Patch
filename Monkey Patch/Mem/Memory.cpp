@@ -6,6 +6,21 @@
 #include "../Patcher/patch.h"
 #include "../GameConfig.h"
 #include <algorithm>
+#include "Memory.h"
+#define MEMPOOL_ADDRS(...) std::initializer_list<void*>{(void*)(__VA_ARGS__)}
+
+#define MEMPOOL_PATCH(name, min_size, default_size, ...) \
+    [&]() { \
+        mempool_registry.push_back({name}); \
+        int new_size = std::clamp( \
+            (int)GameConfig::GetValue("Mempool", name, (int)(default_size), "Default " #min_size), \
+            (int)(min_size), INT32_MAX / 4 \
+        ); \
+        for (void* addr : MEMPOOL_ADDRS(__VA_ARGS__)) \
+            patchInt(addr, new_size); \
+        if (new_size != (int)(min_size)) \
+            Logger::TypedLog(CHN_DEBUG, "Expanded " name " to {}\n", new_size); \
+    }()
 
 namespace Memory
 {
@@ -171,29 +186,20 @@ namespace Memory
 #endif
 #if !JLITE
 
-	int perm_mesh_cpu_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "perm_mesh_cpu", 1114112  * 2, "Default 1114112"), 1114112,INT32_MAX / 4);
-
-			patchInt((void*)(0x0051DED7 + 1), perm_mesh_cpu_new_size);
-			patchInt((void*)(0x0051DF0F + 1), perm_mesh_cpu_new_size);
-			if(perm_mesh_cpu_new_size != 1114112)
-			Logger::TypedLog(CHN_DEBUG, "Expanded perm mesh cpu to {}\n", perm_mesh_cpu_new_size);
-
-	int audio_wavebank_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "audio_wavebank", 102760448, "Default 102760448"), 102760448, INT32_MAX / 4);
-			if (audio_wavebank_new_size != 102760448) {
-				patchInt((void*)(0x0051EBD7 + 1), audio_wavebank_new_size);
-				patchInt((void*)(0x0051EC19 + 1), audio_wavebank_new_size);
-
-				Logger::TypedLog(CHN_DEBUG, "Expanded audio - wavebank to {}\n", audio_wavebank_new_size);
-
-			}
-
-	int animation_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "animation", 17293312 * 2, "Default 17293312"), 17293312, INT32_MAX / 4);
-			if (animation_new_size != 17293312) {
-				patchInt((void*)(0x51FB30 + 1), animation_new_size);
-
-				Logger::TypedLog(CHN_DEBUG, "Expanded animation to {}\n", animation_new_size);
-
-			}
+		MEMPOOL_PATCH("perm mesh cpu", 1114112, 1114112 * 2,
+			(void*)(0x0051DED7 + 1),
+			(void*)(0x0051DF0F + 1)
+		);
+		MEMPOOL_PATCH("perm mesh gpu", 11272192, 11272192 * 2,
+			(void*)(0x51DF44 + 1)
+		);
+		MEMPOOL_PATCH("audio - wavebank", 102760448, 102760448,
+			(void*)(0x0051EBD7 + 1),
+			(void*)(0x0051EC19 + 1)
+		);
+		MEMPOOL_PATCH("animation", 17293312, 17293312 * 2,
+			(void*)(0x51FB30 + 1)
+		);
 
 		//if (GameConfig::GetValue("Graphics", "ExtendedTreeFadeDistance", 0))
 		//{
