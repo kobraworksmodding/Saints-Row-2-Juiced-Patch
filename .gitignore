@@ -11,3 +11,8 @@ Monkey Patch/UGC/thaRow
 .vs
 /Monkey Patch/Generated/BuildInfo.h
 /build_fmt.log
+*.vcxproj.user
+*.suo
+.vs/
+*.VC.db
+*.VC.opendb
