@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include "CrashFixes.h"
 #include "../SafeWrite.h"
+#include "../Patcher/patch.h"
 namespace AssertHandler {
 	static std::unordered_set<std::string> ignored_asserts;
 	static std::mutex assert_mutex;
@@ -179,5 +180,7 @@ namespace CrashFixes {
 			// This one hasn't really crashed but it seems to be sameish?
 			static auto Fix_0x009AEE86_hook = safetyhook::create_mid(0x009AEE86, &Fix_009AEE86_crash_cs_start_characters_for_shot);
 		}
+
+		patchNop((void*)0x00695BDE, 0x18); // these 2 lines of code for freeing the saving mempool only exist on PC for some reason and they cause the game to crash when saving during a mission replay
 	}
 }
