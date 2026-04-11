@@ -677,7 +677,7 @@ int __declspec(naked) GetVarIndex(int VehData, const char* VariantName) {
 		mov		esi, VehData
 		mov     eax, esi
 		imul    eax, 2000
-		mov		ebx, 0x2FAD1F8
+		mov		ebx, VehArr
 		add     eax, ebx
 		mov	    edi, VariantName
 		mov     ecx, edi

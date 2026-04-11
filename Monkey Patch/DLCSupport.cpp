@@ -19,10 +19,6 @@ using namespace Game::xml;
 #define STORE_ITEM_LIMIT 512
 #define MAX_VEHICLES_PER_UNLOCK 6 // there are more things preventing it from going above 6 and I do not want to see the unlockable code ever again
 
-struct VehiclePadding {
-    unsigned char Padding[2000];
-};
-
 struct PostLoadPadding {
     unsigned char Padding[12];
 };
@@ -1209,6 +1205,7 @@ void DLC::Init() {
     patchByte((BYTE*)0x0051EE53, 0x0C);
     // -- 737280 > 802816 (This is enough to have GOTR work, which is main priority i suppose.)
     DLCSaveSetup();
+    VehArr = (VehiclePadding*)0x2FAD1F8;
     if (!UtilsGlobal::FolderExists("DLC") || !GameConfig::GetValue("DLC", "EnableDLC", 1)) return;
     AppendSetup();
     PatchFollowerHeads();
