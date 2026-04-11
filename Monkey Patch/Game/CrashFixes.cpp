@@ -181,6 +181,6 @@ namespace CrashFixes {
 			static auto Fix_0x009AEE86_hook = safetyhook::create_mid(0x009AEE86, &Fix_009AEE86_crash_cs_start_characters_for_shot);
 		}
 
-		patchNop((void*)0x00695BDE, 0x0E); // these 2 lines of code for freeing the saving mempool only exist on PC for some reason and they cause the game to crash when saving during a mission replay
+		patchNop((void*)0x00695BDE, 0x18); // these 2 lines of code for freeing the saving mempool only exist on PC for some reason and they cause the game to crash when saving during a mission replay
 	}
 }
