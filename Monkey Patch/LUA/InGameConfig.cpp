@@ -277,8 +277,8 @@ namespace InGameConfig {
         }
         return nullptr;
     }
-
-    non_live_options* Find_option_restart(const char* name) {
+    // otherwise crashes, worked fine before, probably introduced by with automatically create ini options if they don't exist, idfk why (clippy95)
+    __declspec(noinline) non_live_options* Find_option_restart(const char* name) {
         for (auto& entry : restart_option) {
             if (strcmp(entry.keyname, name) == 0) {
                 return &entry;
