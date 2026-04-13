@@ -190,12 +190,12 @@ bool ScanDLCDir(const char* Directory)
 
     if (SearchDirHandle == INVALID_HANDLE_VALUE)
     {
-        Logger::TypedLog(CHN_DLL, "Unable to find directory %s\n", Directory);
+        Logger::TypedLog(CHN_DLL, "Unable to find directory {}\n", Directory);
         return false;
     }
 
     else {
-        Logger::TypedLog(CHN_DLL, "Adding contents of directory %s\n", Directory);
+        Logger::TypedLog(CHN_DLL, "Adding contents of directory {}\n", Directory);
     }
 
     do
