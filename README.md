@@ -58,6 +58,7 @@ This [issues list](https://github.com/kobraworksmodding/SR2IssuesList/issues) is
 
 ## Extra Information
 Our loose model, texture, etc patches are included in the "Mods" folder in this repository.
+We've also made a [mod manager](https://github.com/kobraworksmodding/SR2JP-ModManager) for mods designed to be used with Juiced Patch, Check it out!
 
 
 
