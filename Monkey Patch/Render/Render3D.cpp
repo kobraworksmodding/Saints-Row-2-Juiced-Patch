@@ -30,6 +30,8 @@
 #include <Hooking.Patterns.h>
 #include "..\Hooker.h"
 #include <set>
+#include <DirectXTex/DDSTextureLoader9.h>
+#include "Textures.h"
 
 import OptionsManager; 
 
@@ -46,6 +48,8 @@ namespace Render3D
 	double FOVMultiplier = 1;
 	double UltrawideFixRatio = 1;
 	const double fourbythreeAR = 1.333333373069763;
+	//TODO: put this dds in some file somewhere instead of a header
+	IDirect3DCubeTexture9* shd_cubedefault_tex;
 	bool DitherFilter;
 
 	void AspectRatioFix(bool update_aspect_ratio) {
@@ -1335,6 +1339,21 @@ constexpr auto new_size_n = 5000;
 			last_mode = UseExtendedRenderBatch;
 		}
 	}
+	SafetyHookInline ReleaseTextures;
+	void ReleaseTexturesHook() {
+		if (shd_cubedefault_tex) {
+			shd_cubedefault_tex->Release();
+			shd_cubedefault_tex = nullptr;
+		}
+		ReleaseTextures.unsafe_ccall();
+	}
+
+	SafetyHookInline CreateRTs;
+	void CreateRTsHook() {
+		IDirect3DDevice9* pDevice = *reinterpret_cast<IDirect3DDevice9**>(reinterpret_cast<void*>(DynAddress(0x0252A2D0)));
+		if (!shd_cubedefault_tex) DirectX::CreateDDSTextureFromMemory(pDevice, shd_cubedefault, sizeof(shd_cubedefault), &shd_cubedefault_tex);
+		CreateRTs.call();
+	}
 
 	void Init()
 	{
@@ -1520,5 +1539,32 @@ constexpr auto new_size_n = 5000;
 		DitherFilter = GameConfig::GetValue("Graphics", "DitherFiltering", 1, "Adds a PostFX filter to smooth out the fallback dithering with MSAA off/no alpha mask available, but blurs the screen slightly (Tervel)");
 
 		Shadows::Init();
+
+		ReleaseTextures = safetyhook::create_inline(0xD1F960, &ReleaseTexturesHook);
+		CreateRTs = safetyhook::create_inline(0xD1E9A0, &CreateRTsHook);
+
+		// - Tervel
+		// the game uses a shared shader (sr2_carpaint1) which expects a sampler cube but the default cubemap
+		// is a regular sampler 2d tex stored in the always_loaded_effects peg, and it causes certain objects (mission marker 3d models for example)
+		// to not have a reflection because the fetching fails due to the mismatch, which for some reason works on X360
+		// but on Xenia it fails too despite the shader working fine with real cubemaps, it also works on some old GPUs
+		// based on old footage
+		static auto FixDefaultCubemap = safetyhook::create_mid(0x00D20B5C, [](SafetyHookContext& ctx) {
+
+			auto IsDefaultCubemap = [](IDirect3DBaseTexture9* Tex) {
+				if (!Tex) return false;
+
+				D3DSURFACE_DESC Desc;
+				((IDirect3DTexture9*)Tex)->GetLevelDesc(0, &Desc);
+
+				return Desc.Width == 256 && Desc.Height == 1536;
+				};
+
+			if (*(UINT*)ctx.eax == 4) { // s4
+				IDirect3DBaseTexture9* CurrentTex = (IDirect3DBaseTexture9*)ctx.ecx;
+				if (shd_cubedefault_tex && IsDefaultCubemap(CurrentTex)) ctx.ecx = reinterpret_cast<uintptr_t>(shd_cubedefault_tex);
+			}
+			});
+
 	}
 }
