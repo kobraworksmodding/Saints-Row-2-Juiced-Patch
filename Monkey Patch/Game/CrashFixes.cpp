@@ -9,6 +9,7 @@
 #include "CrashFixes.h"
 #include "../SafeWrite.h"
 #include "../Patcher/patch.h"
+#include "../General/General.h"
 namespace AssertHandler {
 	static std::unordered_set<std::string> ignored_asserts;
 	static std::mutex assert_mutex;
@@ -130,6 +131,54 @@ namespace CrashFixes {
 			jmp null_jump
 		}
 	}
+	uintptr_t load_all_addr = 0x695F00;
+
+	// ignore modded saves and let me crash
+	bool SAVE_HURT_ME_PLENTY = false;
+	void __cdecl UserWantsItToBlowSaveUp(int Unk, int SelectedOption, int Action) {
+
+		if (Action == 2 && SelectedOption == 1) {
+			SAVE_HURT_ME_PLENTY = true;
+		}
+	}
+
+	void load_all_og(uintptr_t savegame_ptr, BOOL idk)
+	{
+		__asm mov eax, savegame_ptr
+		__asm push idk
+
+		if (!SAVE_HURT_ME_PLENTY) {
+			__try {
+				__asm call load_all_addr
+			}
+			__except (EXCEPTION_EXECUTE_HANDLER) {
+				
+				// aborts save no matter what
+				*(bool*)0x2527E80 = true;
+
+				const wchar_t* Options[] = { L"OKAY", L"[format][color:#D41111]Ignore for next load (allow crash to occur)[/format]\n\n" };
+				auto vint = General::AddMessageCustomized(L"JUICED", L"Save file could not be loaded due to corruption or this saved game was saved using mods that are no longer installed.", Options, _countof(Options));
+
+				*(void**)(vint + 0x930) = &UserWantsItToBlowSaveUp;
+
+			}
+		}
+		// SAVE_HURT_ME_PLENTY IS TRUE PATH
+		else {
+			// I TAKE THE RISKS!!!
+			__asm call load_all_addr
+		}
+
+
+		__asm add esp,4
+
+	}
+	void load_all_og_hook(BOOL idk)
+	{
+		uintptr_t saveptr;
+		__asm mov saveptr,eax
+		load_all_og(saveptr, idk);
+	}
 
 	void Init() {
 		AssertHandler::CvarFixCrashes = GameConfig::GetValue("Debug", "FixCrashes", 2);
@@ -179,6 +228,13 @@ namespace CrashFixes {
 			static auto Fix_0x009AEDAD_hook = safetyhook::create_mid(0x009AED73, &Fix_009AEDAD_crash_cs_start_characters_for_shot);
 			// This one hasn't really crashed but it seems to be sameish?
 			static auto Fix_0x009AEE86_hook = safetyhook::create_mid(0x009AEE86, &Fix_009AEE86_crash_cs_start_characters_for_shot);
+		}
+
+		if (GameConfig::GetValue("Debug", "ExceptionHandler_Saves", 1,"Kick to the main menu when attempting to load a save game that cannot be loaded (clippy95)")) {
+
+			patchCall((void*)0x6A03BF, load_all_og_hook);
+			patchCall((void*)0x69600B, load_all_og_hook);
+
 		}
 
 		patchNop((void*)0x00695BE7, 15); // these 2 lines of code for freeing the saving mempool only exist on PC for some reason and they cause the game to crash when saving during a mission replay
