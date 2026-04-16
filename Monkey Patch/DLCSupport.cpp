@@ -12,12 +12,14 @@
 #include "UtilsGlobal.h"
 #include "FileLogger.h"
 #include "GameConfig.h"
+#include <cwchar>
 using namespace General;
 using namespace Game::xml;
 
 #define MAX_VEH 168
 #define STORE_ITEM_LIMIT 512
-#define MAX_VEHICLES_PER_UNLOCK 6 // there are more things preventing it from going above 6 and I do not want to see the unlockable code ever again
+// can be increased to 30! 31 will static_assert, reasons why are below (probably but 10 is also safe) (clippy95)
+#define MAX_VEHICLES_PER_UNLOCK 6
 
 struct PostLoadPadding {
     unsigned char Padding[12];
@@ -280,37 +282,175 @@ struct VehRewards
 
 VehRewards* VehRewardsNew;
 
+
+
+struct unlocking_item_vehicle
+{
+
+    uint32_t vehicle_handles[MAX_VEHICLES_PER_UNLOCK];
+    size_t num_vehicles;
+
+};
+
+struct unlocking_item
+{
+    unlockables* unlockable;
+    bool unlocked;
+    bool ui;
+    unlocking_item_vehicle data;
+};
+
+struct unlockable_vehicle_reward
+{
+    uint32_t vehicle_type;
+    const char* variant_name;
+};
+
+struct unlockable_vehicle_reward_data
+{
+    unlockable_vehicle_reward vehicles[MAX_VEHICLES_PER_UNLOCK];
+    uint32_t num_vehicles;
+};
+
+#define OFFSET_UNLOCKABLE     offsetof(unlocking_item, unlockable)
+#define OFFSET_UNLOCKED       offsetof(unlocking_item, unlocked)
+#define OFFSET_UI             offsetof(unlocking_item, ui)
+#define OFFSET_VEHICLES       offsetof(unlocking_item, data.vehicle_handles)
+#define OFFSET_NUM_VEHICLES   offsetof(unlocking_item, data.num_vehicles)
+#define OFFSET_TEMPLATE_NUM_VEHICLES offsetof(unlockable_vehicle_reward_data, num_vehicles)
+#define OFFSET_UNLOCKABLE_ITEM_TYPE 0x4
+#define OFFSET_UNLOCKABLE_ITEM_TEMPLATE_DATA 0x8
+#define OFFSET_TEMPLATE_NUM_VEHICLES_IN_ITEM (OFFSET_UNLOCKABLE_ITEM_TEMPLATE_DATA + OFFSET_TEMPLATE_NUM_VEHICLES)
+
+/* (clippy95) offset cant pass UINT8_MAX, if we really need that shit we have to make hooks for
+//     const unsigned int OffsetAddresses[] = {
+0x006BB1AB, 0x006BB212, 0x006BB295, 0x006BB29C,
+0x006BB332, 0x006BB339, 0x006BC004, 0x006BBF23
+    }; */
+static_assert((OFFSET_TEMPLATE_NUM_VEHICLES_IN_ITEM <= UINT8_MAX));
+#define SIZEOF_UNLOCKABLE_ITEM 0xD0
+
+typedef enum {
+    FIELD_UNLOCKABLE,
+    FIELD_UNLOCKED,
+    FIELD_UI,
+    FIELD_VEHICLE_HANDLES,
+    FIELD_NUM_VEHICLES,
+} unlocking_item_field;
+
+struct unlocking_itemold_XRef {
+    uintptr_t patch_location;
+    unlocking_item_field field;
+};
+
+unlocking_itemold_XRef unlocking_itemold_xrefs[] = {
+    { 0x006BAB91, FIELD_UNLOCKED        },
+    { 0x006BABA1, FIELD_UNLOCKED        },
+    { 0x006BBED0, FIELD_UNLOCKABLE      },
+    { 0x006BBED8, FIELD_UNLOCKED        },
+    { 0x006BBEDF, FIELD_UI              },
+    { 0x006BBEFA, FIELD_UNLOCKED        },
+    { 0x006BBF01, FIELD_UI              },
+    { 0x006BBF1D, FIELD_NUM_VEHICLES    },
+    { 0x006BBF43, FIELD_NUM_VEHICLES    },
+    { 0x006BBF57, FIELD_VEHICLE_HANDLES },
+    { 0x006BBFE4, FIELD_NUM_VEHICLES    },
+    { 0x006BBFF1, FIELD_NUM_VEHICLES    },
+    { 0x006BC5C2, FIELD_UNLOCKABLE      },
+    { 0x006BC5E3, FIELD_UNLOCKED        },
+    { 0x006BC5E9, FIELD_UNLOCKABLE      },
+    { 0x006BC5F7, FIELD_UNLOCKED        },
+    { 0x006BC607, FIELD_NUM_VEHICLES    },
+    { 0x006BC61A, FIELD_VEHICLE_HANDLES },
+    { 0x006BC6F6, FIELD_NUM_VEHICLES    },
+    { 0x006BC6FD, FIELD_UNLOCKED        },
+    { 0x006BC706, FIELD_NUM_VEHICLES    },
+    { 0x006BC712, FIELD_NUM_VEHICLES    },
+    { 0x006BC7B8, FIELD_UNLOCKABLE      },
+    { 0x006BC7C5, FIELD_UNLOCKED        },
+    { 0x006BCBC8, FIELD_UNLOCKABLE      },
+    { 0x006BCBDB, FIELD_UNLOCKED        },
+    { 0x006BCBE0, FIELD_UI              },
+    { 0x006BCC34, FIELD_UNLOCKABLE      },
+    { 0x006BCC3E, FIELD_UNLOCKED        },
+    { 0x006BCC44, FIELD_UI              },
+    { 0x006BCC62, FIELD_UNLOCKED        },
+    { 0x006BCCDB, FIELD_UNLOCKED        },
+    { 0x006BD041, FIELD_UNLOCKABLE      },
+    { 0x006BD05D, FIELD_UNLOCKED        },
+    { 0x006BD074, FIELD_UNLOCKED        },
+    { 0x0076228B, FIELD_UNLOCKED        },
+    { 0x0076247A, FIELD_UNLOCKABLE      },
+    { 0x00762492, FIELD_UNLOCKED        },
+};
+
+const size_t unlocking_itemold_xref_count = sizeof(unlocking_itemold_xrefs) / sizeof(unlocking_itemold_xrefs[0]);
+
+static size_t get_field_offset(unlocking_item_field field) {
+    switch (field) {
+    case FIELD_UNLOCKABLE:      return OFFSET_UNLOCKABLE;
+    case FIELD_UNLOCKED:        return OFFSET_UNLOCKED;
+    case FIELD_UI:              return OFFSET_UI;
+    case FIELD_VEHICLE_HANDLES: return OFFSET_VEHICLES;
+    case FIELD_NUM_VEHICLES:    return OFFSET_NUM_VEHICLES;
+    default:                    return 0;
+    }
+}
+
+unlocking_item new_unlocking_item_array;
+SafetyHookInline GetCarsUnlockedStringValue{};
+
+void patch_unlocking_itemold_references(void* new_base) {
+    for (size_t i = 0; i < unlocking_itemold_xref_count; i++) {
+        void* patch_addr = (void*)unlocking_itemold_xrefs[i].patch_location;
+        void* new_value = (void*)((uintptr_t)new_base + get_field_offset(unlocking_itemold_xrefs[i].field));
+
+        patchDWord(patch_addr, (uint32_t)new_value);
+    }
+}
+
+static int GetVehicleUnlockableTotal()
+{
+    int total = 0;
+
+    for (uint32_t i = 0; i < *max_unlockables_counted; i++) {
+        uintptr_t unlockable = (uintptr_t)Unlockables + (i * SIZEOF_UNLOCKABLE_ITEM);
+        uint32_t type = *(uint32_t*)(unlockable + OFFSET_UNLOCKABLE_ITEM_TYPE);
+
+        if (type == 0) {
+            total += *(uint32_t*)(unlockable + OFFSET_TEMPLATE_NUM_VEHICLES_IN_ITEM);
+        }
+    }
+
+    return total;
+}
+
+// vnswprintf is inlined :DDDD we can hook the main function and just do this, 
+// but we need localization as %d of %d can change in other languages, so i just do a midhook (clippy95)
+
+int __cdecl GetCarsUnlockedStringValueHook(wchar_t* buffer, size_t count, int stats_entry)
+{
+    return swprintf(buffer, count, L"%d of %d", *(int*)(stats_entry + 0x34), GetVehicleUnlockableTotal());
+}
+
 void CHooks_unlockable() {
 
     patchByte((void*)0x006BB213, MAX_VEHICLES_PER_UNLOCK);
     patchByte((void*)0x006BBFC0, MAX_VEHICLES_PER_UNLOCK);
 
-    VehRewardsNew = (VehRewards*)UtilsGlobal::calloc_game(1, sizeof(VehRewards));
 
-    const std::pair<unsigned int, std::vector<unsigned int>> Mappings[] = {
-    { 0x000000, {
-        0x006BBED8, 0x006BBEFA, 0x006BC5E3, 0x006BC5F7, 0x006BC6FD, 0x006BC7C5, 0x006BCBDB, 0x006BCC3E,
-        0x006BCC62, 0x006BCCDB, 0x0076228B, 0x00762492
-    }},
-    { 0x000001, {
-        0x006BBEDF, 0x006BBF01, 0x006BCBE0, 0x006BCC44
-    }},
-    { 0x000004, {
-        0x006BBF57, 0x006BC61A
-    }}
-    };
-
-    for (const auto& Entry : Mappings) {
-        unsigned int Offset = Entry.first;
-        for (unsigned int Address : Entry.second) SafeWrite32(Address, (UInt32)VehRewardsNew + Offset);
-    }
+    patch_unlocking_itemold_references(&new_unlocking_item_array);
 
     const unsigned int OffsetAddresses[] = {
-        0x006BB1AB, 0x006BB212, 0x006BB295, 0x006BB29C,
-        0x006BB332, 0x006BB339, 0x006BC004, 0x006BBF23
+    0x006BB1AB, 0x006BB212, 0x006BB295, 0x006BB29C,
+    0x006BB332, 0x006BB339, 0x006BC004, 0x006BBF23
     };
 
-    for (unsigned int Address : OffsetAddresses) SafeWrite8(Address, 0x38);
+    for (unsigned int Address : OffsetAddresses) SafeWrite8(Address, (uint8_t)OFFSET_TEMPLATE_NUM_VEHICLES_IN_ITEM);
+
+    static auto get_cars_unlocked_midhook = safetyhook::create_mid(0x6B1DEC, [](SafetyHookContext& ctx) {
+        ctx.edx = GetVehicleUnlockableTotal();
+        });
 
     static auto unlock_hack1 = safetyhook::create_mid(0x006BAD0D, [](SafetyHookContext& ctx) {
         unlockables* current_unlockable = (unlockables*)ctx.ebp;
