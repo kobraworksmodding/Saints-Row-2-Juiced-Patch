@@ -10,7 +10,16 @@
 #include "../UtilsGlobal.h"
 #include "STUNNat.h"
 #include <Wininet.h>
+#include "safetyhook.hpp"
 #pragma comment(lib, "wininet.lib")
+
+enum E_NAME
+{
+	ELAN,
+	EGAMESPY
+};
+
+E_NAME& name_to_pick = *(E_NAME*)0x02528BC4;
 
 namespace Gamespy
 {
@@ -116,5 +125,13 @@ namespace Gamespy
 		//	patchBytesM((BYTE*)0x006B793F, (BYTE*)"\x83\x3D\xF6\x2C\x7B\x02\x00", 7);  // new particle pause check address 3
 		//}
 #endif
+
+	// Fixes an issue where the game would use your gamespy name instead of the LAN one if you are logged into gamespy (clippy95)
+	static auto UseLAN_NameInSysLink_Load = safetyhook::create_mid(0x02528BC4, [](SafetyHookContext& ctx) {
+
+		name_to_pick = ELAN;
+
+		});
+
 	}
 }
