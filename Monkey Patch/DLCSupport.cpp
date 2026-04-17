@@ -569,8 +569,12 @@ void IncreaseVehLimits() {
     ReplaceVehArray(); // swap out all the original veh array references
 }
 
+char VintSaveNameBuff[512];
+
 void MissingDLCString(SafetyHookContext& ctx) {
-    static wchar_t New[128];
+    memset(VintSaveNameBuff, 0, 512);
+    static wchar_t New[512];
+    wchar_t* AutoSaveLabel = nullptr;
     if (*(char*)(ctx.ebx + DLCFlag) == 1) {
         if (!DLCInstalled) {
             __asm pushad
@@ -579,18 +583,24 @@ void MissingDLCString(SafetyHookContext& ctx) {
             ctx.ecx = (uintptr_t)Missing;
         }
         else {
-            uintptr_t string = ctx.ecx;
+            uintptr_t String = ctx.ecx;
 
-            if (*(char*)(ctx.ebx + AutosaveFlag) == 1)
-                string = (uintptr_t)RequestString(nullptr, "SAVELOAD_AUTOSAVE_LABEL");
-
-            wsprintf(New, L"%s [image:ui_dlc_menu_icon]", (wchar_t*)string);
+            if (*(char*)(ctx.ebx + AutosaveFlag) == 1) {
+                __asm pushad
+                AutoSaveLabel = RequestString(nullptr, "SAVELOAD_AUTOSAVE_LABEL");
+                __asm popad
+            }
+            if (AutoSaveLabel) wsprintf(New, L"%s - %s [image:ui_dlc_menu_icon]", AutoSaveLabel, (wchar_t*)String);
+            else wsprintf(New, L"%s [image:ui_dlc_menu_icon]", (wchar_t*)String);
             ctx.ecx = (uintptr_t)New;
         }
     }
     else if (*(char*)(ctx.ebx + AutosaveFlag) == 1)
     {
-        wsprintf(New, L"%s", (wchar_t*)RequestString(nullptr, "SAVELOAD_AUTOSAVE_LABEL"));
+        __asm pushad
+        wchar_t* AutoSaveLabel = RequestString(nullptr, "SAVELOAD_AUTOSAVE_LABEL");
+        __asm popad
+        wsprintf(New, L"%s - %s", AutoSaveLabel, (wchar_t*)ctx.ecx);
         ctx.ecx = (uintptr_t)New;
     }
 }
@@ -639,10 +649,17 @@ void StartTutorialHook(unsigned int TutorialIndex, int a2, char a3, int a4, char
 }
 
 void DLCSaveSetup() {
+
+    patchDWord((void*)0x00778308, 508);
+    patchDWord((void*)0x00778506, 508);
+    patchDWord((void*)0x007782ED, 508);
+    patch_lea_to_mov_ptr(0x7782F1, (uintptr_t)VintSaveNameBuff);
+    patch_lea_to_mov_ptr(0x778344, (uintptr_t)VintSaveNameBuff);
+    patch_lea_to_mov_ptr(0x77830C, (uintptr_t)VintSaveNameBuff);
     static SafetyHookMid MissingDLC = safetyhook::create_mid(0x00778313, &MissingDLCString);
     static SafetyHookMid DontLoad = safetyhook::create_mid(0x00691E10, &DontLoadTest);
     patchCall((void*)0x00A48636, StartTutorialHook);
-
+        
     // hopefully won't override actual save data
 
     static auto SaveFlag = safetyhook::create_mid(0x00695654, [](SafetyHookContext& ctx) {
