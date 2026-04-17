@@ -1430,8 +1430,81 @@ void DLCGlobals() { // this was done in LUA because they assumed they'd add more
     UnlockEmergentMissionForDLC();
 }
 
+#define DLC_SPECIAL_SERVER_FLAG 0x9D
+
+bool IsServerDLC(const char* str)
+{
+    return std::string_view(str).ends_with(DLC_SPECIAL_SERVER_FLAG);
+}
+
+bool IsServerDLC(const wchar_t* str)
+{
+    return std::wstring_view(str).ends_with(DLC_SPECIAL_SERVER_FLAG);
+}
+
+struct pc_multi_session_saver
+{
+    uint32_t server_id;
+    char server_name[256];
+    
+    inline bool isDLC() {
+
+        return IsServerDLC(server_name);
+    }
+
+};
+#define info_count 64
+pc_multi_session_saver info[info_count];
+
+uint32_t* server_count = (uint32_t*)0x02528D3C;
+
+void online()
+{
+
+    static auto fill_it_up = safetyhook::create_mid(0x835F80, [](SafetyHookContext& ctx) {
+        const char* server_name = (const char*)(ctx.ecx);
+        if (*server_count < info_count) {
+            auto this_info = &info[*server_count];
+            sprintf_s(this_info->server_name, sizeof(this_info->server_name), "%s", server_name);
+
+
+
+            info[*server_count].server_id = *server_count;
+            Logger::TypedLog("HI", "Server[{}] name {} myptr {} {}\n", *server_count,this_info->server_name, fmt::ptr(this_info), this_info->isDLC());
+            
+        }
+
+        });
+
+    static auto join_online_coop_game = safetyhook::create_mid(0x7EF8CF, [](SafetyHookContext& ctx) {
+
+        auto server_id = ctx.eax;
+        if (server_id < info_count) {
+            auto this_info = &info[server_id];
+            Logger::TypedLog("HI", "Server[{}] YOU WANT TO JOIN name {} myptr {} {}\n", server_id, this_info->server_name, fmt::ptr(this_info), this_info->isDLC());
+
+            if (!DLCInstalled && this_info->isDLC())
+                ctx.eip = 0x7EF8D4;
+        }
+        });
+
+    static auto hello_lan = safetyhook::create_mid(0x8131AE, [](SafetyHookContext& ctx) {
+
+        printf("eax %p\n", ctx.eax);
+            MessageBoxA(0, 0, 0, 0);
+
+            if (!DLCInstalled && IsServerDLC((const wchar_t*)ctx.eax))
+            {
+                ctx.eip = 0x8131A9;
+            }
+
+        });
+
+}
+
 void DLC::Init() {
 #if !RELOADED
+    online();
     // Patch max memory for Cust Data to prevent mod crashes with DLC.
     patchByte((BYTE*)0x0051EE15, 0x0C);
     patchByte((BYTE*)0x0051EE53, 0x0C);
