@@ -547,11 +547,53 @@ void ReplaceVehArray() {
     }
 }
 
+struct VehInfo_ext
+{
+    wchar_t display_name[64];
+    uint32_t slot;
+};
+
+VehInfo_ext* VehArr_ext;
+
+VehInfo_ext* GetVehArr_ext(uintptr_t veh_info)
+{
+    return (VehInfo_ext*)get_uint(veh_info + 0x276, veh_info + 0x3EA);
+}
+
+void ReplaceVehInfoEncodeDisplaywithExtended(SafetyHookContext& ctx)
+{
+    auto vehinfo_ext = GetVehArr_ext(ctx.ecx - 0x22E);
+    ctx.ecx = (uintptr_t)vehinfo_ext->display_name;
+}
+
 void IncreaseVehLimits() {
 
     VehArr = (VehiclePadding*)UtilsGlobal::calloc_game(MAX_VEH, sizeof(VehiclePadding));
     PostLoadArr = (PostLoadPadding*)UtilsGlobal::calloc_game(MAX_VEH, sizeof(PostLoadPadding));
+    VehArr_ext = (VehInfo_ext*)UtilsGlobal::calloc_game(MAX_VEH, sizeof(VehInfo_ext));
 
+
+    for (int i = 0; i < MAX_VEH; i++)
+    {
+        uintptr_t addr = (uintptr_t)&VehArr[i].Padding[0];
+        uintptr_t ext = (uintptr_t)&VehArr_ext[i].display_name[0];
+        // (clippy95) this is padding empty unused area in the vehicle info struct, never accessed, so we'll write our own 
+        // extended pointer which points to a new array for extended stuff for whatever we want to do
+        set_uint(ext, addr + 0x276, addr + 0x3EA);
+        VehArr_ext[i].slot = i;
+    }
+
+    static auto vehicle_display_name_parse = safetyhook::create_mid(0x00AEB93B, [](SafetyHookContext& ctx) {
+
+        const char* display_name_from_xtbl = (const char*)ctx.ecx;
+        auto vehinfo_ext = GetVehArr_ext(ctx.ebp);
+
+
+        mbstowcs(vehinfo_ext->display_name, display_name_from_xtbl, sizeof(vehinfo_ext->display_name) / sizeof(wchar_t));
+        });
+
+    static auto encode_garage_populate = safetyhook::create_mid(0x554398, ReplaceVehInfoEncodeDisplaywithExtended);
+    static auto encode_pause_menu_cars = safetyhook::create_mid(0x78A03E, ReplaceVehInfoEncodeDisplaywithExtended);
     /*int Stack = (MAX_VEH * 65) + 8;
 
     SafeWrite32(0x00AEE5F0 + 1, Stack); // 4 patches to increase the local filename buffer's size
