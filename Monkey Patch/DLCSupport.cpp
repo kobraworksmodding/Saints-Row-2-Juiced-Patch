@@ -40,8 +40,12 @@ int& SaveArray = *(int*)0x25283A0;
 int& CurrentIndex = *(int*)0x25283B4;
 bool IsDLCVI;
 
+#define AutosaveFlag 0xA0
+#define CheatFlag 0xA1
+#define DLCFlag 0xA2
+
 bool IsSaveDLC() {
-    return (*(char*)(SaveArray + 172 * CurrentIndex + 0xA2) != 0);
+    return (*(char*)(SaveArray + 172 * CurrentIndex + DLCFlag) != 0);
 }
 
 typedef uintptr_t __cdecl load_packfileT(const char* name);
@@ -567,7 +571,7 @@ void IncreaseVehLimits() {
 
 void MissingDLCString(SafetyHookContext& ctx) {
     static wchar_t New[128];
-    if (*(char*)(ctx.ebx + 0xA2) == 1) {
+    if (*(char*)(ctx.ebx + DLCFlag) == 1) {
         if (!DLCInstalled) {
             __asm pushad
             wchar_t* Missing = RequestString(nullptr, "DLC_SAVE_TITLE_REPLACEMENT");
@@ -577,14 +581,14 @@ void MissingDLCString(SafetyHookContext& ctx) {
         else {
             uintptr_t string = ctx.ecx;
 
-            if (*(char*)(ctx.ebx + 0xA0) == 1)
+            if (*(char*)(ctx.ebx + AutosaveFlag) == 1)
                 string = (uintptr_t)RequestString(nullptr, "SAVELOAD_AUTOSAVE_LABEL");
 
             wsprintf(New, L"%s [image:ui_dlc_menu_icon]", (wchar_t*)string);
             ctx.ecx = (uintptr_t)New;
         }
     }
-    else if (*(char*)(ctx.ebx + 0xA0) == 1)
+    else if (*(char*)(ctx.ebx + AutosaveFlag) == 1)
     {
         wsprintf(New, L"%s", (wchar_t*)RequestString(nullptr, "SAVELOAD_AUTOSAVE_LABEL"));
         ctx.ecx = (uintptr_t)New;
@@ -645,7 +649,7 @@ void DLCSaveSetup() {
         if (DLCInstalled) ctx.ecx += 4;
         });
     static auto ReadFlag = safetyhook::create_mid(0x006958B4, [](SafetyHookContext& ctx) {
-        *(char*)(ctx.ebp + 0xA2) = (ctx.eax & 4) != 0;
+        *(char*)(ctx.ebp + DLCFlag) = (ctx.eax & 4) != 0;
         });
     static auto UpdateContinueIndex = safetyhook::create_mid(0x007791BA, [](SafetyHookContext& ctx) {
         *(int*)0x25283B4 = ctx.ebx; // the game does not update the current save index if you use the continue option in the main menu
