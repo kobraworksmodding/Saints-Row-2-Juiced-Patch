@@ -29,3 +29,19 @@ void* copyFunc(uint32_t func_start, uint32_t func_end, void* new_func);
 void* copyFunc(uint32_t func_start, uint32_t func_end, void* new_func);
 
 bool patch_lea_to_mov_ptr(uintptr_t address, uintptr_t static_ptr);
+
+inline void set_uint(uintptr_t ptr, uintptr_t addr_lo, uintptr_t addr_hi)
+{
+    const uint32_t value = static_cast<uint32_t>(ptr);
+
+    *reinterpret_cast<uint16_t*>(addr_lo) = static_cast<uint16_t>(value & 0xFFFF);
+    *reinterpret_cast<uint16_t*>(addr_hi) = static_cast<uint16_t>((value >> 16) & 0xFFFF);
+}
+
+inline uintptr_t get_uint(uintptr_t addr_lo, uintptr_t addr_hi)
+{
+    const uint32_t lo = *reinterpret_cast<uint16_t*>(addr_lo);
+    const uint32_t hi = *reinterpret_cast<uint16_t*>(addr_hi);
+
+    return static_cast<uintptr_t>(lo | (hi << 16));
+}
