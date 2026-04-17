@@ -587,9 +587,21 @@ void IncreaseVehLimits() {
 
         const char* display_name_from_xtbl = (const char*)ctx.ecx;
         auto vehinfo_ext = GetVehArr_ext(ctx.ebp);
-
+        wchar_t* display_name_og_24 = (wchar_t*)(ctx.ebp + 0x22E);
 
         mbstowcs(vehinfo_ext->display_name, display_name_from_xtbl, sizeof(vehinfo_ext->display_name) / sizeof(wchar_t));
+
+
+        const char* clean_name = display_name_from_xtbl;
+        if (clean_name[0] == '[') {
+            const char* closing = strchr(clean_name, ']');
+            if (closing) {
+                clean_name = closing + 1;
+                while (*clean_name == ' ') clean_name++;
+            }
+        }
+
+        mbstowcs(display_name_og_24, clean_name, 24);
         });
 
     static auto encode_garage_populate = safetyhook::create_mid(0x554398, ReplaceVehInfoEncodeDisplaywithExtended);
