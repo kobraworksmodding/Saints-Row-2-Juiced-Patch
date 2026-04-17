@@ -153,3 +153,54 @@ void* copyFunc(uint32_t func_start, uint32_t func_end, void* new_func)
     return copied;
 }
 
+bool patch_lea_to_mov_ptr(uintptr_t address, uintptr_t static_ptr)
+{
+    ZydisDecoder            decoder;
+    ZydisDecodedInstruction insn;
+    ZydisDecodedOperand     ops[ZYDIS_MAX_OPERAND_COUNT];
+
+    ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LEGACY_32, ZYDIS_STACK_WIDTH_32);
+
+    uint8_t* cursor = (uint8_t*)address;
+
+    if (!ZYAN_SUCCESS(ZydisDecoderDecodeFull(&decoder, cursor, 15, &insn, ops)))
+        return false;
+
+    if (insn.mnemonic != ZYDIS_MNEMONIC_LEA
+        || insn.operand_count < 2
+        || ops[0].type != ZYDIS_OPERAND_TYPE_REGISTER
+        || ops[1].type != ZYDIS_OPERAND_TYPE_MEMORY
+        || ops[1].mem.base != ZYDIS_REGISTER_ESP
+        || ops[1].mem.index != ZYDIS_REGISTER_NONE)
+        return false;
+
+    if (insn.length < 5)
+        return false;
+
+    DWORD old_prot;
+    VirtualProtect(cursor, insn.length, PAGE_EXECUTE_READWRITE, &old_prot);
+
+    memset(cursor, 0x90, insn.length);
+
+    auto reg_to_rd = [](ZydisRegister reg) -> uint8_t {
+        switch (reg) {
+        case ZYDIS_REGISTER_EAX: return 0;
+        case ZYDIS_REGISTER_ECX: return 1;
+        case ZYDIS_REGISTER_EDX: return 2;
+        case ZYDIS_REGISTER_EBX: return 3;
+        case ZYDIS_REGISTER_ESP: return 4;
+        case ZYDIS_REGISTER_EBP: return 5;
+        case ZYDIS_REGISTER_ESI: return 6;
+        case ZYDIS_REGISTER_EDI: return 7;
+        default:                 return 0xFF;
+        }
+        };
+
+    uint8_t rd = reg_to_rd(ops[0].reg.value);
+    cursor[0] = 0xB8 | rd;
+    memcpy(cursor + 1, &static_ptr, 4);
+
+    VirtualProtect(cursor, insn.length, old_prot, &old_prot);
+
+    return true;
+}

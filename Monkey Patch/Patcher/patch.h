@@ -27,3 +27,5 @@ void callFunc(void* addr);
 void* copyFunc(uint32_t func_start, uint32_t func_end, void* new_func);
 
 void* copyFunc(uint32_t func_start, uint32_t func_end, void* new_func);
+
+bool patch_lea_to_mov_ptr(uintptr_t address, uintptr_t static_ptr);
