@@ -632,8 +632,8 @@ void MissingDLCString(SafetyHookContext& ctx) {
                 AutoSaveLabel = RequestString(nullptr, "SAVELOAD_AUTOSAVE_LABEL");
                 __asm popad
             }
-            if (AutoSaveLabel) wsprintf(New, L"%s - %s [image:ui_dlc_menu_icon]", AutoSaveLabel, (wchar_t*)String);
-            else wsprintf(New, L"%s [image:ui_dlc_menu_icon]", (wchar_t*)String);
+            if (AutoSaveLabel) wsprintf(New, L"[image:ui_dlc_menu_icon]%s - %s", AutoSaveLabel, (wchar_t*)String);
+            else wsprintf(New, L"[image:ui_dlc_menu_icon]%s", (wchar_t*)String);
             ctx.ecx = (uintptr_t)New;
         }
     }
