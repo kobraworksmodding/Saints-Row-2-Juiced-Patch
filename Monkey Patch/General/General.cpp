@@ -26,6 +26,8 @@ and / or run completely on startup or after we check everything else.*/
 #include "../Render/bitmap.h"
 
 #include <regex>
+#include "../DLCSupport.h"
+
 #include "../Hooker.h"
 using namespace Math;
 #pragma warning( disable : 4409)
@@ -1070,8 +1072,11 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 					}
 				}
 
-				if(is_pause_menu)
+				// we handle this in DLCSupport.cpp, it'll be SAVELOAD_AUTOSAVE_LABEL +
+				if (is_pause_menu && DLCInstalled) {
+					replace_all(finalContent, "label = \"SAVELOAD_AUTOSAVE_LABEL\"", "label = menu_data.last_mission_name");
 					InGameConfig::DebugDumpLua(finalContent, "after");
+				}
 
 				// If any modifications were made, create a new buffer
 				if (modified) {
