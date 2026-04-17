@@ -817,7 +817,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			"error(error_message)";
 
 		std::string blankLib(sLibSuperUI.length(), ' ');
-
+		bool is_pause_menu = (strcmp(filename, "pause_menu.lua") == 0);
 		if (buff) {
 			//for (int i = 0; i < 14; ++i) { // parses the hardcoded array to check if your current resolution exists in it
 			//	if (userResX == resX[i] && userResY == resY[i]) {
@@ -836,6 +836,10 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			//replace_all(convertedBuff, "2048x1536", patchedRes); // easier to do it this way than to only patch if the user's res isn't found
 			replace_all(convertedBuff, sLibSuperUI, blankLib); // fixes the error logger from SuperUI in system_lib.lua from crashing our executor, if nclok fixes it we'll get rid of this
 
+			// we handle this in DLCSupport.cpp, it'll be SAVELOAD_AUTOSAVE_LABEL + DLC ICON
+			if (is_pause_menu) {
+				replace_all(convertedBuff, "label = \"SAVELOAD_AUTOSAVE_LABEL\"", "label = menu_data.last_mission_name");
+			}
 			if (*(BYTE*)(0xE8C470) == 0) { // only patch these if the game's running in English
 				replace_all(convertedBuff, "MENU_BLUR\",\t\t", "Pause Blur\",\t");
 				replace_all(convertedBuff, "MENU_DEPTH_OF_FIELD", "Depth of Field     ");
@@ -848,7 +852,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 		baseBufferModified = (convertedBuff != originalBuff);
 #endif
-		bool is_pause_menu = (strcmp(filename, "pause_menu.lua") == 0);
 		bool needBufferMod = baseBufferModified || Render2D::UltrawideFix
 #if !JLITE
 			|| Render2D::IVRadarScaling || allowJuicedAPI
@@ -1072,11 +1075,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 					}
 				}
 
-				// we handle this in DLCSupport.cpp, it'll be SAVELOAD_AUTOSAVE_LABEL +
-				if (is_pause_menu && DLCInstalled) {
-					replace_all(finalContent, "label = \"SAVELOAD_AUTOSAVE_LABEL\"", "label = menu_data.last_mission_name");
-					InGameConfig::DebugDumpLua(finalContent, "after");
-				}
 
 				// If any modifications were made, create a new buffer
 				if (modified) {
