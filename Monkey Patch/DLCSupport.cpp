@@ -566,11 +566,28 @@ void IncreaseVehLimits() {
 }
 
 void MissingDLCString(SafetyHookContext& ctx) {
-    if (!DLCInstalled && *(char*)(ctx.ebx + 0xA2) == 1) {
-        __asm pushad
-        wchar_t* Missing = RequestString(nullptr, "DLC_SAVE_TITLE_REPLACEMENT");
-        __asm popad
-        ctx.ecx = (uintptr_t)Missing;
+    static wchar_t New[128];
+    if (*(char*)(ctx.ebx + 0xA2) == 1) {
+        if (!DLCInstalled) {
+            __asm pushad
+            wchar_t* Missing = RequestString(nullptr, "DLC_SAVE_TITLE_REPLACEMENT");
+            __asm popad
+            ctx.ecx = (uintptr_t)Missing;
+        }
+        else {
+            uintptr_t string = ctx.ecx;
+
+            if (*(char*)(ctx.ebx + 0xA0) == 1)
+                string = (uintptr_t)RequestString(nullptr, "SAVELOAD_AUTOSAVE_LABEL");
+
+            wsprintf(New, L"%s [image:ui_dlc_menu_icon]", (wchar_t*)string);
+            ctx.ecx = (uintptr_t)New;
+        }
+    }
+    else if (*(char*)(ctx.ebx + 0xA0) == 1)
+    {
+        wsprintf(New, L"%s", (wchar_t*)RequestString(nullptr, "SAVELOAD_AUTOSAVE_LABEL"));
+        ctx.ecx = (uintptr_t)New;
     }
 }
 
