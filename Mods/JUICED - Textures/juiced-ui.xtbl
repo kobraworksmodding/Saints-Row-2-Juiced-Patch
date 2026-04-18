@@ -1,6 +1,22 @@
 <root>
 <Table>
 	<BitmapSheets>
+		<Name>ui_bms_dlc_icon</Name>
+		<Images>
+			<Properties>
+				<Name>ui_dlc_menu_icon</Name>
+				<StartX>1</StartX>
+				<StartY>1</StartY>
+				<ImageWidth>27</ImageWidth>
+				<ImageHeight>46</ImageHeight>
+				<PersistFilename>D:\projects\sr2art\Interface\bms\dlc\ui_dlc_menu_icon.tga</PersistFilename>
+				</Properties>
+			</Images>
+		<_Editor>
+			<Category>Entries</Category>
+			</_Editor>
+		</BitmapSheets>
+	<BitmapSheets>
 		<Name>ui_bms_sdl3</Name>
 		<Images>
 			<Properties>
@@ -1096,22 +1112,6 @@
 				<PersistFilename>D:\projects\sr2art\Interface\bms\hud\button_mashing\ui_btnmash_stick_ps3.tga</PersistFilename>
 				</Properties>
 			</Images>
-		<_Editor>
-			<Category>Entries</Category>
-			</_Editor>
-		</BitmapSheets>
-	<BitmapSheets>
-		<Name>ui_bms_dlc_icon</Name>
-		<Images>
-			<Properties>
-				<Name>ui_dlc_menu_icon</Name>
-				<StartX>1</StartX>
-				<StartY>1</StartY>
-				<ImageWidth>27</ImageWidth>
-				<ImageHeight>46</ImageHeight>
-				<PersistFilename>D:\projects\sr2art\Interface\bms\dlc\ui_dlc_menu_icon.tga</PersistFilename>
-				</Properties>
-            </Images>
 		<_Editor>
 			<Category>Entries</Category>
 			</_Editor>
