@@ -57,6 +57,11 @@ namespace Gamespy
 		const_cast<char*>("sr2_mp_lobby03")
 	};
 
+	void SetNameToLAN(SafetyHookContext& ctx)
+	{
+		name_to_pick = ELAN;
+	}
+
 	void Init() {
 		coopPausePatch = 0;
 
@@ -127,11 +132,6 @@ namespace Gamespy
 #endif
 
 	// Fixes an issue where the game would use your gamespy name instead of the LAN one if you are logged into gamespy (clippy95)
-	static auto UseLAN_NameInSysLink_Load = safetyhook::create_mid(0x02528BC4, [](SafetyHookContext& ctx) {
-
-		name_to_pick = ELAN;
-
-		});
-
+	static auto UseLAN_NameInSysLink_Load = safetyhook::create_mid(0x778F24, SetNameToLAN);
 	}
 }
