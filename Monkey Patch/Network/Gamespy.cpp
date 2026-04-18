@@ -57,8 +57,31 @@ namespace Gamespy
 		const_cast<char*>("sr2_mp_lobby03")
 	};
 
+
+
+
+	uintptr_t get_pc_session()
+	{
+		return *(uintptr_t*)0x02528C14;
+	}
+	__declspec(noinline) bool get_is_syslink(uintptr_t session = NULL)
+	{
+		if(!session)
+		session = get_pc_session();
+
+		if (session) {
+			auto extra_info = *(uintptr_t*)(session + 0xC);
+			if (extra_info) {
+				return *(bool*)(extra_info + 0x47);
+			}
+		}
+		return false;
+	}
+
 	void SetNameToLAN(SafetyHookContext& ctx)
 	{
+		auto is_lan = get_is_syslink();
+		if(get_is_syslink())
 		name_to_pick = ELAN;
 	}
 
@@ -132,6 +155,12 @@ namespace Gamespy
 #endif
 
 	// Fixes an issue where the game would use your gamespy name instead of the LAN one if you are logged into gamespy (clippy95)
-	static auto UseLAN_NameInSysLink_Load = safetyhook::create_mid(0x778F24, SetNameToLAN);
+	static auto UseLAN_NameInSysLink_Load = safetyhook::create_mid(0x778F05, SetNameToLAN);
+
+	static auto multi_session_create_midhook = safetyhook::create_mid(0x80DB1E, [](SafetyHookContext& ctx) {
+
+		name_to_pick = (E_NAME)!get_is_syslink(ctx.ebx);
+		});
+
 	}
 }
