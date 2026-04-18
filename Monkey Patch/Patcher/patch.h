@@ -1,7 +1,8 @@
 #pragma once
 #include <stdint.h>
 #include <windows.h>
-
+#include "..\MemoryMgr.h"
+using namespace Memory::VP;
 enum instruction {
     NOP = 0x90,
     MOVIMM8 = 0xB0,

@@ -19,6 +19,7 @@
 #include "Math/Math.h"
 #include "Player/Input.h"
 #include "Game/Game.h"
+#include "Hooker.h"
 const char* ERROR_MESSAGE = "ERROR";
 // MainHooks.cpp
 #if !RELOADED
@@ -289,8 +290,47 @@ namespace BlingMenuInstall
         }
     }
 
+    uintptr_t some_late_function;
+
+    void late_function()
+    {
+        cdecl_call<void>(some_late_function);
+
+        struct VehicleEntry {
+            std::string internal_name;
+            std::string display_name;
+        };
+
+        std::vector<VehicleEntry> entries;
+
+        for (int i = 0; i < *(int*)0x252A0D8; i++) {
+            auto veharr_extra = (*(uintptr_t*)0x004840C7) + 2000 * i;
+            auto vehicle_internal_name = (char*)(veharr_extra + 0x80);
+            auto vehicle_display_name = (wchar_t*)(veharr_extra + 0x22E);
+
+            int len = WideCharToMultiByte(CP_UTF8, 0, vehicle_display_name, -1, nullptr, 0, nullptr, nullptr);
+            std::string display_name_str(len, '\0');
+            WideCharToMultiByte(CP_UTF8, 0, vehicle_display_name, -1, display_name_str.data(), len, nullptr, nullptr);
+
+            entries.push_back({ std::string(vehicle_internal_name), std::move(display_name_str) });
+        }
+
+        std::sort(entries.begin(), entries.end(), [](const VehicleEntry& a, const VehicleEntry& b) {
+            return a.display_name < b.display_name;
+            });
+
+        for (const auto& entry : entries) {
+            BlingMenuAddFuncStd("Juiced Vehicle Spawner", entry.display_name.c_str(), [entry]() {
+                if (!UtilsGlobal::getplayer())
+                    return;
+                VehicleSpawner(entry.internal_name.c_str(), "-1");
+                });
+        }
+    }
+
    void AddOptions() {
        if (BlingMenuLoad()) {
+           Memory::VP::InterceptCall(0X5202D9, some_late_function, late_function);
        //BlingMenuAddFuncCustom("Juiced", "SleepHack", NULL, &BM_SleepHacks, NULL);
        BlingMenuAddBool("Juiced", "Fix Havok Frametime",&Debug::fixFrametime, BM_restoreHavok);
        BlingMenuAddBool("Juiced", "FrametimeTauDampingHack", &Game::FrametimeTauDampingHack, NULL);
@@ -357,14 +397,15 @@ namespace BlingMenuInstall
                General::NPCSpawner(character);
                });
        }
+       BlingMenuAddCategory("Juiced Vehicle Spawner");
 
-       for (const auto& vehicle : AllVehicles) {
-           BlingMenuAddFuncStd("Juiced Vehicle Spawner", vehicle.first.c_str(), [vehicle]() {
-               if (!UtilsGlobal::getplayer())
-                   return;
-               VehicleSpawner(vehicle.second, "-1");
-               });
-       }
+       //for (const auto& vehicle : AllVehicles) {
+       //    BlingMenuAddFuncStd("Juiced Vehicle Spawner", vehicle.first.c_str(), [vehicle]() {
+       //        if (!UtilsGlobal::getplayer())
+       //            return;
+       //        VehicleSpawner(vehicle.second, "-1");
+       //        });
+       //}
        BlingMenuAddFunc("Reload table", "Following are untested.", NULL);
        BlingMenuAddFunc("Reload table", "reload weather & weather_time_of_day.xtbl", []() {
 

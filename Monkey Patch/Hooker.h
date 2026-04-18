@@ -1,7 +1,8 @@
 #pragma once
 #include "UtilsGlobal.h"
 #include <libloaderapi.h>
-
+#include "..\MemoryMgr.h"
+using namespace Memory::VP;
 //template<typename AT>
 //inline AT DynAddress(AT address)
 //{
@@ -39,4 +40,28 @@ __declspec(noinline) AT DynAddress(AT address)
 inline uintptr_t operator""_g(unsigned long long val)
 {
     return DynAddress(static_cast<uintptr_t>(val));
+}
+
+// cdecl
+template<typename Ret, typename... Args>
+inline Ret cdecl_call(uintptr_t addr, Args... args) {
+    return reinterpret_cast<Ret(__cdecl*)(Args...)>(addr)(args...);
+}
+
+// stdcall
+template<typename Ret, typename... Args>
+inline Ret stdcall_call(uintptr_t addr, Args... args) {
+    return reinterpret_cast<Ret(__stdcall*)(Args...)>(addr)(args...);
+}
+
+// fastcall
+template<typename Ret, typename... Args>
+inline Ret fastcall_call(uintptr_t addr, Args... args) {
+    return reinterpret_cast<Ret(__fastcall*)(Args...)>(addr)(args...);
+}
+
+// thiscall
+template<typename Ret, typename... Args>
+inline Ret thiscall_call(uintptr_t addr, Args... args) {
+    return reinterpret_cast<Ret(__thiscall*)(Args...)>(addr)(args...);
 }

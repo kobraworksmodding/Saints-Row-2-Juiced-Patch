@@ -190,7 +190,6 @@ namespace Memory
 	int animation_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "animation", 17293312 * 2, "Default 17293312"), 17293312, INT32_MAX / 4);
 			if (animation_new_size != 17293312) {
 				patchInt((void*)(0x51FB30 + 1), animation_new_size);
-
 				Logger::TypedLog(CHN_DEBUG, "Expanded animation to {}\n", animation_new_size);
 
 			}

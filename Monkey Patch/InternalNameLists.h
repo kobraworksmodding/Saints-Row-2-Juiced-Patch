@@ -249,334 +249,334 @@ inline std::vector<const char*> Characters = {
 
 };
 
-/*
-Vehicle list gathered by -SeaboundSaint-
-https://www.saintsrowmods.com/forum/threads/vehicle-internal-names.21232/
-Ideally we'd parse the xmls to get the vehicle names, (BM supports dynamic addition), but this will have to do for now!..
-*/
-
-inline std::map<std::string, std::string> Bikes = {
-     {"Sabretooth", "bike_chopper01"},
-     {"Sandstorm", "bike_dirt01"},
-     {"Kaneda", "bike_exotic01"},
-     {"Widowmaker", "bike_moped01"},
-     {"PeeWee", "bike_pocket01"},
-     {"Tetsuo", "bike_rocket01"},
-     {"Kenshin", "bike_rocket02"},
-     {"Shard", "bike_standard01"},
-     {"Melbourne (Estrada)", "bike_standard02"}
-};
-
-inline std::map<std::string, std::string> Boats = {
-    {"Miami", "boat_speed01"},
-    {"Python", "boat_speed02"},
-    {"Hurricane", "boat_speed03"},
-    {"Maelstrom", "boat_standard01"},
-    {"Shark", "boat_wavecraft01"},
-    {"Skipper", "boat_yacht01"},
-    {"Convict", "boat_yacht02"}
-};
-
-inline std::map<std::string, std::string> Cars = {
-    {"Mongoose", "car_2dr_buggy01"},
-    {"Mockingbird", "car_2dr_compact03"},
-    {"Halberd", "car_2dr_compact04"},
-    {"Baron", "car_2dr_exolux01"},
-    {"Attrazione", "car_2dr_exoticsports01"},
-    {"Zenith", "car_2dr_exoticsports03"},
-    {"Vortex", "car_2dr_exoticsports04"},
-    {"Bezier", "car_2dr_exoticsports05"},
-    {"Superiore", "car_2dr_exoticsports06"},
-    {"Stiletto", "car_2dr_luxury02"},
-    {"Nelson", "car_2dr_luxury04"},
-    {"Hammerhead", "car_2dr_muscle01"},
-    {"Bootlegger", "car_2dr_muscle02"},
-    {"La Fuerza", "car_2dr_muscle03"},
-    {"Phoenix", "car_2dr_muscle04"},
-    {"Phoenix (Cutscene)", "car_2dr_muscle04_cs"},
-    {"Raycaster", "car_2dr_sports03"},
-    {"Venom Classic", "car_2dr_sports05"},
-    {"Magma", "car_2dr_sports06"},
-    {"Hayate Z70", "car_2dr_sports07"},
-    {"Cosmos", "car_2dr_standard03"},
-    {"Go!", "car_2dr_standard06"},
-    {"Danville", "car_2dr_standard07"},
-    {"Hollywood", "car_4dr_classic01"},
-    {"Ethel", "car_4dr_classic02"},
-    {"Justice", "car_4dr_exoticluxury01"},
-    {"Compton", "car_4dr_lowrider01"},
-    {"Zomkah", "car_4dr_luxury01"},
-    {"Eiswolf", "car_4dr_luxury04"},
-    {"Socialite", "car_4dr_luxury05"},
-    {"Five-0", "car_4dr_police01"},
-    {"Voxel", "car_4dr_sports01"},
-    {"Wakazashi", "car_4dr_sports02"},
-    {"Zircon", "car_4dr_standard02"},
-    {"Zircon (Cutscene)", "car_4dr_standard02_cs"},
-    {"Zimos", "car_4dr_standard03"},
-    {"Churchill", "car_4dr_standard07"},
-    {"Wellington", "car_4dr_standard09"},
-    {"Capshaw", "car_4dr_std01"},
-    {"Taxi", "car_4dr_taxi01"}
-};
-
-inline std::map<std::string, std::string> GOTRExclusive = {
-    {"BLADE-SPINNER 2077", "fc_oyeah"},
-    {"ZRT Special", "fc_zrtspecial"}
-};
-
-inline std::map<std::string, std::string> Helicopters = {
-    {"Oppressor", "heli_4dr_police01"},
-    {"Oppressor (Side-Shooter)", "heli_4dr_police02"},
-    {"Tornado", "heli_fighter_01"},
-    {"Horizon", "heli_standard_01"},
-    {"Thompson", "heli_standard_02"},
-    {"Gyro Daddy", "heli_standard_03"}
-};
-
-inline std::map<std::string, std::string> Minivans = {
-    {"Westbury", "minivan_4dr_01"}
-};
-
-inline std::map<std::string, std::string> Planes = {
-    {"Parrot (Corsette/High Rise)", "plane_biplane01"},
-    {"Wolverine", "plane_fighter01"},
-    {"Snipes 57", "plane_jet01"},
-    {"Woodpecker", "plane_standard01"}
-};
-
-inline std::map<std::string, std::string> Special = {
-    {"Ambulance", "sp_ambulance01"},
-    {"Grizzly (Bear)", "sp_apc01"},
-    {"Toad", "sp_atv01"},
-    {"Backhoe", "sp_backhoe01"},
-    {"Bag Boy", "sp_bagcart01"},
-    {"Baggage Trailer (Trailer)", "sp_bagtrailer01"},
-    {"Bulldozer", "sp_bulldozer01"},
-    {"Knoxville", "sp_cart01"},
-    {"Cheetah", "sp_charterbus02"},
-    {"Kent", "sp_combine"},
-    {"Ruckus", "sp_derbycar01"},
-    {"Rampage", "sp_derbycar02"},
-    {"Rumble", "sp_derbycar03"},
-    {"Frenzy", "sp_derbycar04"},
-    {"Delivery Truck", "sp_dlvry_truck01"},
-    {"El Train Cut (Cutscene)", "sp_el_train_cutscene"},
-    {"El Train", "sp_eltrain_01"},
-    {"Reaper", "sp_hearse01"},
-    {"Hounfor", "sp_hearse02"},
-    {"Hounfor (Cutscene)", "sp_hearse02_cs"},
-    {"HounforCut (Cutscene Interior)", "sp_hearse02_interior"},
-    {"Status Quo", "sp_limo01"},
-    {"The Job", "sp_limosuv01"},
-    {"Quota", "sp_metermaid01"},
-    {"Oring", "sp_novelty01"},
-    {"Buffalo", "sp_RV01"},
-    {"Buffalo B (Mission Specific)", "sp_RV02"},
-    {"DonoVan (Warrant)", "sp_shortbus01"},
-    {"Box (Trailer)", "sp_trailer_box01"},
-    {"Flatbed (Trailer)", "sp_trailer_flatbed01"},
-    {"Tank (Trailer)", "sp_trailer_tank1"},
-    {"Destroy (UFO)", "sp_ufo01"}
-};
-
-inline std::map<std::string, std::string> SUVs = {
-    {"Swindle", "suv_2dr_01"},
-    {"Nordberg", "suv_4dr_04"},
-    {"Alaskan", "suv_4dr_06"},
-    {"Interceptor (FBI)", "suv_4dr_fbi01"},
-    {"Mag", "suv_4dr_luxury01"},
-    {"Bulldog", "suv_4dr_luxury05"},
-    {"Quasar", "suv_4dr_luxury06"}
-};
-
-inline std::map<std::string, std::string> Trucks = {
-    {"Titan", "truck_2dr_armored01"},
-    {"Betsy", "truck_2dr_classic01"},
-    {"Longhauler (Mix Master)", "truck_2dr_construct01"},
-    {"Blaze", "truck_2dr_fire01"},
-    {"Stilwater Municipal", "truck_2dr_garbage01"},
-    {"Newman", "truck_2dr_mail01"},
-    {"Atlasbreaker", "truck_2dr_monster01"},
-    {"Atlasbreaker (Cutscene)", "truck_2dr_monster01_CS"},
-    {"Mule", "truck_2dr_mover01"},
-    {"Varsity", "truck_2dr_pickup02"},
-    {"Thorogood", "truck_2dr_pickup03"},
-    {"Legion", "truck_2dr_pickup06"},
-    {"Legion (Cutscene)", "truck_2dr_pickup06"},
-    {"Peterliner", "truck_2dr_semi01"},
-    {"Septic Avenger (City Waste Truck)", "truck_2dr_septic01"},
-    {"Shaft", "truck_2dr_tow01"},
-    {"Compensator", "truck_4dr_pickup04"}
-};
-
-inline std::map<std::string, std::string> Vans = {
-    {"Peacekeeper (Swat Truck)", "van_2dr_riot01"},
-    {"NRG V8", "van_4dr_01"},
-    {"Topher", "van_4dr_03"},
-    {"Voyage", "van_4dr_04"},
-    {"Anchor", "van_4dr_news01"}
-};
-
-inline std::map<std::string, std::string> Wagons = {
-    {"Komodo", "wagon_4dr_01"},
-    {"Keystone", "wagon_4dr_sprt01"}
-};
-
-const std::vector<std::pair<std::string, const char*>> AllVehicles = {
-    // Bikes
-    {"Sabretooth", "bike_chopper01"},
-    {"Sandstorm", "bike_dirt01"},
-    {"Kaneda", "bike_exotic01"},
-    {"Widowmaker", "bike_moped01"},
-    {"PeeWee", "bike_pocket01"},
-    {"Tetsuo", "bike_rocket01"},
-    {"Kenshin", "bike_rocket02"},
-    {"Shard", "bike_standard01"},
-    {"Melbourne (Estrada)", "bike_standard02"},
-
-    // Boats
-    {"Miami", "boat_speed01"},
-    {"Python", "boat_speed02"},
-    {"Hurricane", "boat_speed03"},
-    {"Maelstrom", "boat_standard01"},
-    {"Shark", "boat_wavecraft01"},
-    {"Skipper", "boat_yacht01"},
-    {"Convict", "boat_yacht02"},
-
-    // Cars
-    {"Mongoose", "car_2dr_buggy01"},
-    {"Mockingbird", "car_2dr_compact03"},
-    {"Halberd", "car_2dr_compact04"},
-    {"Baron", "car_2dr_exolux01"},
-    {"Attrazione", "car_2dr_exoticsports01"},
-    {"Zenith", "car_2dr_exoticsports03"},
-    {"Vortex", "car_2dr_exoticsports04"},
-    {"Bezier", "car_2dr_exoticsports05"},
-    {"Superiore", "car_2dr_exoticsports06"},
-    {"Stiletto", "car_2dr_luxury02"},
-    {"Nelson", "car_2dr_luxury04"},
-    {"Hammerhead", "car_2dr_muscle01"},
-    {"Bootlegger", "car_2dr_muscle02"},
-    {"La Fuerza", "car_2dr_muscle03"},
-    {"Phoenix", "car_2dr_muscle04"},
-    {"Phoenix (Cutscene)", "car_2dr_muscle04_cs"},
-    {"Raycaster", "car_2dr_sports03"},
-    {"Venom Classic", "car_2dr_sports05"},
-    {"Magma", "car_2dr_sports06"},
-    {"Hayate Z70", "car_2dr_sports07"},
-    {"Cosmos", "car_2dr_standard03"},
-    {"Go!", "car_2dr_standard06"},
-    {"Danville", "car_2dr_standard07"},
-    {"Hollywood", "car_4dr_classic01"},
-    {"Ethel", "car_4dr_classic02"},
-    {"Justice", "car_4dr_exoticluxury01"},
-    {"Compton", "car_4dr_lowrider01"},
-    {"Zomkah", "car_4dr_luxury01"},
-    {"Eiswolf", "car_4dr_luxury04"},
-    {"Socialite", "car_4dr_luxury05"},
-    {"Five-0", "car_4dr_police01"},
-    {"Voxel", "car_4dr_sports01"},
-    {"Wakazashi", "car_4dr_sports02"},
-    {"Zircon", "car_4dr_standard02"},
-    {"Zircon (Cutscene)", "car_4dr_standard02_cs"},
-    {"Zimos", "car_4dr_standard03"},
-    {"Churchill", "car_4dr_standard07"},
-    {"Wellington", "car_4dr_standard09"},
-    {"Capshaw", "car_4dr_std01"},
-    {"Taxi", "car_4dr_taxi01"},
-
-    // GOTR Exclusive
-    {"BLADE-SPINNER 2077", "fc_oyeah"},
-    {"ZRT Special", "fc_zrtspecial"},
-
-    // Helicopters
-    {"Oppressor", "heli_4dr_police01"},
-    {"Oppressor (Side-Shooter)", "heli_4dr_police02"},
-    {"Tornado", "heli_fighter_01"},
-    {"Horizon", "heli_standard_01"},
-    {"Thompson", "heli_standard_02"},
-    {"Gyro Daddy", "heli_standard_03"},
-
-    // Minivans
-    {"Westbury", "minivan_4dr_01"},
-
-    // Planes
-    {"Parrot (Corsette/High Rise)", "plane_biplane01"},
-    {"Wolverine", "plane_fighter01"},
-    {"Snipes 57", "plane_jet01"},
-    {"Woodpecker", "plane_standard01"},
-
-    // Special
-    {"Ambulance", "sp_ambulance01"},
-    {"Grizzly (Bear)", "sp_apc01"},
-    {"Toad", "sp_atv01"},
-    {"Backhoe", "sp_backhoe01"},
-    {"Bag Boy", "sp_bagcart01"},
-    {"Baggage Trailer (Trailer)", "sp_bagtrailer01"},
-    {"Bulldozer", "sp_bulldozer01"},
-    {"Knoxville", "sp_cart01"},
-    {"Cheetah", "sp_charterbus02"},
-    {"Kent", "sp_combine"},
-    {"Ruckus", "sp_derbycar01"},
-    {"Rampage", "sp_derbycar02"},
-    {"Rumble", "sp_derbycar03"},
-    {"Frenzy", "sp_derbycar04"},
-    {"Delivery Truck", "sp_dlvry_truck01"},
-    {"El Train Cut (Cutscene)", "sp_el_train_cutscene"},
-    {"El Train", "sp_eltrain_01"},
-    {"Reaper", "sp_hearse01"},
-    {"Hounfor", "sp_hearse02"},
-    {"Hounfor (Cutscene)", "sp_hearse02_cs"},
-    {"HounforCut (Cutscene Interior)", "sp_hearse02_interior"},
-    {"Status Quo", "sp_limo01"},
-    {"The Job", "sp_limosuv01"},
-    {"Quota", "sp_metermaid01"},
-    {"Oring", "sp_novelty01"},
-    {"Buffalo", "sp_RV01"},
-    {"Buffalo B (Mission Specific)", "sp_RV02"},
-    {"DonoVan (Warrant)", "sp_shortbus01"},
-    {"Box (Trailer)", "sp_trailer_box01"},
-    {"Flatbed (Trailer)", "sp_trailer_flatbed01"},
-    {"Tank (Trailer)", "sp_trailer_tank1"},
-    {"Destroy (UFO)", "sp_ufo01"},
-
-    // SUVs
-    {"Swindle", "suv_2dr_01"},
-    {"Nordberg", "suv_4dr_04"},
-    {"Alaskan", "suv_4dr_06"},
-    {"Interceptor (FBI)", "suv_4dr_fbi01"},
-    {"Mag", "suv_4dr_luxury01"},
-    {"Bulldog", "suv_4dr_luxury05"},
-    {"Quasar", "suv_4dr_luxury06"},
-
-    // Trucks
-    {"Titan", "truck_2dr_armored01"},
-    {"Betsy", "truck_2dr_classic01"},
-    {"Longhauler (Mix Master)", "truck_2dr_construct01"},
-    {"Blaze", "truck_2dr_fire01"},
-    {"Stilwater Municipal", "truck_2dr_garbage01"},
-    {"Newman", "truck_2dr_mail01"},
-    {"Atlasbreaker", "truck_2dr_monster01"},
-    {"Atlasbreaker (Cutscene)", "truck_2dr_monster01_CS"},
-    {"Mule", "truck_2dr_mover01"},
-    {"Varsity", "truck_2dr_pickup02"},
-    {"Thorogood", "truck_2dr_pickup03"},
-    {"Legion", "truck_2dr_pickup06"},
-    {"Legion (Cutscene)", "truck_2dr_pickup06"},
-    {"Peterliner", "truck_2dr_semi01"},
-    {"Septic Avenger (City Waste Truck)", "truck_2dr_septic01"},
-    {"Shaft", "truck_2dr_tow01"},
-    {"Compensator", "truck_4dr_pickup04"},
-
-    // Vans
-    {"Peacekeeper (Swat Truck)", "van_2dr_riot01"},
-    {"NRG V8", "van_4dr_01"},
-    {"Topher", "van_4dr_03"},
-    {"Voyage", "van_4dr_04"},
-    {"Anchor", "van_4dr_news01"},
-
-    // Wagons
-    {"Komodo", "wagon_4dr_01"},
-    {"Keystone", "wagon_4dr_sprt01"}
-};
+///*
+//Vehicle list gathered by -SeaboundSaint-
+//https://www.saintsrowmods.com/forum/threads/vehicle-internal-names.21232/
+//Ideally we'd parse the xmls to get the vehicle names, (BM supports dynamic addition), but this will have to do for now!..
+//*/
+//
+//inline std::map<std::string, std::string> Bikes = {
+//     {"Sabretooth", "bike_chopper01"},
+//     {"Sandstorm", "bike_dirt01"},
+//     {"Kaneda", "bike_exotic01"},
+//     {"Widowmaker", "bike_moped01"},
+//     {"PeeWee", "bike_pocket01"},
+//     {"Tetsuo", "bike_rocket01"},
+//     {"Kenshin", "bike_rocket02"},
+//     {"Shard", "bike_standard01"},
+//     {"Melbourne (Estrada)", "bike_standard02"}
+//};
+//
+//inline std::map<std::string, std::string> Boats = {
+//    {"Miami", "boat_speed01"},
+//    {"Python", "boat_speed02"},
+//    {"Hurricane", "boat_speed03"},
+//    {"Maelstrom", "boat_standard01"},
+//    {"Shark", "boat_wavecraft01"},
+//    {"Skipper", "boat_yacht01"},
+//    {"Convict", "boat_yacht02"}
+//};
+//
+//inline std::map<std::string, std::string> Cars = {
+//    {"Mongoose", "car_2dr_buggy01"},
+//    {"Mockingbird", "car_2dr_compact03"},
+//    {"Halberd", "car_2dr_compact04"},
+//    {"Baron", "car_2dr_exolux01"},
+//    {"Attrazione", "car_2dr_exoticsports01"},
+//    {"Zenith", "car_2dr_exoticsports03"},
+//    {"Vortex", "car_2dr_exoticsports04"},
+//    {"Bezier", "car_2dr_exoticsports05"},
+//    {"Superiore", "car_2dr_exoticsports06"},
+//    {"Stiletto", "car_2dr_luxury02"},
+//    {"Nelson", "car_2dr_luxury04"},
+//    {"Hammerhead", "car_2dr_muscle01"},
+//    {"Bootlegger", "car_2dr_muscle02"},
+//    {"La Fuerza", "car_2dr_muscle03"},
+//    {"Phoenix", "car_2dr_muscle04"},
+//    {"Phoenix (Cutscene)", "car_2dr_muscle04_cs"},
+//    {"Raycaster", "car_2dr_sports03"},
+//    {"Venom Classic", "car_2dr_sports05"},
+//    {"Magma", "car_2dr_sports06"},
+//    {"Hayate Z70", "car_2dr_sports07"},
+//    {"Cosmos", "car_2dr_standard03"},
+//    {"Go!", "car_2dr_standard06"},
+//    {"Danville", "car_2dr_standard07"},
+//    {"Hollywood", "car_4dr_classic01"},
+//    {"Ethel", "car_4dr_classic02"},
+//    {"Justice", "car_4dr_exoticluxury01"},
+//    {"Compton", "car_4dr_lowrider01"},
+//    {"Zomkah", "car_4dr_luxury01"},
+//    {"Eiswolf", "car_4dr_luxury04"},
+//    {"Socialite", "car_4dr_luxury05"},
+//    {"Five-0", "car_4dr_police01"},
+//    {"Voxel", "car_4dr_sports01"},
+//    {"Wakazashi", "car_4dr_sports02"},
+//    {"Zircon", "car_4dr_standard02"},
+//    {"Zircon (Cutscene)", "car_4dr_standard02_cs"},
+//    {"Zimos", "car_4dr_standard03"},
+//    {"Churchill", "car_4dr_standard07"},
+//    {"Wellington", "car_4dr_standard09"},
+//    {"Capshaw", "car_4dr_std01"},
+//    {"Taxi", "car_4dr_taxi01"}
+//};
+//
+//inline std::map<std::string, std::string> GOTRExclusive = {
+//    {"BLADE-SPINNER 2077", "fc_oyeah"},
+//    {"ZRT Special", "fc_zrtspecial"}
+//};
+//
+//inline std::map<std::string, std::string> Helicopters = {
+//    {"Oppressor", "heli_4dr_police01"},
+//    {"Oppressor (Side-Shooter)", "heli_4dr_police02"},
+//    {"Tornado", "heli_fighter_01"},
+//    {"Horizon", "heli_standard_01"},
+//    {"Thompson", "heli_standard_02"},
+//    {"Gyro Daddy", "heli_standard_03"}
+//};
+//
+//inline std::map<std::string, std::string> Minivans = {
+//    {"Westbury", "minivan_4dr_01"}
+//};
+//
+//inline std::map<std::string, std::string> Planes = {
+//    {"Parrot (Corsette/High Rise)", "plane_biplane01"},
+//    {"Wolverine", "plane_fighter01"},
+//    {"Snipes 57", "plane_jet01"},
+//    {"Woodpecker", "plane_standard01"}
+//};
+//
+//inline std::map<std::string, std::string> Special = {
+//    {"Ambulance", "sp_ambulance01"},
+//    {"Grizzly (Bear)", "sp_apc01"},
+//    {"Toad", "sp_atv01"},
+//    {"Backhoe", "sp_backhoe01"},
+//    {"Bag Boy", "sp_bagcart01"},
+//    {"Baggage Trailer (Trailer)", "sp_bagtrailer01"},
+//    {"Bulldozer", "sp_bulldozer01"},
+//    {"Knoxville", "sp_cart01"},
+//    {"Cheetah", "sp_charterbus02"},
+//    {"Kent", "sp_combine"},
+//    {"Ruckus", "sp_derbycar01"},
+//    {"Rampage", "sp_derbycar02"},
+//    {"Rumble", "sp_derbycar03"},
+//    {"Frenzy", "sp_derbycar04"},
+//    {"Delivery Truck", "sp_dlvry_truck01"},
+//    {"El Train Cut (Cutscene)", "sp_el_train_cutscene"},
+//    {"El Train", "sp_eltrain_01"},
+//    {"Reaper", "sp_hearse01"},
+//    {"Hounfor", "sp_hearse02"},
+//    {"Hounfor (Cutscene)", "sp_hearse02_cs"},
+//    {"HounforCut (Cutscene Interior)", "sp_hearse02_interior"},
+//    {"Status Quo", "sp_limo01"},
+//    {"The Job", "sp_limosuv01"},
+//    {"Quota", "sp_metermaid01"},
+//    {"Oring", "sp_novelty01"},
+//    {"Buffalo", "sp_RV01"},
+//    {"Buffalo B (Mission Specific)", "sp_RV02"},
+//    {"DonoVan (Warrant)", "sp_shortbus01"},
+//    {"Box (Trailer)", "sp_trailer_box01"},
+//    {"Flatbed (Trailer)", "sp_trailer_flatbed01"},
+//    {"Tank (Trailer)", "sp_trailer_tank1"},
+//    {"Destroy (UFO)", "sp_ufo01"}
+//};
+//
+//inline std::map<std::string, std::string> SUVs = {
+//    {"Swindle", "suv_2dr_01"},
+//    {"Nordberg", "suv_4dr_04"},
+//    {"Alaskan", "suv_4dr_06"},
+//    {"Interceptor (FBI)", "suv_4dr_fbi01"},
+//    {"Mag", "suv_4dr_luxury01"},
+//    {"Bulldog", "suv_4dr_luxury05"},
+//    {"Quasar", "suv_4dr_luxury06"}
+//};
+//
+//inline std::map<std::string, std::string> Trucks = {
+//    {"Titan", "truck_2dr_armored01"},
+//    {"Betsy", "truck_2dr_classic01"},
+//    {"Longhauler (Mix Master)", "truck_2dr_construct01"},
+//    {"Blaze", "truck_2dr_fire01"},
+//    {"Stilwater Municipal", "truck_2dr_garbage01"},
+//    {"Newman", "truck_2dr_mail01"},
+//    {"Atlasbreaker", "truck_2dr_monster01"},
+//    {"Atlasbreaker (Cutscene)", "truck_2dr_monster01_CS"},
+//    {"Mule", "truck_2dr_mover01"},
+//    {"Varsity", "truck_2dr_pickup02"},
+//    {"Thorogood", "truck_2dr_pickup03"},
+//    {"Legion", "truck_2dr_pickup06"},
+//    {"Legion (Cutscene)", "truck_2dr_pickup06"},
+//    {"Peterliner", "truck_2dr_semi01"},
+//    {"Septic Avenger (City Waste Truck)", "truck_2dr_septic01"},
+//    {"Shaft", "truck_2dr_tow01"},
+//    {"Compensator", "truck_4dr_pickup04"}
+//};
+//
+//inline std::map<std::string, std::string> Vans = {
+//    {"Peacekeeper (Swat Truck)", "van_2dr_riot01"},
+//    {"NRG V8", "van_4dr_01"},
+//    {"Topher", "van_4dr_03"},
+//    {"Voyage", "van_4dr_04"},
+//    {"Anchor", "van_4dr_news01"}
+//};
+//
+//inline std::map<std::string, std::string> Wagons = {
+//    {"Komodo", "wagon_4dr_01"},
+//    {"Keystone", "wagon_4dr_sprt01"}
+//};
+//
+//const std::vector<std::pair<std::string, const char*>> AllVehicles = {
+//    // Bikes
+//    {"Sabretooth", "bike_chopper01"},
+//    {"Sandstorm", "bike_dirt01"},
+//    {"Kaneda", "bike_exotic01"},
+//    {"Widowmaker", "bike_moped01"},
+//    {"PeeWee", "bike_pocket01"},
+//    {"Tetsuo", "bike_rocket01"},
+//    {"Kenshin", "bike_rocket02"},
+//    {"Shard", "bike_standard01"},
+//    {"Melbourne (Estrada)", "bike_standard02"},
+//
+//    // Boats
+//    {"Miami", "boat_speed01"},
+//    {"Python", "boat_speed02"},
+//    {"Hurricane", "boat_speed03"},
+//    {"Maelstrom", "boat_standard01"},
+//    {"Shark", "boat_wavecraft01"},
+//    {"Skipper", "boat_yacht01"},
+//    {"Convict", "boat_yacht02"},
+//
+//    // Cars
+//    {"Mongoose", "car_2dr_buggy01"},
+//    {"Mockingbird", "car_2dr_compact03"},
+//    {"Halberd", "car_2dr_compact04"},
+//    {"Baron", "car_2dr_exolux01"},
+//    {"Attrazione", "car_2dr_exoticsports01"},
+//    {"Zenith", "car_2dr_exoticsports03"},
+//    {"Vortex", "car_2dr_exoticsports04"},
+//    {"Bezier", "car_2dr_exoticsports05"},
+//    {"Superiore", "car_2dr_exoticsports06"},
+//    {"Stiletto", "car_2dr_luxury02"},
+//    {"Nelson", "car_2dr_luxury04"},
+//    {"Hammerhead", "car_2dr_muscle01"},
+//    {"Bootlegger", "car_2dr_muscle02"},
+//    {"La Fuerza", "car_2dr_muscle03"},
+//    {"Phoenix", "car_2dr_muscle04"},
+//    {"Phoenix (Cutscene)", "car_2dr_muscle04_cs"},
+//    {"Raycaster", "car_2dr_sports03"},
+//    {"Venom Classic", "car_2dr_sports05"},
+//    {"Magma", "car_2dr_sports06"},
+//    {"Hayate Z70", "car_2dr_sports07"},
+//    {"Cosmos", "car_2dr_standard03"},
+//    {"Go!", "car_2dr_standard06"},
+//    {"Danville", "car_2dr_standard07"},
+//    {"Hollywood", "car_4dr_classic01"},
+//    {"Ethel", "car_4dr_classic02"},
+//    {"Justice", "car_4dr_exoticluxury01"},
+//    {"Compton", "car_4dr_lowrider01"},
+//    {"Zomkah", "car_4dr_luxury01"},
+//    {"Eiswolf", "car_4dr_luxury04"},
+//    {"Socialite", "car_4dr_luxury05"},
+//    {"Five-0", "car_4dr_police01"},
+//    {"Voxel", "car_4dr_sports01"},
+//    {"Wakazashi", "car_4dr_sports02"},
+//    {"Zircon", "car_4dr_standard02"},
+//    {"Zircon (Cutscene)", "car_4dr_standard02_cs"},
+//    {"Zimos", "car_4dr_standard03"},
+//    {"Churchill", "car_4dr_standard07"},
+//    {"Wellington", "car_4dr_standard09"},
+//    {"Capshaw", "car_4dr_std01"},
+//    {"Taxi", "car_4dr_taxi01"},
+//
+//    // GOTR Exclusive
+//    {"BLADE-SPINNER 2077", "fc_oyeah"},
+//    {"ZRT Special", "fc_zrtspecial"},
+//
+//    // Helicopters
+//    {"Oppressor", "heli_4dr_police01"},
+//    {"Oppressor (Side-Shooter)", "heli_4dr_police02"},
+//    {"Tornado", "heli_fighter_01"},
+//    {"Horizon", "heli_standard_01"},
+//    {"Thompson", "heli_standard_02"},
+//    {"Gyro Daddy", "heli_standard_03"},
+//
+//    // Minivans
+//    {"Westbury", "minivan_4dr_01"},
+//
+//    // Planes
+//    {"Parrot (Corsette/High Rise)", "plane_biplane01"},
+//    {"Wolverine", "plane_fighter01"},
+//    {"Snipes 57", "plane_jet01"},
+//    {"Woodpecker", "plane_standard01"},
+//
+//    // Special
+//    {"Ambulance", "sp_ambulance01"},
+//    {"Grizzly (Bear)", "sp_apc01"},
+//    {"Toad", "sp_atv01"},
+//    {"Backhoe", "sp_backhoe01"},
+//    {"Bag Boy", "sp_bagcart01"},
+//    {"Baggage Trailer (Trailer)", "sp_bagtrailer01"},
+//    {"Bulldozer", "sp_bulldozer01"},
+//    {"Knoxville", "sp_cart01"},
+//    {"Cheetah", "sp_charterbus02"},
+//    {"Kent", "sp_combine"},
+//    {"Ruckus", "sp_derbycar01"},
+//    {"Rampage", "sp_derbycar02"},
+//    {"Rumble", "sp_derbycar03"},
+//    {"Frenzy", "sp_derbycar04"},
+//    {"Delivery Truck", "sp_dlvry_truck01"},
+//    {"El Train Cut (Cutscene)", "sp_el_train_cutscene"},
+//    {"El Train", "sp_eltrain_01"},
+//    {"Reaper", "sp_hearse01"},
+//    {"Hounfor", "sp_hearse02"},
+//    {"Hounfor (Cutscene)", "sp_hearse02_cs"},
+//    {"HounforCut (Cutscene Interior)", "sp_hearse02_interior"},
+//    {"Status Quo", "sp_limo01"},
+//    {"The Job", "sp_limosuv01"},
+//    {"Quota", "sp_metermaid01"},
+//    {"Oring", "sp_novelty01"},
+//    {"Buffalo", "sp_RV01"},
+//    {"Buffalo B (Mission Specific)", "sp_RV02"},
+//    {"DonoVan (Warrant)", "sp_shortbus01"},
+//    {"Box (Trailer)", "sp_trailer_box01"},
+//    {"Flatbed (Trailer)", "sp_trailer_flatbed01"},
+//    {"Tank (Trailer)", "sp_trailer_tank1"},
+//    {"Destroy (UFO)", "sp_ufo01"},
+//
+//    // SUVs
+//    {"Swindle", "suv_2dr_01"},
+//    {"Nordberg", "suv_4dr_04"},
+//    {"Alaskan", "suv_4dr_06"},
+//    {"Interceptor (FBI)", "suv_4dr_fbi01"},
+//    {"Mag", "suv_4dr_luxury01"},
+//    {"Bulldog", "suv_4dr_luxury05"},
+//    {"Quasar", "suv_4dr_luxury06"},
+//
+//    // Trucks
+//    {"Titan", "truck_2dr_armored01"},
+//    {"Betsy", "truck_2dr_classic01"},
+//    {"Longhauler (Mix Master)", "truck_2dr_construct01"},
+//    {"Blaze", "truck_2dr_fire01"},
+//    {"Stilwater Municipal", "truck_2dr_garbage01"},
+//    {"Newman", "truck_2dr_mail01"},
+//    {"Atlasbreaker", "truck_2dr_monster01"},
+//    {"Atlasbreaker (Cutscene)", "truck_2dr_monster01_CS"},
+//    {"Mule", "truck_2dr_mover01"},
+//    {"Varsity", "truck_2dr_pickup02"},
+//    {"Thorogood", "truck_2dr_pickup03"},
+//    {"Legion", "truck_2dr_pickup06"},
+//    {"Legion (Cutscene)", "truck_2dr_pickup06"},
+//    {"Peterliner", "truck_2dr_semi01"},
+//    {"Septic Avenger (City Waste Truck)", "truck_2dr_septic01"},
+//    {"Shaft", "truck_2dr_tow01"},
+//    {"Compensator", "truck_4dr_pickup04"},
+//
+//    // Vans
+//    {"Peacekeeper (Swat Truck)", "van_2dr_riot01"},
+//    {"NRG V8", "van_4dr_01"},
+//    {"Topher", "van_4dr_03"},
+//    {"Voyage", "van_4dr_04"},
+//    {"Anchor", "van_4dr_news01"},
+//
+//    // Wagons
+//    {"Komodo", "wagon_4dr_01"},
+//    {"Keystone", "wagon_4dr_sprt01"}
+//};

@@ -402,6 +402,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="Hooker.h" />
     <ClInclude Include="InternalNameLists.h" />
     <ClInclude Include="LUA\InGameConfig.h" />
+    <ClInclude Include="MemoryMgr.h" />
     <ClInclude Include="Network\Gamespy.h" />
     <ClInclude Include="BlingMenuInstall.h" />
     <ClInclude Include="Network\STUNNat.h" />
