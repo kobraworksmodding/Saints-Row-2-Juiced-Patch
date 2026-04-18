@@ -48,6 +48,26 @@ bool IsSaveDLC() {
     return (*(char*)(SaveArray + 172 * CurrentIndex + DLCFlag) != 0);
 }
 
+const char DLCServerFlag[] = "[DLC]";
+const wchar_t DLCServerFlagWide[] = L"[DLC]";
+
+bool IsStringDLCFlagged(const char* str)  {
+    return std::string_view(str).starts_with(DLCServerFlag);
+}
+
+bool IsStringDLCFlagged(const wchar_t* str) {
+    return std::wstring_view(str).starts_with(DLCServerFlagWide);
+}
+
+void SetDLCNameFlagOnline() {
+    char* OnlineServerName = (char*)0x0212AA08;
+    if (DLCInstalled && !IsStringDLCFlagged(OnlineServerName)) {
+        char Temp[64];
+        strcpy_s(Temp, 64, OnlineServerName);
+        patchSprintf(OnlineServerName, 64, "[DLC]%s", Temp);
+    }
+}
+
 typedef uintptr_t __cdecl load_packfileT(const char* name);
 load_packfileT* load_packfile = (load_packfileT*)(0xC0AE90);
 
@@ -162,6 +182,7 @@ void __declspec(naked) AddInterfacePeg()
         mov ecx, DLC
         call edi
         mov DLCInstalled, al
+        call SetDLCNameFlagOnline
         jmp jmp_continue
     }
 }
@@ -695,6 +716,15 @@ void ClothingNotice() {
         *(void**)(Result + 0x930) = &VehicleNotice; // definitely not what Volition did but the next notice is supposed to come right after so I think this is better
         // pretty much just daisy chaining
     }
+}
+
+void NoMatchOnJoin() {
+    __asm pushad
+    wchar_t* Title = RequestString(nullptr, "MENU_TITLE_NOTICE");
+    wchar_t* Message = RequestString(nullptr, "DLC_CONTENT_NO_MATCH_ON_JOIN");
+    const wchar_t* Options[] = { RequestString(nullptr, "CONTROL_OKAY") };
+    __asm popad
+    AddMessageCustomized(Title, Message, Options, 1);
 }
 
 void StartTutorialHook(unsigned int TutorialIndex, int a2, char a3, int a4, char a5) {
@@ -1430,18 +1460,6 @@ void DLCGlobals() { // this was done in LUA because they assumed they'd add more
     UnlockEmergentMissionForDLC();
 }
 
-#define DLC_SPECIAL_SERVER_FLAG 0x9D
-
-bool IsServerDLC(const char* str)
-{
-    return std::string_view(str).ends_with(DLC_SPECIAL_SERVER_FLAG);
-}
-
-bool IsServerDLC(const wchar_t* str)
-{
-    return std::wstring_view(str).ends_with(DLC_SPECIAL_SERVER_FLAG);
-}
-
 struct pc_multi_session_saver
 {
     uint32_t server_id;
@@ -1449,7 +1467,7 @@ struct pc_multi_session_saver
     
     inline bool isDLC() {
 
-        return IsServerDLC(server_name);
+        return IsStringDLCFlagged(server_name);
     }
 
 };
@@ -1458,22 +1476,43 @@ pc_multi_session_saver info[info_count];
 
 uint32_t* server_count = (uint32_t*)0x02528D3C;
 
+union multi_flags_1
+{
+    uint32_t value;
+
+    struct
+    {
+        uint32_t unk1 : 16;
+        uint32_t is_dlc_lobby : 1;  // 0x00010000
+        uint32_t pad_17_31 : 15;
+    };
+};
+
+multi_flags_1* current_multi_flags = (multi_flags_1*)0xEB22C8;
+void CHooks_packet()
+{
+    static auto packet_mod = safetyhook::create_mid(0x830E26, [](SafetyHookContext& ctx) {
+        multi_flags_1* flags = (multi_flags_1*)(ctx.ecx + ctx.edi);
+        flags->is_dlc_lobby = 1;
+        });
+}
+
 void online()
 {
+    CHooks_packet();
+
+    static auto SetMPServerNameDLC = safetyhook::create_mid(0x0075EC4A, [](SafetyHookContext& ctx) {
+        int Type = *(int*)0x1F77A58;
+        if (Type == 7) SetDLCNameFlagOnline();
+        });
 
     static auto fill_it_up = safetyhook::create_mid(0x835F80, [](SafetyHookContext& ctx) {
         const char* server_name = (const char*)(ctx.ecx);
         if (*server_count < info_count) {
             auto this_info = &info[*server_count];
             sprintf_s(this_info->server_name, sizeof(this_info->server_name), "%s", server_name);
-
-
-
             info[*server_count].server_id = *server_count;
-            Logger::TypedLog("HI", "Server[{}] name {} myptr {} {}\n", *server_count,this_info->server_name, fmt::ptr(this_info), this_info->isDLC());
-            
         }
-
         });
 
     static auto join_online_coop_game = safetyhook::create_mid(0x7EF8CF, [](SafetyHookContext& ctx) {
@@ -1481,22 +1520,20 @@ void online()
         auto server_id = ctx.eax;
         if (server_id < info_count) {
             auto this_info = &info[server_id];
-            Logger::TypedLog("HI", "Server[{}] YOU WANT TO JOIN name {} myptr {} {}\n", server_id, this_info->server_name, fmt::ptr(this_info), this_info->isDLC());
 
-            if (!DLCInstalled && this_info->isDLC())
+            if (!DLCInstalled && this_info->isDLC() || DLCInstalled && !this_info->isDLC()) {
+                NoMatchOnJoin();
                 ctx.eip = 0x7EF8D4;
+            }
         }
         });
 
-    static auto hello_lan = safetyhook::create_mid(0x8131AE, [](SafetyHookContext& ctx) {
-
-        printf("eax %p\n", ctx.eax);
-            MessageBoxA(0, 0, 0, 0);
-
-            if (!DLCInstalled && IsServerDLC((const wchar_t*)ctx.eax))
-            {
-                ctx.eip = 0x8131A9;
-            }
+    static auto hello_lan = safetyhook::create_mid(0x8131B4, [](SafetyHookContext& ctx) {
+        multi_flags_1* this_flags = (multi_flags_1*)(ctx.esi + 0x98);
+           if (!DLCInstalled && this_flags->is_dlc_lobby || DLCInstalled && !this_flags->is_dlc_lobby) {
+               NoMatchOnJoin();
+               ctx.eip = 0x8131A9;
+           }
 
         });
 
