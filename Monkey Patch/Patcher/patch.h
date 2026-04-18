@@ -21,6 +21,7 @@ void patchDWord(void* addr, uint32_t val);
 void patchFloat(void* addr, float val);
 void patchCall(void* addr, void* func);
 void patchJmp(void* addr, void* func);
+void patchSprintf(void* addr, size_t size, const char* fmt, ...);
 void patchThisToCdecl(void* addr, void* func);
 void callFunc(void* addr);
 

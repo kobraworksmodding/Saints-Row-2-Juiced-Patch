@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <windows.h>
 #include <Zydis.h>
+#include <stdio.h>
 
 void NopInstruction(void* address) {
     ZydisDecoder decoder;
@@ -116,6 +117,19 @@ void patchJmp(void* addr, void* func) {
     *(uint8_t*)addr = JMP9;
     *(uint32_t*)((uint8_t*)addr + 1) = (uint32_t)func - (uint32_t)addr - 5;
     VirtualProtect(addr, 5, oldProtect, &oldProtect);
+}
+
+void patchSprintf(void* addr, size_t size, const char* fmt, ...) {
+    DWORD oldProtect;
+
+    VirtualProtect(addr, size, PAGE_EXECUTE_READWRITE, &oldProtect);
+
+    va_list args;
+    va_start(args, fmt);
+    vsprintf_s((char*)addr, size, fmt, args);
+    va_end(args);
+
+    VirtualProtect(addr, size, oldProtect, &oldProtect);
 }
 
 void patchThisToCdecl(void* addr, void* func) {
