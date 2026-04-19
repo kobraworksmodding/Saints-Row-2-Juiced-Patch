@@ -7,6 +7,7 @@
 #include "../GameConfig.h"
 #include "Math.h"
 #include "../Player/Input.h"
+#include "../UtilsGlobal.h"
 namespace Math
 {
 	void matrix_multiply_safe(matrix* result, const matrix* lhs, const matrix* rhs) {
@@ -171,7 +172,19 @@ namespace Math
 		}
 		signed char FixWater = 1;
 		bool SimulateWaterBug = false;
+
+		uint32_t _ftol2_sse_jmp_hook()
+		{
+			double value;
+			__asm {
+				fst[value]
+			}
+			return (uint32_t)std::lround(value);
+		}
+
 		void Init() {
+			// this is garage_get_repair_cost, returns 49 99 and so on PC, but console does 50, 100 
+			patchJmp((void*)0xAB81B4, _ftol2_sse_jmp_hook);
 			int cpuinfo[4]{};
 			__cpuid(cpuinfo, 1);
 			bool sse1 = cpuinfo[3] & (1 << 25) || false;
