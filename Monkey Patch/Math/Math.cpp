@@ -172,12 +172,11 @@ namespace Math
 		}
 		signed char FixWater = 1;
 		bool SimulateWaterBug = false;
-
 		uint32_t _ftol2_sse_jmp_hook()
 		{
 			double value;
 			__asm {
-				fst[value]
+				fstp[value]
 			}
 			return (uint32_t)std::lround(value);
 		}
