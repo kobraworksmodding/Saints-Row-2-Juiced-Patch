@@ -1178,10 +1178,10 @@ constexpr auto new_size_n = 5000;
 
 	static uint32_t alpha_lastframe = 0;
 	bool AlphaMaskAvailable() { // 2 in 1, fix for the NVIDIA oversight (no unnecessary additional check), as well as updating the shader constant for our modified shaders
-		unsigned char MSAA = *(unsigned char*)DynAddress(0x0252A2A3);
-		unsigned char AlphaMaskVal = *(unsigned char*)DynAddress(0x0252A2EC);
+		int MSAA = *(int*)DynAddress(0x252A2DC);
+		bool AlphaMaskVal = *(bool*)DynAddress(0x0252A2EC);
 
-		bool Result = MSAA && AlphaMaskVal;
+		bool Result = MSAA > 0 && AlphaMaskVal;
 		float AlphaMask[4] = { Result ? 1.0f : 0.0f, DitherFilter ? 1.0f : 0.0f, 0.0f, 0.0f };
 		if (alpha_lastframe != Game::Timer::GetFrameCount()) {
 			ChangeShaderOptions();
