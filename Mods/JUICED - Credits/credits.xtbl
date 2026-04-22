@@ -47,6 +47,10 @@
 							<desc>tha Row, SR1 Deadly Escapade</desc>
 						</items>
 						<items>
+							<name>ithinkimcats</name>
+							<desc> Art (Logos, Button Prompts), Web Development</desc>
+						</items>
+						<items>
 						</items>
 					</items>
 				</headings>
@@ -79,10 +83,6 @@
 							<desc>Helpful Info on Fixing FPS Issues</desc>
 						</items>
 						<items>
-							<name>Zedek</name>
-							<desc>Patching Methods + Old Error Handler</desc>
-						</items>
-						<items>
 							<name>CHC</name>
 							<desc>Openspy</desc>
 						</items>
@@ -93,10 +93,6 @@
 						<items>
 							<name>Row and Theft Discord</name>
 							<desc>Playtesting for tha Row</desc>
-						</items>
-						<items>
-							<name>ithinkimcats</name>
-							<desc>Tha Row Logo</desc>
 						</items>
 						<items>
 							<name>miru97</name>
