@@ -1,5 +1,4 @@
 mods/JUICED - Credits
-mods/JUICED - Fixed Moon Skybox
 mods/JUICED - Chunk Fixes
 mods/JUICED - FPS Camera
 mods/JUICED - Strings
