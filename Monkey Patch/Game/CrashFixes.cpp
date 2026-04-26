@@ -16,32 +16,71 @@ namespace AssertHandler {
 	static std::unordered_set<std::string> active_asserts;
 	static uint8_t CvarFixCrashes;
 	inline void AssertOnce(const char* id, const char* message, bool hide_by_default) {
+		const bool debugger_attached = IsDebuggerPresent();
+
 		{
 			std::lock_guard<std::mutex> lock(assert_mutex);
 			if (ignored_asserts.count(id) || active_asserts.count(id))
 				return;
+
 			active_asserts.insert(id);
 		}
+
 		Logger::TypedLog(CHN_DEBUG, "[Assert ID: {}] {}", id, message);
-		if ((CvarFixCrashes >= 200) || (hide_by_default && (CvarFixCrashes != 201)))
+
+		if (!debugger_attached && ((CvarFixCrashes >= 200) || (hide_by_default && (CvarFixCrashes != 201))))
+		{
+			std::lock_guard<std::mutex> lock(assert_mutex);
+			active_asserts.erase(id);
 			return;
+		}
+
 		std::string id_copy(id);
 		std::string msg_copy(message);
+
 		std::string full_message =
 			"[Assert ID: " + id_copy + "]\n" +
 			msg_copy +
-			"\n\nPress 'Yes' to ignore this warning for the session.";
+			"\n\nYes = Break into debugger"
+			"\nNo = Ignore once"
+			"\nCancel = Ignore this warning for the session.";
 
-		
+		if (debugger_attached)
+		{
+			int result = MessageBoxA(
+				nullptr,
+				full_message.c_str(),
+				"Assert Hit",
+				MB_ICONWARNING | MB_YESNOCANCEL
+			);
+
+			{
+				std::lock_guard<std::mutex> lock(assert_mutex);
+				active_asserts.erase(id_copy);
+
+				if (result == IDCANCEL)
+					ignored_asserts.insert(id_copy);
+			}
+
+			if (result == IDYES)
+				DebugBreak();
+
+			return;
+		}
 
 		std::thread([id_copy, full_message]() {
-			int result = MessageBoxA(nullptr, full_message.c_str(), "Error Occurred", MB_ICONWARNING | MB_YESNO);
+			int result = MessageBoxA(
+				nullptr,
+				full_message.c_str(),
+				"Error Occurred",
+				MB_ICONWARNING | MB_YESNO
+			);
 
 			std::lock_guard<std::mutex> lock(assert_mutex);
 			active_asserts.erase(id_copy);
-			if (result == IDYES) {
+
+			if (result == IDYES)
 				ignored_asserts.insert(id_copy);
-			}
 			}).detach();
 	}
 }
