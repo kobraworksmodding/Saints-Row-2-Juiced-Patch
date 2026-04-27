@@ -763,8 +763,9 @@ namespace Game
 			}
 		}
 	}
+#endif
 	namespace utils {
 		crc_strT str_to_hash = (crc_strT)0x00BDC9B0;
 	}
-#endif
+
 };

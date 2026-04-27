@@ -9,6 +9,7 @@
 #include <regex>
 #include "../loose files.h"
 #include "../FileLogger.h"
+#include "MStrings.h"
 
 namespace CModLoader {
     namespace Audio {
@@ -310,5 +311,8 @@ namespace CModLoader {
             static auto idx_map_hook = safetyhook::create_mid(0x46FA76, &Audio::audio_idx_map_hook_start);
             Audio::sub_46FA20T = safetyhook::create_inline(0x46FA20, &Audio::sub_46FA20);
         }
+
+        MStrings::Init();
+
     }
 }

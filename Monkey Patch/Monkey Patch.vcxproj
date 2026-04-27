@@ -345,6 +345,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="Ext\safetyhook\safetyhook.cpp" />
     <ClCompile Include="Ext\safetyhook\Zydis.c" />
     <ClCompile Include="Game\CrashFixes.cpp" />
+    <ClCompile Include="Game\GFile.cpp" />
     <ClCompile Include="Game\timestamp.ixx" />
     <ClCompile Include="General\JuicedAPI.cpp" />
     <ClCompile Include="LUA\InGameConfig.cpp" />
@@ -387,6 +388,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="UGC\CModLoader.cpp" />
     <ClCompile Include="UGC\Debug.cpp" />
     <ClCompile Include="UGC\InternalPrint.cpp" />
+    <ClCompile Include="UGC\MStrings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Audio\Audio.h" />
@@ -397,6 +399,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="Ext\safetyhook\safetyhook.hpp" />
     <ClInclude Include="Ext\safetyhook\Zydis.h" />
     <ClInclude Include="Game\CrashFixes.h" />
+    <ClInclude Include="Game\GFile.h" />
     <ClInclude Include="General\General.h" />
     <ClInclude Include="General\JuicedAPI.h" />
     <ClInclude Include="Hooker.h" />
@@ -447,6 +450,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="UGC\CModLoader.h" />
     <ClInclude Include="UGC\Debug.h" />
     <ClInclude Include="UGC\InternalPrint.h" />
+    <ClInclude Include="UGC\MStrings.h" />
     <ClInclude Include="UtilsGlobal.h" />
   </ItemGroup>
   <ItemGroup>
