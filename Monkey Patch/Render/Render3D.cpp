@@ -33,6 +33,7 @@
 #include <DirectXTex/DDSTextureLoader9.h>
 #include "Textures.h"
 #include "..\Game\Game.h"
+#include "../Game/GFile.h"
 import OptionsManager; 
 
 namespace Render3D
@@ -1353,9 +1354,25 @@ constexpr auto new_size_n = 5000;
 	}
 
 	SafetyHookInline CreateRTs;
+	// (clippy95)
+	// so we'll just save the buffer for the cube lol
+	uint8_t* cubemap_buffer;
+	size_t cubemap_buffer_size;
 	void CreateRTsHook() {
 		IDirect3DDevice9* pDevice = *reinterpret_cast<IDirect3DDevice9**>(reinterpret_cast<void*>(DynAddress(0x0252A2D0)));
-		if (!shd_cubedefault_tex) DirectX::CreateDDSTextureFromMemory(pDevice, shd_cubedefault, sizeof(shd_cubedefault), &shd_cubedefault_tex);
+		if (!shd_cubedefault_tex) {
+			
+			if (!cubemap_buffer || cubemap_buffer_size == 0) {
+				GFile cubemap_file("shd_cube_default.dds", "rb");
+				cubemap_buffer_size = cubemap_file.GetSize();
+				cubemap_buffer = new uint8_t[cubemap_buffer_size + 1];
+				cubemap_file.Read(cubemap_buffer, cubemap_buffer_size);
+			}
+			if (cubemap_buffer) {
+				DirectX::CreateDDSTextureFromMemory(pDevice, cubemap_buffer, cubemap_buffer_size, &shd_cubedefault_tex);
+				Logger::TypedLog("TEXTURES", "Loading cubemap texture with size of {} ptr:{}\n", cubemap_buffer_size,fmt::ptr(cubemap_buffer));
+			}
+		}
 		CreateRTs.call();
 	}
 
