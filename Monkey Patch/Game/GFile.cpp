@@ -77,7 +77,7 @@ size_t __cdecl cf_read(cfile* file, void* lpBuffer, size_t size_buf)
 		mov eax, size_buf
 		push file
 		push lpBuffer
-		call cf_open_addr
+		call cf_read_addr
 		add esp, 8
 		mov result, eax
 		popad
