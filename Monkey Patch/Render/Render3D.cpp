@@ -1587,5 +1587,39 @@ constexpr auto new_size_n = 5000;
 			}
 			});
 
+		static auto SunFlareFix = safetyhook::create_mid(0x004D6CBD, [](SafetyHookContext& ctx) {
+				float ViewW, ViewH, BaseViewW;
+
+				if (General::IsWidescreen) {
+					BaseViewW = 1280.0f;
+					ViewH = 720.0f;
+					ViewW = 1280.0f;
+
+					float AR = (float)*General::GameResX / (float)*General::GameResY;
+
+					if (AR > Render2D::widescreenvalue) ViewW = ViewH * AR;
+				}
+				else {
+					BaseViewW = ViewW = 640.0f;
+					ViewH = 480.0f;
+				}
+
+				float& PrjX = *(float*)(ctx.esp + 0x30);
+				float& PrjY = *(float*)(ctx.esp + 0x34);
+
+				if (General::IsWidescreen && ViewW > BaseViewW) PrjX *= ViewW / BaseViewW;
+
+				float HViewW = ViewW * 0.5f;
+				float HViewH = ViewH * 0.5f;
+
+				float DX = HViewW - PrjX;
+				float DY = HViewH - PrjY;
+
+				*(float*)(ctx.esp + 0x24) = DX;
+				*(float*)(ctx.esp + 0x28) = DY;
+				*(float*)(ctx.esp + 0x14) = (DX * 2.0f) / ViewW;
+				*(float*)(ctx.esp + 0x18) = (DY * 2.0f) / ViewH;
+			});
+
 	}
 }

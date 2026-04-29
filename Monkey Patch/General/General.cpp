@@ -41,6 +41,7 @@ namespace General {
 	bool* InMultiplayer = (bool*)0x2528B48;
 	bool IsQuickSaving = false;
 	char* CurrentGamemode = (char*)0x00E8B210;
+	bool& IsWidescreen = *(bool*)0x213C383;
 	UINT16* GameResX = (UINT16*)0x022F63F8;
 	UINT16* GameResY = (UINT16*)0x022F63FC;
 	char* LobbyCheck = (char*)0x02528C14; // Copied from Rich Presence stuff, just using it so we can limit LUA Executor to SP/CO-OP.

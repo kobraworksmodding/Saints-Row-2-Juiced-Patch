@@ -30,6 +30,7 @@ namespace General {
 	extern char* GameLoaded;
 	extern char* InMission;
 	extern char* CurrentGamemode;
+	extern bool& IsWidescreen;
 	extern char* LobbyCheck;
 	int GetNPCWeaponType(int NPCPointer);
 	bool isCoop();
