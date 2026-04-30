@@ -68,16 +68,6 @@ void SetDLCNameFlagOnline() {
     }
 }
 
-typedef uintptr_t __cdecl load_packfileT(const char* name);
-load_packfileT* load_packfile = (load_packfileT*)(0xC0AE90);
-
-struct cutscene_hook_checks {
-    uint8_t func_init : 1;
-    uint8_t switched_to_dlc : 1;
-    uint8_t next : 1;
-    uint8_t stop : 1;
-} cscene_hook{};
-
 char* vpp_list[] = {
     const_cast<char*>("anims.vpp"),
     const_cast<char*>("audio.vpp"),
@@ -122,38 +112,90 @@ void __cdecl CountCallback(int CharacterCount, int* Unk) {
     ((void(__cdecl*)(int, int*))0x4A3B40)(CharacterCount + 15, Unk); // in TU3 this is exactly what they did, hardcoded additional 15 character allocations
 }
 
+typedef uintptr_t __cdecl load_packfileT(const char* name);
+load_packfileT* load_packfile = (load_packfileT*)(0xC0AE90);
+
+struct packfile_entry {
+    const char* filename;
+    const char* ext;
+    char padding[0x14];
+};
+
+static_assert(sizeof(packfile_entry) == 0x1C);
+
+struct packfile {
+    char padding[0x154];
+    uint32_t num_files;
+    char padding2[0x18];
+    packfile_entry* dir;
+};
+
+static_assert(offsetof(packfile, num_files) == 0x154);
+static_assert(offsetof(packfile, dir) == 0x170);
+
+constexpr int CUTSCENE_LIST_CAPACITY = 512;
+constexpr int DLC_CUTSCENE_NAME_CAPACITY = 256;
+constexpr int CUTSCENE_NAME_LENGTH = 260;
+
+char* cutscene_list_expanded[CUTSCENE_LIST_CAPACITY];
+char dlc_cutscene_names[DLC_CUTSCENE_NAME_CAPACITY][CUTSCENE_NAME_LENGTH];
+
+const char* GetBasename(const char* path) {
+    const char* basename = path;
+    for (const char* c = path; c && *c; c++) {
+        if (*c == '\\' || *c == '/') basename = c + 1;
+    }
+    return basename;
+}
+
+bool CutsceneListContains(char** list, int count, const char* name) {
+    for (int i = 0; i < count; i++) {
+        if (_stricmp(list[i], name) == 0) return true;
+    }
+    return false;
+}
+
+void AppendCutscenePackfile(SafetyHookContext& ctx, const char* packfile_name) {
+    packfile* pack = (packfile*)load_packfile(packfile_name);
+    if (!pack || !pack->dir) return;
+
+    int& count = *(int*)(ctx.ebp - 0x38C);
+    char**& list = *(char***)(ctx.ebp - 0x394);
+
+    if (count > CUTSCENE_LIST_CAPACITY) count = CUTSCENE_LIST_CAPACITY;
+    for (int i = 0; i < count; i++) cutscene_list_expanded[i] = list[i];
+    list = cutscene_list_expanded;
+
+    int dlc_name_count = 0;
+    for (uint32_t i = 0; i < pack->num_files && count < CUTSCENE_LIST_CAPACITY && dlc_name_count < DLC_CUTSCENE_NAME_CAPACITY; i++) {
+        const packfile_entry& entry = pack->dir[i];
+        if (!entry.filename || !*entry.filename) continue;
+
+        char name[CUTSCENE_NAME_LENGTH];
+        const char* basename = GetBasename(entry.filename);
+        if (entry.ext && *entry.ext) {
+            sprintf_s(name, "%s.%s", basename, entry.ext);
+        }
+        else {
+            strcpy_s(name, basename);
+        }
+
+        _strlwr(name);
+        if (!strstr(name, ".xtbl") || CutsceneListContains(list, count, name)) continue;
+
+        strcpy_s(dlc_cutscene_names[dlc_name_count], name);
+        list[count++] = dlc_cutscene_names[dlc_name_count++];
+    }
+}
+
 void CHooks_cutscene() {
     patchNop((void*)0x006D47A8, 5); // this removes the cutscene array sorting
     // the idea is to have the DLC cutscenes get added at the very end
     // it doesn't break the base VPP because all the base cutscenes will still be sorted alphabetically
     patchDWord((void*)(0x0051DAD0 + 2), (int)&vpp_list); // patch the new list into the startup function.
     patchByte((void*)(0x0051DB36 + 2), sizeof(vpp_list)); // patch number of VPPs it searches for.
-    static auto chook_start = safetyhook::create_mid(0x6D46C4, [](SafetyHookContext& ctx) {
-        if (cscene_hook.func_init == 0) {
-            cscene_hook.func_init = 1;
-        }
-
-        size_t number_of_files = *(uintptr_t*)(ctx.ebx + 0x154);
-        int& i_loop = *(int*)(ctx.ebp + 0x80);
-        int& j_loop = *(int*)(ctx.ebp + 0x7C);
-
-        // printf("number_of_files: %d, i_loop %d j_loop %d\n", number_of_files, i_loop, j_loop);
-
-        if ((i_loop + 1 >= number_of_files) && !cscene_hook.switched_to_dlc && !cscene_hook.next) {
-            // printf("IS IT DONE?!\n");
-            cscene_hook.next = 1;
-        }
-        if (cscene_hook.next && !cscene_hook.stop) {
-            cscene_hook.stop = 1;
-            auto packfile = load_packfile("dlc_cutscenes.vpp_pc");
-            if (!packfile)
-                return;
-            //printf("ITS DOING IT\n");
-            cscene_hook.switched_to_dlc = 1;
-            i_loop = 0;
-            j_loop = 0;
-            ctx.ebx = (uintptr_t)packfile;
-        }
+    static auto AppendDLCCutscenes = safetyhook::create_mid(0x6D478A, [](SafetyHookContext& ctx) {
+        AppendCutscenePackfile(ctx, "dlc_cutscenes.vpp_pc");
         });
 
 }
