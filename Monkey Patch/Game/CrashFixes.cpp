@@ -218,7 +218,28 @@ namespace CrashFixes {
 		__asm mov saveptr,eax
 		load_all_og(saveptr, idk);
 	}
+	SAFETYHOOK_NOINLINE void Fix_0x00BD8662_buffer_double_release(SafetyHookContext& ctx) {
+		// a deregister releases extra divided-bones vbuffers, then
+		// releases vertex_buffer normally. Some meshes can possibily alias both.
+		const uintptr_t block_bones = ctx.edi;
+		if (!block_bones)
+			return;
 
+		const uintptr_t block_vbuffer = *(uintptr_t*)(block_bones + 0x10);
+		const uintptr_t block_bones_remap = *(uintptr_t*)(block_bones + 0x14);
+		const uintptr_t verts = *(uintptr_t*)(ctx.esp + 0x1C);
+		if (!block_vbuffer || !verts)
+			return;
+
+		const uintptr_t base_vbuffer = *(uintptr_t*)(verts + 0x0C);
+		if (block_vbuffer != base_vbuffer)
+			return;
+
+		AssertHandler::AssertOnce("Fix_0x00BD8662_buffer_double_release", "vertex buffer double-release 0x00D07244\n", true);
+
+		ctx.edi = block_bones_remap;
+		ctx.eip = 0x00D07249;
+	}
 	void Init() {
 		AssertHandler::CvarFixCrashes = GameConfig::GetValue("Debug", "FixCrashes", 2);
 		static auto FixAudioLoop_null_crash1_hook = safetyhook::create_mid(0x0046EE64, &FixAudioLoop_null_crash1);
@@ -275,6 +296,9 @@ namespace CrashFixes {
 			patchCall((void*)0x69600B, load_all_og_hook);
 
 		}
+
+		static auto Fix_0x00BD8662_buffer_double_release_hook = safetyhook::create_mid(0x00D0721E, &Fix_0x00BD8662_buffer_double_release);
+
 
 		patchNop((void*)0x00695BE7, 15); // these 2 lines of code for freeing the saving mempool only exist on PC for some reason and they cause the game to crash when saving during a mission replay
 	}
