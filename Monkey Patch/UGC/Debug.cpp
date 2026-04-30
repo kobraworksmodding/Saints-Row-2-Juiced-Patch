@@ -198,7 +198,7 @@ namespace Debug
 					free(extended_buffer);
 				}
 				else {
-					MessageBoxA(NULL, buffer, "Juiced Patch", MB_OK | MB_ICONERROR);
+					MessageBoxA(NULL, buffer, "Juiced Patch (restored error message)", MB_OK | MB_ICONERROR);
 				}
 
 	result = printf("%s", buffer);
@@ -210,8 +210,31 @@ namespace Debug
 		va_end(args);
 		return result;
 	}
+	int sprintf_messagebox_mesh(char* buffer, const char* message, const char* mesh)
+	{
+		auto result = sprintf_s(buffer, 1024,"The game failed trying to preload %s", mesh);
+		MessageBoxA(0, buffer, "Juiced Patch (restored error message)", MB_OK | MB_ICONERROR);
+		return result;
+	}
+
+	//SafetyHookInline static_mesh_loadD;
+	//void* __fastcall static_mesh_load(char* filename_in, void* thisa, char permanent, char a4)
+	//{
+	//	static char meshbuffer[256]{};
+	//	auto result = static_mesh_loadD.unsafe_fastcall<void*>(filename_in, thisa, permanent, a4);
+	//	if (!result && filename_in) {
+	//		sprintf_s(meshbuffer, sizeof(meshbuffer), "The game failed trying to load %s", filename_in);
+	//		MessageBoxA(0, meshbuffer, "Juiced Patch", MB_OK | MB_ICONERROR);
+	//	}
+	//	return result;
+	//}
 
 	void Init() {
+		//InjectHook(0x6E4F87, sprintf_messagebox_mesh);
+		//InjectHook(0x6E4FC7, sprintf_messagebox_mesh);
+
+		//static_mesh_loadD = safetyhook::create_inline(0x6E5760, static_mesh_load);
+
 		//OptionsManager::registerOption("Graphics", "DynamicRenderDistance", (int*)&UseDynamicRenderDistance, 0);
 #if !JLITE
 	if (GameConfig::GetValue("Gameplay", "SkipIntros", 0, "Skips Startup Logos and Disclaimers (Creds to Tervel)")) // can't stop Tervel won't stop Tervel
