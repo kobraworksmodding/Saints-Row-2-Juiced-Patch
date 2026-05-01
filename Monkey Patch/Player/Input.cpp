@@ -152,7 +152,7 @@ namespace Input {
 			g_lastInput = MOUSE;
 
 		if (g_lastInputPrevFrame != g_lastInput)
-			//refreshVintStrings();
+			refreshVintStrings();
 		if (EnableDynamicPrompts >= 2) {
 			for (int i = 0; i < 103; i++) {
 				if (key_held(i)) {
