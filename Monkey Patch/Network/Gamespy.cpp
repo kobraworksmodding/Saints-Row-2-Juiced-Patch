@@ -11,6 +11,7 @@
 #include "STUNNat.h"
 #include <Wininet.h>
 #include "safetyhook.hpp"
+#include "MPStorage.h"
 #pragma comment(lib, "wininet.lib")
 
 enum E_NAME
@@ -96,7 +97,7 @@ namespace Gamespy
 
 	void Init() {
 		coopPausePatch = 0;
-
+		MPStorage::Init();
 		if (IsInternetAvailable()) {
 			// Check basic NAT type on port 4200
 			std::string publicIp;

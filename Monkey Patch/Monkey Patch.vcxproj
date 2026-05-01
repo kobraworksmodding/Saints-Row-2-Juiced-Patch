@@ -349,6 +349,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="Game\timestamp.ixx" />
     <ClCompile Include="General\JuicedAPI.cpp" />
     <ClCompile Include="LUA\InGameConfig.cpp" />
+    <ClCompile Include="Network\MPStorage.cpp" />
     <ClCompile Include="Network\STUNNat.cpp" />
     <ClCompile Include="OptionsManager.ixx" />
     <ClCompile Include="Patcher\CMultiPatch.cpp" />
@@ -408,6 +409,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="MemoryMgr.h" />
     <ClInclude Include="Network\Gamespy.h" />
     <ClInclude Include="BlingMenuInstall.h" />
+    <ClInclude Include="Network\MPStorage.h" />
     <ClInclude Include="Network\STUNNat.h" />
     <ClInclude Include="Patcher\CMultiPatch.h" />
     <ClInclude Include="Patcher\CPatch.h" />
