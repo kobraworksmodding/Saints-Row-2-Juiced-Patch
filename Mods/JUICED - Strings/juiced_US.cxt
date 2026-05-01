@@ -1,0 +1,14 @@
+[DIVERSION_AMBULANCE_MINIGAME_CPR,pad]
+Move both {ANALOG_LS_IMG} and {ANALOG_RS_IMG} up and down at the same time to provide CPR
+
+[TUT_WAYPOINT_2,pad]
+Use {ANALOG_LS_IMG} to move your cursor over the different icons to see what they are.
+
+[TUT_AMBULANCE_SHOCK_PADDLES,pad]
+Move {ANALOG_LS_IMG} and {ANALOG_RS_IMG} up and down quickly in opposite directions to charge the shock paddles.
+
+[DIVERSION_VEHICLE_SURFING_STYLE_TWO_BALANCE_MESSAGE_TEXT,pad]
+Use {ON_FOOT_STRAFE_LEFT} to balance yourself on the vehicle
+
+[DIVERSION_AMBULANCE_MINIGAME_CPR,pad]
+Move both {ANALOG_LS_IMG} and {ANALOG_RS_IMG} up and down at the same time to provide CPR

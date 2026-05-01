@@ -34,6 +34,7 @@ void* __fastcall mempool_localization_align_alloc(size_t size, uint32_t align)
 }
 
 ankerl::unordered_dense::map<uint32_t, wchar_t*> g_CustomStrings;
+ankerl::unordered_dense::map<uint32_t, wchar_t*> g_CustomPadStrings;
 ankerl::unordered_dense::map<uint32_t, std::wstring> g_CustomVoiceStrings;
 
 namespace MStrings
@@ -44,7 +45,11 @@ namespace MStrings
 		std::wstring Text;
 	};
 
-	static std::vector<ParsedString> g_ParsedStrings;
+	struct ParsedCxtResult
+	{
+		std::vector<ParsedString> Normal;
+		std::vector<ParsedString> Pad;
+	};
 
 	static bool EndsWithInsensitive(const std::string& str, const std::string& suffix)
 	{
@@ -157,7 +162,37 @@ namespace MStrings
 		return text_ptr;
 	}
 
-	static bool ParseCxtFile(const std::string& filepath, std::vector<ParsedString>& out)
+	static void ParseTagHeader(const std::string& raw_header, std::string& out_tag, bool& out_pad)
+	{
+		out_tag.clear();
+		out_pad = false;
+
+		std::stringstream ss(raw_header);
+		std::string part;
+		bool first = true;
+
+		while (std::getline(ss, part, ','))
+		{
+			part = Trim(part);
+
+			if (first)
+			{
+				out_tag = part;
+				first = false;
+			}
+			else
+			{
+				if (_stricmp(part.c_str(), "pad") == 0 ||
+					_stricmp(part.c_str(), "gamepad") == 0 ||
+					_stricmp(part.c_str(), "controller") == 0)
+				{
+					out_pad = true;
+				}
+			}
+		}
+	}
+
+	static bool ParseCxtFile(const std::string& filepath, ParsedCxtResult& out)
 	{
 		std::ifstream file(filepath, std::ios::binary);
 		if (!file)
@@ -166,6 +201,7 @@ namespace MStrings
 		std::string line;
 		std::string current_tag;
 		std::string current_text;
+		bool current_pad = false;
 
 		auto FlushEntry = [&]()
 			{
@@ -174,13 +210,19 @@ namespace MStrings
 
 				uint32_t hash = Game::utils::str_to_hash(current_tag.c_str());
 
-				out.push_back({
+				ParsedString parsed{
 					hash,
 					Utf8ToWide(current_text)
-					});
+				};
+
+				if (current_pad)
+					out.Pad.push_back(std::move(parsed));
+				else
+					out.Normal.push_back(std::move(parsed));
 
 				current_tag.clear();
 				current_text.clear();
+				current_pad = false;
 			};
 
 		bool first_line = true;
@@ -205,12 +247,13 @@ namespace MStrings
 			{
 				FlushEntry();
 
-				current_tag = trimmed.substr(1, trimmed.size() - 2);
-				current_tag = Trim(current_tag);
+				std::string header = trimmed.substr(1, trimmed.size() - 2);
+				header = Trim(header);
+
+				ParseTagHeader(header, current_tag, current_pad);
 				continue;
 			}
 
-			// Text line under the current [Tag].
 			if (!current_tag.empty())
 			{
 				if (!current_text.empty())
@@ -245,26 +288,33 @@ namespace MStrings
 	SafetyHookInline get_localization_from_hashD;
 	wchar_t* _cdecl get_localization_from_hash(uint32_t checksum)
 	{
-		bool isGamePadConnected = Input::LastInputUI() == Input::GAME_LAST_INPUT::CONTROLLER;
 		if (checksum)
 		{
 			if (isCutscene())
 			{
-				auto result = GetCustomVoiceString(checksum);
-				if (result)
+				if (wchar_t* result = GetCustomVoiceString(checksum))
 					return result;
+			}
+
+			bool isGamePadConnected =
+				Input::LastInputUI() == Input::GAME_LAST_INPUT::CONTROLLER;
+
+			if (isGamePadConnected)
+			{
+				auto pad_it = g_CustomPadStrings.find(checksum);
+				if (pad_it != g_CustomPadStrings.end())
+					return pad_it->second;
 			}
 
 			auto it = g_CustomStrings.find(checksum);
 			if (it != g_CustomStrings.end())
 				return it->second;
 		}
-		return get_localization_from_hashD.unsafe_ccall<wchar_t*>(checksum);
 
+		return get_localization_from_hashD.unsafe_ccall<wchar_t*>(checksum);
 	}
 	void StartParsing()
 	{
-		g_ParsedStrings.clear();
 
 		const char* language_cstr = GetCurrentLanguage();
 		if (!language_cstr || !*language_cstr)
@@ -286,19 +336,23 @@ namespace MStrings
 			if (!EndsWithInsensitive(filename, wanted_suffix))
 				continue;
 
-			std::vector<ParsedString> parsed;
+			ParsedCxtResult parsed;
 
 			if (!ParseCxtFile(filepath, parsed))
 				continue;
 
-			for (auto& s : parsed)
+			for (auto& s : parsed.Normal)
 			{
 				wchar_t* text_ptr = AllocLocalizationString(s.Hash, s.Text);
+				if (text_ptr)
+					g_CustomStrings[s.Hash] = text_ptr;
+			}
 
-				if (!text_ptr)
-					continue;
-
-				g_CustomStrings[s.Hash] = text_ptr;
+			for (auto& s : parsed.Pad)
+			{
+				wchar_t* text_ptr = AllocLocalizationString(s.Hash, s.Text);
+				if (text_ptr)
+					g_CustomPadStrings[s.Hash] = text_ptr;
 			}
 
 			loaded_files_push_filename(filepath.c_str());
