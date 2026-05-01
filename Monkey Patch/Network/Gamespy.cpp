@@ -57,20 +57,29 @@ namespace Gamespy
 		const_cast<char*>("sr2_mp_lobby03")
 	};
 
-
-
-
 	uintptr_t get_pc_session()
 	{
 		return *(uintptr_t*)0x02528C14;
 	}
+
+	__declspec(noinline) uintptr_t get_extra_info(uintptr_t session)
+	{
+		return *(uintptr_t*)(session + 0xC);
+	}
+
+	bool isSessionCoop(uintptr_t session)
+	{
+		auto extra_info = get_extra_info(session);
+		return (*(uint32_t*)(extra_info + 0x38)) == 2;
+	}
+
 	__declspec(noinline) bool get_is_syslink(uintptr_t session = NULL)
 	{
 		if(!session)
 		session = get_pc_session();
 
 		if (session) {
-			auto extra_info = *(uintptr_t*)(session + 0xC);
+			auto extra_info = get_extra_info(session);
 			if (extra_info) {
 				return *(bool*)(extra_info + 0x47);
 			}
@@ -158,7 +167,7 @@ namespace Gamespy
 	static auto UseLAN_NameInSysLink_Load = safetyhook::create_mid(0x778F05, SetNameToLAN);
 
 	static auto multi_session_create_midhook = safetyhook::create_mid(0x80DB1E, [](SafetyHookContext& ctx) {
-
+		if(ctx.ebx && isSessionCoop(ctx.ebx))
 		name_to_pick = (E_NAME)!get_is_syslink(ctx.ebx);
 		});
 
