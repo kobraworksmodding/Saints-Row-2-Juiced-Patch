@@ -396,6 +396,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="Audio\XACT.h" />
     <ClInclude Include="BlingMenu_public.h" />
     <ClInclude Include="exception.hpp" />
+    <ClInclude Include="Ext\ankerl\unordered_dense.h" />
     <ClInclude Include="Ext\DirectXTex\DDSTextureLoader9.h" />
     <ClInclude Include="Ext\safetyhook\safetyhook.hpp" />
     <ClInclude Include="Ext\safetyhook\Zydis.h" />

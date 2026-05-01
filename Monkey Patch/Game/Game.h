@@ -100,7 +100,7 @@ namespace Game
 		extern uint32_t checksum(xtbl_node* root, uint32_t accumulator);
 	}
 	namespace utils {
-		typedef uint32_t(__thiscall* crc_strT)(char* text);
+		typedef uint32_t(__thiscall* crc_strT)(const char* text);
 		extern crc_strT str_to_hash;
 	}
 	extern SafetyHookMid FixFrametimeVehicleSkids;
