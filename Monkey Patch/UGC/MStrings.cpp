@@ -14,6 +14,7 @@
 #include "../Hooker.h"
 #include "../Render/bitmap.h"
 #include "../Game/Game.h"
+#include "../Player/Input.h"
 
 
 
@@ -244,12 +245,13 @@ namespace MStrings
 	SafetyHookInline get_localization_from_hashD;
 	wchar_t* _cdecl get_localization_from_hash(uint32_t checksum)
 	{
+		bool isGamePadConnected = Input::LastInputUI() == Input::GAME_LAST_INPUT::CONTROLLER;
 		if (checksum)
 		{
 			if (isCutscene())
 			{
 				auto result = GetCustomVoiceString(checksum);
-				if (!result)
+				if (result)
 					return result;
 			}
 
