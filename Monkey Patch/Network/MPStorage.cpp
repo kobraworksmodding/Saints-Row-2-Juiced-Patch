@@ -21,6 +21,7 @@ namespace MPStorage
 {
 	constexpr uint16_t GAME_MP_DATA_VERSION = 12;
 	constexpr size_t MP_STORAGE_DATA_SIZE = 0xEE8C;
+	constexpr size_t LEGACY_MP_STORAGE_DATA_SIZE = 0xEEAC;
 	constexpr int MP_STORAGE_STATUS_BLANK = 1;
 	constexpr int MP_STORAGE_STATUS_VALID = 2;
 	constexpr int MP_ASYNC_RESULT_OK = 0;
@@ -35,21 +36,21 @@ namespace MPStorage
 	};
 	static_assert(sizeof(sr2_mp_data) == MP_STORAGE_DATA_SIZE, "Wrong size for sr2_mp_data");
 
-	struct MPDT
+	struct MPDTHeader
 	{
 		uint32_t signature;
 		uint32_t version;
-		uint32_t offset_for_where_data_starts; // this points to sr2_mp_data in the file, maybe we can add like index multiple chars and stuff so a pointer to this is useful
+		uint32_t offset_for_where_data_starts;
 		uint32_t sr2_mp_data_size;
-		sr2_mp_data data;
 	};
+	static_assert(sizeof(MPDTHeader) == 0x10, "Wrong size for MPDTHeader");
 
-	sr2_mp_data* mp_data = (sr2_mp_data*)DynAddress(0x02A18A08);
-	int* mp_storage_status = (int*)DynAddress(0x02528C24);
-	bool* mp_storage_async_pending = (bool*)DynAddress(0x02528C2C);
-	int* mp_async_callback_status = (int*)DynAddress(0x0212F46C);
-	int* mp_async_result = (int*)DynAddress(0x0212F470);
-	const char* where_to_save = (const char*)0x0144E650;
+	sr2_mp_data* mp_data = (sr2_mp_data*)0x02A18A08_g;
+	int* mp_storage_status = (int*)0x02528C24_g;
+	bool* mp_storage_async_pending = (bool*)0x02528C2C_g;
+	int* mp_async_callback_status = (int*)0x0212F46C_g;
+	int* mp_async_result = (int*)0x0212F470_g;
+	const char* where_to_save = (const char*)0x0144E650_g;
 
 	void FinishAsyncRequest(int result, int callback_status)
 	{
@@ -85,6 +86,7 @@ namespace MPStorage
 
 	constexpr uint32_t MPDT_SIGNATURE = 'TDPM'; // "MPDT" little-endian
 	constexpr uint32_t MPDT_VERSION = 1;
+	constexpr uint32_t MPDT_DATA_OFFSET = sizeof(MPDTHeader);
 
 	static std::filesystem::path GetMPStoragePath()
 	{
@@ -111,23 +113,35 @@ namespace MPStorage
 			return MP_ASYNC_RESULT_FAILED;
 		}
 
-		MPDT header{};
-		file.read(reinterpret_cast<char*>(&header), sizeof(MPDT));
+		MPDTHeader header{};
+		file.read(reinterpret_cast<char*>(&header), sizeof(header));
 
 		if (!file
 			|| header.signature != MPDT_SIGNATURE
 			|| header.version != MPDT_VERSION
-			|| header.offset_for_where_data_starts != offsetof(MPDT, data)
-			|| header.sr2_mp_data_size != sizeof(sr2_mp_data))
+			|| header.offset_for_where_data_starts != MPDT_DATA_OFFSET
+			|| (header.sr2_mp_data_size != MP_STORAGE_DATA_SIZE && header.sr2_mp_data_size != LEGACY_MP_STORAGE_DATA_SIZE))
 		{
 			MarkBlankRead();
 			Logger::TypedLog(CHN_NET, "MPStorage: {} was invalid, using blank storage.\n", path.string());
 			return 1;
 		}
 
-		std::memcpy(mp_data, &header.data, sizeof(sr2_mp_data));
+		sr2_mp_data temp{};
+		file.read(reinterpret_cast<char*>(&temp), MP_STORAGE_DATA_SIZE);
+		if (!file)
+		{
+			MarkBlankRead();
+			Logger::TypedLog(CHN_NET, "MPStorage: {} payload was incomplete, using blank storage.\n", path.string());
+			return 1;
+		}
+
+		std::memcpy(mp_data, &temp, sizeof(temp));
 		MarkSuccessfulRead();
-		Logger::TypedLog(CHN_NET, "MPStorage: loaded local player data from {}.\n", path.string());
+		if (header.sr2_mp_data_size == LEGACY_MP_STORAGE_DATA_SIZE)
+			Logger::TypedLog(CHN_NET, "MPStorage: loaded legacy local player data from {}.\n", path.string());
+		else
+			Logger::TypedLog(CHN_NET, "MPStorage: loaded local player data from {}.\n", path.string());
 
 		return 1;
 	}
@@ -144,14 +158,13 @@ namespace MPStorage
 			return false;
 		}
 
-		MPDT out{};
+		MPDTHeader out{};
 		out.signature = MPDT_SIGNATURE;
 		out.version = MPDT_VERSION;
-		out.offset_for_where_data_starts = offsetof(MPDT, data);
-		out.sr2_mp_data_size = sizeof(sr2_mp_data);
+		out.offset_for_where_data_starts = MPDT_DATA_OFFSET;
+		out.sr2_mp_data_size = MP_STORAGE_DATA_SIZE;
 
 		mp_data->version = GAME_MP_DATA_VERSION;
-		std::memcpy(&out.data, mp_data, sizeof(sr2_mp_data));
 
 		std::ofstream file(path, std::ios::binary | std::ios::trunc);
 		if (!file) {
@@ -160,7 +173,8 @@ namespace MPStorage
 			return false;
 		}
 
-		file.write(reinterpret_cast<const char*>(&out), sizeof(MPDT));
+		file.write(reinterpret_cast<const char*>(&out), sizeof(out));
+		file.write(reinterpret_cast<const char*>(mp_data), MP_STORAGE_DATA_SIZE);
 		if (!file.good()) {
 			MarkWriteFailure();
 			Logger::TypedLog(CHN_NET, "MPStorage: failed to write {}.\n", path.string());
@@ -174,6 +188,10 @@ namespace MPStorage
 
 	void Init()
 	{
+		// idfk (clippy95)
+		if(GameConfig::GetValue("Multiplayer","StoreStorageLocally",1,"stores MP player data such as cash and customization in a"
+			"local PATH/Saints Row 2/" FOLDER_NAME "/mp/MPStorage.mpdt_pc file rather than Game/OpenSpy (clippy95)"))
+		Nop(0x81A87A, 2);
 		InjectHook(0x81A7A3, get_data_from_server);
 		InjectHook(0x81A590, save_data_to_server, HookType::Jump);
 	}
