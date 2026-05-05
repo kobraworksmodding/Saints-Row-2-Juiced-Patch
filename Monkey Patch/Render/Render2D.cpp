@@ -18,6 +18,11 @@
 #include "..\Ext\Hooking.Patterns.h"
 #include <random>
 #include "../loose files.h"
+#include "../Game/Game.h"
+
+typedef char(__cdecl* gr_rectT)(int x1, int y1, int w, int h, int* state);
+gr_rectT gr_rect = (gr_rectT)0x00D0B980;
+
 namespace Render2D
 {
 	float* currentAR = (float*)0x022FD8EC;
@@ -702,7 +707,56 @@ void __fastcall vint_sr2_render(void* thisa) {
 		InGamePrintScale(6, display_text.c_str(), processtextwidth(0), 0, 0.7f);
 	}
 }
+int* GR_FILTER = (int*)0xEC2740;
 
+SAFETYHOOK_NOINLINE bool IsThisVintDoc(uintptr_t element,uint32_t crc)
+{
+	if (!element)
+		return false;
+	auto document = *(uintptr_t*)(element + 0x30);
+	if (!document)
+		return false;
+	return *(uint32_t*)(document + 0x48) == crc;
+}
+
+void DrawUltraWideLeftRightBars(float alpha)
+
+	{
+	if (*currentAR > widescreenvalue) {
+		ChangeTextColor(0, 0, 0, (int)std::clamp((alpha * 255.f), 0.f, 255.f));
+		float x1 = *currentAR * 720;
+		auto bar_width = (float)((x1 - 1280) / 2);
+		gr_rect(0, 0, bar_width, 720, GR_FILTER);
+		gr_rect(x1 - bar_width, 0, bar_width, 720, GR_FILTER);
+	}
+	}
+SafetyHookInline vint_element_base_renderD;
+
+static auto bg_sniper_s_crc = Game::utils::str_to_hash("bg_sniper_s");
+static auto background_crc = Game::utils::str_to_hash("background");
+static auto cte_sniper_rifle_crc = Game::utils::str_to_hash("cte_sniper_rifle");
+//static auto dialog_box_crc = Game::utils::str_to_hash("dialog_box");
+static auto rim_sw_crc = Game::utils::str_to_hash("rim_sw");
+void __fastcall vint_element_base_render(
+	uintptr_t vint_element_base,void* unused,
+	float* vint_render_params,
+	uintptr_t Base,
+	size_t a4)
+{
+	bool* visible = (bool*)(vint_element_base + 0x59);
+
+	if (*currentAR > widescreenvalue && *visible && vint_render_params[4] > 0.00000011920929)
+	{
+		uint32_t crc = *(uint32_t*)(vint_element_base + 0x2C);
+		float& alpha = *(float*)(vint_element_base + 0x88);
+		if (crc == bg_sniper_s_crc || crc == background_crc || (crc == rim_sw_crc && IsThisVintDoc(vint_element_base, cte_sniper_rifle_crc)))
+		{
+			DrawUltraWideLeftRightBars(alpha);
+		}
+	}
+	vint_element_base_renderD.unsafe_thiscall<void>(vint_element_base, vint_render_params, Base, a4);
+
+}
 	void Init() {
 	if(GameConfig::GetValue("Debug","DisplayLooseFilesLoading",1, "Renders the loose files that load during the initial loading screen (Clippy95)"))
 		patchCall((void*)0x68C607, vint_sr2_render);
@@ -737,5 +791,6 @@ void __fastcall vint_sr2_render(void* thisa) {
 			patchBytesM((BYTE*)0x0075CDEA, (BYTE*)"\x68\xFF\x92\x20\x02", 5); // new chat read address for entered message
 			Logger::TypedLog(CHN_DEBUG, "Enabling better chat...\n");
 		}
+	vint_element_base_renderD = safetyhook::create_inline(0xB95B10, vint_element_base_render);
 	}
 }
