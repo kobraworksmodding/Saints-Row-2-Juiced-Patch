@@ -94,13 +94,17 @@ namespace Gamespy
 		if(get_is_syslink())
 		name_to_pick = ELAN;
 	}
-
+	int ip_sprintf_s_parsing(char* buffer, const size_t BufferCount, const char* format, uint8_t ip1, uint8_t ip2, uint8_t ip3, uint8_t ip4)
+	{
+		// we want it empty
+		return sprintf_s(buffer, BufferCount, " ");
+	}
 	void Init() {
 		coopPausePatch = 0;
 		MPStorage::Init();
 
 		// Obfuscate IP display in server browser 
-		patchDWord((void*)(0x008360E9 + 1), (int)&UtilsGlobal::emptyIP);
+		InjectHook(0x8360F8, ip_sprintf_s_parsing);
 
 		// Display nat type
 		if (IsInternetAvailable()) {
