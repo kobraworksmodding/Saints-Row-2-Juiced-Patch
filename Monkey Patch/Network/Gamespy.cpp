@@ -98,6 +98,12 @@ namespace Gamespy
 	void Init() {
 		coopPausePatch = 0;
 		MPStorage::Init();
+
+		// Obfuscate IP display in server browser 
+		std::string IPDonor = UtilsGlobal::emptyIP;
+		patchDWord((void*)(0x008360E9 + 1), (int)&IPDonor);
+
+		// Display nat type
 		if (IsInternetAvailable()) {
 			// Check basic NAT type on port 4200
 			std::string publicIp;

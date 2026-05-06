@@ -12,3 +12,6 @@ Use {ON_FOOT_STRAFE_LEFT} to balance yourself on the vehicle
 
 [DIVERSION_AMBULANCE_MINIGAME_CPR,pad]
 Move both {ANALOG_LS_IMG} and {ANALOG_RS_IMG} up and down at the same time to provide CPR
+
+[MP_SERVER_IP]
+ 
