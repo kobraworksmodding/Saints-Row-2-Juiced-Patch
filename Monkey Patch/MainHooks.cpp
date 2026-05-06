@@ -1458,10 +1458,20 @@ void PrintUsername() {
 	}
 }
 
+const char* get_chunk_name_from_uid(uint16_t cuid)
+{
+	uintptr_t city = *(uintptr_t*)0xF7894C;
+	if (!city)
+		return " ";
+	uint32_t max = *(uint32_t*)(city + 8);
+	if (cuid >= max)
+		return "BAD";
+	return *(char**)(*(DWORD*)(city + 12) + 4 * cuid);
+}
+
 void PrintLatestChunk() {
 	char buffer[50];
-	char* latestChunk = (CHAR*)0x00EB865C;
-	snprintf(buffer, sizeof(buffer), "NewChunkStreamed: % s", latestChunk);
+	snprintf(buffer, sizeof(buffer), "Camera is in chunk: %s", get_chunk_name_from_uid(*(uint16_t*)0x025F5BEC));
 	Render2D::ChangeTextColor(255, 255, 255, 255);
 	__asm pushad
 	Render2D::InGamePrint(buffer, 80, Render2D::processtextwidth(0), 6);
