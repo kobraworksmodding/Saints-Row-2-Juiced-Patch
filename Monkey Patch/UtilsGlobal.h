@@ -85,7 +85,7 @@ inline const char* juicedversion = "8.1.0";
 
 inline const char* thaRowmenuversion = "0.0.2";
 inline const char* thaRowversion = "%s - thaRow 0.2beta";
-inline const char* emptyIP = " ";
+inline std::string emptyIP = "";
 
 inline std::string mynat_type;
 

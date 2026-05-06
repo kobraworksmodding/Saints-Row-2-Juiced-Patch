@@ -100,8 +100,7 @@ namespace Gamespy
 		MPStorage::Init();
 
 		// Obfuscate IP display in server browser 
-		std::string IPDonor = UtilsGlobal::emptyIP;
-		patchDWord((void*)(0x008360E9 + 1), (int)&IPDonor);
+		patchDWord((void*)(0x008360E9 + 1), (int)&UtilsGlobal::emptyIP);
 
 		// Display nat type
 		if (IsInternetAvailable()) {
