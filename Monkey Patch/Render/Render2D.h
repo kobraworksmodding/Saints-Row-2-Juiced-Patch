@@ -51,4 +51,7 @@ namespace Render2D
 
 	extern SafetyHookMid final_2d_render;
 	extern CMultiPatch CMPatches_ProperPlayerCursor;
+	extern void ParseVintCINT();
+	extern int IVRadarScalingDyn;
+	extern float ultrawide_safearea_x;
 }

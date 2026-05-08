@@ -17,9 +17,13 @@
 #include "Render3D.h"
 #include "..\Ext\Hooking.Patterns.h"
 #include <random>
+#include <fstream>
+#include <sstream>
 #include "../loose files.h"
 #include "../Game/Game.h"
-
+#include <ankerl/unordered_dense.h>
+#include "../Hooker.h"
+import component;
 typedef char(__cdecl* gr_rectT)(int x1, int y1, int w, int h, int* state);
 gr_rectT gr_rect = (gr_rectT)0x00D0B980;
 
@@ -30,7 +34,7 @@ namespace Render2D
 	bool BetterChatTest = 0;
 #if !JLITE
 	bool IVRadarScaling = false;
-
+	int IVRadarScalingDyn;
 	float RadarScale = 0.87272727272f;
 	void RadarScaling() {
 		float currentX = (float)(*(unsigned int*)0x022f63f8);
@@ -314,6 +318,7 @@ int processtextwidth(int width) {
 	typedef void SomePMFunc_Native();
 	SomePMFunc_Native* UpdateSomePMFunc = (SomePMFunc_Native*)(0x00B99DB0);
 	const char* JuicedText = "JUICED ";
+	bool& r_is_widescreen = *(bool*)0x025272DD;
 	void SomeMMFunc_Hacked()
 	{
 #if JLITE
@@ -324,7 +329,6 @@ int processtextwidth(int width) {
 			__asm popad
 		}
 #else
-		bool& r_is_widescreen = *(bool*)0x025272DD;
 #if !RELOADED
 		if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
 
@@ -499,6 +503,7 @@ char SR2Ultrawide_HUDScale() {
 			IVRadarScaling = true;
 			RadarScaling();
 		}
+	//RadarScaling();
 #endif
 
 		// Fucking tagging system cause yeah lets hard code the anchor for it?
@@ -709,15 +714,28 @@ void __fastcall vint_sr2_render(void* thisa) {
 }
 int* GR_FILTER = (int*)0xEC2740;
 
-SAFETYHOOK_NOINLINE bool IsThisVintDoc(uintptr_t element,uint32_t crc)
+SAFETYHOOK_NOINLINE bool IsThisVintDoc(void* element,uint32_t crc)
 {
 	if (!element)
 		return false;
-	auto document = *(uintptr_t*)(element + 0x30);
+	auto document = *(uintptr_t*)((uintptr_t)element + 0x30);
 	if (!document)
 		return false;
 	return *(uint32_t*)(document + 0x48) == crc;
 }
+
+static uint32_t GetVintDocCRC(const void* element)
+{
+	if (!element)
+		return 0;
+
+	auto document = *(uintptr_t*)((uintptr_t)element + 0x30);
+	if (!document)
+		return 0;
+
+	return *(uint32_t*)(document + 0x48);
+}
+
 
 void DrawUltraWideLeftRightBars(float alpha)
 
@@ -735,27 +753,398 @@ SafetyHookInline vint_element_base_renderD;
 static auto bg_sniper_s_crc = Game::utils::str_to_hash("bg_sniper_s");
 static auto background_crc = Game::utils::str_to_hash("background");
 static auto cte_sniper_rifle_crc = Game::utils::str_to_hash("cte_sniper_rifle");
-//static auto dialog_box_crc = Game::utils::str_to_hash("dialog_box");
+static auto map_grp_crc = Game::utils::str_to_hash("map_grp");
+static auto hud_crc = Game::utils::str_to_hash("hud");
 static auto rim_sw_crc = Game::utils::str_to_hash("rim_sw");
+
+struct __declspec(align(8)) vint_render_params
+{
+	int unk;
+	vector3 color;
+	float alpha;
+	bool mask;
+	float rotation;
+	char pad[0x50];
+};
+
+struct vint_object_base
+{
+	void* vft;
+	char pad[0x24];
+	uint32_t handle;
+	uint32_t crc;
+	void* document;
+	char name[32];
+};
+
+struct vint_element_base : vint_object_base
+{
+	int unk1;
+	bool mask;
+	bool visible;
+	vector2 v_anchor;
+	vector2 v_offset;
+	int enum1;
+	vector2 v_unk;
+	float unk3;
+	vector3 color;
+	float alpha;
+	int color_render_type;
+	vector2 scale;
+};
+
+struct Alignment {
+	uint32_t h_left : 1;
+	uint32_t h_right : 1;
+	uint32_t h_center : 1;
+	uint32_t v_top : 1;
+	uint32_t v_bottom : 1;
+	uint32_t v_center : 1;
+
+	bool will_it_be_anchored()
+	{
+		return h_left == 1 || h_right == 1 || h_center == 1 || v_top == 1 || v_bottom == 1 || v_center == 1;
+	}
+
+	uint32_t black_bars : 1;
+	uint32_t IVRadar : 1;
+};
+
+struct vint_cint_custom
+{
+	uint32_t document_crc = 0;
+	bool any_document = false;
+	Alignment align;
+};
+
+ankerl::unordered_dense::map<uint32_t, std::vector<vint_cint_custom>> g_custom_vint_cint_data;
+
+static std::string TrimCopy(const std::string& value)
+{
+	const size_t start = value.find_first_not_of(" \t\r\n");
+	if (start == std::string::npos)
+		return {};
+
+	const size_t end = value.find_last_not_of(" \t\r\n");
+	return value.substr(start, end - start + 1);
+}
+
+static std::string ToLowerCopy(std::string value)
+{
+	std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+		return static_cast<char>(std::tolower(c));
+		});
+	return value;
+}
+
+static std::string ToUpperCopy(std::string value)
+{
+	std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+		return static_cast<char>(std::toupper(c));
+		});
+	return value;
+}
+
+static void ApplyVintCINTFlag(Alignment& align, const std::string& raw_flag)
+{
+	const std::string flag = ToUpperCopy(TrimCopy(raw_flag));
+	if (flag.empty())
+		return;
+
+	if (flag == "L") {
+		align.h_left = 1;
+	}
+	else if (flag == "R") {
+		align.h_right = 1;
+	}
+	else if (flag == "CB") {
+		align.h_center = 1;
+		align.v_bottom = 1;
+	}
+	else if (flag == "CT") {
+		align.h_center = 1;
+		align.v_top = 1;
+	}
+	else if (flag == "LT") {
+		align.h_left = 1;
+		align.v_top = 1;
+	}
+	else if (flag == "RT") {
+		align.h_right = 1;
+		align.v_top = 1;
+	}
+	else if (flag == "LB") {
+		align.h_left = 1;
+		align.v_bottom = 1;
+	}
+	else if (flag == "RB") {
+		align.h_right = 1;
+		align.v_bottom = 1;
+	}
+	else if (flag == "T") {
+		align.v_top = 1;
+	}
+	else if (flag == "B") {
+		align.v_bottom = 1;
+	}
+	else if (flag == "C") {
+		align.h_center = 1;
+		align.v_center = 1;
+	}
+	else if (flag == "BLACKBARS") {
+		align.black_bars = 1;
+	}
+	else if (flag == "IV") {
+		align.IVRadar = 1;
+	}
+}
+
+static void MergeAlignment(Alignment& dst, const Alignment& src)
+{
+	dst.h_left |= src.h_left;
+	dst.h_right |= src.h_right;
+	dst.h_center |= src.h_center;
+	dst.v_top |= src.v_top;
+	dst.v_bottom |= src.v_bottom;
+	dst.v_center |= src.v_center;
+	dst.black_bars |= src.black_bars;
+	dst.IVRadar |= src.IVRadar;
+}
+
+static const vint_cint_custom* FindVintCINT(const vint_element_base* element)
+{
+	if (!element)
+		return nullptr;
+
+	const auto it = g_custom_vint_cint_data.find(element->crc);
+	if (it == g_custom_vint_cint_data.end())
+		return nullptr;
+
+	const uint32_t document_crc = GetVintDocCRC(element);
+	const vint_cint_custom* any_document_rule = nullptr;
+	for (const auto& rule : it->second)
+	{
+		if (rule.any_document)
+		{
+			if (!any_document_rule)
+				any_document_rule = &rule;
+			continue;
+		}
+
+		if (rule.document_crc == document_crc)
+			return &rule;
+	}
+
+	return any_document_rule;
+}
+
+float ultrawide_get_x_difference()
+{
+	if (*currentAR > widescreenvalue)
+	{
+		return ((*currentAR * 720.f) - 1280) / 2;
+	}
+	return 0.f;
+}
+
+float ultrawide_safearea_x = 0.f;
+
+SAFETYHOOK_NOINLINE bool modify_vint_anchor(const vint_cint_custom* cint, vint_element_base* element)
+{
+	auto align = cint->align;
+
+	if (align.will_it_be_anchored())
+	{
+		float x = ultrawide_get_x_difference();
+		if (*currentAR > widescreenvalue)
+		{
+			x *= std::clamp(ultrawide_safearea_x,0.f,1.f);
+			if (align.h_left)
+				element->v_anchor.x -= x;
+			else if (align.h_right)
+				element->v_anchor.x += x;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool ApplyIVRadarScaling(vint_element_base* element)
+{
+	return false;
+	if (r_is_widescreen && IVRadarScalingDyn)
+	{
+		element->scale *= RadarScale;
+		element->v_anchor.x *= -0.40650406504f;
+		element->v_anchor.x /= -0.93802816901f;
+		return true;
+	}
+	return false;
+}
+
 void __fastcall vint_element_base_render(
-	uintptr_t vint_element_base,void* unused,
-	float* vint_render_params,
+	vint_element_base* this_element,void* unused,
+	vint_render_params* Cvint_render_params,
 	uintptr_t Base,
 	size_t a4)
 {
-	bool* visible = (bool*)(vint_element_base + 0x59);
-
-	if (*currentAR > widescreenvalue && *visible && vint_render_params[4] > 0.00000011920929)
+	static bool parsed = false;
+	if (!parsed)
 	{
-		uint32_t crc = *(uint32_t*)(vint_element_base + 0x2C);
-		float& alpha = *(float*)(vint_element_base + 0x88);
-		if (crc == bg_sniper_s_crc || crc == background_crc || (crc == rim_sw_crc && IsThisVintDoc(vint_element_base, cte_sniper_rifle_crc)))
-		{
-			DrawUltraWideLeftRightBars(alpha);
-		}
+		ParseVintCINT();
+		parsed = true;
 	}
-	vint_element_base_renderD.unsafe_thiscall<void>(vint_element_base, vint_render_params, Base, a4);
+	bool visible = this_element->visible && Cvint_render_params->alpha > 0.00000011920929;
+	bool modified_anchor = false;
+	bool modified_scale = false;
+	vector2 old_anchor;
+	vector2 old_scale;
+	if (r_is_widescreen && visible)
+	{
+		uint32_t crc = this_element->crc;
+		float& alpha = this_element->alpha;
+		bool drew_black_bars = false;
+		//if (crc == bg_sniper_s_crc || crc == background_crc || (crc == rim_sw_crc && IsThisVintDoc(this_element, cte_sniper_rifle_crc)))
+		//{
+		//	DrawUltraWideLeftRightBars(alpha);
+		//	drew_black_bars = true;
+		//}
+		
+		
+		if (auto* custom = FindVintCINT(this_element))
+		{
+			if (custom->align.black_bars && !drew_black_bars)
+				DrawUltraWideLeftRightBars(alpha);
+			old_anchor = this_element->v_anchor;
+			modified_anchor = modify_vint_anchor(custom, this_element);
+			if (custom->align.IVRadar) {
+				modified_scale = ApplyIVRadarScaling(this_element);
+				if (modified_scale) 
+				{
+					old_scale = this_element->scale;
+					old_anchor = this_element->v_anchor;
+					modified_anchor = true;
+				}
+			}
+		}
 
+	}
+	vint_element_base_renderD.unsafe_thiscall<void>(this_element, Cvint_render_params, Base, a4);
+	if (modified_anchor) {
+		this_element->v_anchor = old_anchor;
+	}
+	if (modified_scale)
+	{
+		this_element->scale = old_scale;
+	}
+}
+// load or reload, should empty g_custom_vint_cint_data
+void ParseVintCINT()
+{
+	g_custom_vint_cint_data.clear();
+
+	for (auto& entry : DirCache)
+	{
+		const std::string& filename = entry.first; // lowercase hopefully
+		const std::string& filepath = entry.second.FilePath;
+		if (filename != "cvint.dat")
+			continue;
+
+		std::ifstream file(filepath.c_str());
+		if (!file.is_open())
+		{
+			Logger::TypedLog("VINT", "Failed to open {}\n", filepath);
+			return;
+		}
+
+		std::string current_document_name;
+		uint32_t current_document_crc = 0;
+		bool current_document_any = false;
+		size_t parsed_rules = 0;
+
+		std::string line;
+		int line_number = 0;
+		while (std::getline(file, line))
+		{
+			++line_number;
+
+			const size_t comment_pos = line.find("//");
+			if (comment_pos != std::string::npos)
+				line.erase(comment_pos);
+
+			line = TrimCopy(line);
+			if (line.empty())
+				continue;
+
+			if (line.front() == '[' && line.back() == ']')
+			{
+				current_document_name = TrimCopy(line.substr(1, line.size() - 2));
+				current_document_any = (_stricmp(current_document_name.c_str(), "any") == 0);
+				current_document_crc = current_document_any ? 0u : Game::utils::str_to_hash(current_document_name.c_str());
+				continue;
+			}
+
+			if (current_document_name.empty() && !current_document_any)
+			{
+				Logger::TypedLog("VINT", "cvint.dat:{} missing [document] section before '{}'\n", line_number, line);
+				continue;
+			}
+
+			std::stringstream stream(line);
+			std::string token;
+			std::vector<std::string> tokens;
+			while (std::getline(stream, token, ','))
+			{
+				token = TrimCopy(token);
+				if (!token.empty())
+					tokens.push_back(token);
+			}
+
+			if (tokens.empty())
+				continue;
+
+			const std::string element_name = tokens.front();
+			if (element_name.empty())
+				continue;
+
+			vint_cint_custom parsed_rule{};
+			parsed_rule.document_crc = current_document_crc;
+			parsed_rule.any_document = current_document_any;
+
+			for (size_t i = 1; i < tokens.size(); ++i)
+				ApplyVintCINTFlag(parsed_rule.align, tokens[i]);
+
+			auto& rules = g_custom_vint_cint_data[Game::utils::str_to_hash(element_name.c_str())];
+			auto existing = std::find_if(rules.begin(), rules.end(), [&](const vint_cint_custom& rule) {
+				return rule.any_document == parsed_rule.any_document && rule.document_crc == parsed_rule.document_crc;
+				});
+
+			if (existing != rules.end())
+			{
+				MergeAlignment(existing->align, parsed_rule.align);
+			}
+			else
+			{
+				rules.push_back(parsed_rule);
+			}
+
+			++parsed_rules;
+		}
+
+		Logger::TypedLog("VINT", "Parsed {} cvint rules from {}\n", parsed_rules, filepath);
+		return;
+	}
+}
+uintptr_t diversion_image_sizeup_addr;
+float saved_diversion_horz = 0.f;
+float* diversion_horz = (float*)0xE8D668_g;
+void diversion_image_sizeup()
+{
+	cdecl_call<void>(diversion_image_sizeup_addr);
+	if (r_is_widescreen)
+	{
+		saved_diversion_horz = *diversion_horz;
+	}
 }
 	void Init() {
 	if(GameConfig::GetValue("Debug","DisplayLooseFilesLoading",1, "Renders the loose files that load during the initial loading screen (Clippy95)"))
@@ -792,5 +1181,18 @@ void __fastcall vint_element_base_render(
 			Logger::TypedLog(CHN_DEBUG, "Enabling better chat...\n");
 		}
 	vint_element_base_renderD = safetyhook::create_inline(0xB95B10, vint_element_base_render);
+	InterceptCall(0x79B064, diversion_image_sizeup_addr, diversion_image_sizeup);
+	InterceptCall(0xB8A751, diversion_image_sizeup_addr, diversion_image_sizeup);
+
+	ultrawide_safearea_x = std::clamp((float)GameConfig::GetDoubleValue("Graphics", "SafeArea_X_UW", 1.f, "Safearea in ultrawide for elements defined in cvint.dat (clippy95)"),0.f,1.f);
+
+	Juiced::onInputPoll() += []() 
+		{
+			
+			if (r_is_widescreen && saved_diversion_horz != 0.f)
+			{
+				*diversion_horz = saved_diversion_horz + (ultrawide_get_x_difference() * ultrawide_safearea_x);
+			}
+		};
 	}
 }

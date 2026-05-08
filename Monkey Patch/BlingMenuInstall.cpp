@@ -458,6 +458,9 @@ namespace BlingMenuInstall
        //BlingMenuAddInt8("Juiced Debug", "Fix mouse water", &Math::Fixes::FixWater, NULL,1,0,2);
        //BlingMenuAddBool("Juiced Debug", "Simulate mouse water", &Math::Fixes::SimulateWaterBug, NULL);
        BlingMenuAddBool("Juiced Debug", "old sleep hack 1", &Render3D::use_old, Render3D::apply_old);
+       BlingMenuAddFunc("Juiced Debug", "ParseVintCINT", &Render2D::ParseVintCINT);
+       BlingMenuAddInt("Juiced Debug", "IVRadarScalingDyn", &Render2D::IVRadarScalingDyn,NULL,1,0,1);
+       BlingMenuAddFloat("Juiced Debug", "ultrawide_safearea_x", &Render2D::ultrawide_safearea_x, NULL, 0.01f, 0.f, 1.f);
        }
     }
 }

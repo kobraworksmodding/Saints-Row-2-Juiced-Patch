@@ -1,0 +1,24 @@
+// clippy95 was here,
+// [] is the name of the vint document, [ANY] will ignore it and apply without document check
+// element_name,flags such as LB,RB,R,L,CB,CT,LT,RT,T,B and maybe more for the alignemnt theyre for 16:9 mode ultrawide / safearea 
+// IV is for IVRadarScaling 16:9 too (as of now unused),
+// flag blackbars is to display black bars assuming this is safe_framed correctly in DLL
+// the TOP and BOTTOM (T,B) in those flags are planned hacks for 16:10
+// file is reloadable in blingmenu
+[hud]
+map_grp,LB,IV
+bg_sniper_s,blackbars
+health_grp,RT
+cash,RT
+followers,RT
+gsi_grp,LT
+radial_grp,RB
+vehicle_logo,RB
+[hud_msg]
+msg_diversion_anchor,LB,IV
+[mp_hud]
+perk_grp,LB,IV
+[dialog_box]
+background,blackbars
+[cte_sniper_rifle]
+rim_sw,blackbars

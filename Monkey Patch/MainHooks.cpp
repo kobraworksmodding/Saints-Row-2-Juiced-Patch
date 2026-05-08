@@ -3,6 +3,7 @@
 #pragma warning( disable : 4309)
 #pragma warning( disable : 4244)
 #pragma warning( disable : 4473)
+import component;
 #include "MainHooks.h"
 #include "UtilsGlobal.h"
 #include "General/General.h"
@@ -281,7 +282,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 			// The game timer constructor sets up the game's timing so this needs to patch before the constructor is called.
 
 			patchCall((void*)0xDB3985, render_buffer_malloc);
-
+			Juiced::onAttach().executeAll();
 			PatchQueryPerformance();
 			//Render3D::render_batch_increase();
 		}
@@ -1290,7 +1291,7 @@ static bool modpackread = 0;
 #endif
 int RenderLoopStuff_Hacked()
 {
-	
+	Juiced::onInputPoll().executeAll();
 #if !JLITE
 
 	Game::InLoop::FrameChecks();
