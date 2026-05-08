@@ -63,6 +63,12 @@ struct LexState
     int nestlevel;
 };
 
+struct luaL_Reg
+{
+    const char* name;
+    lua_CFunction func;
+};
+
 
 namespace LuaExtended
 {
@@ -336,7 +342,7 @@ namespace LuaExtended
 
         if (ls == nullptr)
         {
-            Logger::TypedLog(CHN_DEBUG, "LoadVintExtended: Vint lua state is null");
+            Logger::TypedLog(CHN_DEBUG, "LuaExtended: Vint lua state is null");
             return;
         }
 
@@ -353,7 +359,7 @@ namespace LuaExtended
 
             if (!read_file_binary(filepath, buffer))
             {
-                Logger::TypedLog(CHN_DEBUG, "LoadVintExtended: failed to read {}", filepath);
+                Logger::TypedLog(CHN_DEBUG, "LuaExtended: failed to read {}", filepath);
                 continue;
             }
 
@@ -366,7 +372,7 @@ namespace LuaExtended
 
             Logger::TypedLog(
                 CHN_DEBUG,
-                "LoadVintExtended: loaded {} result={}",
+                "LuaExtended: loaded {} result={}",
                 filename,
                 result
             );
@@ -391,8 +397,147 @@ namespace LuaExtended
         }
     }
 
+    uintptr_t luaL_openlib_retail = 0xCD9A30_g;
+    void* luaL_openlib(lua_State* L, luaL_Reg* reg, const char* eh)
+    {
+        __asm
+        {
+            mov ecx, L
+            mov eax, reg
+            push eh
+            call luaL_openlib_retail
+            add esp, 4
+        }
+        return NULL;
+    }
+    SafetyHookInline register_vint_lua_funcsD;
+
+        //    static luaL_Reg lua_patching_functions[] = {
+        //{"vint_subscribe_to_mouse_input", VintSubscribeToMouseInput},
+        //{"vint_unsubscribe_to_mouse_input", VintUnsubscribeToMouseInput},
+        //{"vint_get_current_clickable_element", VintGetCurrentClickableElement},
+        //{"vint_get_object_bbox", VintGetObjectBBox},
+        //{"vint_force_mouse_move_event", VintForceMouseMoveEvent},
+        //{NULL, NULL}
+        //};
+    template <typename T>
+    static int PatchValue(lua_State* L)
+    {
+        LuaArgs args(L);
+
+        auto address = args.get<uintptr_t>();
+        auto value = args.get<T>();
+
+        Patch<T>(address, value);
+
+        return 0;
+    }
+
+    int Patch_bool(lua_State* L)
+    {
+        return PatchValue<bool>(L);
+    }
+
+    int Patch_int8_t(lua_State* L)
+    {
+        return PatchValue<int8_t>(L);
+    }
+
+    int Patch_uint8_t(lua_State* L)
+    {
+        return PatchValue<uint8_t>(L);
+    }
+
+    int Patch_int16_t(lua_State* L)
+    {
+        return PatchValue<int16_t>(L);
+    }
+
+    int Patch_uint16_t(lua_State* L)
+    {
+        return PatchValue<uint16_t>(L);
+    }
+
+    int Patch_int32_t(lua_State* L)
+    {
+        return PatchValue<int32_t>(L);
+    }
+
+    int Patch_uint32_t(lua_State* L)
+    {
+        return PatchValue<uint32_t>(L);
+    }
+
+    int Patch_int64_t(lua_State* L)
+    {
+        return PatchValue<int64_t>(L);
+    }
+
+    int Patch_uint64_t(lua_State* L)
+    {
+        return PatchValue<uint64_t>(L);
+    }
+
+    int Patch_float(lua_State* L)
+    {
+        return PatchValue<float>(L);
+    }
+
+    int Patch_double(lua_State* L)
+    {
+        return PatchValue<double>(L);
+    }
+
+    int Patch_uintptr_t(lua_State* L)
+    {
+        return PatchValue<uintptr_t>(L);
+    }
+
+    int Patch_intptr_t(lua_State* L)
+    {
+        return PatchValue<intptr_t>(L);
+    }
+
+    int Patch_size_t(lua_State* L)
+    {
+        return PatchValue<size_t>(L);
+    }
+
+    static luaL_Reg lua_patching_functions[] =
+    {
+        { "PatchBool",   Patch_bool },
+
+        { "PatchI8",     Patch_int8_t },
+        { "PatchU8",     Patch_uint8_t },
+
+        { "PatchI16",    Patch_int16_t },
+        { "PatchU16",    Patch_uint16_t },
+
+        { "PatchI32",    Patch_int32_t },
+        { "PatchU32",    Patch_uint32_t },
+
+        { "PatchI64",    Patch_int64_t },
+        { "PatchU64",    Patch_uint64_t },
+
+        { "PatchFloat",  Patch_float },
+        { "PatchDouble", Patch_double },
+
+        { "PatchPtr",    Patch_uintptr_t },
+        { "PatchSize",   Patch_size_t },
+
+        { NULL, NULL }
+    };
+
+    void register_vint_lua_funcs(lua_State* L)
+    {
+        register_vint_lua_funcsD.unsafe_ccall<void>();
+        luaL_openlib(L, lua_patching_functions, "_G");
+
+    }
+
     void Init()
     {
+        register_vint_lua_funcsD = safetyhook::create_inline(0x7F35A0, register_vint_lua_funcs);
         static auto vint_lib_hook = safetyhook::create_mid(0xB9155D, [](SafetyHookContext& ctx) {
             LoadVintExtended();
             });
