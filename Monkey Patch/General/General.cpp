@@ -498,12 +498,12 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 	};
 
 	void generalluaLoadBuff(safetyhook::Context32& ctx) {
-		if (!(ctx.esp + 0x10))
+		if (!(ctx.esp + 0x14))
 			return;
 		const char* buff = (const char*)ctx.eax;
 		if (!buff)
 			return;
-		const char* filename = (const char*)*(uintptr_t*)(ctx.esp + 0x10);
+		const char* filename = (const char*)*(uintptr_t*)(ctx.esp + 0x14);
 		size_t& sz = ctx.ecx;
 		std::string convertedBuff(buff, sz);
 		const char* currentBuff = buff;
