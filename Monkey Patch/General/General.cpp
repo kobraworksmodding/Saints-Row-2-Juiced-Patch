@@ -496,9 +496,9 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 			{Input::ControllerType::PS5, "ui_ctrl_ps5_dpad_ud"}
 		}}
 	};
-
+	bool generalluaLoadBuff_disabled = false;
 	void generalluaLoadBuff(safetyhook::Context32& ctx) {
-		if (!(ctx.esp + 0x14))
+		if (generalluaLoadBuff_disabled || !(ctx.esp + 0x14))
 			return;
 		const char* buff = (const char*)ctx.eax;
 		if (!buff)

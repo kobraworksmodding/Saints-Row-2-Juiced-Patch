@@ -51,4 +51,5 @@ namespace General {
 	extern std::function<void()> D3D9_create;
 	extern UINT16* GameResX;
 	extern UINT16* GameResY;
+	extern bool generalluaLoadBuff_disabled;
 }

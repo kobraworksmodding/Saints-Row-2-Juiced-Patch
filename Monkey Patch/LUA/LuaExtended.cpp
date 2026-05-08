@@ -1,3 +1,6 @@
+// LuaExtended.cpp (clippy95)
+// --------------------
+// Created: May 8th 2026
 import component;
 #include "../FileLogger.h"
 #include "../Patcher/patch.h"
@@ -362,21 +365,21 @@ namespace LuaExtended
                 Logger::TypedLog(CHN_DEBUG, "LuaExtended: failed to read {}", filepath);
                 continue;
             }
-
+            General::generalluaLoadBuff_disabled = true;
             int result = luaL_loadbuffer_game(
                 buffer.data(),
                 buffer.size(),
                 ls,
                 filename.c_str()
             );
-
+            General::generalluaLoadBuff_disabled = false;
             Logger::TypedLog(
                 CHN_DEBUG,
                 "LuaExtended: loaded {} result={}",
                 filename,
                 result
             );
-
+            
             auto init = make_ui_init_name(filename);
             if (lua_does_function_exist(ls, init.c_str()))
             {
@@ -386,7 +389,7 @@ namespace LuaExtended
                 }
             }
         }
-
+        
     }
 
     void LoadVintExtended()
