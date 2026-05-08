@@ -420,6 +420,29 @@ namespace LuaExtended
         //{"vint_force_mouse_move_event", VintForceMouseMoveEvent},
         //{NULL, NULL}
         //};
+
+    static std::string GetCurrentLuaSource(lua_State* L)
+    {
+        lua_Debug ar{};
+
+        // level 0 = this C function
+        // level 1 = Lua function that called this C function
+        if (!lua_getstack(L, 1, &ar))
+            return {};
+
+        // "S" = source info
+        if (!lua_getinfo(L, "S", &ar))
+            return {};
+
+        if (ar.source)
+            return ar.source;
+
+        if (ar.short_src)
+            return ar.short_src;
+
+        return {};
+    }
+
     template <typename T>
     static int PatchValue(lua_State* L)
     {
@@ -427,6 +450,12 @@ namespace LuaExtended
 
         auto address = args.get<uintptr_t>();
         auto value = args.get<T>();
+        auto source = GetCurrentLuaSource(L);
+        Logger::TypedLog(
+            CHN_DEBUG,
+            "PatchValue called from Lua source: {}",
+            source
+        );
 
         Patch<T>(address, value);
 
