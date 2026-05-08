@@ -330,12 +330,9 @@ namespace LuaExtended
         return name;
     }
 
-    void LoadVintExtended()
+    void LoadExtendedLuaFiles(lua_State* ls,const char* prefix)
     {
-        lua_State* ls = nullptr;
 
-        if (Vint_lua_state != nullptr)
-            ls = *Vint_lua_state;
 
         if (ls == nullptr)
         {
@@ -349,7 +346,7 @@ namespace LuaExtended
             const std::string& filepath = entry.second.FilePath;
 
             // Only load loose VINT UI lua files.
-            if (!std::string_view(filename).ends_with("_ui.lua"))
+            if (!std::string_view(filename).ends_with(prefix))
                 continue;
 
             std::vector<char> buffer;
@@ -383,12 +380,27 @@ namespace LuaExtended
                 }
             }
         }
+
+    }
+
+    void LoadVintExtended()
+    {
+        if (Vint_lua_state != nullptr)
+        {
+            LoadExtendedLuaFiles(*Vint_lua_state, "_ui.lua");
+        }
     }
 
     void Init()
     {
         static auto vint_lib_hook = safetyhook::create_mid(0xB9155D, [](SafetyHookContext& ctx) {
             LoadVintExtended();
+            });
+        static auto system_lib = safetyhook::create_mid(0xCDE465, [](SafetyHookContext& ctx) {
+            if (ctx.esi)
+            {
+                LoadExtendedLuaFiles((lua_State*)ctx.esi, "_gs.lua");
+            }
             });
     }
 
