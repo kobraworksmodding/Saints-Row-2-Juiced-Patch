@@ -298,7 +298,7 @@ namespace LuaExtended
             pushad
             mov eax, ls
             push function_name
-            call new_thread_internal_game
+            call lua_does_function_exist_game
             add esp, 0x4
             mov byte ptr[result], al
             popad
@@ -326,7 +326,7 @@ namespace LuaExtended
         return true;
     }
 
-    static std::string make_ui_init_name(std::string_view filename)
+    static std::string make_func_name(std::string_view filename, std::string_view prefix)
     {
         // "main_menu_ui.lua" -> "main_menu_ui_init"
 
@@ -335,7 +335,7 @@ namespace LuaExtended
         if (name.ends_with(".lua"))
             name.resize(name.size() - 4);
 
-        name += "_init";
+        name += prefix;
         return name;
     }
 
@@ -365,7 +365,7 @@ namespace LuaExtended
                 Logger::TypedLog(CHN_DEBUG, "LuaExtended: failed to read {}", filepath);
                 continue;
             }
-            General::generalluaLoadBuff_disabled = true;
+            //General::generalluaLoadBuff_disabled = true;
             int result = luaL_loadbuffer_game(
                 buffer.data(),
                 buffer.size(),
@@ -380,14 +380,15 @@ namespace LuaExtended
                 result
             );
             
-            auto init = make_ui_init_name(filename);
-            if (lua_does_function_exist(ls, init.c_str()))
-            {
+            auto init = make_func_name(filename,"_init");
+            auto main = make_func_name(filename, "_main");
                 auto thread = new_thread_internal(ls, init.c_str(), nullptr, 0, 1);
                 if (thread) {
                     lua_execute_thread_immediate(&thread);
                 }
-            }
+            
+                auto thread_main = new_thread_internal(ls, main.c_str(), nullptr, 1, 0);
+
         }
         
     }
@@ -573,12 +574,19 @@ namespace LuaExtended
         static auto vint_lib_hook = safetyhook::create_mid(0xB9155D, [](SafetyHookContext& ctx) {
             LoadVintExtended();
             });
-        static auto system_lib = safetyhook::create_mid(0xCDE465, [](SafetyHookContext& ctx) {
+        static auto system_lib = safetyhook::create_mid(0xA23E72, [](SafetyHookContext& ctx) {
             if (ctx.esi)
             {
                 LoadExtendedLuaFiles((lua_State*)ctx.esi, "_gs.lua");
             }
             });
+
+        static auto register_main = safetyhook::create_mid(0x89DA60, [](SafetyHookContext& ctx) {
+            luaL_openlib((lua_State*)ctx.eax, lua_patching_functions, "_G");
+                
+
+            });
+
     }
 
     class LUAX {
