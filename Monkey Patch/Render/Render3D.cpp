@@ -85,19 +85,50 @@ namespace Render3D
 		return;
 
 	}
+
+	SAFETYHOOK_NOINLINE float GetSmartCutsceneFOVMultiplier()
+	{
+		float screenW = (float)(*(unsigned int*)0x022f63f8_g);
+		float screenH = (float)(*(unsigned int*)0x022f63fc_g);
+
+		if (screenW <= 0.0f || screenH <= 0.0f)
+			return 1.0f;
+
+		constexpr float targetAspect = 24.0f / 10.0f; // 2.4
+
+		float aspect = screenW / screenH;
+
+		// do not touch FOV, borders handle it.
+		if (aspect <= targetAspect)
+			return 1.0f;
+
+		// widen full render so the visible 24:10 center is not zoomed in.
+		return aspect / targetAspect;
+	}
+
 	double __cdecl ConvertVerticalFOVToHorizontal_fixwidescreen(float verticalFOV, bool cutscene)
 	{
-		float radians = verticalFOV * 0.01745299994945526f;  // Convert to radians
+		float radians = verticalFOV * 0.01745299994945526f;
 		float tangent = tanf(radians * 0.5f);
 
-		// Apply aspect ratio adjustment
-		float adjusted = tangent * static_cast<float>(UltrawideFixRatio);
-		if (!cutscene) {
-			adjusted *= static_cast<float>(1.333333373069763 * Render3D::FOVMultiplier);
-		}
+		float adjusted;
 
+		if (cutscene && Render2D::bSmartCutsceneBorder)
+		{
+			auto mult = GetSmartCutsceneFOVMultiplier();
+			adjusted = tangent * mult;
+		}
+		else
+		{
+			adjusted = tangent * static_cast<float>(UltrawideFixRatio);
+
+			if (!cutscene)
+			{
+				adjusted *= static_cast<float>(1.333333373069763f * Render3D::FOVMultiplier);
+			}
+		}
 		// Convert back to degrees
-		return atan(adjusted) * 2.0 * 57.29582977294922;
+		return atan(adjusted) * 2.0f * 57.29582977294922f;
 	}
 	double GetFOV() {
 		bool* is_cutscene_active = (bool*)0x02527D14;

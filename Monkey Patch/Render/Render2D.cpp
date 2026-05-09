@@ -474,6 +474,7 @@ int processtextwidth(int width) {
 	}
 
 bool UltrawideFix = false;
+bool bSmartCutsceneBorder = true;
 // Clippy TODO, maybe handle 16:10?
 std::thread RefreshHUD_thread;
 void RefreshHUD_loop() {
@@ -481,6 +482,178 @@ void RefreshHUD_loop() {
 	vint_create_process_hook.enable();
 	std::this_thread::sleep_for(std::chrono::seconds(4));
 	vint_create_process_hook.disable();
+}
+uintptr_t gr_rect_og;
+int letterbox_height = *(int*)0xE98960_g;
+static void draw_black_rect(int x, int y, int w, int h, int* state)
+{
+	if (w <= 0 || h <= 0)
+		return;
+
+	cdecl_call<void>(gr_rect_og, x, y, w, h, state);
+}
+
+
+
+#include <algorithm>
+#include <cmath>
+
+struct SmartCutsceneFrame
+{
+	int screenW;
+	int screenH;
+
+	int viewX;
+	int viewY;
+	int viewW;
+	int viewH;
+
+	int top;
+	int bottom;
+	int left;
+	int right;
+
+	float screenAspect;
+	float cameraAspect;
+};
+
+static SmartCutsceneFrame GetSmartCutsceneFrame()
+{
+	int screenW = *(int*)0x022f63f8_g;
+	int screenH = *(int*)0x022f63fc_g;
+
+	// Your game is using 720p UI space.
+	// If these addresses return real resolution, normalize it to 720p space.
+	if (screenH != 720 && screenH > 0)
+	{
+		float scale = 720.0f / (float)screenH;
+		screenW = (int)std::round((float)screenW * scale);
+		screenH = 720;
+	}
+
+	if (screenW <= 0)
+		screenW = 1280;
+
+	if (screenH <= 0)
+		screenH = 720;
+
+	constexpr float targetAspect = 24.0f / 10.0f; // 2.40:1
+
+	SmartCutsceneFrame out{};
+	out.screenW = screenW;
+	out.screenH = screenH;
+	out.screenAspect = (float)screenW / (float)screenH;
+
+	// Border frame calculation.
+	// If screen is narrower than 24:10, use top/bottom bars.
+	// If screen is wider than 24:10, use side bars.
+	if (out.screenAspect < targetAspect)
+	{
+		out.viewW = screenW;
+		out.viewH = (int)std::round((float)screenW / targetAspect);
+
+		out.viewX = 0;
+		out.viewY = (screenH - out.viewH) / 2;
+	}
+	else
+	{
+		out.viewH = screenH;
+		out.viewW = (int)std::round((float)screenH * targetAspect);
+
+		out.viewX = (screenW - out.viewW) / 2;
+		out.viewY = 0;
+	}
+
+	out.top = out.viewY;
+	out.bottom = screenH - (out.viewY + out.viewH);
+	out.left = out.viewX;
+	out.right = screenW - (out.viewX + out.viewW);
+
+	if (out.top < 0) out.top = 0;
+	if (out.bottom < 0) out.bottom = 0;
+	if (out.left < 0) out.left = 0;
+	if (out.right < 0) out.right = 0;
+
+	// Important:
+	// FOV is based on the camera area, not the black-bar frame.
+	// 16:9 stays 16:9.
+	// 21:9 uses 21:9.
+	// 32:9 gets clamped to 24:10.
+	out.cameraAspect = min(out.screenAspect, targetAspect);
+
+	return out;
+}
+
+static void DrawBorderRect(int x, int y, int w, int h, int* state)
+{
+	if (w <= 0 || h <= 0)
+		return;
+
+	cdecl_call<void>(gr_rect_og, x, y, w, h, state);
+}
+
+void gr_rect_letterbox(int x1, int y1, int w, int h, int* state)
+{
+	if (bSmartCutsceneBorder && r_is_widescreen)
+	{
+		SmartCutsceneFrame f = GetSmartCutsceneFrame();
+
+		constexpr int bleed = 2;
+
+		// Top
+		DrawBorderRect(
+			0,
+			0,
+			f.screenW + bleed,
+			f.top + bleed,
+			state
+		);
+
+		// Bottom
+		DrawBorderRect(
+			0,
+			f.screenH - f.bottom,
+			f.screenW + bleed,
+			f.bottom + bleed,
+			state
+		);
+
+		// Left
+		DrawBorderRect(
+			0,
+			0,
+			f.left + bleed,
+			f.screenH + bleed,
+			state
+		);
+
+		// Right
+		DrawBorderRect(
+			f.screenW - f.right,
+			0,
+			f.right + bleed,
+			f.screenH + bleed,
+			state
+		);
+
+		return;
+	}
+
+	cdecl_call<void>(gr_rect_og, x1, y1, w, h, state);
+}
+
+
+
+void gr_rect_letterbox_below(int x1, int y1, int w, int h, int* state)
+{
+
+
+	if (bSmartCutsceneBorder && r_is_widescreen)
+	{
+		return;
+	}
+
+	cdecl_call<void>(gr_rect_og, x1, y1, w, h, state);
 }
 
 char SR2Ultrawide_HUDScale() {
@@ -491,11 +664,11 @@ char SR2Ultrawide_HUDScale() {
 
 	float aspectRatio = currentX / currentY;
 	// Cutscene black bars
-	SafeWrite32((0x00755C49 + 1), 1280);
+	//SafeWrite32((0x00755C49 + 1), 1280);
 	Render3D::AspectRatioFix(true);
 	SafeWrite32((0x75F1F6 + 4), processtextwidth(387));
 	if (aspectRatio >= 1.77) {
-		SafeWrite32((0x00755C49 + 1), (uint32_t)(aspectRatio * 720));
+		//SafeWrite32((0x00755C49 + 1), (uint32_t)(aspectRatio * 720));
 		// Fix reflections being broken at ultrawide.
 		*(float*)(0x0E86388) = aspectRatio;
 #if !JLITE
@@ -1185,6 +1358,10 @@ void diversion_image_sizeup()
 	InterceptCall(0xB8A751, diversion_image_sizeup_addr, diversion_image_sizeup);
 
 	ultrawide_safearea_x = std::clamp((float)GameConfig::GetDoubleValue("Graphics", "SafeArea_X_UW", 1.f, "Safearea in ultrawide for elements defined in cvint.dat (clippy95)"),0.f,1.f);
+	InterceptCall(0x755C56, gr_rect_og,gr_rect_letterbox);
+	InterceptCall(0x755C81, gr_rect_og, gr_rect_letterbox_below);
+
+	bSmartCutsceneBorder = GameConfig::GetValue("Graphics", "SmartCutsceneBorders", 1,"Proper letterboxing for different aspect ratios above widescreen while in cutscenes (clippy95)");
 
 	Juiced::onInputPoll() += []() 
 		{
