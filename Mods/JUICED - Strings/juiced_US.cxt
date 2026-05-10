@@ -13,5 +13,152 @@ Use {ON_FOOT_STRAFE_LEFT} to balance yourself on the vehicle
 [DIVERSION_AMBULANCE_MINIGAME_CPR,pad]
 Move both {ANALOG_LS_IMG} and {ANALOG_RS_IMG} up and down at the same time to provide CPR
 
+[J_OPTIONS]
+Juiced Options
+
+[J_UNCFPS]
+Vanilla FX Plus
+
+[J_XBGAMMA]
+Xbox 360 Gamma
+
+[J_XBGAMMA_UI]
+Xbox 360 Gamma on UI
+
+[J_SHADOWFLT]
+Shadow Filtering
+
+[J_VEHFADE]
+Increase Vehicle Fade Distance
+
+[J_SHDROVR]
+Shader Override
+
+[J_SHDROVR_HI]
+Force Highest LOD
+
+[J_SHDROVR_DIST]
+Increased distance
+
+[J_VFXPLUS]
+Vanilla FX Plus
+
+[J_BETTERAO]
+Better Ambient Occlusion
+
+[J_NOFOG]
+Disable Fog
+
+[J_NOSKYREF]
+Disable Sky Reflections
+
+[J_IVRADAR]
+IV Radar Scaling
+
+[J_NOTUT]
+Disable Tutorials
+
+[J_INPROMPT]
+Force Input Prompt
+
+[J_AUTO]
+Automated
+
+[J_CTRL]
+Controller
+
+[J_KBM]
+Keyboard and Mouse
+
+[J_CTRLPROMPT]
+Controller Prompts
+
+[J_DECK]
+Steam Deck
+
+[J_XSX]
+Xbox Series X
+
+[J_NSW]
+Nintendo Switch
+
+[J_DS]
+Dualsense
+
+[J_DS3]
+Dualshock 3
+
+[J_X360]
+Xbox 360
+
+[J_HOLDAIM]
+Hold Fine Aim
+
+[J_NOAIMASSIST]
+Disable Aim Assist
+
+[J_MOUSEONLY]
+On Mouse only
+
+[J_ALWAYS]
+Always
+
+[J_AUTOCENTER]
+Vehicle Auto Center Modifier
+
+[J_DBCAM]
+Better Drive-by Cam
+
+[J_HBCAM]
+Better Handbrake Cam
+
+[J_NOSPRINTSHK]
+Disable Sprint Cam Shake
+
+[J_SR1RELOAD]
+SR1 Reloading
+
+[J_SR1QSW]
+SR1 Quick Switch
+
+[J_SR1CROUCHCAM]
+SR1 Crouch Cam
+
+[J_NOMELEELOCK]
+No Melee Lock-On
+
+[J_NOFARPEDS]
+Disable Distant Peds
+
+[J_NOFARVEH]
+Disable Distant Vehicles
+
+[J_MAPROT]
+Ingame-map Player Rotation
+
+[J_DISXINP_R]
+Disable XInput (R)
+
+[J_NOVIB_R]
+Force Disable Vibration (R)
+
+[J_UHQ_R]
+UHQ Screen Effects (R)
+
+[J_BORDER_R]
+Borderless (R)
+
+[J_NOVIGN_R]
+Remove Vignette (R)
+
+[J_NOPIXEL_R]
+Remove Pixelation Shader (R)
+
+[J_FASTLOAD_R]
+Faster Loading (R)
+
+[J_METRIC_R]
+Force Metric System (R)
+
 [MP_SERVER_IP]
- 
+

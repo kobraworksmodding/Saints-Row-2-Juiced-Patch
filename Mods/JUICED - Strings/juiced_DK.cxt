@@ -1,2 +1,148 @@
+[J_OPTIONS]
+Juiced-indstillinger
+
+[J_UNCFPS]
+Vanilla FX Plus
+
+[J_XBGAMMA]
+Xbox 360-gamma
+
+[J_XBGAMMA_UI]
+Xbox 360-gamma på UI
+
+[J_SHADOWFLT]
+Skyggefiltrering
+
+[J_VEHFADE]
+Forøg køretøjs synsafstand
+
+[J_SHDROVR]
+Shader-tilsidesættelse
+
+[J_SHDROVR_HI]
+Gennemtving højeste LOD
+
+[J_SHDROVR_DIST]
+Forøget afstand
+
+[J_VFXPLUS]
+Vanilla FX Plus
+
+[J_BETTERAO]
+Bedre omgivelsesokklusion
+
+[J_NOFOG]
+Deaktiver tåge
+
+[J_NOSKYREF]
+Deaktiver himmelrefleksioner
+
+[J_IVRADAR]
+IV-radarskalering
+
+[J_NOTUT]
+Deaktiver tutorials
+
+[J_INPROMPT]
+Gennemtving inputprompt
+
+[J_AUTO]
+Automatisk
+
+[J_CTRL]
+Controller
+
+[J_KBM]
+Tastatur og mus
+
+[J_CTRLPROMPT]
+Controller-prompts
+
+[J_DECK]
+Steam Deck
+
+[J_XSX]
+Xbox Series X
+
+[J_NSW]
+Nintendo Switch
+
+[J_DS]
+Dualsense
+
+[J_DS3]
+Dualshock 3
+
+[J_X360]
+Xbox 360
+
+[J_HOLDAIM]
+Hold fin sigte
+
+[J_NOAIMASSIST]
+Deaktiver sigteassistance
+
+[J_MOUSEONLY]
+Kun på mus
+
+[J_ALWAYS]
+Altid
+
+[J_AUTOCENTER]
+Køretøj auto-centrering
+
+[J_DBCAM]
+Bedre drive-by-kamera
+
+[J_HBCAM]
+Bedre håndbremsekamera
+
+[J_NOSPRINTSHK]
+Deaktiver sprintkamera-rysten
+
+[J_SR1RELOAD]
+SR1-genopladning
+
+[J_SR1QSW]
+SR1-hurtigskift
+
+[J_SR1CROUCHCAM]
+SR1-knæltkamera
+
+[J_NOMELEELOCK]
+Ingen nærkamps-lås
+
+[J_NOFARPEDS]
+Deaktiver fjerne fodgængere
+
+[J_NOFARVEH]
+Deaktiver fjerne køretøjer
+
+[J_MAPROT]
+Spillerrotation på kort
+
+[J_DISXINP_R]
+Deaktiver XInput (R)
+
+[J_NOVIB_R]
+Gennemtving slå vibration fra (R)
+
+[J_UHQ_R]
+UHQ-skærmeffekter (R)
+
+[J_BORDER_R]
+Uden ramme (R)
+
+[J_NOVIGN_R]
+Fjern vignet (R)
+
+[J_NOPIXEL_R]
+Fjern pixeleringsshader (R)
+
+[J_FASTLOAD_R]
+Hurtigere indlæsning (R)
+
+[J_METRIC_R]
+Gennemtving metersystem (R)
+
 [MP_SERVER_IP]
- 

@@ -67,39 +67,39 @@ namespace InGameConfig {
     };
     void AddOptions() {
         Input::EnableDynamicPrompts = GameConfig::GetValue("Input", "EnableDynamicPrompts", 2);
-        InGameConfig::RegisterBoolSlider("UncapFPS", "UncapFPS");
-        InGameConfig::RegisterBoolSlider("X360Gamma", "Xbox 360 Gamma");
-        InGameConfig::RegisterBoolSlider("X360GammaUI", "Xbox 360 Gamma on UI");
-        InGameConfig::RegisterBoolSlider("ShadowFiltering", "Shadow Filtering");
+        InGameConfig::RegisterBoolSlider("UncapFPS", "J_UNCFPS");
+        InGameConfig::RegisterBoolSlider("X360Gamma", "J_XBGAMMA");
+        InGameConfig::RegisterBoolSlider("X360GammaUI", "J_XBGAMMA_UI");
+        InGameConfig::RegisterBoolSlider("ShadowFiltering", "J_SHADOWFLT");
         //InGameConfig::RegisterBoolSlider("ExtendedRenderDistance", "Extended Render Distance");
         //InGameConfig::RegisterBoolSlider("DynamicRenderDistance", "DynamicRenderDistance");
-        InGameConfig::RegisterBoolSlider("IncreaseVehicleFadeDistance", "Increase Vehicle Fade Distance");
+        InGameConfig::RegisterBoolSlider("IncreaseVehicleFadeDistance", "J_VEHFADE");
         /*if (GameConfig::GetValue("Graphics", "ExtendRenderBatches", 0)) {
             InGameConfig::RegisterBoolSlider("ToggleExtendedRenderDistance", "Toggle ExtendedRenderDistance");
         }*/
-        InGameConfig::RegisterSlider("ShaderOverride", "ShaderOverride", { "CONTROL_NO","Force Highest LOD","Increased distance" });
+        InGameConfig::RegisterSlider("ShaderOverride", "J_SHDROVR", { "CONTROL_NO","J_SHDROVR_HI","J_SHDROVR_DIST" });
 #if !JLITE
-        InGameConfig::RegisterBoolSlider("VFXPlus", "VanillaFXPlus");
+        InGameConfig::RegisterBoolSlider("VFXPlus", "J_VFXPLUS");
 #endif
-        InGameConfig::RegisterBoolSlider("BetterAO", "Better Ambient Occlusion");
+        InGameConfig::RegisterBoolSlider("BetterAO", "J_BETTERAO");
 #if !JLITE
-        InGameConfig::RegisterBoolSlider("DisableFog", "Disable Fog");
+        InGameConfig::RegisterBoolSlider("DisableFog", "J_NOFOG");
 #endif
-        InGameConfig::RegisterBoolSlider("DisableBlueRefl", "Disable Sky Reflections");
+        InGameConfig::RegisterBoolSlider("DisableBlueRefl", "J_NOSKYREF");
 #if !JLITE
-        InGameConfig::RegisterBoolSlider("IVRadarScaling", "IV Radar Scaling");
+        InGameConfig::RegisterBoolSlider("IVRadarScaling", "J_IVRADAR");
 #endif
-        InGameConfig::RegisterBoolSlider("DisableTutorials", "DisableTutorials");
+        InGameConfig::RegisterBoolSlider("DisableTutorials", "J_NOTUT");
         if (Input::EnableDynamicPrompts) {
-            InGameConfig::RegisterSlider("ForceInputPrompt", "ForceInputPrompt", { "Automated","Controller","Keyboard and Mouse" }, MenuType::CONTROLS);
-            InGameConfig::RegisterSlider("ForcedControllerPrompts", "Controller Prompts",{"Automated","Steam Deck","Xbox Series X","Nintendo Switch","Dualsense","Dualshock 3","Xbox 360"}, MenuType::CONTROLS);
+            InGameConfig::RegisterSlider("ForceInputPrompt", "J_INPROMPT", { "J_AUTO","J_CTRL","J_KBM" }, MenuType::CONTROLS);
+            InGameConfig::RegisterSlider("ForcedControllerPrompts", "J_CTRLPROMPT", { "J_AUTO","J_DECK","J_XSX","J_NSW","J_DS","J_DS3","J_X360" }, MenuType::CONTROLS);
         }
-        InGameConfig::RegisterBoolSlider("HoldFineAim", "HoldFineAim", MenuType::CONTROLS);
-        InGameConfig::RegisterSlider("DisableAimAssist", "Disable Aim Assist", { "CONTROL_NO","On Mouse only","Always"}, MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("HoldFineAim", "J_HOLDAIM", MenuType::CONTROLS);
+        InGameConfig::RegisterSlider("DisableAimAssist", "J_NOAIMASSIST", { "CONTROL_NO","J_MOUSEONLY","J_ALWAYS" }, MenuType::CONTROLS);
 #if !JLITE
         InGameConfig::RegisterSlider(
             "VehicleAutoCenterModifer",
-            "Vehicle Auto Center Modifer",
+            "J_AUTOCENTER",
             []() -> std::vector<std::string> {
                 std::vector<std::string> result;
                 std::ostringstream oss;
@@ -114,21 +114,35 @@ namespace InGameConfig {
                 MenuType::CONTROLS
                 );
 
-        InGameConfig::RegisterBoolSlider("BetterDriveByCam", "Better Drive-by Cam", InGameConfig::MenuType::CONTROLS);
-        InGameConfig::RegisterBoolSlider("BetterHandbrakeCam", "Better Handbrake Cam", InGameConfig::MenuType::CONTROLS);
-        InGameConfig::RegisterBoolSlider("DisableSprintCamShake", "DisableSprintCamShake", InGameConfig::MenuType::CONTROLS);
-        InGameConfig::RegisterBoolSlider("SR1Reloading", "SR1Reloading", InGameConfig::MenuType::CONTROLS);
-        InGameConfig::RegisterBoolSlider("SR1QuickSwitch", "SR1QuickSwitch", InGameConfig::MenuType::CONTROLS);
-        InGameConfig::RegisterBoolSlider("SR1CrouchCam", "SR1CrouchCam", InGameConfig::MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("BetterDriveByCam", "J_DBCAM", InGameConfig::MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("BetterHandbrakeCam", "J_HBCAM", InGameConfig::MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("DisableSprintCamShake", "J_NOSPRINTSHK", InGameConfig::MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("SR1Reloading", "J_SR1RELOAD", InGameConfig::MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("SR1QuickSwitch", "J_SR1QSW", InGameConfig::MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("SR1CrouchCam", "J_SR1CROUCHCAM", InGameConfig::MenuType::CONTROLS);
         //InGameConfig::RegisterBoolSlider("AllowWeaponSwitchInAllCases", "AllowWeaponSwitchInAllCases", InGameConfig::MenuType::CONTROLS);
-        InGameConfig::RegisterBoolSlider("NoMeleeLockOn", "NoMeleeLockOn", InGameConfig::MenuType::CONTROLS);
-        InGameConfig::RegisterBoolSlider("DisableDistantPeds", "DisableDistantPeds");
-        InGameConfig::RegisterBoolSlider("DisableDistantVehicles", "DisableDistantVehicles");
-        InGameConfig::RegisterBoolSlider("mini_pause_map_PlayerRotation", "Ingame-map player rotation");
+        InGameConfig::RegisterBoolSlider("NoMeleeLockOn", "J_NOMELEELOCK", InGameConfig::MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("DisableDistantPeds", "J_NOFARPEDS");
+        InGameConfig::RegisterBoolSlider("DisableDistantVehicles", "J_NOFARVEH");
+        InGameConfig::RegisterBoolSlider("mini_pause_map_PlayerRotation", "J_MAPROT");
 #endif
+        // Restart-required toggles share the (R) suffix, baked into each cxt entry
+        // so the lua side can use the localization key verbatim as the label.
+        // this is stupid so pls fix
+        static const std::unordered_map<std::string, const char*> restart_label_keys = {
+            { "DisableXInput",          "J_DISXINP_R" },
+            { "ForceDisableVibration",  "J_NOVIB_R"   },
+            { "UHQScreenEffects",       "J_UHQ_R"     },
+            { "Borderless",             "J_BORDER_R"  },
+            { "RemoveVignette",         "J_NOVIGN_R"  },
+            { "RemovePixelationShader", "J_NOPIXEL_R" },
+            { "FasterLoading",          "J_FASTLOAD_R"},
+            { "ForceMetricSystem",      "J_METRIC_R"  },
+        };
         for (const auto& opt : restart_option) {
-            std::string label = std::string(opt.keyname) + " (R)";
-            InGameConfig::RegisterBoolSlider(opt.keyname, label.c_str(),opt.type);
+            auto it = restart_label_keys.find(opt.keyname);
+            const char* labelKey = (it != restart_label_keys.end()) ? it->second : opt.keyname;
+            InGameConfig::RegisterBoolSlider(opt.keyname, labelKey, opt.type);
         }
 
 
@@ -598,7 +612,7 @@ namespace InGameConfig {
                             int headerIndex = currentNumItems;
 #if !RELOADED
                             menuEntries += "\t[" + std::to_string(headerIndex) +
-                                "] = { label = \"Juiced Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
+                                "] = { label = \"J_OPTIONS\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
 #else 
                             menuEntries += "\t[" + std::to_string(headerIndex) +
                                 "] = { label = \"thaRow Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
@@ -737,7 +751,7 @@ namespace InGameConfig {
                                 int headerIndex = currentNumItems;
 #if !RELOADED
                                 menuEntries += "\t[" + std::to_string(headerIndex) +
-                                    "] = { label = \"Juiced Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
+                                    "] = { label = \"J_OPTIONS\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
 
 #else
                                 menuEntries += "\t[" + std::to_string(headerIndex) +
@@ -919,7 +933,7 @@ namespace InGameConfig {
                 // Now add the Juiced_options menu after the functions
                 std::string juicedOptionsMenu = juicedFunctions + "Juiced_options = {\n";
 #if !RELOADED
-                juicedOptionsMenu += "\theader_label_str\t= \"Juiced Options\",\n";
+                juicedOptionsMenu += "\theader_label_str\t= \"J_OPTIONS\",\n";
 #else
                 juicedOptionsMenu += "\theader_label_str\t= \"thaRow Options\",\n";
 #endif
@@ -1058,7 +1072,7 @@ namespace InGameConfig {
                                             // Insert Juiced_options entry
 #if !RELOADED
                                             std::string juicedEntry = "\t[" + std::to_string(juicedIndex) +
-                                                "] = { label = \"Juiced Options\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";
+                                                "] = { label = \"J_OPTIONS\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";
 #else
                                             std::string juicedEntry = "\t[" + std::to_string(juicedIndex) +
                                                 "] = { label = \"thaRow Options\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";
@@ -1138,7 +1152,7 @@ namespace InGameConfig {
                                             // Insert Juiced_options entry
 #if !RELOADED
                                             std::string juicedEntry = "\t[" + std::to_string(juicedIndex) +
-                                                "] = { label = \"Juiced Options\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";
+                                                "] = { label = \"J_OPTIONS\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";
 #else
                                             std::string juicedEntry = "\t[" + std::to_string(juicedIndex) +
                                                 "] = { label = \"thaRow Options\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";

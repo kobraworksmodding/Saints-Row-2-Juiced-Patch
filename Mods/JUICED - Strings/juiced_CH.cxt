@@ -1,2 +1,148 @@
+[J_OPTIONS]
+Juiced 选项
+
+[J_UNCFPS]
+Vanilla FX Plus
+
+[J_XBGAMMA]
+Xbox 360 伽马
+
+[J_XBGAMMA_UI]
+界面上的 Xbox 360 伽马
+
+[J_SHADOWFLT]
+阴影过滤
+
+[J_VEHFADE]
+增加车辆淡出距离
+
+[J_SHDROVR]
+着色器覆盖
+
+[J_SHDROVR_HI]
+强制最高 LOD
+
+[J_SHDROVR_DIST]
+增加距离
+
+[J_VFXPLUS]
+Vanilla FX Plus
+
+[J_BETTERAO]
+更佳环境光遮蔽
+
+[J_NOFOG]
+禁用雾效
+
+[J_NOSKYREF]
+禁用天空反射
+
+[J_IVRADAR]
+IV 雷达缩放
+
+[J_NOTUT]
+禁用教程
+
+[J_INPROMPT]
+强制输入提示
+
+[J_AUTO]
+自动
+
+[J_CTRL]
+控制器
+
+[J_KBM]
+键盘和鼠标
+
+[J_CTRLPROMPT]
+控制器提示
+
+[J_DECK]
+Steam Deck
+
+[J_XSX]
+Xbox Series X
+
+[J_NSW]
+Nintendo Switch
+
+[J_DS]
+Dualsense
+
+[J_DS3]
+Dualshock 3
+
+[J_X360]
+Xbox 360
+
+[J_HOLDAIM]
+保持精确瞄准
+
+[J_NOAIMASSIST]
+禁用瞄准辅助
+
+[J_MOUSEONLY]
+仅鼠标时
+
+[J_ALWAYS]
+始终
+
+[J_AUTOCENTER]
+车辆自动居中修正
+
+[J_DBCAM]
+更佳驾车射击摄像机
+
+[J_HBCAM]
+更佳手刹摄像机
+
+[J_NOSPRINTSHK]
+禁用冲刺摄像机晃动
+
+[J_SR1RELOAD]
+SR1 装弹
+
+[J_SR1QSW]
+SR1 快速切换
+
+[J_SR1CROUCHCAM]
+SR1 蹲伏摄像机
+
+[J_NOMELEELOCK]
+无近战锁定
+
+[J_NOFARPEDS]
+禁用远处行人
+
+[J_NOFARVEH]
+禁用远处车辆
+
+[J_MAPROT]
+地图上玩家旋转
+
+[J_DISXINP_R]
+禁用 XInput (R)
+
+[J_NOVIB_R]
+强制禁用震动 (R)
+
+[J_UHQ_R]
+UHQ 屏幕效果 (R)
+
+[J_BORDER_R]
+无边框 (R)
+
+[J_NOVIGN_R]
+移除暗角 (R)
+
+[J_NOPIXEL_R]
+移除像素化着色器 (R)
+
+[J_FASTLOAD_R]
+更快加载 (R)
+
+[J_METRIC_R]
+强制公制 (R)
+
 [MP_SERVER_IP]
- 

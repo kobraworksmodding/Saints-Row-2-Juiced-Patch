@@ -1,2 +1,148 @@
+[J_OPTIONS]
+Juiced Optionen
+
+[J_UNCFPS]
+Vanilla FX Plus
+
+[J_XBGAMMA]
+Xbox 360 Gamma
+
+[J_XBGAMMA_UI]
+Xbox 360 Gamma in der UI
+
+[J_SHADOWFLT]
+Schattenfilterung
+
+[J_VEHFADE]
+Fahrzeug-Sichtweite erhöhen
+
+[J_SHDROVR]
+Shader-Überschreibung
+
+[J_SHDROVR_HI]
+Höchstes LOD erzwingen
+
+[J_SHDROVR_DIST]
+Erhöhte Distanz
+
+[J_VFXPLUS]
+Vanilla FX Plus
+
+[J_BETTERAO]
+Bessere Umgebungsverdeckung
+
+[J_NOFOG]
+Nebel deaktivieren
+
+[J_NOSKYREF]
+Himmelsreflexionen deaktivieren
+
+[J_IVRADAR]
+IV-Radar-Skalierung
+
+[J_NOTUT]
+Tutorials deaktivieren
+
+[J_INPROMPT]
+Eingabe-Hinweis erzwingen
+
+[J_AUTO]
+Automatisch
+
+[J_CTRL]
+Controller
+
+[J_KBM]
+Tastatur und Maus
+
+[J_CTRLPROMPT]
+Controller-Hinweise
+
+[J_DECK]
+Steam Deck
+
+[J_XSX]
+Xbox Series X
+
+[J_NSW]
+Nintendo Switch
+
+[J_DS]
+Dualsense
+
+[J_DS3]
+Dualshock 3
+
+[J_X360]
+Xbox 360
+
+[J_HOLDAIM]
+Feinzielen halten
+
+[J_NOAIMASSIST]
+Zielhilfe deaktivieren
+
+[J_MOUSEONLY]
+Nur bei Maus
+
+[J_ALWAYS]
+Immer
+
+[J_AUTOCENTER]
+Fahrzeug-Auto-Zentrierung
+
+[J_DBCAM]
+Bessere Drive-by-Kamera
+
+[J_HBCAM]
+Bessere Handbremskamera
+
+[J_NOSPRINTSHK]
+Sprint-Kamerawackeln deaktivieren
+
+[J_SR1RELOAD]
+SR1-Nachladen
+
+[J_SR1QSW]
+SR1-Schnellwechsel
+
+[J_SR1CROUCHCAM]
+SR1-Duck-Kamera
+
+[J_NOMELEELOCK]
+Kein Nahkampf-Lock-On
+
+[J_NOFARPEDS]
+Entfernte Passanten deaktivieren
+
+[J_NOFARVEH]
+Entfernte Fahrzeuge deaktivieren
+
+[J_MAPROT]
+Spielerrotation in Karte
+
+[J_DISXINP_R]
+XInput deaktivieren (R)
+
+[J_NOVIB_R]
+Vibration zwangsweise deaktivieren (R)
+
+[J_UHQ_R]
+UHQ-Bildschirmeffekte (R)
+
+[J_BORDER_R]
+Randlos (R)
+
+[J_NOVIGN_R]
+Vignette entfernen (R)
+
+[J_NOPIXEL_R]
+Pixelierungs-Shader entfernen (R)
+
+[J_FASTLOAD_R]
+Schnelleres Laden (R)
+
+[J_METRIC_R]
+Metrisches System erzwingen (R)
+
 [MP_SERVER_IP]
- 

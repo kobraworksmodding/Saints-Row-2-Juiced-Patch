@@ -1,2 +1,148 @@
+[J_OPTIONS]
+Možnosti Juiced
+
+[J_UNCFPS]
+Vanilla FX Plus
+
+[J_XBGAMMA]
+Gamma Xbox 360
+
+[J_XBGAMMA_UI]
+Gamma Xbox 360 v UI
+
+[J_SHADOWFLT]
+Filtrování stínů
+
+[J_VEHFADE]
+Zvýšit vzdálenost mizení vozidel
+
+[J_SHDROVR]
+Přepsání shaderu
+
+[J_SHDROVR_HI]
+Vynutit nejvyšší LOD
+
+[J_SHDROVR_DIST]
+Zvýšená vzdálenost
+
+[J_VFXPLUS]
+Vanilla FX Plus
+
+[J_BETTERAO]
+Lepší okolní okluze
+
+[J_NOFOG]
+Vypnout mlhu
+
+[J_NOSKYREF]
+Vypnout odrazy oblohy
+
+[J_IVRADAR]
+Škálování radaru IV
+
+[J_NOTUT]
+Vypnout tutoriály
+
+[J_INPROMPT]
+Vynutit výzvu vstupu
+
+[J_AUTO]
+Automaticky
+
+[J_CTRL]
+Ovladač
+
+[J_KBM]
+Klávesnice a myš
+
+[J_CTRLPROMPT]
+Výzvy ovladače
+
+[J_DECK]
+Steam Deck
+
+[J_XSX]
+Xbox Series X
+
+[J_NSW]
+Nintendo Switch
+
+[J_DS]
+Dualsense
+
+[J_DS3]
+Dualshock 3
+
+[J_X360]
+Xbox 360
+
+[J_HOLDAIM]
+Držet jemné míření
+
+[J_NOAIMASSIST]
+Vypnout asistenci míření
+
+[J_MOUSEONLY]
+Pouze na myši
+
+[J_ALWAYS]
+Vždy
+
+[J_AUTOCENTER]
+Modifikátor auto-vystředění vozidla
+
+[J_DBCAM]
+Lepší kamera drive-by
+
+[J_HBCAM]
+Lepší kamera ruční brzdy
+
+[J_NOSPRINTSHK]
+Vypnout třesení kamery při sprintu
+
+[J_SR1RELOAD]
+SR1 nabíjení
+
+[J_SR1QSW]
+SR1 rychlé přepínání
+
+[J_SR1CROUCHCAM]
+SR1 kamera v kleče
+
+[J_NOMELEELOCK]
+Bez zaměření v boji zblízka
+
+[J_NOFARPEDS]
+Vypnout vzdálené chodce
+
+[J_NOFARVEH]
+Vypnout vzdálená vozidla
+
+[J_MAPROT]
+Rotace hráče na mapě
+
+[J_DISXINP_R]
+Vypnout XInput (R)
+
+[J_NOVIB_R]
+Vynutit vypnutí vibrací (R)
+
+[J_UHQ_R]
+UHQ efekty obrazovky (R)
+
+[J_BORDER_R]
+Bez okrajů (R)
+
+[J_NOVIGN_R]
+Odstranit vinětu (R)
+
+[J_NOPIXEL_R]
+Odstranit shader pixelace (R)
+
+[J_FASTLOAD_R]
+Rychlejší načítání (R)
+
+[J_METRIC_R]
+Vynutit metrický systém (R)
+
 [MP_SERVER_IP]
- 

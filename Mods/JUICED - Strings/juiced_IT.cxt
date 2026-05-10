@@ -1,2 +1,148 @@
+[J_OPTIONS]
+Opzioni Juiced
+
+[J_UNCFPS]
+Vanilla FX Plus
+
+[J_XBGAMMA]
+Gamma Xbox 360
+
+[J_XBGAMMA_UI]
+Gamma Xbox 360 sull'interfaccia
+
+[J_SHADOWFLT]
+Filtraggio ombre
+
+[J_VEHFADE]
+Aumenta distanza dissolvenza veicoli
+
+[J_SHDROVR]
+Sovrascrittura shader
+
+[J_SHDROVR_HI]
+Forza LOD massimo
+
+[J_SHDROVR_DIST]
+Distanza aumentata
+
+[J_VFXPLUS]
+Vanilla FX Plus
+
+[J_BETTERAO]
+Migliore occlusione ambientale
+
+[J_NOFOG]
+Disattiva nebbia
+
+[J_NOSKYREF]
+Disattiva riflessi del cielo
+
+[J_IVRADAR]
+Scala radar IV
+
+[J_NOTUT]
+Disattiva tutorial
+
+[J_INPROMPT]
+Forza prompt input
+
+[J_AUTO]
+Automatico
+
+[J_CTRL]
+Controller
+
+[J_KBM]
+Tastiera e mouse
+
+[J_CTRLPROMPT]
+Prompt controller
+
+[J_DECK]
+Steam Deck
+
+[J_XSX]
+Xbox Series X
+
+[J_NSW]
+Nintendo Switch
+
+[J_DS]
+Dualsense
+
+[J_DS3]
+Dualshock 3
+
+[J_X360]
+Xbox 360
+
+[J_HOLDAIM]
+Mantieni mira fine
+
+[J_NOAIMASSIST]
+Disattiva assistenza alla mira
+
+[J_MOUSEONLY]
+Solo con mouse
+
+[J_ALWAYS]
+Sempre
+
+[J_AUTOCENTER]
+Modificatore auto-centratura veicolo
+
+[J_DBCAM]
+Migliore camera drive-by
+
+[J_HBCAM]
+Migliore camera freno a mano
+
+[J_NOSPRINTSHK]
+Disattiva tremolio camera in sprint
+
+[J_SR1RELOAD]
+Ricarica SR1
+
+[J_SR1QSW]
+Cambio rapido SR1
+
+[J_SR1CROUCHCAM]
+Camera accovacciato SR1
+
+[J_NOMELEELOCK]
+Nessun aggancio in mischia
+
+[J_NOFARPEDS]
+Disattiva pedoni distanti
+
+[J_NOFARVEH]
+Disattiva veicoli distanti
+
+[J_MAPROT]
+Rotazione giocatore sulla mappa
+
+[J_DISXINP_R]
+Disattiva XInput (R)
+
+[J_NOVIB_R]
+Forza disattiva vibrazione (R)
+
+[J_UHQ_R]
+Effetti schermo UHQ (R)
+
+[J_BORDER_R]
+Senza bordi (R)
+
+[J_NOVIGN_R]
+Rimuovi vignetta (R)
+
+[J_NOPIXEL_R]
+Rimuovi shader pixelato (R)
+
+[J_FASTLOAD_R]
+Caricamento più veloce (R)
+
+[J_METRIC_R]
+Forza sistema metrico (R)
+
 [MP_SERVER_IP]
- 

@@ -1,2 +1,148 @@
+[J_OPTIONS]
+Juiced Opties
+
+[J_UNCFPS]
+Vanilla FX Plus
+
+[J_XBGAMMA]
+Xbox 360 Gamma
+
+[J_XBGAMMA_UI]
+Xbox 360 Gamma op interface
+
+[J_SHADOWFLT]
+Schaduwfiltering
+
+[J_VEHFADE]
+Verhoog vervaagafstand voertuigen
+
+[J_SHDROVR]
+Shader overschrijven
+
+[J_SHDROVR_HI]
+Forceer hoogste LOD
+
+[J_SHDROVR_DIST]
+Verhoogde afstand
+
+[J_VFXPLUS]
+Vanilla FX Plus
+
+[J_BETTERAO]
+Betere omgevingsocclusie
+
+[J_NOFOG]
+Mist uitschakelen
+
+[J_NOSKYREF]
+Hemelreflecties uitschakelen
+
+[J_IVRADAR]
+IV-radarschaling
+
+[J_NOTUT]
+Tutorials uitschakelen
+
+[J_INPROMPT]
+Forceer invoerprompt
+
+[J_AUTO]
+Automatisch
+
+[J_CTRL]
+Controller
+
+[J_KBM]
+Toetsenbord en muis
+
+[J_CTRLPROMPT]
+Controllerprompts
+
+[J_DECK]
+Steam Deck
+
+[J_XSX]
+Xbox Series X
+
+[J_NSW]
+Nintendo Switch
+
+[J_DS]
+Dualsense
+
+[J_DS3]
+Dualshock 3
+
+[J_X360]
+Xbox 360
+
+[J_HOLDAIM]
+Fijn richten vasthouden
+
+[J_NOAIMASSIST]
+Richthulp uitschakelen
+
+[J_MOUSEONLY]
+Alleen op muis
+
+[J_ALWAYS]
+Altijd
+
+[J_AUTOCENTER]
+Voertuig auto-centreer modifier
+
+[J_DBCAM]
+Betere drive-by camera
+
+[J_HBCAM]
+Betere handremcamera
+
+[J_NOSPRINTSHK]
+Sprintcamera-schudden uitschakelen
+
+[J_SR1RELOAD]
+SR1 herladen
+
+[J_SR1QSW]
+SR1 snel wisselen
+
+[J_SR1CROUCHCAM]
+SR1 hurkcamera
+
+[J_NOMELEELOCK]
+Geen melee lock-on
+
+[J_NOFARPEDS]
+Verre voetgangers uitschakelen
+
+[J_NOFARVEH]
+Verre voertuigen uitschakelen
+
+[J_MAPROT]
+Speler-rotatie op kaart
+
+[J_DISXINP_R]
+XInput uitschakelen (R)
+
+[J_NOVIB_R]
+Forceer trilling uit (R)
+
+[J_UHQ_R]
+UHQ-schermeffecten (R)
+
+[J_BORDER_R]
+Randloos (R)
+
+[J_NOVIGN_R]
+Vignet verwijderen (R)
+
+[J_NOPIXEL_R]
+Pixelisatie-shader verwijderen (R)
+
+[J_FASTLOAD_R]
+Sneller laden (R)
+
+[J_METRIC_R]
+Forceer metrisch stelsel (R)
+
 [MP_SERVER_IP]
- 

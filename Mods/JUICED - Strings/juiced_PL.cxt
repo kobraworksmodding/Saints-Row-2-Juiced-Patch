@@ -1,2 +1,148 @@
+[J_OPTIONS]
+Opcje Juiced
+
+[J_UNCFPS]
+Vanilla FX Plus
+
+[J_XBGAMMA]
+Gamma Xbox 360
+
+[J_XBGAMMA_UI]
+Gamma Xbox 360 w UI
+
+[J_SHADOWFLT]
+Filtrowanie cieni
+
+[J_VEHFADE]
+Zwiększ dystans zanikania pojazdów
+
+[J_SHDROVR]
+Nadpisanie shadera
+
+[J_SHDROVR_HI]
+Wymuś najwyższe LOD
+
+[J_SHDROVR_DIST]
+Zwiększony dystans
+
+[J_VFXPLUS]
+Vanilla FX Plus
+
+[J_BETTERAO]
+Lepsza okluzja otoczenia
+
+[J_NOFOG]
+Wyłącz mgłę
+
+[J_NOSKYREF]
+Wyłącz odbicia nieba
+
+[J_IVRADAR]
+Skalowanie radaru IV
+
+[J_NOTUT]
+Wyłącz samouczki
+
+[J_INPROMPT]
+Wymuś monit wejścia
+
+[J_AUTO]
+Automatycznie
+
+[J_CTRL]
+Kontroler
+
+[J_KBM]
+Klawiatura i mysz
+
+[J_CTRLPROMPT]
+Monity kontrolera
+
+[J_DECK]
+Steam Deck
+
+[J_XSX]
+Xbox Series X
+
+[J_NSW]
+Nintendo Switch
+
+[J_DS]
+Dualsense
+
+[J_DS3]
+Dualshock 3
+
+[J_X360]
+Xbox 360
+
+[J_HOLDAIM]
+Przytrzymaj precyzyjne celowanie
+
+[J_NOAIMASSIST]
+Wyłącz asystę celowania
+
+[J_MOUSEONLY]
+Tylko na myszy
+
+[J_ALWAYS]
+Zawsze
+
+[J_AUTOCENTER]
+Modyfikator auto-centrowania pojazdu
+
+[J_DBCAM]
+Lepsza kamera drive-by
+
+[J_HBCAM]
+Lepsza kamera hamulca ręcznego
+
+[J_NOSPRINTSHK]
+Wyłącz wstrząsy kamery sprintu
+
+[J_SR1RELOAD]
+Przeładowanie SR1
+
+[J_SR1QSW]
+Szybkie przełączanie SR1
+
+[J_SR1CROUCHCAM]
+Kamera kucania SR1
+
+[J_NOMELEELOCK]
+Bez blokady wręcz
+
+[J_NOFARPEDS]
+Wyłącz odległych pieszych
+
+[J_NOFARVEH]
+Wyłącz odległe pojazdy
+
+[J_MAPROT]
+Obrót gracza na mapie
+
+[J_DISXINP_R]
+Wyłącz XInput (R)
+
+[J_NOVIB_R]
+Wymuś wyłącz wibracje (R)
+
+[J_UHQ_R]
+Efekty ekranu UHQ (R)
+
+[J_BORDER_R]
+Bez ramki (R)
+
+[J_NOVIGN_R]
+Usuń winietę (R)
+
+[J_NOPIXEL_R]
+Usuń shader pikselizacji (R)
+
+[J_FASTLOAD_R]
+Szybsze ładowanie (R)
+
+[J_METRIC_R]
+Wymuś system metryczny (R)
+
 [MP_SERVER_IP]
- 

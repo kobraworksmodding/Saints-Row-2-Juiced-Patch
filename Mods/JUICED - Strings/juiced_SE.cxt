@@ -1,2 +1,148 @@
+[J_OPTIONS]
+Juiced-alternativ
+
+[J_UNCFPS]
+Vanilla FX Plus
+
+[J_XBGAMMA]
+Xbox 360-gamma
+
+[J_XBGAMMA_UI]
+Xbox 360-gamma på UI
+
+[J_SHADOWFLT]
+Skuggfiltrering
+
+[J_VEHFADE]
+Öka fordonsblekningsavstånd
+
+[J_SHDROVR]
+Shader-åsidosättning
+
+[J_SHDROVR_HI]
+Tvinga högsta LOD
+
+[J_SHDROVR_DIST]
+Ökat avstånd
+
+[J_VFXPLUS]
+Vanilla FX Plus
+
+[J_BETTERAO]
+Bättre omgivningsocklusion
+
+[J_NOFOG]
+Inaktivera dimma
+
+[J_NOSKYREF]
+Inaktivera himmelsreflektioner
+
+[J_IVRADAR]
+IV-radarskalning
+
+[J_NOTUT]
+Inaktivera handledningar
+
+[J_INPROMPT]
+Tvinga inmatningsindikering
+
+[J_AUTO]
+Automatisk
+
+[J_CTRL]
+Handkontroll
+
+[J_KBM]
+Tangentbord och mus
+
+[J_CTRLPROMPT]
+Handkontrollindikeringar
+
+[J_DECK]
+Steam Deck
+
+[J_XSX]
+Xbox Series X
+
+[J_NSW]
+Nintendo Switch
+
+[J_DS]
+Dualsense
+
+[J_DS3]
+Dualshock 3
+
+[J_X360]
+Xbox 360
+
+[J_HOLDAIM]
+Håll fin sikt
+
+[J_NOAIMASSIST]
+Inaktivera siktassistans
+
+[J_MOUSEONLY]
+Endast på mus
+
+[J_ALWAYS]
+Alltid
+
+[J_AUTOCENTER]
+Fordon auto-centrering
+
+[J_DBCAM]
+Bättre drive-by-kamera
+
+[J_HBCAM]
+Bättre handbromskamera
+
+[J_NOSPRINTSHK]
+Inaktivera sprintkamera-skakning
+
+[J_SR1RELOAD]
+SR1-omladdning
+
+[J_SR1QSW]
+SR1-snabbväxling
+
+[J_SR1CROUCHCAM]
+SR1-hukkamera
+
+[J_NOMELEELOCK]
+Ingen närstridslåsning
+
+[J_NOFARPEDS]
+Inaktivera avlägsna fotgängare
+
+[J_NOFARVEH]
+Inaktivera avlägsna fordon
+
+[J_MAPROT]
+Spelarrotation på karta
+
+[J_DISXINP_R]
+Inaktivera XInput (R)
+
+[J_NOVIB_R]
+Tvinga av vibration (R)
+
+[J_UHQ_R]
+UHQ-skärmeffekter (R)
+
+[J_BORDER_R]
+Utan ram (R)
+
+[J_NOVIGN_R]
+Ta bort vignett (R)
+
+[J_NOPIXEL_R]
+Ta bort pixeleringsshader (R)
+
+[J_FASTLOAD_R]
+Snabbare laddning (R)
+
+[J_METRIC_R]
+Tvinga metersystem (R)
+
 [MP_SERVER_IP]
- 

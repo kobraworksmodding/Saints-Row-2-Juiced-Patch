@@ -1,2 +1,148 @@
+[J_OPTIONS]
+Juiced オプション
+
+[J_UNCFPS]
+Vanilla FX Plus
+
+[J_XBGAMMA]
+Xbox 360 ガンマ
+
+[J_XBGAMMA_UI]
+UI上の Xbox 360 ガンマ
+
+[J_SHADOWFLT]
+シャドウフィルタリング
+
+[J_VEHFADE]
+車両フェード距離を増加
+
+[J_SHDROVR]
+シェーダー上書き
+
+[J_SHDROVR_HI]
+最高LODを強制
+
+[J_SHDROVR_DIST]
+距離を増加
+
+[J_VFXPLUS]
+Vanilla FX Plus
+
+[J_BETTERAO]
+高品質アンビエントオクルージョン
+
+[J_NOFOG]
+霧を無効化
+
+[J_NOSKYREF]
+空の反射を無効化
+
+[J_IVRADAR]
+IVレーダースケーリング
+
+[J_NOTUT]
+チュートリアルを無効化
+
+[J_INPROMPT]
+入力プロンプトを強制
+
+[J_AUTO]
+自動
+
+[J_CTRL]
+コントローラー
+
+[J_KBM]
+キーボードとマウス
+
+[J_CTRLPROMPT]
+コントローラープロンプト
+
+[J_DECK]
+Steam Deck
+
+[J_XSX]
+Xbox Series X
+
+[J_NSW]
+Nintendo Switch
+
+[J_DS]
+Dualsense
+
+[J_DS3]
+Dualshock 3
+
+[J_X360]
+Xbox 360
+
+[J_HOLDAIM]
+精密照準を保持
+
+[J_NOAIMASSIST]
+エイムアシストを無効化
+
+[J_MOUSEONLY]
+マウスのみ
+
+[J_ALWAYS]
+常に
+
+[J_AUTOCENTER]
+車両オートセンター修正
+
+[J_DBCAM]
+改良ドライブバイカメラ
+
+[J_HBCAM]
+改良ハンドブレーキカメラ
+
+[J_NOSPRINTSHK]
+スプリントカメラ揺れを無効化
+
+[J_SR1RELOAD]
+SR1リロード
+
+[J_SR1QSW]
+SR1クイック切替
+
+[J_SR1CROUCHCAM]
+SR1しゃがみカメラ
+
+[J_NOMELEELOCK]
+近接ロックオン無効
+
+[J_NOFARPEDS]
+遠方の歩行者を無効化
+
+[J_NOFARVEH]
+遠方の車両を無効化
+
+[J_MAPROT]
+マップ上のプレイヤー回転
+
+[J_DISXINP_R]
+XInputを無効化 (R)
+
+[J_NOVIB_R]
+振動を強制無効化 (R)
+
+[J_UHQ_R]
+UHQスクリーンエフェクト (R)
+
+[J_BORDER_R]
+ボーダーレス (R)
+
+[J_NOVIGN_R]
+ビネットを削除 (R)
+
+[J_NOPIXEL_R]
+ピクセル化シェーダーを削除 (R)
+
+[J_FASTLOAD_R]
+高速ロード (R)
+
+[J_METRIC_R]
+メートル法を強制 (R)
+
 [MP_SERVER_IP]
- 
