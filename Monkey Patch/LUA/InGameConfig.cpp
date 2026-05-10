@@ -259,7 +259,7 @@ namespace InGameConfig {
         }
         if (OptionsManager::getOption(var) != nullptr) {
             if (write) {
-                OptionsManager::setOptionValue(var, *value);
+                OptionsManager::setOptionValue(var, static_cast<double>(*value));
             }
             else if (!write) {
                 *value = OptionsManager::getOptionValue(var);
@@ -268,6 +268,25 @@ namespace InGameConfig {
         if (!write) {
             *value = ClampSliderValue(var, *value);
         }
+    }
+    void GLuaWrapperF(const char* var, double* value, bool write) {
+        if (!var || !value) return;
+        Option* opt = OptionsManager::getOption(var);
+        if (!opt) return;
+        if (write) {
+            OptionsManager::setOptionValue(std::string(var), *value);
+        } else {
+            *value = opt->getValue();
+        }
+    }
+    static std::string lua_escape(const std::string& s) {
+        std::string out;
+        out.reserve(s.size());
+        for (char c : s) {
+            if (c == '\\' || c == '"') out += '\\';
+            out += c;
+        }
+        return out;
     }
     PatchEntry* FindPatchEntry(const char* name) {
         for (auto& entry : patch_registry) {
@@ -401,6 +420,32 @@ namespace InGameConfig {
         // Create a bool slider with default Yes/No labels
         return RegisterSlider(name, display_name, { "CONTROL_NO", "CONTROL_YES" }, type, startingId);
     }
+    bool RegisterNumSlider(const char* name, const char* display_name,
+                           const char* suffix, int scale,
+                           MenuType menuType, int startingId)
+    {
+        int id = startingId;
+        if (id == -1 || g_usedIds.find(id) != g_usedIds.end()) {
+            id = -1; // assigned later in PatchSliderContent
+        } else {
+            g_usedIds.insert(id);
+        }
+
+        Slider s;
+        s.name         = name;
+        s.display_name = display_name;
+        s.id           = id;
+        s.menuType     = menuType;
+        s.isNumSlider  = true;
+        s.suffix       = suffix ? suffix : "%%";
+        s.scale        = scale;
+        g_sliders.push_back(std::move(s));
+
+        if (g_juicedVars.find(name) == g_juicedVars.end()) {
+            g_juicedVars[name] = 0;
+        }
+        return true;
+    }
     int ClampSliderValue(const std::string& sliderName, int currentValue)
     {
         auto it = std::find_if(
@@ -410,7 +455,7 @@ namespace InGameConfig {
                 return s.name == sliderName;
             }
         );
-        if (it != g_sliders.end())
+        if (it != g_sliders.end() && !it->isNumSlider)
         {
             const int maxIndex = static_cast<int>(it->labels.size()) - 1;
             if (currentValue < 0) currentValue = 0;
@@ -422,7 +467,6 @@ namespace InGameConfig {
     static char* g_sliderModifiedBuffer = nullptr;
 
     void DebugDumpLua(const std::string& buffer, const std::string& stage) {
-        return;
         // Get current module directory
         char modulePath[MAX_PATH];
         GetModuleFileNameA(GetModuleHandleA(nullptr), modulePath, MAX_PATH);
@@ -479,6 +523,9 @@ namespace InGameConfig {
 
             std::string sliderAdditions;
             for (const auto& slider : g_sliders) {
+                // NUM_SLIDER stores cur_value directly on the menu entry, no helper table needed.
+                if (slider.isNumSlider) continue;
+
                 // Create slider definition with custom labels
                 std::string sliderValuesStr = slider.name + "_slider_values = { ";
 
@@ -500,16 +547,17 @@ namespace InGameConfig {
             modified = true;
         }
 
-        // Count sliders for each menu type
-        std::vector<Slider> displaySliders;
-        std::vector<Slider> controlSliders;
+        // Count sliders for each menu type. Use pointers so that index assignments
+        // we make below (idxOriginal / idxJuiced) survive into later emission steps.
+        std::vector<Slider*> displaySliders;
+        std::vector<Slider*> controlSliders;
 
-        for (const auto& slider : g_sliders) {
+        for (auto& slider : g_sliders) {
             if (slider.menuType == MenuType::DISPLAY) {
-                displaySliders.push_back(slider);
+                displaySliders.push_back(&slider);
             }
             else if (slider.menuType == MenuType::CONTROLS) {
-                controlSliders.push_back(slider);
+                controlSliders.push_back(&slider);
             }
         }
 
@@ -557,13 +605,21 @@ namespace InGameConfig {
 #endif
                             // Then add all display sliders
                             for (size_t i = 0; i < displaySliders.size(); i++) {
-                                const auto& slider = displaySliders[i];
-                                // Create new menu entry with the same format as existing entries
-                                menuEntries += "\t[" + std::to_string(headerIndex + 1 + i) +
-                                    "] = { label = \"" + slider.display_name +
-                                    "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
-                                    slider.name + "_slider_values,\t\t\ton_value_update = pause_menu_display_options_update_value,\tid =" +
-                                    std::to_string(slider.id) + ",\t\ton_select = pause_menu_options_submenu_exit_confirm },\n";
+                                auto& slider = *displaySliders[i];
+                                int entryIdx = headerIndex + 1 + static_cast<int>(i);
+                                slider.idxOriginal = entryIdx;
+                                if (slider.isNumSlider) {
+                                    menuEntries += "\t[" + std::to_string(entryIdx) +
+                                        "] = { label = \"" + slider.display_name +
+                                        "\",\t\t\ttype = MENU_ITEM_TYPE_NUM_SLIDER, thumb_width = 70, cur_value = 0,\t\t\ton_value_update = pause_menu_display_options_update_value,\tid =" +
+                                        std::to_string(slider.id) + ",\t\ton_select = pause_menu_option_accept },\n";
+                                } else {
+                                    menuEntries += "\t[" + std::to_string(entryIdx) +
+                                        "] = { label = \"" + slider.display_name +
+                                        "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
+                                        slider.name + "_slider_values,\t\t\ton_value_update = pause_menu_display_options_update_value,\tid =" +
+                                        std::to_string(slider.id) + ",\t\ton_select = pause_menu_options_submenu_exit_confirm },\n";
+                                }
                             }
 
                             buffer.insert(lastBracketPos, menuEntries);
@@ -586,9 +642,14 @@ namespace InGameConfig {
                     std::string initLines;
                     initLines += "vint_get_avg_processing_time(\"JuicedCall\",1)";
                     for (const auto& slider : displaySliders) {
-                        // Create initialization lines
-                        initLines += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
-                            slider.name + "\")\n";
+                        if (slider->isNumSlider) {
+                            initLines += "\tPause_display_menu_PC[" + std::to_string(slider->idxOriginal) +
+                                "].cur_value = vint_get_avg_processing_time(\"ReadJuicedF\",\"" +
+                                slider->name + "\")\n";
+                        } else {
+                            initLines += "\t" + slider->name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
+                                slider->name + "\")\n";
+                        }
                     }
 
                     buffer.insert(functionBodyStart, initLines);
@@ -609,11 +670,24 @@ namespace InGameConfig {
 
                     std::string conditions;
                     for (const auto& slider : displaySliders) {
-                        // Create condition for each slider
-                        conditions += "\tif idx == " + std::to_string(slider.id) + " then\n" +
-                            "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider.name +
-                            "\", menu_data.text_slider_values.cur_value)\n" +
-                            "\tend\n";
+                        if (slider->isNumSlider) {
+                            // Custom-suffix block. Early-return so vanilla NUM_SLIDER handler
+                            // (which would force the "%%" suffix) doesn't overwrite our text_tag.
+                            conditions += "\tif idx == " + std::to_string(slider->id) + " then\n" +
+                                "\t\tvint_get_avg_processing_time(\"WriteJuicedF\",\"" + slider->name +
+                                "\", menu_data.cur_value)\n" +
+                                "\t\tpause_menu_update_option(PAUSE_MENU_DISPLAY_ID, idx, false, menu_data.cur_value)\n" +
+                                "\t\tlocal h = vint_object_find(\"value_text\", menu_label.control.grp_h)\n" +
+                                "\t\tvint_set_property(h, \"text_tag\", floor(menu_data.cur_value * " +
+                                std::to_string(slider->scale) + ") .. \"" + lua_escape(slider->suffix) + "\")\n" +
+                                "\t\treturn\n" +
+                                "\tend\n";
+                        } else {
+                            conditions += "\tif idx == " + std::to_string(slider->id) + " then\n" +
+                                "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider->name +
+                                "\", menu_data.text_slider_values.cur_value)\n" +
+                                "\tend\n";
+                        }
                     }
 
                     buffer.insert(insertPos, conditions);
@@ -671,13 +745,21 @@ namespace InGameConfig {
 #endif
                                 // Then add all control sliders
                                 for (size_t i = 0; i < controlSliders.size(); i++) {
-                                    const auto& slider = controlSliders[i];
-                                    // Create new menu entry with the same format as existing entries
-                                    menuEntries += "\t[" + std::to_string(headerIndex + 1 + i) +
-                                        "] = { label = \"" + slider.display_name +
-                                        "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
-                                        slider.name + "_slider_values,\t\t\ton_value_update = pause_menu_control_options_update_value,\tid =" +
-                                        std::to_string(slider.id) + ",\t\ton_select = pause_menu_option_accept },\n";
+                                    auto& slider = *controlSliders[i];
+                                    int entryIdx = headerIndex + 1 + static_cast<int>(i);
+                                    slider.idxOriginal = entryIdx;
+                                    if (slider.isNumSlider) {
+                                        menuEntries += "\t[" + std::to_string(entryIdx) +
+                                            "] = { label = \"" + slider.display_name +
+                                            "\",\t\t\ttype = MENU_ITEM_TYPE_NUM_SLIDER, thumb_width = 70, cur_value = 0,\t\t\ton_value_update = pause_menu_control_options_update_value,\tid =" +
+                                            std::to_string(slider.id) + ",\t\ton_select = pause_menu_option_accept },\n";
+                                    } else {
+                                        menuEntries += "\t[" + std::to_string(entryIdx) +
+                                            "] = { label = \"" + slider.display_name +
+                                            "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
+                                            slider.name + "_slider_values,\t\t\ton_value_update = pause_menu_control_options_update_value,\tid =" +
+                                            std::to_string(slider.id) + ",\t\ton_select = pause_menu_option_accept },\n";
+                                    }
                                 }
 
                                 buffer.insert(lastBracketPos, menuEntries);
@@ -701,9 +783,14 @@ namespace InGameConfig {
                     std::string initLines;
                     initLines += "vint_get_avg_processing_time(\"JuicedCall\",1)";
                     for (const auto& slider : controlSliders) {
-                        // Create initialization lines
-                        initLines += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
-                            slider.name + "\")\n";
+                        if (slider->isNumSlider) {
+                            initLines += "\tPause_control_menu_PC[" + std::to_string(slider->idxOriginal) +
+                                "].cur_value = vint_get_avg_processing_time(\"ReadJuicedF\",\"" +
+                                slider->name + "\")\n";
+                        } else {
+                            initLines += "\t" + slider->name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
+                                slider->name + "\")\n";
+                        }
                     }
 
                     buffer.insert(functionBodyStart, initLines);
@@ -724,11 +811,22 @@ namespace InGameConfig {
 
                     std::string conditions;
                     for (const auto& slider : controlSliders) {
-                        // Create condition for each slider
-                        conditions += "\tif idx == " + std::to_string(slider.id) + " then\n" +
-                            "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider.name +
-                            "\", menu_data.text_slider_values.cur_value)\n" +
-                            "\tend\n";
+                        if (slider->isNumSlider) {
+                            conditions += "\tif idx == " + std::to_string(slider->id) + " then\n" +
+                                "\t\tvint_get_avg_processing_time(\"WriteJuicedF\",\"" + slider->name +
+                                "\", menu_data.cur_value)\n" +
+                                "\t\tpause_menu_update_option(PAUSE_MENU_CONTROL_ID, idx, false, menu_data.cur_value)\n" +
+                                "\t\tlocal h = vint_object_find(\"value_text\", menu_label.control.grp_h)\n" +
+                                "\t\tvint_set_property(h, \"text_tag\", floor(menu_data.cur_value * " +
+                                std::to_string(slider->scale) + ") .. \"" + lua_escape(slider->suffix) + "\")\n" +
+                                "\t\treturn\n" +
+                                "\tend\n";
+                        } else {
+                            conditions += "\tif idx == " + std::to_string(slider->id) + " then\n" +
+                                "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider->name +
+                                "\", menu_data.text_slider_values.cur_value)\n" +
+                                "\tend\n";
+                        }
                     }
 
                     buffer.insert(insertPos, conditions);
@@ -750,13 +848,34 @@ namespace InGameConfig {
             std::string displayMenuStr = "Pause_display_menu_PC = {";
             size_t displayMenuPos = buffer.find(displayMenuStr);
             if (displayMenuPos != std::string::npos) {
+                // Pre-compute the index each slider will occupy inside Juiced_options.
+                // We need this in both the populate (build) function and the menu definition,
+                // and the populate is emitted *before* we walk the menu entries.
+                {
+                    int probe = 0;
+                    if (!displaySliders.empty()) {
+                        ++probe; // display header
+                        for (auto* s : displaySliders) s->idxJuiced = probe++;
+                    }
+                    if (!controlSliders.empty()) {
+                        ++probe; // control header
+                        for (auto* s : controlSliders) s->idxJuiced = probe++;
+                    }
+                }
+
                 // First add the supporting functions before the menu
                 std::string juicedFunctions = "function juiced_menu_build_display_options_menu_PC(menu_data)\n";
                 juicedFunctions += "vint_get_avg_processing_time(\"JuicedCall\",1)";
                 // Initialize all sliders (both display and control)
                 for (const auto& slider : g_sliders) {
-                    juicedFunctions += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
-                        slider.name + "\")\n";
+                    if (slider.isNumSlider) {
+                        juicedFunctions += "\tJuiced_options[" + std::to_string(slider.idxJuiced) +
+                            "].cur_value = vint_get_avg_processing_time(\"ReadJuicedF\",\"" +
+                            slider.name + "\")\n";
+                    } else {
+                        juicedFunctions += "\t" + slider.name + "_slider_values.cur_value = vint_get_avg_processing_time(\"ReadJuiced\",\"" +
+                            slider.name + "\")\n";
+                    }
                 }
 
                 juicedFunctions += "end\n\n";
@@ -764,21 +883,31 @@ namespace InGameConfig {
                 // Add update function for juiced menu
                 juicedFunctions += "function juiced_menu_display_options_update_value(menu_label, menu_data)\n";
                 juicedFunctions += "\tlocal idx = menu_data.id\n";
-                juicedFunctions += "if menu_data.type == MENU_ITEM_TYPE_NUM_SLIDER then\n";
-                juicedFunctions += "local h = vint_object_find(\"value_text\", menu_label.control.grp_h)\n";
-                juicedFunctions += "vint_set_property(h, \"text_tag\", floor(menu_data.cur_value * 100) .. \" % %\")\n";
-                juicedFunctions += "end\n\n";
+                juicedFunctions += "\tif menu_data.type == MENU_ITEM_TYPE_NUM_SLIDER then\n";
+                juicedFunctions += "\t\tlocal h = vint_object_find(\"value_text\", menu_label.control.grp_h)\n";
+                // Per-id NUM_SLIDER block with each slider's own scale + suffix.
+                for (const auto& slider : g_sliders) {
+                    if (!slider.isNumSlider) continue;
+                    juicedFunctions += "\t\tif idx == " + std::to_string(slider.id) + " then\n" +
+                        "\t\t\tvint_get_avg_processing_time(\"WriteJuicedF\",\"" + slider.name +
+                        "\", menu_data.cur_value)\n" +
+                        "\t\t\tvint_set_property(h, \"text_tag\", floor(menu_data.cur_value * " +
+                        std::to_string(slider.scale) + ") .. \"" + lua_escape(slider.suffix) + "\")\n" +
+                        "\t\tend\n";
+                }
+                juicedFunctions += "\tend\n\n";
                 // Add conditions for all sliders
 
-                juicedFunctions += "if menu_data.type == MENU_ITEM_TYPE_TEXT_SLIDER then\n";
+                juicedFunctions += "\tif menu_data.type == MENU_ITEM_TYPE_TEXT_SLIDER then\n";
 
                 for (const auto& slider : g_sliders) {
-                    juicedFunctions += "\tif idx == " + std::to_string(slider.id) + " then\n" +
-                        "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider.name +
+                    if (slider.isNumSlider) continue;
+                    juicedFunctions += "\t\tif idx == " + std::to_string(slider.id) + " then\n" +
+                        "\t\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider.name +
                         "\", menu_data.text_slider_values.cur_value)\n" +
-                        "\tend\n";
+                        "\t\tend\n";
                 }
-                juicedFunctions += "end\n\n";
+                juicedFunctions += "\tend\n";
                 juicedFunctions += "end\n\n";
 
                 // Add back function
@@ -820,19 +949,29 @@ namespace InGameConfig {
                 // Add entries for all sliders
                 int entryIndex = 0;
 
+                auto emitJuicedEntry = [&](const Slider& slider, int idx) {
+                    if (slider.isNumSlider) {
+                        juicedOptionsMenu += "\t[" + std::to_string(idx) +
+                            "] = { label = \"" + slider.display_name +
+                            "\",\t\t\ttype = MENU_ITEM_TYPE_NUM_SLIDER, thumb_width = 70, cur_value = 0,\t\t\ton_value_update = juiced_menu_display_options_update_value,\tid =" +
+                            std::to_string(slider.id) + ",\t\ton_select = pause_menu_option_accept },\n";
+                    } else {
+                        juicedOptionsMenu += "\t[" + std::to_string(idx) +
+                            "] = { label = \"" + slider.display_name +
+                            "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
+                            slider.name + "_slider_values,\t\t\ton_value_update = juiced_menu_display_options_update_value,\tid =" +
+                            std::to_string(slider.id) + ",\t\ton_select = pause_menu_options_submenu_exit_confirm },\n";
+                    }
+                };
+
                 // Add display sliders if we have any
                 if (!displaySliders.empty()) {
                     // Add display header
                     juicedOptionsMenu += "\t[" + std::to_string(entryIndex++) +
                         "] = { label = \"Display & Audio Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
 
-                    // Add display sliders
-                    for (const auto& slider : displaySliders) {
-                        juicedOptionsMenu += "\t[" + std::to_string(entryIndex++) +
-                            "] = { label = \"" + slider.display_name +
-                            "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
-                            slider.name + "_slider_values,\t\t\ton_value_update = juiced_menu_display_options_update_value,\tid =" +
-                            std::to_string(slider.id) + ",\t\ton_select = pause_menu_options_submenu_exit_confirm },\n";
+                    for (const auto* slider : displaySliders) {
+                        emitJuicedEntry(*slider, entryIndex++);
                     }
                 }
 
@@ -842,13 +981,8 @@ namespace InGameConfig {
                     juicedOptionsMenu += "\t[" + std::to_string(entryIndex++) +
                         "] = { label = \"Control Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
 
-                    // Add control sliders
-                    for (const auto& slider : controlSliders) {
-                        juicedOptionsMenu += "\t[" + std::to_string(entryIndex++) +
-                            "] = { label = \"" + slider.display_name +
-                            "\",\t\t\ttype = MENU_ITEM_TYPE_TEXT_SLIDER, text_slider_values = " +
-                            slider.name + "_slider_values,\t\t\ton_value_update = juiced_menu_display_options_update_value,\tid =" +
-                            std::to_string(slider.id) + ",\t\ton_select = pause_menu_options_submenu_exit_confirm },\n";
+                    for (const auto* slider : controlSliders) {
+                        emitJuicedEntry(*slider, entryIndex++);
                     }
                 }
 
@@ -1161,7 +1295,7 @@ namespace InGameConfig {
 
 
         
-            //DebugDumpLua(buffer, "after");
+            DebugDumpLua(buffer, "after");
         return modified;
     }
 }

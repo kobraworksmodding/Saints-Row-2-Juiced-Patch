@@ -450,6 +450,28 @@ namespace GLua
             lua_pushboolean(L, 1);
             return 1;
         }
+        else if (strcmp(cmd, "ReadJuicedF") == 0) {
+            const char* varName = lua_tostring(L, 2);
+            if (varName == NULL) {
+                lua_pushnumber(L, 0);
+                return 1;
+            }
+            double value = 0.0;
+            InGameConfig::GLuaWrapperF(varName, &value, false);
+            lua_pushnumber(L, value);
+            return 1;
+        }
+        else if (strcmp(cmd, "WriteJuicedF") == 0) {
+            const char* varName = lua_tostring(L, 2);
+            if (varName == NULL) {
+                lua_pushboolean(L, 0);
+                return 1;
+            }
+            double value = (double)lua_tonumber(L, 3);
+            InGameConfig::GLuaWrapperF(varName, &value, true);
+            lua_pushboolean(L, 1);
+            return 1;
+        }
 
         lua_pushnil(L);
         return 1;
