@@ -16,7 +16,29 @@
 #include "../Game/Game.h"
 #include "../Player/Input.h"
 
+uintptr_t compress_character_addr = 0x7F4F60_g;
+struct cchar
+{
+	wchar_t unicode;
+	wchar_t compressed;
+};
 
+wchar_t compress_char(wchar_t c)
+{
+	unsigned int i = 0;
+	size_t& num_cchars = *(size_t*)0x02528B30_g;
+	cchar* cc_list = *(cchar**)0x02528B2C_g;
+
+	if (c < 256)
+		return c;
+	for (i = 0; i < num_cchars; ++i)
+	{
+		if (cc_list[i].unicode == c)
+			return cc_list[i].compressed;
+	}
+	return c;
+
+}
 
 const char* GetCurrentLanguage()
 {
@@ -112,7 +134,7 @@ namespace MStrings
 			out.reserve(input.size());
 
 			for (unsigned char c : input)
-				out.push_back((wchar_t)c);
+				out.push_back(compress_char((wchar_t)c));
 
 			return out;
 		}
@@ -128,6 +150,12 @@ namespace MStrings
 			out.data(),
 			needed
 		);
+
+		// Map each codepoint through the game's character compression table.
+		// compress_character() returns the input unchanged when the codepoint
+		// is >= 256 (and any other rejection cases), so this is safe for US too.
+		for (wchar_t& c : out)
+			c = compress_char(c);
 
 		return out;
 	}
@@ -286,6 +314,12 @@ namespace MStrings
 	}
 
 	SafetyHookInline get_localization_from_hashD;
+
+	wchar_t* _cdecl get_localization_from_hash_og(uint32_t checksum)
+	{
+		return cdecl_call<wchar_t*>(0x7F4D60, checksum);
+	}
+
 	wchar_t* _cdecl get_localization_from_hash(uint32_t checksum)
 	{
 		if (checksum)
@@ -470,6 +504,127 @@ namespace MStrings
 		}
 	}
 
+	// US fallback: when the current language isn't US, walk *US.cxt files and
+	// inject any entries the game's native localization doesn't have. Lets us
+	// add new strings (e.g. J_* keys for the Juiced menu) without having to
+	// duplicate them into every localized cxt.
+	// Skips entries that already exist in our overlay (native cxt overrides US)
+	// or in the game's native string table (don't fight the official translation).
+	void StartParsingUSFallback()
+	{
+		const char* language_cstr = GetCurrentLanguage();
+		std::string language = (language_cstr && *language_cstr) ? language_cstr : "";
+
+		// Already covered by StartParsing() in the US case.
+		if (_stricmp(language.c_str(), "US") == 0)
+			return;
+
+		const std::string wanted_suffix     = "us.cxt";
+		const std::string voice_suffix_skip = "_vcus.cxt";
+
+		for (auto& entry : DirCache)
+		{
+			const std::string& filename = entry.first; // lowercase hopefully
+			const std::string& filepath = entry.second.FilePath;
+
+			if (!EndsWithInsensitive(filename, wanted_suffix))
+				continue;
+			// Voice cxts (*_vcUS.cxt) are handled by StartParsingVoiceUSFallback.
+			if (EndsWithInsensitive(filename, voice_suffix_skip))
+				continue;
+
+			ParsedCxtResult parsed;
+			if (!ParseCxtFile(filepath, parsed))
+				continue;
+
+			size_t added_normal = 0;
+			size_t added_pad    = 0;
+
+			for (auto& s : parsed.Normal)
+			{
+				// Already injected from the native cxt — keep the localized text.
+				if (g_CustomStrings.find(s.Hash) != g_CustomStrings.end())
+					continue;
+				// Game already has a native string for this hash — don't override.
+				if (get_localization_from_hash_og(s.Hash) != nullptr)
+					continue;
+
+				wchar_t* text_ptr = AllocLocalizationString(s.Hash, s.Text);
+				if (text_ptr)
+				{
+					g_CustomStrings[s.Hash] = text_ptr;
+					++added_normal;
+				}
+			}
+
+			for (auto& s : parsed.Pad)
+			{
+				if (g_CustomPadStrings.find(s.Hash) != g_CustomPadStrings.end())
+					continue;
+				if (get_localization_from_hash_og(s.Hash) != nullptr)
+					continue;
+
+				wchar_t* text_ptr = AllocLocalizationString(s.Hash, s.Text);
+				if (text_ptr)
+				{
+					g_CustomPadStrings[s.Hash] = text_ptr;
+					++added_pad;
+				}
+			}
+
+			if (added_normal || added_pad)
+			{
+				Logger::TypedLog("MSTRINGS",
+					"US fallback: {} normal + {} pad strings from {}\n",
+					added_normal, added_pad, filepath);
+				loaded_files_push_filename(filepath.c_str());
+			}
+		}
+	}
+
+	void StartParsingVoiceUSFallback()
+	{
+		const char* language_cstr = GetCurrentLanguage();
+		std::string language = (language_cstr && *language_cstr) ? language_cstr : "";
+
+		if (_stricmp(language.c_str(), "US") == 0)
+			return;
+
+		const std::string wanted_suffix = "_vcus.cxt";
+
+		for (auto& entry : DirCache)
+		{
+			const std::string& filename = entry.first;
+			const std::string& filepath = entry.second.FilePath;
+
+			if (!EndsWithInsensitive(filename, wanted_suffix))
+				continue;
+
+			std::vector<ParsedVoiceString> parsed;
+			if (!ParseVoiceCxtFile(filepath, parsed))
+				continue;
+
+			size_t added = 0;
+			for (auto& s : parsed)
+			{
+				if (g_CustomVoiceStrings.find(s.Hash) != g_CustomVoiceStrings.end())
+					continue;
+				if (get_localization_from_hash_og(s.Hash) != nullptr)
+					continue;
+
+				g_CustomVoiceStrings[s.Hash] = std::move(s.Text);
+				++added;
+			}
+
+			if (added)
+			{
+				Logger::TypedLog("MSTRINGS",
+					"US voice fallback: {} strings from {}\n", added, filepath);
+				loaded_files_push_filename(filepath.c_str());
+			}
+		}
+	}
+
 	//void StartScan()
 	//{
 	//	const auto max_files = 1024;
@@ -497,6 +652,13 @@ namespace MStrings
 		auto result = loadcharlistD.unsafe_ccall<char>();
 		StartParsing();
 		StartParsingVoice();
+
+		// Run the US-fallback passes *before* installing our hook so that
+		// get_localization_from_hash_og() — which calls 0x7F4D60 directly —
+		// hits the genuine original game function rather than bouncing through
+		// our overlay. After this point the hook takes over for all lookups.
+		StartParsingUSFallback();
+		StartParsingVoiceUSFallback();
 
 		if(!g_CustomStrings.empty() || !g_CustomVoiceStrings.empty())
 			get_localization_from_hashD = safetyhook::create_inline(0x7F4D60_g, get_localization_from_hash);
