@@ -1,18 +1,21 @@
-
-
 # Saints Row 2 Juiced Patch
+<p align="center">
+<img height="225" alt="Juiced Patch logo by cats" src="https://github.com/user-attachments/assets/ced0fdee-2453-42f4-889a-cdfb7b2a2213" />
+</p>
 
-Juiced Patch is a collaboration of fixes and enhancements for Saints Row 2 created by Uzis, Tervel, Clippy95 and Scanti
-using an inject-able DLL file running using the Monkey Patch framework backend by Scanti,
+
+
+Juiced Patch is a collaboration of fixes and enhancements for Saints Row 2 by replacing the original games DFEngine.dll file.
 Juiced Patch provides these fixes and enhancements to the Saints Row 2 PC port, only supporting the latest uncensored update of the game.
 
 [Features fixed that Juiced provides](FEATURED_FIXES.md)
 
 <p>
-  <img width="550" src="https://github.com/user-attachments/assets/6a542edc-bca4-4eb9-9608-cefe46fe435c">
+  <img width="800" src="https://github.com/user-attachments/assets/c4392190-32fa-47eb-91d7-35eaa2806282">
 </p>
 
-This is the entire project of SR2 Juiced Patch in it's entirety minus some SR2 Reloaded code. \
+
+This is the entire project of SR2 Juiced Patch in it's entirety minus some Tharow code. \
 Juiced Patch was originally based on Monkey Patch by [Scanti](https://github.com/scanti2) \
 This project was originally created using Visual Studio 2022 using C++23 and may only be buildable using this setup.
 
@@ -21,8 +24,7 @@ Some main patching areas are all included in Monkey Patch/General/General.cpp an
 ## Build Environments
 There are three different build environments for Juiced Patch.
 - Debug (Full Juiced Patch)
-- Debug - LITE (Juiced Patch LITE)
-- RELOADED (Full Juiced Patch + Extra stuff for RELOADED)
+- RELOADED (Full Juiced Patch + Extra stuff for THAROW)
 
 (RELOADED Build Environment is still included in this source code but the code we have for SR2 Reloaded is scrapped out of
 this repository for security purposes, So code will not build properly when using the RELOADED Build Environment.)
