@@ -319,6 +319,7 @@ int processtextwidth(int width) {
 	SomePMFunc_Native* UpdateSomePMFunc = (SomePMFunc_Native*)(0x00B99DB0);
 	const char* JuicedText = "JUICED ";
 	bool& r_is_widescreen = *(bool*)0x025272DD;
+	static bool hasChangedLobbyName = false;
 	void SomeMMFunc_Hacked()
 	{
 #if JLITE
@@ -355,6 +356,14 @@ int processtextwidth(int width) {
 				__asm pushad
 				InGamePrint(UtilsGlobal::mynat_type.c_str(), y + 15, Render2D::processtextwidth(10), 6);
 				__asm popad
+				if (!hasChangedLobbyName) {
+					char* playerName = (CHAR*)0x0212AB48;
+					char* GameName = reinterpret_cast<char*>(0x0212AA08);
+
+					snprintf(GameName, 256, "[%s]", playerName);
+
+					hasChangedLobbyName = true;
+				}
 			}
 		}
 #else
