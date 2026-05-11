@@ -26,7 +26,7 @@ and / or run completely on startup or after we check everything else.*/
 #include "../Render/bitmap.h"
 
 #include <regex>
-
+#include "../Hooker.h"
 using namespace Math;
 #pragma warning( disable : 4409)
 namespace General {
@@ -1419,8 +1419,30 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		}
 
 	}
+
+	uintptr_t chunk_get_uid_cribsHook_addr = 0x4A9840;
+	uintptr_t streamman_trigger_chunk_swap_addr = 0xA7C760_g;
+	int streamman_trigger_chunk_swap(int id)
+	{
+		int result;
+		__asm
+		{
+			mov eax, id
+			call streamman_trigger_chunk_swap_addr
+			mov result,eax
+		}
+		return result;
+	}
+
+	int16_t __fastcall chunk_get_uid_cribsHook(const char* name)
+	{
+		auto id = thiscall_call <int16_t>(chunk_get_uid_cribsHook_addr, name);
+		return (int16_t)streamman_trigger_chunk_swap(id);
+	}
+
 	void TopWinMain() {
 		Logger::TypedLog("D3D9", "D3D9 Hook: {}\n", D3D9Hook::initialize());
+		InterceptCall(0x5456E7, chunk_get_uid_cribsHook_addr, chunk_get_uid_cribsHook);
 		CModLoader::Init();
 		allowJuicedAPI = GameConfig::GetValue("API", "JuicedAPI", 1);
 		bitmap_loader::Init();
