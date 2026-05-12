@@ -326,7 +326,7 @@ struct unlockables
     char unk[0xA];
 };
 
-int* max_unlockables_counted = (int*)0x0145A29C;
+uint32_t* max_unlockables_counted = (uint32_t*)0x0145A29C;
 unlockables* Unlockables = (unlockables*)0x027DD018;
 typedef void __fastcall unlock_unlockablesT(unlockables* item,int unused);
 unlock_unlockablesT* unlock_item = (unlock_unlockablesT*)(0x6BBD50);
