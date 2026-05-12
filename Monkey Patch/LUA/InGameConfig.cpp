@@ -72,7 +72,7 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("X360GammaUI", "J_XBGAMMA_UI");
         InGameConfig::RegisterBoolSlider("ShadowFiltering", "J_SHADOWFLT");
         //InGameConfig::RegisterBoolSlider("ExtendedRenderDistance", "Extended Render Distance");
-        //InGameConfig::RegisterBoolSlider("DynamicRenderDistance", "DynamicRenderDistance");
+        InGameConfig::RegisterBoolSlider("DynamicRenderDistance", "DynamicRenderDistance");
         InGameConfig::RegisterBoolSlider("IncreaseVehicleFadeDistance", "J_VEHFADE");
         /*if (GameConfig::GetValue("Graphics", "ExtendRenderBatches", 0)) {
             InGameConfig::RegisterBoolSlider("ToggleExtendedRenderDistance", "Toggle ExtendedRenderDistance");

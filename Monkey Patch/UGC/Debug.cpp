@@ -235,7 +235,7 @@ namespace Debug
 
 		//static_mesh_loadD = safetyhook::create_inline(0x6E5760, static_mesh_load);
 
-		//OptionsManager::registerOption("Graphics", "DynamicRenderDistance", (int*)&UseDynamicRenderDistance, 0);
+		OptionsManager::registerOption("Graphics", "DynamicRenderDistance", (int*)&UseDynamicRenderDistance, 0);
 #if !JLITE
 	if (GameConfig::GetValue("Gameplay", "SkipIntros", 0, "Skips Startup Logos and Disclaimers (Creds to Tervel)")) // can't stop Tervel won't stop Tervel
 		{

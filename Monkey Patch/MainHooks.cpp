@@ -1269,7 +1269,7 @@ RenderLoopStuff_Native* UpdateRenderLoopStuff = (RenderLoopStuff_Native*)(0x00C0
 #if !JLITE
 int early_render_hook() {
 	((void(__cdecl*)())0x68C950)();
-	//Debug::DynamicRenderDistance();
+	Debug::DynamicRenderDistance();
 	Render3D::patch_render_batch();
 	if (useJuicedOSD) {
 		PrintFrametime();
