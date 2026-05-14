@@ -59,6 +59,22 @@ ankerl::unordered_dense::map<uint32_t, wchar_t*> g_CustomStrings;
 ankerl::unordered_dense::map<uint32_t, wchar_t*> g_CustomPadStrings;
 ankerl::unordered_dense::map<uint32_t, std::wstring> g_CustomVoiceStrings;
 
+const wchar_t* display_request_string(const char* id, const wchar_t* default_fallback)
+{
+	auto result = thiscall_call<const wchar_t*>(0x7F4BC0_g);
+	if (result)
+	{
+		return result;
+	}
+
+	if (default_fallback)
+	{
+		return default_fallback;
+	}
+
+	return nullptr;
+}
+
 namespace MStrings
 {
 	struct ParsedString
