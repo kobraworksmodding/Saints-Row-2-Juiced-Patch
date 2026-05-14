@@ -763,8 +763,10 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		const char* buff = (const char*)ctx.ebp;
 		const char* filename = (const char*)(ctx.esp + 0x14);
 		size_t& sz = ctx.ecx;
-	
-		std::string convertedBuff(buff,sz);
+
+		std::string originalBuff(buff, sz);
+		std::string convertedBuff = originalBuff;
+		bool baseBufferModified = false;
 #if !JLITE
 		int* resX = (int*)(0xE8DF14);
 		int* resY = (int*)(0xE8DF4C);
@@ -808,16 +810,12 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				replace_all(convertedBuff, "MENU_VSYNC\",\t\t\t\t\t\t", "Fullscreen VSync\",");
 				replace_all(convertedBuff, "Shadow_Maps", "Shadows    ");
 			}
-
-			size_t& sz = ctx.edx;
-			sz = convertedBuff.length();
-
-			strncpy(const_cast<char*>(buff), convertedBuff.c_str(), sz);
-			const_cast<char*>(buff)[sz] = '\0';
 		}
+
+		baseBufferModified = (convertedBuff != originalBuff);
 #endif
 		bool is_pause_menu = (strcmp(filename, "pause_menu.lua") == 0);
-		bool needBufferMod = Render2D::UltrawideFix
+		bool needBufferMod = baseBufferModified || Render2D::UltrawideFix
 #if !JLITE
 			|| Render2D::IVRadarScaling || allowJuicedAPI
 #endif
@@ -830,13 +828,14 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 					delete[] currentModifiedBuffer;
 					currentModifiedBuffer = nullptr;
 				}
-				// Start with the current buffer state
-				const char* currentBuff = buff;
-				bool modified = false;
+				// Start with the latest buffer state so injected Lua appends to the full script.
+				const char* currentBuff = baseBufferModified ? convertedBuff.c_str() : buff;
+				size_t currentSize = baseBufferModified ? convertedBuff.length() : sz;
+				bool modified = baseBufferModified;
 
 
 				std::string finalContent;
-				finalContent = std::string(currentBuff, sz);
+				finalContent = std::string(currentBuff, currentSize);
 				std::string customCode = "";
 				// remove .lua
 				std::string cached_str = filename;
@@ -970,7 +969,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 				if (strcmp(filename, "pause_menu.lua") == 0 && !InGameConfig::g_sliders.empty()) {
 					if (!modified) {
 						// If we haven't created finalContent yet, do it now
-						finalContent = std::string(currentBuff, sz);
+						finalContent = std::string(currentBuff, currentSize);
 					}
 
 					if (GameConfig::GetValue("Debug", "PopulateInGameOptions", 1)) {
@@ -999,7 +998,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #endif
 				if (is_pause_menu) {
 					if (!modified) {
-						finalContent = std::string(currentBuff, sz);
+						finalContent = std::string(currentBuff, currentSize);
 					}
 
 
@@ -1010,7 +1009,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 
 				if (strcmp(filename, "hud.lua") == 0) {
 					if (!modified) {
-						finalContent = std::string(currentBuff, sz);
+						finalContent = std::string(currentBuff, currentSize);
 					}
 
 

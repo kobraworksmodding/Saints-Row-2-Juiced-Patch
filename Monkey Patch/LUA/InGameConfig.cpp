@@ -481,6 +481,7 @@ namespace InGameConfig {
     static char* g_sliderModifiedBuffer = nullptr;
 
     void DebugDumpLua(const std::string& buffer, const std::string& stage) {
+        return;
         // Get current module directory
         char modulePath[MAX_PATH];
         GetModuleFileNameA(GetModuleHandleA(nullptr), modulePath, MAX_PATH);
