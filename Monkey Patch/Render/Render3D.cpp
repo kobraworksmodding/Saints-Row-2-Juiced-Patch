@@ -1546,16 +1546,16 @@ constexpr auto new_size_n = 5000;
 
 		sync_handhake_render();
 
-		// THIS IS KEPT IN JUICED AS IS, DEPRECATED!!!! SEE AND SHOULD USE sync_handhake_render() -- Clippy95
-		if (GameConfig::GetValue("Debug", "SleepHack", 2) == 1) // LOW patch
-		{
-			Render3D::PatchLowSleepHack();
-		}
+		//// THIS IS KEPT IN JUICED AS IS, DEPRECATED!!!! SEE AND SHOULD USE sync_handhake_render() -- Clippy95
+		//if (GameConfig::GetValue("Debug", "SleepHack", 2) == 1) // LOW patch
+		//{
+		//	Render3D::PatchLowSleepHack();
+		//}
 
-		if (GameConfig::GetValue("Debug", "SleepHack", 2) == 2)
-		{
-			Render3D::PatchMediumSleepHack();
-		}
+		//if (GameConfig::GetValue("Debug", "SleepHack", 2) == 2)
+		//{
+		//	Render3D::PatchMediumSleepHack();
+		//}
 		if (GameConfig::GetValue("Debug", "SleepHook", 0, "This will hook sleep and divide sleep-time by half, NOT RECOMMENDED, no support will be provided for playing with this option toggled on!, EXPECT ISSUES!") == 1)
 		{
 			Logger::TypedLog(CHN_DLL, "Hooking sleep...\n");
