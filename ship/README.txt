@@ -4,6 +4,7 @@ Open your Saints Row 2 Game Directory
 
 Drag:
 DFEngine.dll, 
+SDL3.dll,
 mods (folder),
 patches (folder), 
 loose.txt, 
