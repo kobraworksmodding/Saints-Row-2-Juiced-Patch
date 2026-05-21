@@ -67,7 +67,7 @@ namespace InGameConfig {
     };
     void AddOptions() {
         Input::EnableDynamicPrompts = GameConfig::GetValue("Input", "EnableDynamicPrompts", 2);
-        InGameConfig::RegisterBoolSlider("UncapFPS", "J_UNCFPS");
+        InGameConfig::RegisterBoolSlider("UncapFPS", "Uncap FPS");
         InGameConfig::RegisterBoolSlider("X360Gamma", "J_XBGAMMA");
         InGameConfig::RegisterBoolSlider("X360GammaUI", "J_XBGAMMA_UI");
         InGameConfig::RegisterBoolSlider("ShadowFiltering", "J_SHADOWFLT");
