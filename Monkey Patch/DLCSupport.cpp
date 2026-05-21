@@ -1605,7 +1605,7 @@ void DLC::Init() {
     // -- 737280 > 802816 (This is enough to have GOTR work, which is main priority i suppose.)
     DLCSaveSetup();
     VehArr = (VehiclePadding*)0x2FAD1F8;
-    if (!UtilsGlobal::FolderExists("DLC") || !GameConfig::GetValue("DLC", "EnableDLC", 1),"Requires DLC content to be installed otherwise does nothing") return;
+    if (!UtilsGlobal::FolderExists("DLC") || !GameConfig::GetValue("DLC", "EnableDLC", 1, "Requires DLC content to be installed otherwise does nothing")) return;
     AppendSetup();
     PatchFollowerHeads();
     static SafetyHookMid MissionFailure = safetyhook::create_mid(0x00A3994C, &MissionFStringFix);
