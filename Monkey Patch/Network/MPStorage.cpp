@@ -190,7 +190,7 @@ namespace MPStorage
 	{
 		// idfk (clippy95)
 		if(GameConfig::GetValue("Multiplayer","StoreStorageLocally",1,"stores MP player data such as cash and customization in a"
-			"local PATH/Saints Row 2/" FOLDER_NAME "/mp/MPStorage.mpdt_pc file rather than Game/OpenSpy (clippy95)"))
+			"localappdata/THQ/Saints Row 2/" FOLDER_NAME "/mp/MPStorage.mpdt_pc file rather than Game/OpenSpy (clippy95)"))
 		Nop(0x81A87A, 2);
 		InjectHook(0x81A7A3, get_data_from_server);
 		InjectHook(0x81A590, save_data_to_server, HookType::Jump);
