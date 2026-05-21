@@ -15,6 +15,7 @@ namespace AssertHandler {
 	static std::mutex assert_mutex;
 	static std::unordered_set<std::string> active_asserts;
 	static uint8_t CvarFixCrashes;
+	static bool DisableAssertsPopUp;
 	inline void AssertOnce(const char* id, const char* message, bool hide_by_default) {
 		const bool debugger_attached = IsDebuggerPresent();
 
@@ -67,21 +68,22 @@ namespace AssertHandler {
 
 			return;
 		}
+		if (!DisableAssertsPopUp) {
+			std::thread([id_copy, full_message]() {
+				int result = MessageBoxA(
+					nullptr,
+					full_message.c_str(),
+					"Error Occurred",
+					MB_ICONWARNING | MB_YESNO
+				);
 
-		std::thread([id_copy, full_message]() {
-			int result = MessageBoxA(
-				nullptr,
-				full_message.c_str(),
-				"Error Occurred",
-				MB_ICONWARNING | MB_YESNO
-			);
+				std::lock_guard<std::mutex> lock(assert_mutex);
+				active_asserts.erase(id_copy);
 
-			std::lock_guard<std::mutex> lock(assert_mutex);
-			active_asserts.erase(id_copy);
-
-			if (result == IDYES)
-				ignored_asserts.insert(id_copy);
-			}).detach();
+				if (result == IDYES)
+					ignored_asserts.insert(id_copy);
+				}).detach();
+		}
 	}
 }
 namespace CrashFixes {
@@ -242,6 +244,7 @@ namespace CrashFixes {
 	}
 	void Init() {
 		AssertHandler::CvarFixCrashes = GameConfig::GetValue("Debug", "FixCrashes", 2);
+		AssertHandler::DisableAssertsPopUp = GameConfig::GetValue("Debug", "DisableAssertsPopUp", 0) != 0;
 		static auto FixAudioLoop_null_crash1_hook = safetyhook::create_mid(0x0046EE64, &FixAudioLoop_null_crash1);
 		static auto player_vehicle_C4_crash = safetyhook::create_mid(0x4FA07B, [](SafetyHookContext& ctx) {
 			if (ctx.eax == NULL)
