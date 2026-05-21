@@ -1341,7 +1341,7 @@ void diversion_image_sizeup()
 			texture_2d* pass = (texture_2d*)ctx.eax;
 			ApplyX360Gamma(pass->color_info);
 			},safetyhook::MidHook::StartDisabled);
-	if (GameConfig::GetValue("Graphics", "X360GammaUI", 0, "Applies XBOX 360 gamma on HUD elements. (Clippy95)"))
+	if (GameConfig::GetValue("Graphics", "X360GammaUI", 1, "Applies XBOX 360 gamma on HUD elements. (Clippy95)"))
 			final_2d_render.enable();
 	if (GameConfig::GetValue("Graphics", "Borderless", 1, "Borderless windowed, this replaces Windowed mode in-game."))
 		{
