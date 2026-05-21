@@ -28,14 +28,15 @@ function hud_btnmash_init()
 	--eh - Clippy95
 	local SDL_type = vint_get_avg_processing_time("INPUT_PROMPT")
 	
+	-- loading the custom ones causes game to crash for some users idk why
 	if SDL_type == 1 then
-	Hud_btnmash.handles.platform = "sdk"
+	Hud_btnmash.handles.platform = "xbox2"
 	elseif SDL_type == 2 then
-	Hud_btnmash.handles.platform = "xsx"
+	Hud_btnmash.handles.platform = "xbox2"
 	elseif SDL_type == 3 then
-	Hud_btnmash.handles.platform = "nx"
+	Hud_btnmash.handles.platform = "xbox2"
 	elseif SDL_type == 4 then
-	Hud_btnmash.handles.platform = "ps5"
+	Hud_btnmash.handles.platform = "ps3"
 	end
 	
 	platform = Hud_btnmash.handles.platform	
