@@ -19,6 +19,7 @@ import OptionsManager;
 #include <Hooking.Patterns.h>
 #include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_init.h>
+#include "../Hooker.h"
 bool IsKeyPressed(unsigned char Key, bool Hold);
 int __fastcall subT_6218F0(DWORD* a1);
 namespace Input {
@@ -936,6 +937,19 @@ namespace Input {
 
 		return ((HRESULT(__cdecl*)())0xC13910)();
 	}
+
+	SafetyHookInline menu_player_rotateD{};
+
+	 void SAFETYHOOK_CCALL menu_player_rotate(float a1)
+	{
+		auto camera = *(uint32_t*)0x25F5AE8_g;
+		if (camera == 1 || camera == 2)
+		{
+			return;
+		}
+		menu_player_rotateD.unsafe_ccall<void>(a1);
+	}
+
 	void Init() {
 	if (GameConfig::GetValue("Input", "SDL", 1, "Swaps xinput with SDL") != 0) {
 			patchCall((void*)0x51F47C, input_pc_init_hook);
@@ -1027,6 +1041,7 @@ namespace Input {
 			Logger::TypedLog(CHN_MOD, "Patching better player rotation for wardrobes.\n");
 			patchCall((int*)0x007CE170, (int*)0x0073FA80);
 			patchNop((int*)0x7CE168, 2);
+			menu_player_rotateD = safetyhook::create_inline(0x73FB20, menu_player_rotate);
 		}
 
 		if (GameConfig::GetValue("Gameplay", "SwapScrollWheel", 0))
