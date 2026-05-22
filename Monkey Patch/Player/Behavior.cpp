@@ -526,8 +526,9 @@ CMultiPatch CMPatches_SR1Reloading = {
 			static float moon_size_before;
 			static float moonsize = 1.f;
 			static auto get = safetyhook::create_mid(0x4D74DB, [](SafetyHookContext& ctx) {
-				*(float*)(ctx.esp + 0x30) += moonsize;
-				moon_size_before = *(float*)(ctx.esp + 0x30);
+				float& actual_size = *(float*)(ctx.esp + 0x30);
+				moon_size_before = actual_size;
+				actual_size *= moonsize;
 				});
 			static auto meme = safetyhook::create_mid(0x9BBEF4, [](SafetyHookContext& ctx) {
 
