@@ -1598,6 +1598,9 @@ void online()
 
 void DLC::Init() {
 #if !RELOADED
+    auto EnableDLC = GameConfig::GetValue("DLC", "EnableDLC", 1, "Requires DLC content to be installed otherwise does nothing");
+    if (EnableDLC == -1)
+        return;
     online();
     // Patch max memory for Cust Data to prevent mod crashes with DLC.
     patchByte((BYTE*)0x0051EE15, 0x0C);
@@ -1605,7 +1608,7 @@ void DLC::Init() {
     // -- 737280 > 802816 (This is enough to have GOTR work, which is main priority i suppose.)
     DLCSaveSetup();
     VehArr = (VehiclePadding*)0x2FAD1F8;
-    if (!UtilsGlobal::FolderExists("DLC") || !GameConfig::GetValue("DLC", "EnableDLC", 1, "Requires DLC content to be installed otherwise does nothing")) return;
+    if (!UtilsGlobal::FolderExists("DLC") || !EnableDLC) return;
     AppendSetup();
     PatchFollowerHeads();
     static SafetyHookMid MissionFailure = safetyhook::create_mid(0x00A3994C, &MissionFStringFix);
