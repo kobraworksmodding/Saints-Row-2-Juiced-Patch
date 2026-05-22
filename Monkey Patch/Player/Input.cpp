@@ -318,14 +318,24 @@ namespace Input {
 		}
 
 	}
-
+	uintptr_t XInputSetState_call_vibr_og;
+	HRESULT SAFETYHOOK_STDCALL  XInputSetState_call(DWORD dwUserIndex, XINPUT_VIBRATION* pVibration)
+	{
+		if (g_lastInput == MOUSE)
+			return 0;
+		return stdcall_call<HRESULT>(XInputSetState_call_vibr_og, dwUserIndex, pVibration);
+	}
 	void ForceNoVibration()
 	{
 	if (GameConfig::GetValue("Debug", "ForceDisableVibration", 0, "Forces Vibration to be disabled. This will most likely fix the rare load/new game save crashes some users have.")) // Fixes load/new save insta-crash due to broken / shitty joystick drivers.
 		{
-			patchBytesM((BYTE*)0x00C14930, (BYTE*)"\xC3\x00", 2);
+			patchByte((void*)0xC14930, 0xC3);
 			Logger::TypedLog(CHN_DEBUG, "Vibration Forced to OFF.\n");
 		}
+	else {
+		// this will get overriden by SDL, if non SDL this still works for xinput (clippy95)
+		InterceptCall(0xC14A06, XInputSetState_call_vibr_og, XInputSetState_call);
+	}
 	}
 
 	typedef int __cdecl PlayerSpin(float a1);
@@ -913,7 +923,8 @@ namespace Input {
 		if (!g_gamepad || !pVibration) {
 			return -1;  // Error
 		}
-
+		if (g_lastInput == MOUSE)
+			return 0;
 
 		return SDL_RumbleGamepad(g_gamepad, pVibration->wLeftMotorSpeed, pVibration->wRightMotorSpeed, 0);
 	}
