@@ -178,7 +178,7 @@ std::string StringToLower(std::string strToConvert)
 
 bool ScanDLCDir(const char* Directory)
 {
-    if (!GameConfig::GetValue("DLC", "EnableDLC", 1)) return false;
+    if (!(GameConfig::GetValue("DLC", "EnableDLC", 1) >= 1)) return false;
     char CurrentSearch[MAX_PATH];
     char PathBuffer[MAX_PATH];
     WIN32_FIND_DATAA FileData;
