@@ -36,9 +36,8 @@ jobs:
         copy "loose.txt" upload\
         copy "license.txt" upload\
         copy "ship\readme.txt" upload\
-        robocopy "ship" "upload" /E
-        if %ERRORLEVEL% LEQ 7 exit /b 0
-        exit /b %ERRORLEVEL%
+        xcopy ship\* upload\ /T /E /I /Y
+        xcopy Mods upload\Mods /E /I /Y
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
