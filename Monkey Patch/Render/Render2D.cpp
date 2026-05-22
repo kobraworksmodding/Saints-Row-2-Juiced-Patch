@@ -932,13 +932,6 @@ void DrawUltraWideLeftRightBars(float alpha)
 	}
 SafetyHookInline vint_element_base_renderD;
 
-static auto bg_sniper_s_crc = Game::utils::str_to_hash("bg_sniper_s");
-static auto background_crc = Game::utils::str_to_hash("background");
-static auto cte_sniper_rifle_crc = Game::utils::str_to_hash("cte_sniper_rifle");
-static auto map_grp_crc = Game::utils::str_to_hash("map_grp");
-static auto hud_crc = Game::utils::str_to_hash("hud");
-static auto rim_sw_crc = Game::utils::str_to_hash("rim_sw");
-
 struct __declspec(align(8)) vint_render_params
 {
 	int unk;
