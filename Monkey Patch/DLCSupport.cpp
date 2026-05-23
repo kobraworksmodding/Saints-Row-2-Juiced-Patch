@@ -16,6 +16,7 @@
 using namespace General;
 using namespace Game::xml;
 
+
 #define MAX_VEH 168
 #define STORE_ITEM_LIMIT 512
 // can be increased to 30! 31 will static_assert, reasons why are below (probably but 10 is also safe) (clippy95)
@@ -957,7 +958,7 @@ void AppendBitmaps() {
 }
 
 struct VehFineAim {
-    unsigned int Hash;
+    int Hash = -1;
     vector3 Lookat_Offset;
     float Min_Pitch;
     float Max_Pitch;
@@ -970,12 +971,62 @@ struct VehFineAim {
     uint8_t Flags;
 };
 
+struct Vehicle_Fine_Aims_array_XRef {
+    uintptr_t patch_location;
+    size_t offset;
+};
+
+Vehicle_Fine_Aims_array_XRef Vehicle_Fine_Aims_array_xrefs[] = {
+    { 0x004964D2, 0x0000 },
+    { 0x00498646, 0x0000 },
+    { 0x0049C269, 0x0000 },
+    { 0x0049D979, 0x0000 },
+    { 0x0049D9AB, 0x002C },
+    { 0x0049D9BA, 0x0028 },
+    { 0x0049D9CE, 0x0014 },
+    { 0x0049D9D4, 0x0008 },
+    { 0x0049D9E3, 0x0010 },
+    { 0x0049D9EF, 0x0024 },
+    { 0x0049D9FB, 0x0018 },
+    { 0x0049DA07, 0x0004 },
+    { 0x0049DA0D, 0x000C },
+    { 0x0049EAC9, 0x0030 },
+    { 0x0049EB0B, 0x0000 },
+    { 0x0049EB2F, 0x0030 },
+    { 0x00DA4E46, 0x0000 },
+    { 0x00DA4E4B, 0x0034 },
+    { 0x00DA4E50, 0x0068 },
+    { 0x00DA4E55, 0x009C },
+    { 0x00DA4E5A, 0x00D0 },
+    { 0x00DA4E5F, 0x0104 },
+};
+
+const size_t Vehicle_Fine_Aims_array_xref_count = sizeof(Vehicle_Fine_Aims_array_xrefs) / sizeof(Vehicle_Fine_Aims_array_xrefs[0]);
+
+#define Fine_Aim_Vehicles_size 7
+VehFineAim fine[Fine_Aim_Vehicles_size]{};
+void patch_Vehicle_Fine_Aims_array_references() {
+    uintptr_t new_base = (uintptr_t)fine;
+    uintptr_t end_base = ((uintptr_t)&fine[Fine_Aim_Vehicles_size - 1]) + sizeof(uintptr_t);
+
+    Memory::VP::Patch(0x49EB1A + 1, end_base);
+    Memory::VP::Patch(0x49D98A + 1, end_base);
+    for (size_t i = 0; i < Vehicle_Fine_Aims_array_xref_count; i++) {
+        void* patch_addr = (void*)Vehicle_Fine_Aims_array_xrefs[i].patch_location;
+        void* new_value = (void*)((uintptr_t)new_base + Vehicle_Fine_Aims_array_xrefs[i].offset);
+
+        Memory::VP::Patch<void*>(patch_addr, new_value);
+        printf("Patched 0x%p -> 0x%p (offset +0x%zX)\n",
+            patch_addr, new_value, Vehicle_Fine_Aims_array_xrefs[i].offset);
+    }
+}
+
 void __stdcall ParseVehicleFineAim(xtbl_node* XML)
 {
     VehFineAim* Entry = nullptr;
     xtbl_node* VehFineAimNode = xtbl_find(XML, "Vehicle_Fine_Aim");
     int Index = 0;
-    VehFineAim* VehFineAimCameras = (VehFineAim*)0x25F6738;
+    VehFineAim* VehFineAimCameras = *(VehFineAim**)0x004964D2;
     bool IsGameWidescreen = *(bool*)0x025272DD;
 
     while (VehFineAimNode) {
@@ -1033,6 +1084,7 @@ void __stdcall ParseVehicleFineAim(xtbl_node* XML)
             Entry->Hash = Game::utils::str_to_hash((char*)"Flatbed Secondary");
             Entry->Lookat_Offset = { 0.5f, 1.45f, -1.62f };
         }
+        
 
         Entry->Min_Pitch = -1.134464f;
         Entry->Max_Pitch = 0.61086524f;
@@ -1103,6 +1155,7 @@ void AppendVehicleCameras() {
             if (IsDLC) IsDLC = false;
         });
 
+    patch_Vehicle_Fine_Aims_array_references();
     patchJmp((void*)0x00496490, &ParseVehicleFineAim);
 }
 
@@ -1582,6 +1635,7 @@ void online()
         });
 
 }
+
 
 void DLC::Init() {
 #if !RELOADED
