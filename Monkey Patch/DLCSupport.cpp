@@ -1550,7 +1550,8 @@ void CHooks_packet()
 {
     static auto packet_mod = safetyhook::create_mid(0x830E26, [](SafetyHookContext& ctx) {
         multi_flags_1* flags = (multi_flags_1*)(ctx.ecx + ctx.edi);
-        flags->is_dlc_lobby = 1;
+        if(DLCInstalled) flags->is_dlc_lobby = 1;
+
         });
 }
 
@@ -1587,6 +1588,7 @@ void online()
 
     static auto hello_lan = safetyhook::create_mid(0x8131B4, [](SafetyHookContext& ctx) {
         multi_flags_1* this_flags = (multi_flags_1*)(ctx.esi + 0x98);
+        printf("this_flags->is_dlc_lobby %d\n", this_flags->is_dlc_lobby);
            if (!DLCInstalled && this_flags->is_dlc_lobby || DLCInstalled && !this_flags->is_dlc_lobby) {
                NoMatchOnJoin();
                ctx.eip = 0x8131A9;
