@@ -29,7 +29,7 @@ gr_rectT gr_rect = (gr_rectT)0x00D0B980;
 
 namespace Render2D
 {
-	float* currentAR = (float*)0x022FD8EC;
+	float* currentAR = (float*)0x022FD8EC_g;
 	const float widescreenvalue = 1.777777791f;
 	bool BetterChatTest = 0;
 #if !JLITE
@@ -603,7 +603,7 @@ static void DrawBorderRect(int x, int y, int w, int h, int* state)
 
 void gr_rect_letterbox(int x1, int y1, int w, int h, int* state)
 {
-	if (bSmartCutsceneBorder && r_is_widescreen)
+	if (*currentAR > widescreenvalue && bSmartCutsceneBorder && r_is_widescreen)
 	{
 		SmartCutsceneFrame f = GetSmartCutsceneFrame();
 
@@ -657,7 +657,7 @@ void gr_rect_letterbox_below(int x1, int y1, int w, int h, int* state)
 {
 
 
-	if (bSmartCutsceneBorder && r_is_widescreen)
+	if (*currentAR > widescreenvalue && bSmartCutsceneBorder && r_is_widescreen)
 	{
 		return;
 	}
