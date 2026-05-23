@@ -1022,7 +1022,6 @@ void __stdcall ParseVehicleFineAim(xtbl_node* XML)
         else VehFineAimNode = xtbl_find_next(XML, VehFineAimNode, "Vehicle_Fine_Aim");
     }
 
-#ifdef ORIGINAL_FLATBED_CAM
     for (int j = 0; j < 2; ++j) { // this was the bright idea they came up with for the DLC flatbed truck
         Entry = &VehFineAimCameras[Index++];
 
@@ -1045,20 +1044,6 @@ void __stdcall ParseVehicleFineAim(xtbl_node* XML)
         Entry->z_dist = 1.75f;
         Entry->Flags = (Entry->Flags & 0xF8) | 0x06;
     }
-#else
-    Entry = &VehFineAimCameras[Index++];
-    Entry->Hash = Game::utils::str_to_hash((char*)"Flatbed Primary");
-    Entry->Lookat_Offset = { -0.5f, 1.45f, -1.62f };
-    Entry->Min_Pitch = -1.134464f;
-    Entry->Max_Pitch = 0.61086524f;
-    Entry->X_Shift = 0.5f;
-    Entry->Heading_Center = 3.1415927f;
-    Entry->Heading_Range = 0.0f;
-    Entry->base_fov = IsGameWidescreen ? 40.0f : 50.0f;
-    Entry->y_dist = 0.0f;
-    Entry->z_dist = 1.75f;
-    Entry->Flags = (Entry->Flags & 0xF8) | 0x06;
-#endif
 }
 
 void ParseVehicle(xtbl_node* TablePointer, int Unk) {
