@@ -250,6 +250,20 @@ namespace MStrings
 			_strnicmp(tag.c_str(), "image:", 6) == 0;
 	}
 
+	static bool IsValidTagIdentifier(const std::string& tag)
+	{
+		if (tag.empty())
+			return false;
+
+		for (unsigned char c : tag)
+		{
+			if (!(std::isalnum(c) || c == '_'))
+				return false;
+		}
+
+		return true;
+	}
+
 	static bool IsSectionHeaderLine(const std::string& trimmed)
 	{
 		if (trimmed.size() < 2 || trimmed.front() != '[' || trimmed.back() != ']')
@@ -270,6 +284,140 @@ namespace MStrings
 			return false;
 		}
 
+		return true;
+	}
+
+	static bool TryParseSectionHeaderLine(
+		const std::string& trimmed,
+		std::string& out_header)
+	{
+		out_header.clear();
+
+		if (IsSectionHeaderLine(trimmed))
+		{
+			out_header = Trim(trimmed.substr(1, trimmed.size() - 2));
+			return true;
+		}
+
+		if (trimmed.size() < 2 || trimmed.front() != '@')
+			return false;
+
+		std::string header = Trim(trimmed.substr(1));
+		if (header.empty())
+			return false;
+		if (header.find_first_of(" \t") != std::string::npos)
+			return false;
+
+		std::string tag;
+		bool pad = false;
+		ParseTagHeader(header, tag, pad);
+
+		if (!IsValidTagIdentifier(tag))
+			return false;
+
+		out_header = std::move(header);
+		return true;
+	}
+
+	static std::string UnescapeBackslashSequences(const std::string& input)
+	{
+		std::string out;
+		out.reserve(input.size());
+
+		for (size_t i = 0; i < input.size(); ++i)
+		{
+			char c = input[i];
+			if (c != '\\' || i + 1 >= input.size())
+			{
+				out.push_back(c);
+				continue;
+			}
+
+			char next = input[++i];
+			switch (next)
+			{
+			case 'n':
+				out.push_back('\n');
+				break;
+			case 'r':
+				out.push_back('\r');
+				break;
+			case 't':
+				out.push_back('\t');
+				break;
+			case '\\':
+				out.push_back('\\');
+				break;
+			case '"':
+				out.push_back('"');
+				break;
+			default:
+				out.push_back('\\');
+				out.push_back(next);
+				break;
+			}
+		}
+
+		return out;
+	}
+
+	static bool TryParseQuotedEntryLine(
+		const std::string& trimmed,
+		std::string& out_tag,
+		std::string& out_text)
+	{
+		out_tag.clear();
+		out_text.clear();
+
+		if (trimmed.size() < 3 || trimmed.front() != '"')
+			return false;
+
+		std::string raw_tag;
+		raw_tag.reserve(trimmed.size());
+
+		size_t i = 1;
+		bool escape = false;
+		for (; i < trimmed.size(); ++i)
+		{
+			char c = trimmed[i];
+			if (escape)
+			{
+				raw_tag.push_back(c);
+				escape = false;
+				continue;
+			}
+
+			if (c == '\\')
+			{
+				escape = true;
+				raw_tag.push_back(c);
+				continue;
+			}
+
+			if (c == '"')
+				break;
+
+			raw_tag.push_back(c);
+		}
+
+		if (i >= trimmed.size() || trimmed[i] != '"')
+			return false;
+
+		size_t value_start = i + 1;
+		while (value_start < trimmed.size() &&
+			(trimmed[value_start] == ' ' || trimmed[value_start] == '\t'))
+		{
+			++value_start;
+		}
+
+		if (value_start >= trimmed.size())
+			return false;
+
+		out_tag = Trim(UnescapeBackslashSequences(raw_tag));
+		if (out_tag.empty())
+			return false;
+
+		out_text = UnescapeBackslashSequences(trimmed.substr(value_start));
 		return true;
 	}
 
@@ -320,18 +468,32 @@ namespace MStrings
 			}
 
 			std::string trimmed = Trim(line);
+			std::string header;
+			std::string inline_tag;
+			std::string inline_text;
 
 			if (trimmed.empty())
 				continue;
 
-			if (IsSectionHeaderLine(trimmed))
+			if (TryParseSectionHeaderLine(trimmed, header))
 			{
 				FlushEntry();
 
-				std::string header = trimmed.substr(1, trimmed.size() - 2);
-				header = Trim(header);
-
 				ParseTagHeader(header, current_tag, current_pad);
+				continue;
+			}
+
+			if (TryParseQuotedEntryLine(trimmed, inline_tag, inline_text))
+			{
+				FlushEntry();
+
+				uint32_t hash = Game::utils::str_to_hash(inline_tag.c_str());
+				ParsedString parsed{
+					hash,
+					Utf8ToWide(inline_text)
+				};
+
+				out.Normal.push_back(std::move(parsed));
 				continue;
 			}
 
@@ -492,16 +654,31 @@ namespace MStrings
 			}
 
 			std::string trimmed = Trim(line);
+			std::string header;
+			std::string inline_tag;
+			std::string inline_text;
 
 			if (trimmed.empty())
 				continue;
 
-			if (IsSectionHeaderLine(trimmed))
+			if (TryParseSectionHeaderLine(trimmed, header))
 			{
 				FlushEntry();
 
-				current_tag = trimmed.substr(1, trimmed.size() - 2);
-				current_tag = Trim(current_tag);
+				bool unused_pad = false;
+				ParseTagHeader(header, current_tag, unused_pad);
+				continue;
+			}
+
+			if (TryParseQuotedEntryLine(trimmed, inline_tag, inline_text))
+			{
+				FlushEntry();
+
+				uint32_t hash = Game::utils::str_to_hash(inline_tag.c_str());
+				out.push_back({
+					hash,
+					Utf8ToWide(inline_text)
+					});
 				continue;
 			}
 
