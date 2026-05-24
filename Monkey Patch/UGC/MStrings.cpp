@@ -236,6 +236,43 @@ namespace MStrings
 		}
 	}
 
+	static bool IsInlineFormatTag(const std::string& tag)
+	{
+		if (tag.empty())
+			return false;
+
+		if (tag.front() == '/')
+			return true;
+
+		return _stricmp(tag.c_str(), "format") == 0 ||
+			_strnicmp(tag.c_str(), "color:", 6) == 0 ||
+			_strnicmp(tag.c_str(), "scale:", 6) == 0 ||
+			_strnicmp(tag.c_str(), "image:", 6) == 0;
+	}
+
+	static bool IsSectionHeaderLine(const std::string& trimmed)
+	{
+		if (trimmed.size() < 2 || trimmed.front() != '[' || trimmed.back() != ']')
+			return false;
+
+		std::string header = Trim(trimmed.substr(1, trimmed.size() - 2));
+		if (header.empty())
+			return false;
+
+		// Treat only a single bracketed token as a section header.
+		// This keeps inline formatting such as
+		// [format][color:red]hotdog[/format]
+		// or standalone tags like [format] as string content.
+		if (header.find('[') != std::string::npos ||
+			header.find(']') != std::string::npos ||
+			IsInlineFormatTag(header))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	static bool ParseCxtFile(const std::string& filepath, ParsedCxtResult& out)
 	{
 		std::ifstream file(filepath, std::ios::binary);
@@ -287,7 +324,7 @@ namespace MStrings
 			if (trimmed.empty())
 				continue;
 
-			if (trimmed.size() >= 2 && trimmed.front() == '[' && trimmed.back() == ']')
+			if (IsSectionHeaderLine(trimmed))
 			{
 				FlushEntry();
 
@@ -459,7 +496,7 @@ namespace MStrings
 			if (trimmed.empty())
 				continue;
 
-			if (trimmed.size() >= 2 && trimmed.front() == '[' && trimmed.back() == ']')
+			if (IsSectionHeaderLine(trimmed))
 			{
 				FlushEntry();
 
