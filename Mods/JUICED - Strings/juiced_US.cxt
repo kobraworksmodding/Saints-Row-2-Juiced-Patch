@@ -162,3 +162,8 @@ Force Metric System (R)
 
 [MP_SERVER_IP]
 
+[J_MOUSEFOV]
+Scale mouse sensitivity with FOV
+
+[J_FINEAIMONLY]
+Yes, but only in Fine Aim

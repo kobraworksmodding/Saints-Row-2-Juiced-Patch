@@ -20,6 +20,10 @@ import OptionsManager;
 #include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_init.h>
 #include "../Hooker.h"
+#include "../LUA/InGameConfig.h"
+
+import component;
+
 bool IsKeyPressed(unsigned char Key, bool Hold);
 int __fastcall subT_6218F0(DWORD* a1);
 namespace Input {
@@ -960,6 +964,54 @@ namespace Input {
 		}
 		menu_player_rotateD.unsafe_ccall<void>(a1);
 	}
+	 enum ecamera_mouse_fov_options : int16_t
+	 {
+		 DISABLED,
+		 ENABLED,
+		 ENABLED_FINEAIM_ONLY
+	 } camera_mouse_fov_options;
+
+	 enum camera_free_submodes
+	 {
+		 CFSM_EXTERIOR_CLOSE = 0x0,
+		 CFSM_INTERIOR_CLOSE = 0x1,
+		 CFSM_INTERIOR_SPRINT = 0x2,
+		 CFSM_VEHICLE_DRIVER = 0x3,
+		 CFSM_VEHICLE_DRIVER_ALT = 0x4,
+		 CFSM_WATERCRAFT_DRIVER = 0x5,
+		 CFSM_HELICOPTER_DRIVER = 0x6,
+		 CFSM_HELICOPTER_FINE_AIM = 0x7,
+		 CFSM_AIRPLANE_DRIVER = 0x8,
+		 CFSM_ZOOM = 0x9,
+		 CFSM_SWIMMING = 0xA,
+		 CFSM_SPECTATOR = 0xB,
+		 CFSM_FENCE = 0xC,
+		 CFSM_RAGDOLL = 0xD,
+		 CFSM_FALLING = 0xE,
+		 CFSM_LEAPING = 0xF,
+		 CFSM_FINE_AIM = 0x10,
+		 CFSM_FINE_AIM_CROUCH = 0x11,
+		 CFSM_MELEE_LOCK = 0x12,
+		 CFSM_FINE_AIM_VEHICLE = 0x13,
+		 CFSM_FREEFALL = 0x14,
+		 CFSM_PARACHUTE = 0x15,
+		 CFSM_HUMAN_SHIELD = 0x16,
+		 CFSM_SPRINT = 0x17,
+	 };
+
+	 bool isAnyFineAim(camera_free_submodes status) {
+		 return status == CFSM_FINE_AIM ||
+			 status == CFSM_FINE_AIM_CROUCH ||
+			 status == CFSM_HELICOPTER_FINE_AIM ||
+			 status == CFSM_FINE_AIM_VEHICLE || status == CFSM_HUMAN_SHIELD;
+	 }
+
+	 bool CanDoFOVScale(camera_free_submodes status) {
+		 return !( status == CFSM_ZOOM || status == CFSM_AIRPLANE_DRIVER || status == CFSM_HELICOPTER_DRIVER || status == CFSM_WATERCRAFT_DRIVER ||
+			 status == CFSM_VEHICLE_DRIVER_ALT || status == CFSM_VEHICLE_DRIVER);
+	 }
+
+
 
 	void Init() {
 	if (GameConfig::GetValue("Input", "SDL", 1, "Swaps xinput with SDL") != 0) {
@@ -1068,5 +1120,36 @@ namespace Input {
 			float* zoom_delta = (float*)(ctx.esp + 0x10);
 			*zoom_delta = *zoom_delta * GetFrameTimeOver33ms_Fix();
 			});
+
+		OptionsManager::registerOption("Input", "MouseFOVScaling", (int16_t*)&camera_mouse_fov_options);
+		InGameConfig::RegisterSlider("MouseFOVScaling", "J_MOUSEFOV", { "CONTROL_NO", "CONTROL_YES","J_FINEAIMONLY"}, InGameConfig::MenuType::CONTROLS);
+		static float new_mousesenx;
+		static float new_mouseseny;
+		Patch<float*>(0xC136C0 + 4, &new_mouseseny);
+		Patch<float*>(0xC136A2 + 4, &new_mousesenx);
+
+		Juiced::onInputPoll() += []() 
+			{
+				new_mousesenx = *(float*)0x25F5C98_g;
+				new_mouseseny = *(float*)0x25F5C9C_g;
+				camera_free_submodes player_status = *(camera_free_submodes*)0x00E9A5BC;
+				float& current_fov = *(float*)0x025F5BA4;
+				float& exterior = *(float*)0x025F632C;
+				if (camera_mouse_fov_options == ENABLED_FINEAIM_ONLY && (player_status == CFSM_FINE_AIM || player_status == CFSM_FINE_AIM_CROUCH) && LastInput() == MOUSE)
+				{
+
+					float scale = current_fov / exterior;
+					new_mouseseny *= scale;
+					new_mousesenx *= scale;
+				}
+				else if (camera_mouse_fov_options == ENABLED && CanDoFOVScale(player_status))
+				{
+					float scale = current_fov / exterior;
+					new_mouseseny *= scale;
+					new_mousesenx *= scale;
+				}
+
+			};
+
 	}
 }
