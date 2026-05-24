@@ -158,8 +158,8 @@ _declspec(naked) void hook_loose_files()
 
 
 
-std::map<std::string, FILEDATA> DirCache;
-std::map<std::string, FILEDATA> DLCCache;
+LooseFileCache DirCache;
+LooseFileCache DLCCache;
 
 std::string StringToUpper(std::string strToConvert)
 {
@@ -219,8 +219,7 @@ bool ScanDLCDir(const char* Directory)
         std::string SearchFileName(FileData.cFileName);
         SearchFileName = StringToLower(SearchFileName);
 
-        std::map<std::string, FILEDATA>::iterator itDLCCache;
-        itDLCCache = DLCCache.find(SearchFileName);
+        auto itDLCCache = DLCCache.find(SearchFileName);
         if (itDLCCache == DLCCache.end())
         {
             FILEDATA PushData;
@@ -310,9 +309,7 @@ bool CreateCache(char* DirListFile)
 
             std::string SearchFileName(FileData.cFileName);
             SearchFileName = StringToLower(SearchFileName);
-			std::map<std::string, FILEDATA>::iterator itDirCache;
-
-            itDirCache = DirCache.find(SearchFileName);
+            auto itDirCache = DirCache.find(SearchFileName);
 
             if (itDirCache == DirCache.end())
             {
@@ -345,7 +342,7 @@ bool CreateCache(char* DirListFile)
 void DumpCache()
 {
 	Logger::TypedLog(CHN_DLL, "Directory cache :\n");
-	for (std::map<std::string, FILEDATA>::iterator DumpRecord = DirCache.begin(), itr_end = DirCache.end(); DumpRecord != itr_end; ++DumpRecord)
+	for (auto DumpRecord = DirCache.begin(), itr_end = DirCache.end(); DumpRecord != itr_end; ++DumpRecord)
 	{
 		if (DumpRecord->second.MultiDef)
 			Logger::TypedLog(CHN_DLL, "{} -> {} (Multiple definitions)\n", DumpRecord->first.c_str(), DumpRecord->second.FilePath.c_str());
@@ -360,7 +357,7 @@ void CacheConflicts()
 {
     bool has_conflicts = false;
     Logger::TypedLog(CHN_DEBUG, "Possible loose file conflicts:\n");
-	for(std::map<std::string, FILEDATA>::iterator DumpRecord = DirCache.begin(), itr_end = DirCache.end(); DumpRecord != itr_end; ++DumpRecord)
+	for(auto DumpRecord = DirCache.begin(), itr_end = DirCache.end(); DumpRecord != itr_end; ++DumpRecord)
 		if (DumpRecord->second.MultiDef)
 		{
 			Logger::TypedLog(CHN_DEBUG, "    {}\n", DumpRecord->first.c_str());
@@ -376,8 +373,7 @@ const char* TranslateFilePath(const char* FilePath)
     std::string FilePathString(FilePath);
     FilePathString = StringToLower(FilePathString);
 
-    std::map<std::string, FILEDATA>::iterator FoundFilePath;
-    FoundFilePath = DirCache.find(FilePathString);
+    auto FoundFilePath = DirCache.find(FilePathString);
     if (FoundFilePath != DirCache.end())
         return(FoundFilePath->second.FilePath.c_str());
 
@@ -393,8 +389,7 @@ FILEDATA* TranslateFilePathData(const char* FilePath)
     std::string FilePathString(FilePath);
     FilePathString = StringToLower(FilePathString);
 
-    std::map<std::string, FILEDATA>::iterator FoundFilePath;
-    FoundFilePath = DirCache.find(FilePathString);
+    auto FoundFilePath = DirCache.find(FilePathString);
     if (FoundFilePath != DirCache.end())
         return(&FoundFilePath->second);
 
@@ -436,7 +431,7 @@ int GetStringHash(const char* String) {
     return ((int(__fastcall*)(int, const char*))0xBF2BD0)(0, String);
 }
 
-void ProcessCacheHashes(std::map<std::string, FILEDATA>& Cache) {
+void ProcessCacheHashes(LooseFileCache& Cache) {
 
     const char* validExts[] = {
         ".cmesh_pc", ".g_cmesh_pc", ".peg_pc", ".g_peg_pc", ".pcm_pc", ".sim_pc", ".cvtf", ".morph_pc",
@@ -446,7 +441,7 @@ void ProcessCacheHashes(std::map<std::string, FILEDATA>& Cache) {
 
     int extCount = sizeof(validExts) / sizeof(validExts[0]);
 
-    for (std::map<std::string, FILEDATA>::iterator it = Cache.begin(), it_end = Cache.end(); it != it_end; ++it) {
+    for (auto it = Cache.begin(), it_end = Cache.end(); it != it_end; ++it) {
         const std::string& filename = it->first;
         const char* matchedExt = NULL;
         for (int i = 0; i < extCount; i++) {

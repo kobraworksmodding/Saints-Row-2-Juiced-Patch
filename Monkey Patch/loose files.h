@@ -1,7 +1,7 @@
 #pragma once
 #include "stdafx.h"
-#include <map>
 #include <string>
+#include <ankerl/unordered_dense.h>
 #include <safetyhook.hpp>
 
 #include "Shlwapi.h"
@@ -45,6 +45,8 @@ struct FILEDATA
 	bool MultiDef;					// For debug purposes
 };
 
+using LooseFileCache = ankerl::unordered_dense::map<std::string, FILEDATA>;
+
 bool CreateCache(char* DirListFile);
 bool ScanDLCDir(const char* Dir);
 void DumpCache();
@@ -52,8 +54,8 @@ void CacheConflicts();
 void ClearDirCache();
 void InsertFileHashes(SafetyHookContext& ctx);
 
-extern std::map<std::string, FILEDATA> DirCache;
-extern std::map<std::string, FILEDATA> DLCCache;
+extern LooseFileCache DirCache;
+extern LooseFileCache DLCCache;
 const char* TranslateFilePath(const char* FilePath);
 FILEDATA* TranslateFilePathData(const char* FilePath);
 
