@@ -21,6 +21,7 @@ import OptionsManager;
 #include <SDL3/SDL_init.h>
 #include "../Hooker.h"
 #include "../LUA/InGameConfig.h"
+#include "../Render/Render3D.h"
 
 import component;
 
@@ -1130,25 +1131,34 @@ namespace Input {
 
 		Juiced::onInputPoll() += []() 
 			{
+
 				new_mousesenx = *(float*)0x25F5C98_g;
 				new_mouseseny = *(float*)0x25F5C9C_g;
+
+
 				camera_free_submodes player_status = *(camera_free_submodes*)0x00E9A5BC;
-				float& current_fov = *(float*)0x025F5BA4;
-				float& exterior = *(float*)0x025F632C;
-				if (camera_mouse_fov_options == ENABLED_FINEAIM_ONLY && (player_status == CFSM_FINE_AIM || player_status == CFSM_FINE_AIM_CROUCH) && LastInput() == MOUSE)
-				{
+				float current_fov = (*(float*)0x025F5BA4);
+				float exterior = (*(float*)0x025F632C);
 
-					float scale = current_fov / exterior;
-					new_mouseseny *= scale;
-					new_mousesenx *= scale;
-				}
-				else if (camera_mouse_fov_options == ENABLED && CanDoFOVScale(player_status))
+				if (camera_mouse_fov_options != DISABLED)
 				{
 					float scale = current_fov / exterior;
-					new_mouseseny *= scale;
-					new_mousesenx *= scale;
-				}
+					if (camera_mouse_fov_options == ENABLED_FINEAIM_ONLY && (player_status == CFSM_FINE_AIM || player_status == CFSM_FINE_AIM_CROUCH) && LastInput() == MOUSE)
+					{
+						new_mouseseny *= scale;
+						new_mousesenx *= scale;
+					}
+					else if (camera_mouse_fov_options == ENABLED && CanDoFOVScale(player_status))
+					{
 
+						new_mouseseny *= scale;
+						new_mousesenx *= scale;
+					}
+
+					new_mouseseny /= Render3D::FOVMultiplier;
+					new_mousesenx /= Render3D::FOVMultiplier;
+
+				}
 			};
 
 	}
