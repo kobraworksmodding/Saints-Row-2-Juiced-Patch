@@ -525,9 +525,11 @@ CMultiPatch CMPatches_SR1Reloading = {
 
 			static float moon_size_before;
 			static float moonsize = 1.f;
+			static bool done_once = false;
 			static auto get = safetyhook::create_mid(0x4D74DB, [](SafetyHookContext& ctx) {
 				float& actual_size = *(float*)(ctx.esp + 0x30);
 				moon_size_before = actual_size;
+				if(done_once)
 				actual_size *= moonsize;
 				});
 			static auto meme = safetyhook::create_mid(0x9BBEF4, [](SafetyHookContext& ctx) {
@@ -554,6 +556,7 @@ CMultiPatch CMPatches_SR1Reloading = {
 					float thresh = 1.0f - (0.035f * uh) * (0.035f * uh) * 0.5f;
 
 					if (Dot >= thresh) {
+						done_once = true;
 						moonsize = moonsize+ 1.5f;
 						if (moonsize >= 11.f)
 							moonsize = 1.f;
