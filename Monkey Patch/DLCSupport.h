@@ -1,6 +1,7 @@
 #pragma once
 namespace DLC {
 	void Init();
+	void SetDLCNameFlagOnline();
 }
 
 struct VehiclePadding {
