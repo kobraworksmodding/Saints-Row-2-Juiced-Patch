@@ -522,47 +522,6 @@ CMultiPatch CMPatches_SR1Reloading = {
 				(void)cf_do_control_mode_sticky_MIDASMHOOK.enable();
 				sticky_cam_timer_add = user_cam_modifier;
 			}
-
-			static float moon_size_before;
-			static float moonsize = 1.f;
-			static bool done_once = false;
-			static auto get = safetyhook::create_mid(0x4D74DB, [](SafetyHookContext& ctx) {
-				float& actual_size = *(float*)(ctx.esp + 0x30);
-				moon_size_before = actual_size;
-				if(done_once)
-				actual_size *= moonsize;
-				});
-			static auto meme = safetyhook::create_mid(0x9BBEF4, [](SafetyHookContext& ctx) {
-
-
-				auto player = UtilsGlobal::getplayer();
-				auto human = *(uintptr_t*)(ctx.esp + 0x104);
-				if (human == UtilsGlobal::getplayer()) {
-					uint32_t flags = *(uint32_t*)(UtilsGlobal::getplayer() + 0x1160);
-					bool is_currently_fine_aim = (flags >> 27) & 1;
-					bool is_currently_sniper = (flags >> 8) & 1;
-					if (!is_currently_sniper)
-						return;
-					vector3 Dir = (*(vector3*)((*(int*)0x02526DB8) + 0x0C) - *(vector3*)0x025F5B20).normalized();
-
-					float Dot = Dir.x * *(float*)0x025F5B50 + Dir.y * *(float*)0x025F5B54 + Dir.z * *(float*)0x025F5B58;
-
-					if (Dot < 0.0f) Dot = 0.0f;
-
-					// base angle ~2deg, widens as moon grows
-					const float changeme = 2.5f;
-					float uh = moon_size_before * changeme;
-
-					float thresh = 1.0f - (0.035f * uh) * (0.035f * uh) * 0.5f;
-
-					if (Dot >= thresh) {
-						done_once = true;
-						moonsize = moonsize+ 1.5f;
-						if (moonsize >= 11.f)
-							moonsize = 1.f;
-					}
-				}
-				});
 #endif
 	}
 }
