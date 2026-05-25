@@ -15,6 +15,7 @@
 #include <cwchar>
 using namespace General;
 using namespace Game::xml;
+using namespace DLC;
 
 
 #define MAX_VEH 168
@@ -60,7 +61,7 @@ bool IsStringDLCFlagged(const wchar_t* str) {
     return std::wstring_view(str).starts_with(DLCServerFlagWide);
 }
 
-void SetDLCNameFlagOnline() {
+void DLC::SetDLCNameFlagOnline() {
     char* OnlineServerName = (char*)0x0212AA08;
     if (DLCInstalled && !IsStringDLCFlagged(OnlineServerName)) {
         char Temp[64];

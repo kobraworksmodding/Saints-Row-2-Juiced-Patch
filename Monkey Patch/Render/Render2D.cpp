@@ -23,6 +23,7 @@
 #include "../Game/Game.h"
 #include <ankerl/unordered_dense.h>
 #include "../Hooker.h"
+#include "../DLCSupport.h"
 import component;
 typedef char(__cdecl* gr_rectT)(int x1, int y1, int w, int h, int* state);
 gr_rectT gr_rect = (gr_rectT)0x00D0B980;
@@ -361,7 +362,7 @@ int processtextwidth(int width) {
 					char* GameName = reinterpret_cast<char*>(0x0212AA08);
 
 					snprintf(GameName, 256, "[%s]", playerName);
-
+					DLC::SetDLCNameFlagOnline();
 					hasChangedLobbyName = true;
 				}
 			}
