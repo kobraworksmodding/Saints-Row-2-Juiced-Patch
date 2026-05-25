@@ -167,3 +167,6 @@ Scale mouse sensitivity with FOV
 
 [J_FINEAIMONLY]
 Only in FineAim
+
+[J_FOVMULT]
+FOV Multiplier

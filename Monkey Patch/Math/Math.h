@@ -10,6 +10,20 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+template <typename T>
+    requires std::is_floating_point_v<T>
+T NormalizeRange(T value, T min, T max)
+{
+    return (std::clamp(value, min, max) - min) / (max - min);
+}
+
+template <typename T>
+    requires std::is_floating_point_v<T>
+T DenormalizeRange(T value, T min, T max)
+{
+    return min + (std::clamp(value, static_cast<T>(0), static_cast<T>(1)) * (max - min));
+}
+
 struct vector2 {
     float x;
     float y;

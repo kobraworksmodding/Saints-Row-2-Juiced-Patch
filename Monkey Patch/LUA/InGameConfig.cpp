@@ -12,6 +12,7 @@
 #include "../Player/Input.h"
 #include "../General/General.h"
 #include <fstream>
+#include <intrin.h>
 #include <string>
 using namespace General;
 import OptionsManager; 
@@ -74,6 +75,7 @@ namespace InGameConfig {
         //InGameConfig::RegisterBoolSlider("ExtendedRenderDistance", "Extended Render Distance");
         InGameConfig::RegisterBoolSlider("DynamicRenderDistance", "DynamicRenderDistance");
         InGameConfig::RegisterBoolSlider("IncreaseVehicleFadeDistance", "J_VEHFADE");
+        InGameConfig::RegisterNumSlider("FOVMultiplier", "J_FOVMULT", "", 1, nullptr, MenuType::DISPLAY, -1, 1.0, 2.0, 2);
         /*if (GameConfig::GetValue("Graphics", "ExtendRenderBatches", 0)) {
             InGameConfig::RegisterBoolSlider("ToggleExtendedRenderDistance", "Toggle ExtendedRenderDistance");
         }*/
@@ -434,9 +436,15 @@ namespace InGameConfig {
         // Create a bool slider with default Yes/No labels
         return RegisterSlider(name, display_name, { "CONTROL_NO", "CONTROL_YES" }, type, startingId);
     }
+    static std::string LuaNumber(double value) {
+        std::ostringstream oss;
+        oss << std::setprecision(15) << value;
+        return oss.str();
+    }
     bool RegisterNumSlider(const char* name, const char* display_name,
-                           const char* suffix, int scale,
-                           MenuType menuType, int startingId)
+                           const char* suffix, int scale, const char* formatter,
+                           MenuType menuType, int startingId,
+                           double displayMin, double displayMax, int precision)
     {
         int id = startingId;
         if (id == -1 || g_usedIds.find(id) != g_usedIds.end()) {
@@ -453,6 +461,10 @@ namespace InGameConfig {
         s.isNumSlider  = true;
         s.suffix       = suffix ? suffix : "%%";
         s.scale        = scale;
+        s.formatter    = formatter ? formatter : "";
+        s.displayMin   = displayMin;
+        s.displayMax   = displayMax;
+        s.precision    = precision;
         g_sliders.push_back(std::move(s));
 
         if (g_juicedVars.find(name) == g_juicedVars.end()) {
@@ -528,6 +540,67 @@ namespace InGameConfig {
         }
 
         bool modified = false;
+
+        if (buffer.find("function format_decimal_2(") == std::string::npos) {
+            const std::string formatAnchor = "function format_time(data)";
+            const std::string formatHelper =
+                "function format_decimal_2(value)\n"
+                "\tlocal scaled = floor((value * 100) + 0.5)\n"
+                "\tlocal whole = floor(scaled / 100)\n"
+                "\tlocal frac = mod(scaled, 100)\n"
+                "\tif frac < 10 then\n"
+                "\t\treturn whole .. \".0\" .. frac\n"
+                "\telse\n"
+                "\t\treturn whole .. \".\" .. frac\n"
+                "\tend\n"
+                "end\n\n";
+
+            size_t formatPos = buffer.find(formatAnchor);
+            if (formatPos != std::string::npos) {
+                buffer.insert(formatPos, formatHelper);
+                modified = true;
+            }
+        }
+        if (buffer.find("function format_slider_range(") == std::string::npos) {
+            const std::string formatAnchor = "function format_time(data)";
+            const std::string formatHelper =
+                "function format_slider_range(value, min_value, max_value, precision)\n"
+                "\tlocal display_value = min_value + ((max_value - min_value) * value)\n"
+                "\tif precision <= 0 then\n"
+                "\t\treturn floor(display_value + 0.5)\n"
+                "\tend\n"
+                "\tlocal scale = 1\n"
+                "\tfor i = 1, precision do\n"
+                "\t\tscale = scale * 10\n"
+                "\tend\n"
+                "\tlocal scaled = floor((display_value * scale) + 0.5)\n"
+                "\tlocal whole = floor(scaled / scale)\n"
+                "\tlocal frac = mod(scaled, scale)\n"
+                "\tlocal frac_text = \"\"\n"
+                "\tlocal digits = 0\n"
+                "\tif frac == 0 then\n"
+                "\t\tdigits = 1\n"
+                "\telse\n"
+                "\t\tlocal temp = frac\n"
+                "\t\twhile temp > 0 do\n"
+                "\t\t\tdigits = digits + 1\n"
+                "\t\t\ttemp = floor(temp / 10)\n"
+                "\t\tend\n"
+                "\tend\n"
+                "\twhile digits < precision do\n"
+                "\t\tfrac_text = frac_text .. \"0\"\n"
+                "\t\tdigits = digits + 1\n"
+                "\tend\n"
+                "\tfrac_text = frac_text .. frac\n"
+                "\treturn whole .. \".\" .. frac_text\n"
+                "end\n\n";
+
+            size_t formatPos = buffer.find(formatAnchor);
+            if (formatPos != std::string::npos) {
+                buffer.insert(formatPos, formatHelper);
+                modified = true;
+            }
+        }
 
         // 1. Find and add slider values definitions
         std::string sliderSection = "----[ Sliders for the Menus ]----";
@@ -692,11 +765,21 @@ namespace InGameConfig {
                                 "\t\tvint_get_avg_processing_time(\"WriteJuicedF\",\"" + slider->name +
                                 "\", menu_data.cur_value)\n" +
                                 "\t\tpause_menu_update_option(PAUSE_MENU_DISPLAY_ID, idx, false, menu_data.cur_value)\n" +
-                                "\t\tlocal h = vint_object_find(\"value_text\", menu_label.control.grp_h)\n" +
-                                "\t\tvint_set_property(h, \"text_tag\", floor(menu_data.cur_value * " +
-                                std::to_string(slider->scale) + ") .. \"" + lua_escape(slider->suffix) + "\")\n" +
-                                "\t\treturn\n" +
-                                "\tend\n";
+                                "\t\tlocal h = vint_object_find(\"value_text\", menu_label.control.grp_h)\n";
+                            if (!slider->formatter.empty()) {
+                                conditions += "\t\tvint_set_property(h, \"text_tag\", " + slider->formatter + "(menu_data.cur_value))\n";
+                            }
+                            else if (slider->precision >= 0) {
+                                conditions += "\t\tvint_set_property(h, \"text_tag\", format_slider_range(menu_data.cur_value, " +
+                                    LuaNumber(slider->displayMin) + ", " + LuaNumber(slider->displayMax) + ", " +
+                                    std::to_string(slider->precision) + "))\n";
+                            }
+                            else {
+                                conditions += "\t\tvint_set_property(h, \"text_tag\", floor(menu_data.cur_value * " +
+                                    std::to_string(slider->scale) + ") .. \"" + lua_escape(slider->suffix) + "\")\n";
+                            }
+                            conditions += "\t\treturn\n";
+                            conditions += "\tend\n";
                         } else {
                             conditions += "\tif idx == " + std::to_string(slider->id) + " then\n" +
                                 "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider->name +
@@ -831,11 +914,21 @@ namespace InGameConfig {
                                 "\t\tvint_get_avg_processing_time(\"WriteJuicedF\",\"" + slider->name +
                                 "\", menu_data.cur_value)\n" +
                                 "\t\tpause_menu_update_option(PAUSE_MENU_CONTROL_ID, idx, false, menu_data.cur_value)\n" +
-                                "\t\tlocal h = vint_object_find(\"value_text\", menu_label.control.grp_h)\n" +
-                                "\t\tvint_set_property(h, \"text_tag\", floor(menu_data.cur_value * " +
-                                std::to_string(slider->scale) + ") .. \"" + lua_escape(slider->suffix) + "\")\n" +
-                                "\t\treturn\n" +
-                                "\tend\n";
+                                "\t\tlocal h = vint_object_find(\"value_text\", menu_label.control.grp_h)\n";
+                            if (!slider->formatter.empty()) {
+                                conditions += "\t\tvint_set_property(h, \"text_tag\", " + slider->formatter + "(menu_data.cur_value))\n";
+                            }
+                            else if (slider->precision >= 0) {
+                                conditions += "\t\tvint_set_property(h, \"text_tag\", format_slider_range(menu_data.cur_value, " +
+                                    LuaNumber(slider->displayMin) + ", " + LuaNumber(slider->displayMax) + ", " +
+                                    std::to_string(slider->precision) + "))\n";
+                            }
+                            else {
+                                conditions += "\t\tvint_set_property(h, \"text_tag\", floor(menu_data.cur_value * " +
+                                    std::to_string(slider->scale) + ") .. \"" + lua_escape(slider->suffix) + "\")\n";
+                            }
+                            conditions += "\t\treturn\n";
+                            conditions += "\tend\n";
                         } else {
                             conditions += "\tif idx == " + std::to_string(slider->id) + " then\n" +
                                 "\t\tvint_get_avg_processing_time(\"WriteJuiced\",\"" + slider->name +
@@ -905,10 +998,20 @@ namespace InGameConfig {
                     if (!slider.isNumSlider) continue;
                     juicedFunctions += "\t\tif idx == " + std::to_string(slider.id) + " then\n" +
                         "\t\t\tvint_get_avg_processing_time(\"WriteJuicedF\",\"" + slider.name +
-                        "\", menu_data.cur_value)\n" +
-                        "\t\t\tvint_set_property(h, \"text_tag\", floor(menu_data.cur_value * " +
-                        std::to_string(slider.scale) + ") .. \"" + lua_escape(slider.suffix) + "\")\n" +
-                        "\t\tend\n";
+                        "\", menu_data.cur_value)\n";
+                    if (!slider.formatter.empty()) {
+                        juicedFunctions += "\t\t\tvint_set_property(h, \"text_tag\", " + slider.formatter + "(menu_data.cur_value))\n";
+                    }
+                    else if (slider.precision >= 0) {
+                        juicedFunctions += "\t\t\tvint_set_property(h, \"text_tag\", format_slider_range(menu_data.cur_value, " +
+                            LuaNumber(slider.displayMin) + ", " + LuaNumber(slider.displayMax) + ", " +
+                            std::to_string(slider.precision) + "))\n";
+                    }
+                    else {
+                        juicedFunctions += "\t\t\tvint_set_property(h, \"text_tag\", floor(menu_data.cur_value * " +
+                            std::to_string(slider.scale) + ") .. \"" + lua_escape(slider.suffix) + "\")\n";
+                    }
+                    juicedFunctions += "\t\tend\n";
                 }
                 juicedFunctions += "\tend\n\n";
                 // Add conditions for all sliders

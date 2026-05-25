@@ -148,13 +148,6 @@ public:
         // Seed: if a write callback exists, push the ini-stored value into it.
         // Otherwise nothing to seed (no var, no setter) — value is purely produced
         // by readCallback at query time.
-        if (opt->writeCallback) {
-            if (opt->isFloat()) {
-                opt->writeCallback(GameConfig::GetDoubleValue(app.c_str(), key.c_str(), def));
-            } else {
-                opt->writeCallback(static_cast<double>(GameConfig::GetValue(app.c_str(), key.c_str(), static_cast<uint32_t>(def))));
-            }
-        }
     }
 
     // Backwards-compat alias for the var-less form.
@@ -189,14 +182,18 @@ public:
         Option* opt = getOption(app, key);
         if (!opt) return false;
         opt->setValue(value);
-        opt->syncToIni();
+        if (!opt->readCallback) {
+            opt->syncToIni();
+        }
         return true;
     }
     static bool setOptionValue(const std::string& key, double value) {
         Option* opt = getOption(key);
         if (!opt) return false;
         opt->setValue(value);
-        opt->syncToIni();
+        if (!opt->readCallback) {
+            opt->syncToIni();
+        }
         return true;
     }
 

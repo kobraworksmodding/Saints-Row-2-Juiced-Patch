@@ -1502,6 +1502,7 @@ constexpr auto new_size_n = 5000;
 		{
 			ARfov = 1;
 		}
+
 		if (GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", 1.0, "Field of View, affects cutscenes and gameplay.")) // 1.0 isn't go anywhere.
 		{
 			FOVMultiplier = GameConfig::GetDoubleValue("Gameplay", "FOVMultiplier", FOVMultiplier, "Field of View, affects cutscenes and gameplay.");
@@ -1513,6 +1514,23 @@ constexpr auto new_size_n = 5000;
 			SafeWrite32(0x00AA5648 + 0x2, (UInt32)&fourbythreeAR); // patch vehicle turning radius, this read from the FOV and the radius gets smaller if FOV is lower than 4/3
 			Logger::TypedLog(CHN_DEBUG, "FOV Multiplier: {:f},\n", FOVMultiplier);
 		}
+
+		OptionsManager::registerOption(
+			"Gameplay",
+			"FOVMultiplier",
+			Option::Type::Double,
+			1.0,
+			[]() -> double {
+				return NormalizeRange(Render3D::FOVMultiplier, 1.0, 2.0);
+			},
+			[](double value) {
+				double mapped = DenormalizeRange(value, 1.0, 2.0);
+				Render3D::FOVMultiplier = std::clamp(mapped, 1.0, 10.0);
+				Logger::TypedLog("FUCK", "FUCKED {} {}\n", Render3D::FOVMultiplier,mapped);
+				GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
+				AspectRatioFix(false);
+			}
+		);
 
 		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 1, "2 = Maps the resolution to your screens resolution\n1 = Same as above but half res (Example: 1920x1080 > 1280x720 resolution scale.)\n0 = Vanilla Resolution\nIncreases resolution of Depth-of-field, skydive blur, reflections and bloom (Tervel)"))
 		{
