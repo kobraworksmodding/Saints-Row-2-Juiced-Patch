@@ -815,8 +815,20 @@ namespace Game
 			return current;
 		}
 
-		void xtbl_free() {
-			((void(__thiscall*)(void*, int))0xBFC870)(*(void**)0xE87138, *(int*)0xE87134);
+		SAFETYHOOK_NOINLINE void xtbl_free()
+		{
+			auto xtbl = *(void**)0xE87138;
+			auto id = *(int*)0xE87134;
+
+			if (!xtbl)
+				return;
+
+			auto vft = *(void***)xtbl;
+
+			auto fn = (void(__thiscall*)(void*, int))vft[0x34 / 4];
+
+			fn(xtbl, id);
+
 			*(int*)0xE87134 = -1;
 		}
 
