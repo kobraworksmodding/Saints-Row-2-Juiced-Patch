@@ -54,7 +54,6 @@ This [issues list](https://github.com/kobraworksmodding/SR2IssuesList/issues) is
 - [ThirteenAG](https://github.com/ThirteenAG) - [Hooking.Patterns Patcher](https://github.com/ThirteenAG/Hooking.Patterns)
 - jason098 - Slew Mode Fixes
 - [Silent](https://github.com/CookiePLMonster) - Helpful information on FPS Issues
-- Zedek the Plague Doctor - Error Handler + Patching Methods
 - [CHC](https://github.com/chc) - Openspy
 
 
