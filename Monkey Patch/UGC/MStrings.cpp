@@ -236,6 +236,65 @@ namespace MStrings
 		}
 	}
 
+	static bool TryParseLiteralHashTag(const std::string& raw_tag, uint32_t& out_hash)
+	{
+		std::string tag = Trim(raw_tag);
+		if (tag.empty())
+			return false;
+
+		if (tag.front() == '@')
+		{
+			tag = Trim(tag.substr(1));
+			if (tag.empty())
+				return false;
+		}
+
+		if (tag.size() >= 2 && tag.front() == '[' && tag.back() == ']')
+		{
+			tag = Trim(tag.substr(1, tag.size() - 2));
+			if (tag.empty())
+				return false;
+		}
+
+		if (tag.size() < 3 ||
+			tag.size() > 10 ||
+			tag[0] != '0' ||
+			std::tolower((unsigned char)tag[1]) != 'x')
+		{
+			return false;
+		}
+
+		uint32_t value = 0;
+		for (size_t i = 2; i < tag.size(); ++i)
+		{
+			unsigned char c = (unsigned char)tag[i];
+			uint32_t nibble = 0;
+
+			if (c >= '0' && c <= '9')
+				nibble = c - '0';
+			else if (c >= 'a' && c <= 'f')
+				nibble = 10u + (c - 'a');
+			else if (c >= 'A' && c <= 'F')
+				nibble = 10u + (c - 'A');
+			else
+				return false;
+
+			value = (value << 4) | nibble;
+		}
+
+		out_hash = value;
+		return true;
+	}
+
+	static uint32_t ResolveTagHash(const std::string& tag)
+	{
+		uint32_t hash = 0;
+		if (TryParseLiteralHashTag(tag, hash))
+			return hash;
+
+		return Game::utils::str_to_hash(tag.c_str());
+	}
+
 	static bool IsInlineFormatTag(const std::string& tag)
 	{
 		if (tag.empty())
@@ -437,7 +496,7 @@ namespace MStrings
 				if (current_tag.empty())
 					return;
 
-				uint32_t hash = Game::utils::str_to_hash(current_tag.c_str());
+				uint32_t hash = ResolveTagHash(current_tag);
 
 				ParsedString parsed{
 					hash,
@@ -487,7 +546,7 @@ namespace MStrings
 			{
 				FlushEntry();
 
-				uint32_t hash = Game::utils::str_to_hash(inline_tag.c_str());
+				uint32_t hash = ResolveTagHash(inline_tag);
 				ParsedString parsed{
 					hash,
 					Utf8ToWide(inline_text)
@@ -629,7 +688,7 @@ namespace MStrings
 				if (current_tag.empty())
 					return;
 
-				uint32_t hash = Game::utils::str_to_hash(current_tag.c_str());
+				uint32_t hash = ResolveTagHash(current_tag);
 
 				out.push_back({
 					hash,
@@ -674,7 +733,7 @@ namespace MStrings
 			{
 				FlushEntry();
 
-				uint32_t hash = Game::utils::str_to_hash(inline_tag.c_str());
+				uint32_t hash = ResolveTagHash(inline_tag);
 				out.push_back({
 					hash,
 					Utf8ToWide(inline_text)
