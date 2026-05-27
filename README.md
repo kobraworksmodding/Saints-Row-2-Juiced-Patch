@@ -36,7 +36,7 @@ this repository for security purposes, So code will not build properly when usin
 - The exported Juiced Patch "DFEngine.dll" should output in a folder corresponding to the configuration name in your Juiced Patch project folder.
 
 ## Active Developers
-- [Uzis](https://github.com/theuzis)
+- [Soaa](https://github.com/xSoaa)
 - [Tervel](https://github.com/Tervel1337)
 - [Clippy](https://github.com/Clippy95)
 - [Scanti](https://github.com/scanti2)
