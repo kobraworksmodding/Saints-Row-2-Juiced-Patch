@@ -135,7 +135,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions);UC_WITH_SAFETYHOOK</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -143,7 +143,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;$(ProjectDir)Ext\xbyak;$(ProjectDir)Ext\usercaller;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>/utf-8</AdditionalOptions>
       <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
@@ -166,13 +166,13 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions);UC_WITH_SAFETYHOOK</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;$(ProjectDir)Ext\xbyak;$(ProjectDir)Ext\usercaller;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -202,7 +202,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug - LITE|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;JLITE;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;JLITE;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions);UC_WITH_SAFETYHOOK</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -212,7 +212,7 @@
       <Optimization>MaxSpeed</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;$(ProjectDir)Ext\xbyak;$(ProjectDir)Ext\usercaller;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalOptions>/utf-8</AdditionalOptions>
@@ -241,14 +241,14 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RELOADED|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;RELOADED;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;RELOADED;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions);UC_WITH_SAFETYHOOK</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;$(ProjectDir)Ext\xbyak;$(ProjectDir)Ext\usercaller;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
@@ -273,14 +273,14 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RELOADED - DEV|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;RELOADED;RLDEV;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;RELOADED;RLDEV;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions);UC_WITH_SAFETYHOOK</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;$(ProjectDir)Ext\xbyak;$(ProjectDir)Ext\usercaller;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
@@ -305,14 +305,14 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Reloaded Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;BLANKDFENGINE_EXPORTS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;%(PreprocessorDefinitions);UC_WITH_SAFETYHOOK</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;$(ProjectDir)Ext\xbyak;$(ProjectDir)Ext\usercaller;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
@@ -346,6 +346,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="Ext\DirectXTex\DDSTextureLoader9.cpp" />
     <ClCompile Include="Ext\safetyhook\safetyhook.cpp" />
     <ClCompile Include="Ext\safetyhook\Zydis.c" />
+    <ClCompile Include="Ext\usercaller\usercaller.cpp" />
     <ClCompile Include="Game\CrashFixes.cpp" />
     <ClCompile Include="Game\GFile.cpp" />
     <ClCompile Include="Game\timestamp.ixx" />
@@ -403,6 +404,12 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="Ext\DirectXTex\DDSTextureLoader9.h" />
     <ClInclude Include="Ext\safetyhook\safetyhook.hpp" />
     <ClInclude Include="Ext\safetyhook\Zydis.h" />
+    <ClInclude Include="Ext\usercaller\safetyhook_inline.hpp" />
+    <ClInclude Include="Ext\usercaller\usercaller.hpp" />
+    <ClInclude Include="Ext\xbyak\xbyak.h" />
+    <ClInclude Include="Ext\xbyak\xbyak_bin2hex.h" />
+    <ClInclude Include="Ext\xbyak\xbyak_mnemonic.h" />
+    <ClInclude Include="Ext\xbyak\xbyak_util.h" />
     <ClInclude Include="Game\CrashFixes.h" />
     <ClInclude Include="Game\GFile.h" />
     <ClInclude Include="General\General.h" />

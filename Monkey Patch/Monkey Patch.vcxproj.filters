@@ -45,6 +45,12 @@
     <Filter Include="Source Files\General">
       <UniqueIdentifier>{b9eb4fc8-8780-4b98-afe3-b1178953a01c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Ext\xbyak">
+      <UniqueIdentifier>{f902a36a-81d4-4809-9b21-0e4dbd3865da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ext\usercaller">
+      <UniqueIdentifier>{dab3d9df-17db-4248-890b-e2e23f7a961b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DFEngine.cpp">
@@ -196,6 +202,13 @@
     </ClCompile>
     <ClCompile Include="UGC\MStrings.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="component.ixx" />
+    <ClCompile Include="DLCSupport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Ext\usercaller\usercaller.cpp">
+      <Filter>Ext\usercaller</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -384,6 +397,30 @@
     </ClInclude>
     <ClInclude Include="UGC\MStrings.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DLCSupport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ext\ankerl\unordered_dense.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ext\xbyak\xbyak.h">
+      <Filter>Ext\xbyak</Filter>
+    </ClInclude>
+    <ClInclude Include="Ext\xbyak\xbyak_bin2hex.h">
+      <Filter>Ext\xbyak</Filter>
+    </ClInclude>
+    <ClInclude Include="Ext\xbyak\xbyak_mnemonic.h">
+      <Filter>Ext\xbyak</Filter>
+    </ClInclude>
+    <ClInclude Include="Ext\xbyak\xbyak_util.h">
+      <Filter>Ext\xbyak</Filter>
+    </ClInclude>
+    <ClInclude Include="Ext\usercaller\safetyhook_inline.hpp">
+      <Filter>Ext\usercaller</Filter>
+    </ClInclude>
+    <ClInclude Include="Ext\usercaller\usercaller.hpp">
+      <Filter>Ext\usercaller</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
