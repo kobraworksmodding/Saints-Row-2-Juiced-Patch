@@ -1526,7 +1526,6 @@ constexpr auto new_size_n = 5000;
 			[](double value) {
 				double mapped = DenormalizeRange(value, 1.0, 2.0);
 				Render3D::FOVMultiplier = std::clamp(mapped, 1.0, 10.0);
-				Logger::TypedLog("FUCK", "FUCKED {} {}\n", Render3D::FOVMultiplier,mapped);
 				GameConfig::SetDoubleValue("Gameplay", "FOVMultiplier", Render3D::FOVMultiplier);
 				AspectRatioFix(false);
 			}
