@@ -119,6 +119,155 @@ namespace Debug
 			__asm pushad
 			Render2D::InGamePrint(buffer, y + 40, Render2D::processtextwidth(0), 6);
 			__asm popad
+
+			// this is some stupid shit, someone make it better (clippy95)
+			if (*(bool*)0x02527CF7 && *(int*)(0x02527D10)) {
+				debug_cutscene_clock ct = *(debug_cutscene_clock*)0x027E66FC;
+				debug_cutscene_info* const cs_info = (debug_cutscene_info*)(*(uintptr_t*)*(uintptr_t*)0x02527D10);
+				// Get the first pointer (0x07B30000)
+				uintptr_t ptr1 = *(uintptr_t*)0x02527D10;
+
+				// Get the second pointer (0x07B9A230) from ptr1 + 0x1540
+				uintptr_t ptr2 = NULL;
+				ptr2 = *(uintptr_t*)(ptr1 + 0x1540);
+				debug_cutscene_shot* cur_shot = NULL;
+				// Finally, get the cutscene shot from ptr2
+				if (ptr2)
+					cur_shot = (debug_cutscene_shot*)ptr2;
+
+				// Print cutscene timer info with newlines for each property
+				int yOffset = y + 60; // Start below the previous text
+				Render2D::ChangeTextColor(255, 255, 0, 255); // Yellow for cutscene info
+
+				snprintf(buffer, sizeof(buffer), "CUTSCENE: elapsed: %.2fs / total: %.2fs",
+					ct.elapsed_seconds, ct.total_seconds);
+				__asm pushad
+				Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+				__asm popad
+				yOffset += 20;
+
+
+				int current_frame_cs = (int)(ct.elapsed_seconds * 30.f);
+				int total_frames_cs = (int)(ct.total_seconds * 30.f);
+
+				snprintf(buffer, sizeof(buffer), "%u/%u frames",
+					current_frame_cs, total_frames_cs);
+				__asm pushad
+				Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+				__asm popad
+				yOffset += 20;
+
+
+				snprintf(buffer, sizeof(buffer), "Shot: #%d elapsed: %.2fs / total: %.2fs",
+					ct.current_shot_index, ct.current_shot_elapsed_seconds, ct.current_shot_total_seconds);
+				__asm pushad
+				Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+				__asm popad
+				yOffset += 20;
+
+				snprintf(buffer, sizeof(buffer), "Time: frame %.3fs intershot %.3fs",
+					ct.frame_time_seconds, ct.intershot_frame_time_seconds);
+				__asm pushad
+				Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+				__asm popad
+				yOffset += 20;
+
+				snprintf(buffer, sizeof(buffer), "Ticks: start %u real_start %u last %u",
+					ct.real_start_tick, ct.real_start_time, ct.real_last_time);
+				__asm pushad
+				Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+				__asm popad
+				yOffset += 20;
+
+				snprintf(buffer, sizeof(buffer), "Pause: count %d start %u total %u last %u",
+					ct.paused_count, ct.pause_start_time, ct.pause_total_time, ct.last_frame_time);
+				__asm pushad
+				Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+				__asm popad
+				yOffset += 20;
+
+				// Print cutscene info structure information
+				Render2D::ChangeTextColor(0, 255, 255, 255); // Cyan for cutscene info
+
+				const char* name = cs_info->name ? cs_info->name : "NULL";
+				snprintf(buffer, sizeof(buffer), "CS Name: %s", name);
+				__asm pushad
+				Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+				__asm popad
+				yOffset += 20;
+
+				// Check if display_name is NULL before trying to print it
+				if (cs_info->display_name) {
+					// Convert wchar_t to char if needed (simplified approach)
+					char displayName[100] = "";
+					for (int i = 0; i < 99 && cs_info->display_name[i]; i++) {
+						displayName[i] = (char)cs_info->display_name[i]; // Simple conversion, may not work for all characters
+					}
+
+					snprintf(buffer, sizeof(buffer), "Display Name: %s", displayName);
+					__asm pushad
+					Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+					__asm popad
+					yOffset += 20;
+				}
+				else {
+					snprintf(buffer, sizeof(buffer), "Display Name: NULL");
+					__asm pushad
+					Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+					__asm popad
+					yOffset += 20;
+				}
+
+				snprintf(buffer, sizeof(buffer), "Viewed: %s", cs_info->viewed ? "Yes" : "No");
+				__asm pushad
+				Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+				__asm popad
+				yOffset += 20;
+
+				// Print cutscene shot structure information
+				if (cur_shot) {
+					Render2D::ChangeTextColor(0, 255, 0, 255); // Green for cutscene shot
+
+					const char* shotName = cur_shot->shot_name ? cur_shot->shot_name : "NULL";
+					snprintf(buffer, sizeof(buffer), "Shot Name: %s", shotName);
+					__asm pushad
+					Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+					__asm popad
+					yOffset += 20;
+
+					snprintf(buffer, sizeof(buffer), "Shot Index: %d", cur_shot->shot_index);
+					__asm pushad
+					Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+					__asm popad
+					yOffset += 20;
+
+					snprintf(buffer, sizeof(buffer), "Start Time: %.2fs", cur_shot->start_time_seconds);
+					__asm pushad
+					Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+					__asm popad
+					yOffset += 20;
+					int current_frame = (int)(ct.current_shot_elapsed_seconds * 30.f);
+					snprintf(buffer, sizeof(buffer), "%u/%u frames", current_frame, cur_shot->duration_frames);
+					__asm pushad
+					Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+					__asm popad
+					yOffset += 20;
+
+					snprintf(buffer, sizeof(buffer), "Fade Out: %.2fs from end, %.2fs duration",
+						cur_shot->fade_out_time_from_end_seconds, cur_shot->fade_out_duration_seconds);
+					__asm pushad
+					Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+					__asm popad
+					yOffset += 20;
+
+					snprintf(buffer, sizeof(buffer), "Fade Letterbox: %s",
+						cur_shot->fade_out_letterbox ? "Yes" : "No");
+					__asm pushad
+					Render2D::InGamePrint(buffer, yOffset, Render2D::processtextwidth(0), 6);
+					__asm popad
+				}
+			}
+
 		}
 	}
 
