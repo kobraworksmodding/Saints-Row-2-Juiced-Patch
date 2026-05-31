@@ -293,12 +293,12 @@ namespace CrashFixes {
 			static auto Fix_0x009AEE86_hook = safetyhook::create_mid(0x009AEE86, &Fix_009AEE86_crash_cs_start_characters_for_shot);
 		}
 
-		if (GameConfig::GetValue("Debug", "ExceptionHandler_Saves", 1,"Kick to the main menu when attempting to load a save game that cannot be loaded (clippy95)")) {
+		//if (GameConfig::GetValue("Debug", "ExceptionHandler_Saves", 1,"Kick to the main menu when attempting to load a save game that cannot be loaded (clippy95)")) {
 
-			patchCall((void*)0x6A03BF, load_all_og_hook);
-			patchCall((void*)0x69600B, load_all_og_hook);
+		//	patchCall((void*)0x6A03BF, load_all_og_hook);
+		//	patchCall((void*)0x69600B, load_all_og_hook);
 
-		}
+		//}
 
 		static auto Fix_0x00BD8662_buffer_double_release_hook = safetyhook::create_mid(0x00D0721E, &Fix_0x00BD8662_buffer_double_release);
 
