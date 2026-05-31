@@ -329,16 +329,23 @@ struct unlockables
 };
 
 uint32_t* max_unlockables_counted = (uint32_t*)0x0145A29C;
-unlockables* Unlockables = (unlockables*)0x027DD018;
+
+// read this from the game rather than assume hardcoded address
+unlockables* get_Unlockables()
+{
+    auto ptr = *(uintptr_t*)0x006BC809;
+    return (unlockables*)ptr;
+}
+
 typedef void __fastcall unlock_unlockablesT(unlockables* item,int unused);
 unlock_unlockablesT* unlock_item = (unlock_unlockablesT*)(0x6BBD50);
 
-void DLC_Unlocks() {
+SAFETYHOOK_NOINLINE void DLC_Unlocks() {
     if (!*max_unlockables_counted)
         return;
     for (int i = 0; i < *max_unlockables_counted; i++) {
-        if (Unlockables[i].dlc_start_unlocked && !Unlockables[i].unlocked) {
-            unlock_item(&Unlockables[i],1);
+        if (get_Unlockables()[i].dlc_start_unlocked && !get_Unlockables()[i].unlocked) {
+            unlock_item(&get_Unlockables()[i],1);
         }
     }
 }
@@ -483,7 +490,7 @@ static int GetVehicleUnlockableTotal()
     int total = 0;
 
     for (uint32_t i = 0; i < *max_unlockables_counted; i++) {
-        uintptr_t unlockable = (uintptr_t)Unlockables + (i * SIZEOF_UNLOCKABLE_ITEM);
+        uintptr_t unlockable = (uintptr_t)&get_Unlockables()[0] + (i * SIZEOF_UNLOCKABLE_ITEM);
         uint32_t type = *(uint32_t*)(unlockable + OFFSET_UNLOCKABLE_ITEM_TYPE);
 
         if (type == 0) {
