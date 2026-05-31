@@ -1,0 +1,15 @@
+[MAINMENU_EXIT]
+QUITTER LE JEU
+
+[HELP_TEXT_ON_FOOT_COMBAT]
+ Pour sélectionner une arme, ouvre le menu radial en appuyant longuement sur {WEAPON_MENU_IMG}. Une fois le menu radial ouvert, sers-toi de {ANALOG_RS_IMG} pour sélectionner une arme, puis relâche {WEAPON_MENU_IMG}.
+
+ Si tu n'as pas d'arme, {ATTACK_PRIMARY_IMG} et {ATTACK_SECONDARY_IMG} te permettront respectivement de décocher des droites et des gauches. En appuyant successivement sur {ATTACK_PRIMARY_IMG} et {ATTACK_SECONDARY_IMG}, tu peux déclencher des combos surpuissants.
+
+ Pour réaliser un blocage, utilise simultanément {ATTACK_PRIMARY_IMG} et {ATTACK_SECONDARY_IMG}.
+
+ Si tu es équipé d'une arme de combat rapproché, utilise {ATTACK_PRIMARY_IMG} ou {ATTACK_SECONDARY_IMG} pour frapper.
+
+ Si tu es équipé d'un projectile (une bombe artisanale, par exemple), utilise {ATTACK_SECONDARY_IMG} pour l'envoyer à une courte distance et {ATTACK_PRIMARY_IMG} pour l'envoyer plus loin.
+
+ Si tu es équipé d'une arme à distance, un réticule apparaît à l'écran. Pour tirer, utilise {ATTACK_PRIMARY_IMG} et {PICKUP_RELOAD_IMG} pour recharger.
