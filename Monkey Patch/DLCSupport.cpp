@@ -329,8 +329,7 @@ struct unlockables
 };
 
 uint32_t* max_unlockables_counted = (uint32_t*)0x0145A29C;
-// read pointer from game always
-unlockables** Unlockables = (unlockables**)(0x006BC9D7 + 1);
+unlockables* Unlockables = (unlockables*)0x027DD018;
 typedef void __fastcall unlock_unlockablesT(unlockables* item,int unused);
 unlock_unlockablesT* unlock_item = (unlock_unlockablesT*)(0x6BBD50);
 
@@ -338,8 +337,8 @@ void DLC_Unlocks() {
     if (!*max_unlockables_counted)
         return;
     for (int i = 0; i < *max_unlockables_counted; i++) {
-        if (Unlockables[i]->dlc_start_unlocked && !Unlockables[i]->unlocked) {
-            unlock_item(Unlockables[i],1);
+        if (Unlockables[i].dlc_start_unlocked && !Unlockables[i].unlocked) {
+            unlock_item(&Unlockables[i],1);
         }
     }
 }
