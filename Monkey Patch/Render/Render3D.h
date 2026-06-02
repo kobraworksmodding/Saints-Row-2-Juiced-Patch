@@ -48,6 +48,7 @@ namespace Render3D
     extern float RenderDistance_old;
     extern bool DitherFilter;
     extern void render_batch_increase();
+    extern float ExtendedRenderDistance;
     extern std::vector<std::pair<uint32_t, uint32_t>> getAvailableResolutions();
 
 }

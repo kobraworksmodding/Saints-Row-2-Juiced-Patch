@@ -285,7 +285,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 			patchCall((void*)0xDB3985, render_buffer_malloc);
 			Juiced::onAttach().executeAll();
 			PatchQueryPerformance();
-			//Render3D::render_batch_increase();
+			Render3D::render_batch_increase();
 		}
 		else
 		{

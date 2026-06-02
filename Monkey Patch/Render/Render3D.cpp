@@ -876,13 +876,132 @@ namespace Render3D
 	public:
 		batch_entry m_batch[N];
 		unsigned int m_size;
-		//unsigned int m_overflow_count;
 	};
-constexpr auto new_size_n = 5000;
-	render_batch<new_size_n> main_render_bigger{};
+	static_assert(sizeof(batch_entry) == 0x14);
+	static_assert(offsetof(batch_entry, m_flags) == 0x4);
+	static_assert(offsetof(render_batch<1536>, m_size) == 0x7800);
+	static_assert(offsetof(render_batch<1024>, m_size) == 0x5000);
+	static_assert(offsetof(render_batch<512>, m_size) == 0x2800);
 
-	constexpr auto alpha_new_size = 2500;
-	render_batch<alpha_new_size> alpha_bigger{};
+	struct addr_xref {
+		uintptr_t patch_location;
+		intptr_t offset;
+	};
+
+	constexpr size_t kMainRenderBatchNewCapacity = 5000;
+	constexpr size_t kAlphaRenderBatchNewCapacity = 2000;
+	constexpr size_t kSuppPassRenderBatchNewCapacity = 2000;
+
+	constexpr size_t kRenderBatchFlagsOffset = offsetof(batch_entry, m_flags);
+	constexpr size_t kMainRenderBatchNewSizeOffset = offsetof(render_batch<kMainRenderBatchNewCapacity>, m_size);
+	constexpr size_t kAlphaRenderBatchNewSizeOffset = offsetof(render_batch<kAlphaRenderBatchNewCapacity>, m_size);
+	constexpr size_t kSuppPassBatchNewSizeOffset = offsetof(render_batch<kSuppPassRenderBatchNewCapacity>, m_size);
+
+#define BATCH_XREF(addr, offset) { addr, offset }
+	static constexpr addr_xref g_main_render_batch_xrefs[] = {
+		BATCH_XREF(0x005242F9, 0),
+		BATCH_XREF(0x0052433D, 0),
+		BATCH_XREF(0x00524350, 0),
+		BATCH_XREF(0x00524386, 0),
+		BATCH_XREF(0x0052550E, 0),
+		BATCH_XREF(0x005255C9, 0),
+		BATCH_XREF(0x00526C13, 0),
+		BATCH_XREF(0x005284BA, 0),
+		BATCH_XREF(0x0052870E, 0),
+		BATCH_XREF(0x0052AE71, 0),
+		BATCH_XREF(0x0052AE8B, 0),
+		BATCH_XREF(0x0052AE96, 0),
+		BATCH_XREF(0x0052FD9B, 0),
+		BATCH_XREF(0x00536C3C, 0),
+		BATCH_XREF(0x00538435, 0),
+		BATCH_XREF(0x0052595C, kRenderBatchFlagsOffset),
+		BATCH_XREF(0x005260DB, kRenderBatchFlagsOffset),
+		BATCH_XREF(0x0052648A, kRenderBatchFlagsOffset),
+		BATCH_XREF(0x005267B9, kRenderBatchFlagsOffset),
+		BATCH_XREF(0x00526A34, kRenderBatchFlagsOffset),
+		BATCH_XREF(0x00526D44, kRenderBatchFlagsOffset),
+		BATCH_XREF(0x004B7CC1, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x004B7EC4, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x004B8271, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x005242E9, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052431B, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00525943, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00525B8D, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00526A22, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00526C03, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00526C33, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00526D23, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00526F3F, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00528619, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00528703, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052878F, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00528834, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052899D, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00528B57, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00528BF5, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00528CE6, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00528DFE, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00528F13, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052920D, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052929F, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052AE81, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052E7D2, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052FD92, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052FDA1, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052FDDC, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052FDF2, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052FDC0, -static_cast<intptr_t>(sizeof(batch_entry))),
+		BATCH_XREF(0x00536C09, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00536C87, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0053842E, kMainRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0053846C, kMainRenderBatchNewSizeOffset),
+	};
+
+	static constexpr addr_xref g_alpha_render_batch_xrefs[] = {
+		BATCH_XREF(0x005243A0, 0),
+		BATCH_XREF(0x005243E3, 0),
+		BATCH_XREF(0x005243F6, 0),
+		BATCH_XREF(0x0052442C, 0),
+		BATCH_XREF(0x005272EC, 0),
+		BATCH_XREF(0x0052AEB1, 0),
+		BATCH_XREF(0x0052AECB, 0),
+		BATCH_XREF(0x0052AED6, 0),
+		BATCH_XREF(0x0052FE0B, 0),
+		BATCH_XREF(0x00524390, kAlphaRenderBatchNewSizeOffset),
+		BATCH_XREF(0x005243C1, kAlphaRenderBatchNewSizeOffset),
+		BATCH_XREF(0x005272DA, kAlphaRenderBatchNewSizeOffset),
+		BATCH_XREF(0x00527A05, kAlphaRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052AEA1, kAlphaRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052AEC1, kAlphaRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052E7D8, kAlphaRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052FE02, kAlphaRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052FE11, kAlphaRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052FE4C, kAlphaRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052FE62, kAlphaRenderBatchNewSizeOffset),
+		BATCH_XREF(0x0052FE30, -static_cast<intptr_t>(sizeof(batch_entry))),
+	};
+
+	static constexpr addr_xref g_supp_pass_batch_xrefs[] = {
+		BATCH_XREF(0x0052AEF6, 0),
+		BATCH_XREF(0x0052FE7B, 0),
+		BATCH_XREF(0x005248D0, kRenderBatchFlagsOffset),
+		BATCH_XREF(0x00529BD8, kRenderBatchFlagsOffset),
+		BATCH_XREF(0x005248B6, kSuppPassBatchNewSizeOffset),
+		BATCH_XREF(0x00524AA4, kSuppPassBatchNewSizeOffset),
+		BATCH_XREF(0x00529BBA, kSuppPassBatchNewSizeOffset),
+		BATCH_XREF(0x00529E67, kSuppPassBatchNewSizeOffset),
+		BATCH_XREF(0x0052AEE1, kSuppPassBatchNewSizeOffset),
+		BATCH_XREF(0x0052E7DE, kSuppPassBatchNewSizeOffset),
+		BATCH_XREF(0x0052FE72, kSuppPassBatchNewSizeOffset),
+		BATCH_XREF(0x0052FE81, kSuppPassBatchNewSizeOffset),
+		BATCH_XREF(0x0052FEBC, kSuppPassBatchNewSizeOffset),
+		BATCH_XREF(0x0052FED2, kSuppPassBatchNewSizeOffset),
+		BATCH_XREF(0x0052FEA0, -static_cast<intptr_t>(sizeof(batch_entry))),
+	};
+#undef BATCH_XREF
+
+	constexpr auto new_size_n = kMainRenderBatchNewCapacity;
+	render_batch<new_size_n> main_render_bigger{};
 	bool push_back_force_old_size = false;
 	size_t debug_push_back_size(unsigned int old_size, unsigned int new_size) {
 
@@ -893,242 +1012,33 @@ constexpr auto new_size_n = 5000;
 
 	}
 
-	int __stdcall push_back(
-		void* ri,
-		unsigned int render_flags,
-		unsigned int vis0,
-		unsigned int vis1) {
-		batch_entry* new_entry; // [esp+4h] [ebp-8h]
-		unsigned int next_inst; // [esp+8h] [ebp-4h]
 
-		auto main_size = debug_push_back_size(1536, new_size_n);
 
-		next_inst = _InterlockedIncrement(&main_render_bigger.m_size);
-		if (next_inst > main_size)
-		{
-			main_render_bigger.m_size = main_size;
-			//main_render_bigger.m_overflow_count;
-		}
-		else
-		{
-			new_entry = &main_render_bigger.m_batch[next_inst - 1];
-			new_entry->m_ri = ri;
-			new_entry->m_flags = render_flags;
-			new_entry->m_vis_bits0 = vis0;
-			new_entry->m_vis_bits1 = vis1;
-		}
-
-		return next_inst;
-
-	}
-
-#define Alpha_Size_New 2000
+#define Alpha_Size_New kAlphaRenderBatchNewCapacity
 	render_batch<Alpha_Size_New> Alpha_Render_batch;
 
-	int __stdcall push_back_alpha(
-		void* ri,
-		unsigned int render_flags,
-		unsigned int vis0,
-		unsigned int vis1) {
-		batch_entry* new_entry; // [esp+4h] [ebp-8h]
-		unsigned int next_inst; // [esp+8h] [ebp-4h]
 
-		next_inst = _InterlockedIncrement(&Alpha_Render_batch.m_size);
-
-		auto alpha_size = debug_push_back_size(1024, Alpha_Size_New);
-
-		if (next_inst > alpha_size)
-		{
-			Alpha_Render_batch.m_size = alpha_size;
-			//main_render_bigger.m_overflow_count;
-		}
-		else
-		{
-			new_entry = &Alpha_Render_batch.m_batch[next_inst - 1];
-			new_entry->m_ri = ri;
-			new_entry->m_flags = render_flags;
-			new_entry->m_vis_bits0 = vis0;
-			new_entry->m_vis_bits1 = vis1;
-		}
-
-		return next_inst;
-
-	}
-
-#define Supp_pass_Size_New 2000
+#define Supp_pass_Size_New kSuppPassRenderBatchNewCapacity
 	render_batch<Supp_pass_Size_New> Supp_pass_increased;
-	int __stdcall push_back_Supp_Pass(
-		void* ri,
-		unsigned int render_flags,
-		unsigned int vis0) {
-		batch_entry* new_entry; // [esp+4h] [ebp-8h]
-		unsigned int next_inst; // [esp+8h] [ebp-4h]
 
-		auto supp_size = debug_push_back_size(512, Supp_pass_Size_New);
-
-		next_inst = _InterlockedIncrement(&Supp_pass_increased.m_size);
-		if (next_inst > supp_size)
-		{
-			Supp_pass_increased.m_size = supp_size;
-			//Supp_pass_increased.m_overflow_count;
-		}
-		else
-		{
-			new_entry = &Supp_pass_increased.m_batch[next_inst - 1];
-			new_entry->m_ri = ri;
-			new_entry->m_flags = render_flags;
-			new_entry->m_vis_bits0 = vis0;
-			new_entry->m_vis_bits1 = 0;
-		}
-
-		return next_inst;
-
-	}
-
-	template<size_t OriginalSize, size_t NewSize>
-	void PatchRenderBatch(const char* batch_name, uintptr_t original_address, render_batch<NewSize>& new_structure) {
+	template<size_t OriginalSize, size_t NewSize, size_t XrefCount>
+	void PatchRenderBatch(const char* batch_name, uintptr_t original_address, render_batch<NewSize>& new_structure, const addr_xref(&xrefs)[XrefCount]) {
 		printf("=== Patching %s render_batch Structure ===\n", batch_name);
 		printf("Original address: 0x%08X (size: %zu entries)\n", static_cast<unsigned int>(original_address), OriginalSize);
 		printf("New structure address: 0x%08X (size: %zu entries)\n",
 			static_cast<unsigned int>(reinterpret_cast<uintptr_t>(&new_structure)), NewSize);
 		printf("New structure size: %zu bytes (was %zu)\n\n", sizeof(new_structure), sizeof(render_batch<OriginalSize>));
 
-		// Calculate offsets for structure fields
-		size_t original_batch_array_size = sizeof(batch_entry) * OriginalSize;
-
-		// Convert addresses to little-endian patterns for scanning
-		struct AddressPatch {
-			const char* name;
-			uintptr_t original_address;
-			uintptr_t new_address;
-			std::string pattern;
-		};
-
-		auto addr_to_pattern = [](uintptr_t addr) -> std::string {
-			uint8_t* bytes = reinterpret_cast<uint8_t*>(&addr);
-			char pattern[20];
-			sprintf(pattern, "%02X %02X %02X %02X", bytes[0], bytes[1], bytes[2], bytes[3]);
-			return std::string(pattern);
-			};
-
-		AddressPatch address_patches[] = {
-			// Map original addresses to new addresses
-			{"m_batch[0].m_ri",
-			 original_address + offsetof(batch_entry, m_ri),
-			 reinterpret_cast<uintptr_t>(&new_structure.m_batch[0].m_ri),
-			 addr_to_pattern(original_address + offsetof(batch_entry, m_ri))},
-
-			{"m_batch[0].m_flags",
-			 original_address + offsetof(batch_entry, m_flags),
-			 reinterpret_cast<uintptr_t>(&new_structure.m_batch[0].m_flags),
-			 addr_to_pattern(original_address + offsetof(batch_entry, m_flags))},
-
-			{"m_batch[0].m_vis_bits0",
-			 original_address + offsetof(batch_entry, m_vis_bits0),
-			 reinterpret_cast<uintptr_t>(&new_structure.m_batch[0].m_vis_bits0),
-			 addr_to_pattern(original_address + offsetof(batch_entry, m_vis_bits0))},
-
-			{"m_batch[0].m_vis_bits1",
-			 original_address + offsetof(batch_entry, m_vis_bits1),
-			 reinterpret_cast<uintptr_t>(&new_structure.m_batch[0].m_vis_bits1),
-			 addr_to_pattern(original_address + offsetof(batch_entry, m_vis_bits1))},
-
-			{"m_batch[0].render_distance",
-			 original_address + offsetof(batch_entry, render_distance),
-			 reinterpret_cast<uintptr_t>(&new_structure.m_batch[0].render_distance),
-			 addr_to_pattern(original_address + offsetof(batch_entry, render_distance))},
-
-			{"m_size",
-			 original_address + original_batch_array_size,
-			 reinterpret_cast<uintptr_t>(&new_structure.m_size),
-			 addr_to_pattern(original_address + original_batch_array_size)},
-
-
-
-			{"base address (m_batch)",
-			 original_address,
-			 reinterpret_cast<uintptr_t>(&new_structure.m_batch),
-			 addr_to_pattern(original_address)},
-		};
-
-		int total_patches_applied = 0;
-		int total_references_found = 0;
-
-		for (const auto& patch_info : address_patches) {
-			printf("Patching: %s\n", patch_info.name);
-			printf("Original: 0x%08X -> New: 0x%08X\n",
-				static_cast<unsigned int>(patch_info.original_address),
-				static_cast<unsigned int>(patch_info.new_address));
-			printf("Pattern: %s\n", patch_info.pattern.c_str());
-
-			try {
-				auto pattern_results = hook::pattern(patch_info.pattern);
-				size_t count = pattern_results.size();
-				total_references_found += static_cast<int>(count);
-
-				if (count > 0) {
-					printf("  Found %zu references - applying patches...\n", count);
-
-					// Apply patches to all found references
-					for (size_t i = 0; i < count; ++i) {
-						auto match = pattern_results.get(i);
-						uintptr_t patch_location = reinterpret_cast<uintptr_t>(match.get<void>());
-
-						printf("    Patching reference at 0x%08X\n", static_cast<unsigned int>(patch_location));
-
-						// Apply the patch using SafeWrite32
-						SafeWrite32(patch_location, patch_info.new_address);
-						total_patches_applied++;
-					}
-					printf("  Successfully applied %zu patches for %s\n", count, patch_info.name);
-				}
-				else {
-					printf("  No references found - no patches needed\n");
-				}
-			}
-			catch (...) {
-				printf("  Pattern scan failed for %s\n", patch_info.name);
-			}
-			printf("\n");
+		for (const auto& xref : xrefs) {
+			uintptr_t new_value = static_cast<uintptr_t>(reinterpret_cast<intptr_t>(&new_structure) + xref.offset);
+			SafeWrite32(static_cast<UInt32>(xref.patch_location), static_cast<UInt32>(new_value));
 		}
-
-
-		printf("=== Scanning for additional array element references ===\n");
-
-		for (int i = 1; i < 10; ++i) {
-			uintptr_t original_entry = original_address + (sizeof(batch_entry) * i);
-			uintptr_t new_entry = reinterpret_cast<uintptr_t>(&new_structure.m_batch[i]);
-			std::string entry_pattern = addr_to_pattern(original_entry);
-
-			try {
-				auto pattern_results = hook::pattern(entry_pattern);
-				size_t count = pattern_results.size();
-
-				if (count > 0) {
-					printf("Found %zu references to m_batch[%d] - patching...\n", count, i);
-
-					for (size_t j = 0; j < count; ++j) {
-						auto match = pattern_results.get(j);
-						uintptr_t patch_location = reinterpret_cast<uintptr_t>(match.get<void>());
-						SafeWrite32(patch_location, new_entry);
-						total_patches_applied++;
-					}
-					total_references_found += static_cast<int>(count);
-				}
-			}
-			catch (...) {
-				// Continue with next entry
-			}
-		}
-
-		printf("Total references found: %d\n", total_references_found);
-		printf("Total patches applied: %d\n", total_patches_applied);
-		printf("New structure capacity: %zu entries (was %zu)\n", NewSize, OriginalSize);
-		printf("Memory size increase: %zu bytes\n", sizeof(new_structure) - sizeof(render_batch<OriginalSize>));
-
 
 		new_structure.m_size = 0;
 
+		printf("Patched %zu references\n", XrefCount);
+		printf("New structure capacity: %zu entries (was %zu)\n", NewSize, OriginalSize);
+		printf("Memory size increase: %zu bytes\n", sizeof(new_structure) - sizeof(render_batch<OriginalSize>));
 		printf("New %s structure initialized and ready for use!\n", batch_name);
 		printf("========================================\n\n");
 	}
@@ -1332,7 +1242,7 @@ constexpr auto new_size_n = 5000;
 		GameConfig::Initialize();
 		Logger::Initialize();
 
-		auto value = GameConfig::GetValue("Graphics", "ExtendRenderBatches", 1);
+		auto value = GameConfig::GetValue("Graphics", "ExtendRenderBatches", 0);
 
 		if (!value) {
 			return;
@@ -1341,13 +1251,15 @@ constexpr auto new_size_n = 5000;
 		patchDWord((void*)(0xC0BD0B + 1), Instance_pool_buffer_new_size);
 		patchDWord((void*)(0xC0BD13 + 1), (uintptr_t)&Instance_pool_buffer);
 
-		PatchRenderBatch<1536, new_size_n>("Main", 0x0277D190, main_render_bigger);
-		PatchRenderBatch<1024, Alpha_Size_New>("Alpha", 0x02784998, Alpha_Render_batch);
-		PatchRenderBatch<512, Supp_pass_Size_New>("Supp", 0x027899A0, Supp_pass_increased);
-
-		patchCall((void*)0x52E926, push_back);
-		patchCall((void*)0x52E912, push_back_alpha);
-		patchCall((void*)0x52E967, push_back_Supp_Pass);
+		PatchRenderBatch<1536, new_size_n>("Main", 0x0277D190, main_render_bigger, g_main_render_batch_xrefs);
+		PatchRenderBatch<1024, Alpha_Size_New>("Alpha", 0x02784998, Alpha_Render_batch, g_alpha_render_batch_xrefs);
+		PatchRenderBatch<512, Supp_pass_Size_New>("Supp", 0x027899A0, Supp_pass_increased, g_supp_pass_batch_xrefs);
+		SafeWrite32(0x52FDAC, new_size_n);
+		SafeWrite32(0x52FDE0, new_size_n);
+		SafeWrite32(0x52FE1C, Alpha_Size_New);
+		SafeWrite32(0x52FE50, Alpha_Size_New);
+		SafeWrite32(0x52FE8C, Supp_pass_Size_New);
+		SafeWrite32(0x52FEC0, Supp_pass_Size_New);
 
 		patchDWord((void*)0x00DD28F8, (uintptr_t)&cutscene_func_city_render_fade_dist_scale);
 
