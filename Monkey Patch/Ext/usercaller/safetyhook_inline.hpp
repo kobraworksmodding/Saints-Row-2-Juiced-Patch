@@ -13,32 +13,74 @@
 
 namespace uc
 {
-    template <typename Abi>
-    class inline_hook
+    namespace detail
+    {
+        template <cleanup CleanupMode, typename Abi>
+        struct inline_hook_traits;
+
+        template <typename Abi>
+        struct inline_hook_traits<cleanup::caller, Abi>
+        {
+            using callback_t = typename Abi::callback_t;
+
+            template <typename CallbackFn>
+            static callback_t make_callback(CallbackFn callback)
+            {
+                return Abi::make_callback(callback);
+            }
+
+            static typename Abi::invoker_t make_invoker()
+            {
+                return Abi::make_invoker();
+            }
+        };
+
+        template <typename Abi>
+        struct inline_hook_traits<cleanup::callee, Abi>
+        {
+            using callback_t = typename Abi::callback_callee_t;
+
+            template <typename CallbackFn>
+            static callback_t make_callback(CallbackFn callback)
+            {
+                return Abi::make_callback_callee(callback);
+            }
+
+            static typename Abi::invoker_t make_invoker()
+            {
+                return Abi::make_invoker_callee();
+            }
+        };
+    }
+
+    template <cleanup CleanupMode, typename Abi>
+    class basic_inline_hook
     {
     public:
         using ret_t = typename Abi::ret_t;
+        using traits_t = detail::inline_hook_traits<CleanupMode, Abi>;
+        using callback_t = typename traits_t::callback_t;
 
-        inline_hook() = default;
+        basic_inline_hook() = default;
 
-        inline_hook(const inline_hook&) = delete;
-        inline_hook& operator=(const inline_hook&) = delete;
+        basic_inline_hook(const basic_inline_hook&) = delete;
+        basic_inline_hook& operator=(const basic_inline_hook&) = delete;
 
-        inline_hook(inline_hook&&) noexcept = default;
-        inline_hook& operator=(inline_hook&&) noexcept = default;
+        basic_inline_hook(basic_inline_hook&&) noexcept = default;
+        basic_inline_hook& operator=(basic_inline_hook&&) noexcept = default;
 
         template <typename CallbackFn>
         bool create(void* target, CallbackFn callback)
         {
             reset();
 
-            callback_ = Abi::make_callback(callback);
-            invoker_ = Abi::make_invoker();
+            callback_ = traits_t::make_callback(callback);
+            invoker_ = traits_t::make_invoker();
             hook_ = safetyhook::create_inline(target, callback_.raw());
 
             if (!hook_)
             {
-                callback_ = typename Abi::callback_t{};
+                callback_ = callback_t{};
                 invoker_ = {};
             }
 
@@ -54,7 +96,7 @@ namespace uc
         void reset()
         {
             hook_.reset();
-            callback_ = typename Abi::callback_t{};
+            callback_ = callback_t{};
             invoker_ = {};
         }
 
@@ -115,7 +157,7 @@ namespace uc
             if (!hook_)
             {
 #if defined(_DEBUG)
-                assert(false && "UserCaller: inline_hook::call_original called on invalid hook.");
+                assert(false && "UserCaller: inline_hook call_original called on invalid hook.");
 #endif
 
                 if constexpr (!std::is_void_v<ret_t>)
@@ -151,9 +193,15 @@ namespace uc
 
     private:
         SafetyHookInline hook_{};
-        typename Abi::callback_t callback_{};
+        callback_t callback_{};
         typename Abi::invoker_t invoker_{};
     };
+
+    template <typename Abi>
+    using inline_hook = basic_inline_hook<cleanup::caller, Abi>;
+
+    template <typename Abi>
+    using inline_hook_callee = basic_inline_hook<cleanup::callee, Abi>;
 }
 
 #endif
