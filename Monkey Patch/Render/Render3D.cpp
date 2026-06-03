@@ -40,7 +40,6 @@ namespace Render3D
 	int SHADER_LOD = 0;
 	int OVERRIDE_SHADER_LOD = 1;
 	float SHADER_DISTANCE_SQUARED_MULT = 1.6f;
-	const char FPSCam[] = "camera_fpss.xtbl";
 	bool useFPSCam = 0;
 	bool VFXP_fixFog = 0;
 	float AOStrength = 1.5;
@@ -742,18 +741,6 @@ namespace Render3D
 			ctx.eip = 0x00BD8665;
 		}
 	}
-#if !JLITE
-	CMultiPatch CMPatches_ClassicGTAIdleCam = {
-
-		[](CMultiPatch& mp) {
-			mp.AddPatchNop(0x00994541, 5);
-		},
-
-		[](CMultiPatch& mp) {
-			mp.AddPatchNop(0x0099454C, 5);
-		},
-	};
-#endif
 	shaderOptions ShaderOptions;
 	
 
@@ -1365,32 +1352,6 @@ namespace Render3D
 		if (GameConfig::GetValue("Graphics", "DisableFog", 0, "Disables Distance Fog (Creds to Tervel)")) // Option for the 2 psychopaths that think no fog looks better.
 		{
 			Render3D::DisableFog();
-		}
-
-		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0, "Uses a custom first person mode camera on-foot. 2 has viewmodel, 1 has no viewmodel.") == 1)
-		{
-			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS...\n");
-			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
-			patchNop((BYTE*)0x0099453D, 2);
-			CMPatches_ClassicGTAIdleCam.Apply();
-		}
-		if (GameConfig::GetValue("Graphics", "FirstPersonCamera", 0, "Uses a custom first person mode camera on-foot. 2 has viewmodel, 1 has no viewmodel.") == 2)
-		{
-			Logger::TypedLog(CHN_MOD, "Turning SR2 into an FPS with Viewmodel...\n");
-			patchDWord((BYTE*)0x00495AC3 + 1, (uint32_t)&FPSCam);
-			patchNop((BYTE*)0x0099453D, 2);
-			CMPatches_ClassicGTAIdleCam.Apply();
-			useFPSCam = 1;
-		}
-		const uint32_t firstPersonCameraMode = GameConfig::GetValue("Graphics", "FirstPersonCamera", 0, "Uses a custom first person mode camera on-foot. 2 has viewmodel, 1 has no viewmodel.");
-		if (GameConfig::GetValue("Graphics", "ClassicGTAIdle", 0, "Makes idle animations snap to where the camera is pointing (like GTA3/VC)") &&
-			firstPersonCameraMode != 1 &&
-			firstPersonCameraMode != 2)
-		{
-			Logger::TypedLog(CHN_MOD, "Patching in Classic GTA Idle...\n");
-			//patchByte((BYTE*)0x00960C30, 0xC3);
-			//patchNop((BYTE*)0x0099453D, 2);
-			CMPatches_ClassicGTAIdleCam.Apply();
 		}
 #endif
 		//WriteRelJump(0x00D1B7CE, (UInt32)&LoadShadersHook);

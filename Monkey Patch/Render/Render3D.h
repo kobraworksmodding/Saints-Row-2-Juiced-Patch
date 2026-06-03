@@ -23,7 +23,6 @@ namespace Render3D
     extern const double fourbythreeAR;
     extern bool IsSleepHooked;
     extern CMultiPatch CMPatches_PatchLowSleepHack;
-    extern CMultiPatch CMPatches_ClassicGTAIdleCam;
     extern CMultiPatch CMPatches_DisableFog;
     extern CMultiPatch CMPatches_VFXPlus;
     extern CMultiPatch CMPatches_DisableSkyRefl;

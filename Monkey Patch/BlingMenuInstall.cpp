@@ -242,7 +242,6 @@ namespace BlingMenuInstall
 
         return hook.enabled() ? "ON " : "OFF";
     }
-        BM_MakeCPatchFunction(ClassicGTAIdleCam, CMPatches_ClassicGTAIdleCam, Render3D)
         BM_MakeCPatchFunction(UncapFPS, CUncapFPS, Render3D)
         BM_MakeCPatchFunction(BetterAO, CBetterAO, Render3D)
         BM_MakeCPatchFunction(DisableSkyRefl, CMPatches_DisableSkyRefl, Render3D)
@@ -362,7 +361,6 @@ namespace BlingMenuInstall
        BlingMenuAddFuncCustom("Juiced", "Better Drive-by Cam", NULL, &BM_DBC, NULL);
        BlingMenuAddFuncCustom("Juiced", "Better Handbrake Cam", NULL, &BM_HBC, NULL);
        //BlingMenuAddFuncCustom("Juiced", "Anim Blend", NULL, &BM_AnimBlend, NULL);
-       BlingMenuAddFuncCustom("Juiced", "Classic GTA Idle Cam", NULL, &BM_ClassicGTAIdleCam, NULL);
        BlingMenuAddFuncCustom("Juiced", "SR1 Reloading", NULL, &BM_SR1Reloading, NULL);
        BlingMenuAddFuncCustom("Juiced", "SR1 Quick Switching", NULL, &BM_SR1QuickSwitch, NULL);
        BlingMenuAddFuncCustom("Juiced", "Juiced", NULL, &BM_ReportVersion, NULL);
