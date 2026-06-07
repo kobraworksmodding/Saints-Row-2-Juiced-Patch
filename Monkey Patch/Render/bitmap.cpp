@@ -238,7 +238,7 @@ constexpr size_t permanent_default = 0x00800000;
             static auto interface_gpu_increase = safetyhook::create_mid(0x51E322, [](SafetyHookContext& ctx) {
                 if (double interface_gpu_new_size = GameConfig::GetDoubleValue("Mempool", "interface_gpu_multi", 1.5); interface_gpu_new_size >= 1.0) {
                     ctx.esi = static_cast<uintptr_t>(ctx.esi * interface_gpu_new_size);
-                    Logger::TypedLog("Mempool", "Patched interface_gpu size to 0x%X\n", ctx.esi);
+                    Logger::TypedLog("Mempool", "Patched interface_gpu size to {}\n", ctx.esi);
                 }
                 });
             size_t new_permanent_size = std::clamp(GameConfig::GetValue("Mempool", "permanent", permanent_default + (permanent_default / 2)), permanent_default, GB / 2);
