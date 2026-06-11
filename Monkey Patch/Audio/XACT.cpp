@@ -130,5 +130,7 @@ namespace XACT
 		UpdateToNewerXACT();
 		ChangeSpeakerCount();
 
+		// removes "FILE_FLAG_NO_BUFFERING" from XACT soundbank createfileA fixes 4kn loading (clippy95)
+		Patch<uint32_t>(0x481183 + 1, FILE_FLAG_OVERLAPPED);
 	}
 }
