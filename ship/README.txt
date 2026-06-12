@@ -2,16 +2,7 @@ HOW TO INSTALL:
 
 Open your Saints Row 2 Game Directory
 
-Drag:
-DFEngine.dll, 
-SDL3.dll,
-mods (folder),
-patches (folder), 
-loose.txt, 
-discord_game_sdk.dll, 
-JuicedSteamXDel.bat, 
-Juiced (folder), 
-juiced.ini into the directory
+Drag ALL contents of this archive (SDL3.dll, DFEngine.dll, mods/juiced folders, etc) into your Saints Row 2 Game Directory
 
 Run game through "sr2_pc.exe". ( I would 10000% recommend to take a look at the juiced.ini file before you launch the game as it has key options in there that may or may not help your gameplay, fps, etc. )
 
@@ -20,12 +11,10 @@ Notes:
 
 Teleport to Waypoint and LUA Console Executor both enable cheat flag if used.
 FetchKWorksAd.exe is a completely optional binary file, you do not need to install it however you can run it before you launch the game for the first time to install community made billboard images.
-VanillaFXPlus Replaces HDR Option. If you want to use original visuals for the game disable VanillaFXPlus in juiced.ini.
 Borderless windowed replaces Windowed mode. To enabled borderless you just pick the windowed option in game.
 AltTabFPS option simply removes the fps cap when alt tabbed.
-UncapFPS uses more cpu usage the higher your fps goes.
+UncapFPS uses more cpu usage the higher your fps goes. (Without UncapFPS on the highest you should be able to see your FPS go is around 95-100)
 Steam or GOG versions of the game is required / recommended.
-coopPausePatch can potentially cause issues in co-op.
 Thanks to Scanti the Audio Playback has been fixed! 
 
 
@@ -78,10 +67,11 @@ HELP:
 	(There have been reports that this setting doesn't work well on linux.)
 	
 3 : I crash when making a new save game or loading a save game.
-    Turn ForceDisableVibration to 1 in the reloaded.ini config. You can also try turning DisableXInput to 1.
+    Turn ForceDisableVibration to 1 in the juiced.ini config. You can also try turning DisableXInput to 1.
 	
 4 : Help my controller doesn't work when launching through steam or even at all
     Turn off steam input, if you still have issues try using an X-Input mapper like DS4-Windows, x360ce or xPadder
+    or turn SDL in the juiced.ini to 0.
 	
 5 : Booting Juiced Patch for the first time and getting a write/read issue error?
     Start Saints Row 2 with Administrator Privileges.
