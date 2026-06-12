@@ -24,7 +24,7 @@ VanillaFXPlus Replaces HDR Option. If you want to use original visuals for the g
 Borderless windowed replaces Windowed mode. To enabled borderless you just pick the windowed option in game.
 AltTabFPS option simply removes the fps cap when alt tabbed.
 UncapFPS uses more cpu usage the higher your fps goes.
-GOG Executable is not needed but is HIGHLY recommended as its more stable and the patch was built using a GOG exe.
+Steam or GOG versions of the game is required / recommended.
 coopPausePatch can potentially cause issues in co-op.
 Thanks to Scanti the Audio Playback has been fixed! 
 
