@@ -1,10 +1,11 @@
+mods
 mods/JUICED - Credits
 mods/JUICED - Chunk Fixes
 mods/JUICED - FPS Camera
 mods/JUICED - Strings
 mods/JUICED - Lua Libraries
+mods/JUICED - TU3 Mission Fixes
 mods/JUICED - Shaders
 mods/JUICED - Animations
 mods/JUICED - Textures
 mods/JUICED - Vehicle Fixes
-mods
