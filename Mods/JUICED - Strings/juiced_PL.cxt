@@ -1,53 +1,65 @@
+[DIVERSION_AMBULANCE_MINIGAME_CPR,pad]
+Poruszaj {ANALOG_LS_IMG) i {ANALOG_RS_IMG} w górę i w dół, aby przywrócić puls.
+
+[TUT_WAYPOINT_2,pad]
+Użyj {ANALOG_LS_IMG}, aby najechać kursorem na poszczególne ikony i sprawdzić, co one oznaczają.
+
+[TUT_AMBULANCE_SHOCK_PADDLES,pad]
+Szybko poruszaj {ANALOG_LS_IMG} i {ANALOG_RS_IMG} w górę i w dół w przeciwnych kierunkach, aby naładować elektrody defibrylacyjne.
+
+[DIVERSION_VEHICLE_SURFING_STYLE_TWO_BALANCE_MESSAGE_TEXT,pad]
+Użyj {ON_FOOT_STRAFE_LEFT}, aby utrzymać równowagę na pojeździe.
+
 [J_OPTIONS]
 Opcje Juiced
 
 [J_UNCFPS]
-Vanilla FX Plus
+Wyłącz limit klatek na sekundę
 
 [J_XBGAMMA]
-Gamma Xbox 360
+Gamma z Xboxa 360
 
 [J_XBGAMMA_UI]
-Gamma Xbox 360 w UI
+Gamma z Xboxa 360 (interfejs użytkownika)
 
 [J_SHADOWFLT]
 Filtrowanie cieni
 
 [J_VEHFADE]
-Zwiększ dystans zanikania pojazdów
+Dalszy dystans rysowania pojazdów
 
 [J_SHDROVR]
-Nadpisanie shadera
+Nadpisanie shadera skalowania LOD
 
 [J_SHDROVR_HI]
-Wymuś najwyższe LOD
+Wymuś najwyższej jakości modele
 
 [J_SHDROVR_DIST]
-Zwiększony dystans
+Dalszy dystans rysowania
 
 [J_VFXPLUS]
-Vanilla FX Plus
+Poprawione domyślne efekty graficzne
 
 [J_BETTERAO]
-Lepsza okluzja otoczenia
+Wysokiej jakości okluzja otoczenia
 
 [J_NOFOG]
 Wyłącz mgłę
 
 [J_NOSKYREF]
-Wyłącz odbicia nieba
+Wyłącz odbicia nieba na oknach budynków
 
 [J_IVRADAR]
-Skalowanie radaru IV
+Skalowanie radaru w stylu GTA IV
 
 [J_NOTUT]
 Wyłącz samouczki
 
 [J_INPROMPT]
-Wymuś monit wejścia
+Wymuś glify kontrolera
 
 [J_AUTO]
-Automatycznie
+Automatyczne
 
 [J_CTRL]
 Kontroler
@@ -56,7 +68,7 @@ Kontroler
 Klawiatura i mysz
 
 [J_CTRLPROMPT]
-Monity kontrolera
+Glify kontrolera
 
 [J_DECK]
 Steam Deck
@@ -77,72 +89,81 @@ Dualshock 3
 Xbox 360
 
 [J_HOLDAIM]
-Przytrzymaj precyzyjne celowanie
+Precyzyjne celowanie po przytrzymaniu przycisku
 
 [J_NOAIMASSIST]
-Wyłącz asystę celowania
+Wyłącz wspomaganie celowania
 
 [J_MOUSEONLY]
-Tylko na myszy
+Tylko podczas korzystania z myszy
 
 [J_ALWAYS]
 Zawsze
 
 [J_AUTOCENTER]
-Modyfikator auto-centrowania pojazdu
+Prędkość auto-centrowania kamery w pojeździe
 
 [J_DBCAM]
-Lepsza kamera drive-by
+Poprawiona kamera przy celowaniu z pojazdu
 
 [J_HBCAM]
-Lepsza kamera hamulca ręcznego
+Poprawiona kamera przy użyciu hamulca ręcznego
 
 [J_NOSPRINTSHK]
-Wyłącz wstrząsy kamery sprintu
+Wyłącz trzęsienie kamery podczas sprintu
 
 [J_SR1RELOAD]
-Przeładowanie SR1
+Przeładowanie jak w SR1
 
 [J_SR1QSW]
-Szybkie przełączanie SR1
+Szybka zmiana broni/przedmiotów jak w SR1
 
 [J_SR1CROUCHCAM]
-Kamera kucania SR1
+Kamera podczas kucania jak w SR1
 
 [J_NOMELEELOCK]
-Bez blokady wręcz
+Wyłącz blokowanie kamery podczas walki wręcz
 
 [J_NOFARPEDS]
-Wyłącz odległych pieszych
+Wyłącz rysowanie odległych pieszych
 
 [J_NOFARVEH]
-Wyłącz odległe pojazdy
+Wyłącz rysowanie odległych pojazdy
 
 [J_MAPROT]
-Obrót gracza na mapie
+Pokaż orientację gracza na mapie
 
 [J_DISXINP_R]
 Wyłącz XInput (R)
 
 [J_NOVIB_R]
-Wymuś wyłącz wibracje (R)
+Wymuś wyłączenie wibracji kontrolera (R)
 
 [J_UHQ_R]
-Efekty ekranu UHQ (R)
+Wysokiej jakości efekty graficzne (R)
 
 [J_BORDER_R]
-Bez ramki (R)
+Okno bez ramki (R)
 
 [J_NOVIGN_R]
-Usuń winietę (R)
+Wyłącz winietę (R)
 
 [J_NOPIXEL_R]
-Usuń shader pikselizacji (R)
+Wyłącz efekt pikselizacji (cenzura) (R)
 
 [J_FASTLOAD_R]
-Szybsze ładowanie (R)
+Szybsze ładowanie gry (R)
 
 [J_METRIC_R]
 Wymuś system metryczny (R)
 
 [MP_SERVER_IP]
+
+[J_MOUSEFOV]
+Dostosuj czułość myszy do pola widzenia (FOV)
+
+[J_FINEAIMONLY]
+Tylko przy precyzyjnym celowaniu
+
+[J_FOVMULT]
+Współczynnik zwiększenia pola widzenia (FOV)
