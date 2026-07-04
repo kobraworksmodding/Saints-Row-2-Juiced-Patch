@@ -125,10 +125,10 @@ Kamera podczas kucania jak w SR1
 Wyłącz blokowanie kamery podczas walki wręcz
 
 [J_NOFARPEDS]
-Wyłącz odległych pieszych
+Wyłącz rysowanie odległych pieszych
 
 [J_NOFARVEH]
-Wyłącz odległe pojazdy
+Wyłącz rysowanie odległych pojazdy
 
 [J_MAPROT]
 Pokaż orientację gracza na mapie
@@ -137,7 +137,7 @@ Pokaż orientację gracza na mapie
 Wyłącz XInput (R)
 
 [J_NOVIB_R]
-Wymuś wyłączenie wibracji (R)
+Wymuś wyłączenie wibracji kontrolera (R)
 
 [J_UHQ_R]
 Wysokiej jakości efekty graficzne (R)
