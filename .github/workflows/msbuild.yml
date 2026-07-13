@@ -30,7 +30,7 @@ jobs:
         copy "Release\DFEngine.dll" upload\
         copy "Release\DFEngine.pdb" upload\
         copy "Discord\discord_game_sdk.dll" upload\
-        copy "Monkey Patch\Ext\lib\x86\SDL3.dll" upload\
+        copy "Juiced Patch\Ext\lib\x86\SDL3.dll" upload\
         copy "external\SDL_GameControllerDB\gamecontrollerdb.txt" upload\
         copy "juiced.ini" upload\
         copy "loose.txt" upload\
