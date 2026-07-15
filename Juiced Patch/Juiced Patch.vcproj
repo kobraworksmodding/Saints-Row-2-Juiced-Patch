@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="SR2 Monkey Patch"
+	Name="SR2 Juiced Patch"
 	ProjectGUID="{470235EE-E987-45D6-8BCD-AA93D09EFACF}"
 	RootNamespace="BlankDFEngine"
 	Keyword="Win32Proj"

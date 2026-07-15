@@ -15,24 +15,22 @@ Juiced Patch provides these fixes and enhancements to the Saints Row 2 PC port, 
 </p>
 
 
-This is the entire project of SR2 Juiced Patch in it's entirety minus some Tharow code. \
-Juiced Patch was originally based on Monkey Patch by [Scanti](https://github.com/scanti2) \
+This is the entire project of SR2 Juiced Patch in its entirety minus some Tharow code. \
 This project was originally created using Visual Studio 2022 using C++23 and may only be buildable using this setup.
 
-Some main patching areas are all included in Monkey Patch/General/General.cpp and Monkey Patch/MainHooks.cpp
+Some main patching areas are included in the Juiced Patch project under General/General.cpp and MainHooks.cpp.
 
 ## Build Environments
-There are three different build environments for Juiced Patch.
-- Debug (Full Juiced Patch)
-- RELOADED (Full Juiced Patch + Extra stuff for THAROW)
-
-(RELOADED Build Environment is still included in this source code but the code we have for SR2 Reloaded is scrapped out of
-this repository for security purposes, So code will not build properly when using the RELOADED Build Environment.)
+There are four build environments for Juiced Patch.
+- Debug
+- Release
+- RELOADED (THAROW/multiplayer build)
+- RELOADED - DEV (THAROW/multiplayer development build)
 
 ## How to build?
 - Run the Juiced Patch.sln file using VS 2022 on a version that supports C++23
-- Make sure the configuration is set to "Debug" or "Debug - LITE"
-- Click "Build" then "Build Reloaded Patch" or press CTRL+B
+- Make sure the configuration is set to "Debug", "Release", "RELOADED", or "RELOADED - DEV"
+- Click "Build" then "Build Juiced Patch" or press CTRL+B
 - The exported Juiced Patch "DFEngine.dll" should output in a folder corresponding to the configuration name in your Juiced Patch project folder.
 
 ## Active Developers
