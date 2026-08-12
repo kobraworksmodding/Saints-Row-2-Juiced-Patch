@@ -60,15 +60,10 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	if (GameConfig::GetValue("Logger", "ExceptionHandler", 1, "Exception Handler shows a useful text box of crash addresses as soon as the game crashes"))
 		{
 			Logger::TypedLog(CHN_DLL, "Enabling ExceptionHandler.\n");
-#if !RELOADED
-			_mkdir("Juiced");
-			_mkdir("Juiced\\CrashDumps");
-			_mkdir("Juiced\\logs");
-#else
+
 			_mkdir("thaRow");
 			_mkdir("thaRow\\CrashDumps");
 			_mkdir("thaRow\\logs");
-#endif
 			SetUnhandledExceptionFilter(CustomUnhandledExceptionFilter);
 			uint32_t ret = 0x900004C2; //ret4
 			DWORD protect[2];

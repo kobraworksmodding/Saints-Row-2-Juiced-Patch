@@ -17,10 +17,8 @@ import component;
 #include "LuaHandler.h"
 #include "DFEngine.h"
 #include "Mem/Memory.h"
-#if RELOADED
-#include "UGC/thaRow/Reloaded.h"
-#include "UGC/thaRow/packfile.h"
-#endif
+#include "UGC/Reloaded.h"
+#include "UGC/packfile.h"
 #include "UGC/InternalPrint.h"
 
 #include "Player/Input.h"
@@ -81,7 +79,6 @@ bool wasPressedThisFrame[256];
 void SetDefaultGameSettings()
 {
 	patchBytesM((BYTE*)0x00774126, (BYTE*)"\xC6\x05\xAC\xA9\xF7\x01\x00", 7); // Force game into windowed on default settings.
-#if RELOADED
 	//char* playerName = (CHAR*)0x0212AB48;
 	//char* GameName = reinterpret_cast<char*>(0x0212AA08);
 	//strcpy(GameName, playerName);
@@ -91,10 +88,6 @@ void SetDefaultGameSettings()
 	// change game version from 201 to 209 
 	// 201 is Vanilla , 209 is Reloaded.
 	//patchBytesM((BYTE*)0x008D01F6, (BYTE*)"\x68\xB1", 2);
-#else
-	char* GameName = reinterpret_cast<char*>(0x0212AA08);
-	strcpy(GameName, (const char*)ServerNameSR2);
-#endif
 
 	// -- RAHHHHHHH I HATE RESOLUTION STUFF --
 	/* patchNop((BYTE*)0x00775F24, 7);
@@ -214,23 +207,8 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	if (exe) {
 		*(exe + 1) = '\0';
 	}
-#if !RELOADED
-	#if JLITE
-	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED LITE Version: " +
-		std::string(UtilsGlobal::juicedversion) +
-		" (commit: " + UtilsGlobal::getShortCommitHash() +
-		", built: " + BUILD_TIME_UTC +
-		") ---\n").c_str());
-    #else
-	Logger::TypedLog(CHN_DLL, (" --- Welcome to Saints Row 2 JUICED Version: " +
-		std::string(UtilsGlobal::juicedversion) +
-		" (commit: " + UtilsGlobal::getShortCommitHash() +
-		", built: " + BUILD_TIME_UTC +
-		") ---\n").c_str());
-    #endif
-#else
+
 	Logger::TypedLog(CHN_DLL, " --- Welcome to thaRow ---\n");
-#endif
 	std::string cpu = getCPUName();
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: {}\n", static_cast<const char*>((LPSTR)executableDirectory));
 	Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: {}\n", std::string_view(timeString));
@@ -803,11 +781,7 @@ void cus_FrameToggles() {
 		*(uint8_t*)(0x25273B4) = uglyMode ? 1 : 0;
 		*(float*)(0xE98988) = uglyMode ? 400.0f : 20000.0f;
 	}
-#if !RELOADED
-	if (IsKeyPressed(VK_F11, false)) { // F1
-		NewSave();
-	}
-#endif
+
 	if (IsKeyPressed(VK_F4, false)) { // F4
 		SlewModeToggle();
 	}
@@ -874,7 +848,7 @@ void cus_FrameToggles() {
 		addsubtitles(subtitles.c_str(), delay, duration, whateverthefuck);
 		Logger::TypedLog(CHN_DEBUG, "Player Pos + Orient: <{:.6f} {:.6f} {:.6f}> [{:.6f}]\n", hkg_playerPosition[0], hkg_playerPosition[1], hkg_playerPosition[2], hkg_camOrient);
 	}
-#if !RELOADED // change this up later when thaRow gets 3+ player co-op?
+/* #if !RELOADED // change this up later when thaRow gets 3+ player co-op?
 	if (IsKeyPressed(VK_F7, false)) {
 
 		if (hasCheatMessageBeenSeen == 1 || Debug::CMPatches_DisableCheatFlag.IsApplied())
@@ -895,7 +869,7 @@ void cus_FrameToggles() {
 			}
 		}
 	}
-#endif
+#endif */
 	if (IsKeyPressed(VK_DELETE, false) && IsInSaveMenu()) {
 		DeletionMode = true;
 		*EnterPressed = true;
@@ -924,7 +898,7 @@ PlayerHolsterT PlayerHolster = (PlayerHolsterT)0x9661E0;
 typedef void(__stdcall* SetInvulnerableT)(int Pointer, bool Enable);
 SetInvulnerableT SetInvulnerable = (SetInvulnerableT)0x965F40;
 
-#if !RELOADED
+#if RLDEV
 void ResetYVel() {
 	uintptr_t YVelBase = UtilsGlobal::ReadPointer(UtilsGlobal::getplayer(true), { 0x570 });
 	float* YVelPositive = (float*)(*(int*)YVelBase + 0x164);
@@ -1047,7 +1021,7 @@ void Noclip() {
 typedef void(*LoadLevelT)();
 LoadLevelT LoadLevel = (LoadLevelT)0x73C000;
 char LUA_Key = VK_INSERT;
-#if !RELOADED
+#if RLDEV
 void LuaExecutor() {
 	static bool OpenedByExecutor = false;
 	BOOL* IsOpen = (BOOL*)(0x0252A5B3);
@@ -1229,7 +1203,7 @@ void LuaExecutor() {
 	}
 }
 #endif
-#if !RELOADED
+#if RELOADED
 inline void ModpackWarning(const wchar_t* Warning) {
 	__asm pushad
 	AddMessage(L"Juiced", Warning);
@@ -1287,7 +1261,7 @@ int early_render_hook() {
 	return ((int(*)(void))0xD14770)();
 }
 #endif
-#if !RELOADED
+#if RELOADED
 static bool modpackread = 0;
 #endif
 int RenderLoopStuff_Hacked()
@@ -1315,7 +1289,7 @@ int RenderLoopStuff_Hacked()
 			CutscenePaused ? ShowPauseDialog(true, false, false, false) : RemovePauseDialog();
 		}
 
-    #if !RELOADED
+    #if RELOADED
 		LuaExecutor();
 		Noclip();
     #endif
@@ -1599,22 +1573,6 @@ int* sub_73D900() {
 		*(void**)(Result + 0x930) = &WelcomeCallback;
 		FirstBootFlag();
 	}
-#if !RELOADED
-	if (Game::xtbl_scan_status.gotr_detected) {
-		ModWarningMessage("GOTR.txt",L"Gentlemen of the Row", L"does not increase stability or fix the game, in some cases it can even do the opposite.\n"
-			L"Crashes and issues that may occur are usually NOT the cause of Juiced Patch.\n"
-			L"Think of GOTR as a DLC mod rather than a fix patch.\n"
-			L"This message is only to spread awareness, make a GOTR.txt file in your game directory to remove this message."
-			L"\n-Juiced Team");
-	}
-	else if (Game::xtbl_scan_status.overhauled_stilwater_detected()) {
-		ModWarningMessage("overhauled_stilwater.txt",L"Overhauled Stilwater", L"does not increase stability or fix issues within the game, and has files that conflict with Juiced\n"
-			L"Crashes and issues that may occur are usually NOT the cause of Juiced Patch.\n"
-			L"This message is only to spread awareness, create a overhauled_stilwater.txt file in your game directory to remove this message."
-			L"\n-Juiced Team");
-	}
-
-#endif
 	return ((int* (*)())0x73D900)();
 }
 int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
@@ -1670,15 +1628,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	}
 	
 	// Instead of data being in %LOCALAPPDATA%\\THQ\\Saints Row 2, move it to current direcetory\\userdata
-#if !RELOADED
-	if (GameConfig::GetValue("Misc", "portable", 0, "Turning this option on makes it so saved games and settings load from \"SR2 GAME DIRECTORY//userdata\"") && PathRemoveFileSpecA(NameBuffer) && PathAppendA(NameBuffer, "userdata")) {
-		CreateDirectoryA(NameBuffer, NULL);
-		Logger::TypedLog(CHN_DLL, "Final Path: {} \n", std::string_view(NameBuffer));
-		SafeWriteBuf(0x0144E650, NameBuffer, MAX_PATH);
-		patchNop((void*)0x00520FCD, 5);
-		patchNop((void*)0x520F65, 6);
-	}
-#else
+
 	if (PathRemoveFileSpecA(NameBuffer) && PathAppendA(NameBuffer, "\\thaRow\\userData")) {
 		CreateDirectoryA(NameBuffer, NULL);
 		Logger::TypedLog(CHN_DLL, "Final Path: {} \n", std::string_view(NameBuffer));
@@ -1686,14 +1636,10 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 		patchNop((void*)0x00520FCD, 5);
 		patchNop((void*)0x520F65, 6);
 	}
-#endif
 #if !JLITE
 	InternalPrint::Init();
 	RPCHandler::Init();
 
-#if !RELOADED
-	BlingMenuInstall::AddOptions();
-#endif
 
 #endif
 	DLC::Init();
@@ -1709,15 +1655,10 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	Debug::Init();
 	Render2D::InitMenVerNum();
 
-#if RELOADED
 	Reloaded::Init();
 	Behavior::BetterMovement();
 	packfile::PatchThaRowPackfiles();
 #if RLDEV
-	Debug::PatchDatafiles();
-#endif 
-
-#else
 	Debug::PatchDatafiles();
 #endif
 

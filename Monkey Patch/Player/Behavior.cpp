@@ -435,14 +435,6 @@ CMultiPatch CMPatches_SR1Reloading = {
 	//		patchDWord((void*)(0x00D26587 + 2), (uint32_t)&bogusPi);
 		//}
 #if !JLITE
-#if !RELOADED
-	if (GameConfig::GetValue("Gameplay", "AlwaysDisarmOnRagdoll", 0, "Disarms characters and the player everytime ragdoll is initiated."))
-		{
-			patchNop((BYTE*)0x009AC517, 11); // NOP out an if statement that holsters on ragdoll.
-			patchNop((BYTE*)0x009AC52B, 8);
-			patchByte((BYTE*)0x009C3AB8, 0xEB); // jmp a check in can drop weapons.
-		}
-#endif
 	if (GameConfig::GetValue("Gameplay", "SprintWhileOnFire", 0, "Allows you to sprint while on fire, just like in SR1! (Clippy95)"))
 		{
 			patchCall((BYTE*)0x004F8B45, UtilsGlobal::RetZero);

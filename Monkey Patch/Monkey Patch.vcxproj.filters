@@ -210,6 +210,15 @@
     <ClCompile Include="Ext\usercaller\usercaller.cpp">
       <Filter>Ext\usercaller</Filter>
     </ClCompile>
+    <ClCompile Include="UGC\packfile.cpp">
+      <Filter>Source Files\UGC</Filter>
+    </ClCompile>
+    <ClCompile Include="UGC\Reloaded.cpp">
+      <Filter>Source Files\UGC</Filter>
+    </ClCompile>
+    <ClCompile Include="UGC\AT.cpp">
+      <Filter>Source Files\UGC</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DFEngine.h">
@@ -421,6 +430,15 @@
     </ClInclude>
     <ClInclude Include="Ext\usercaller\usercaller.hpp">
       <Filter>Ext\usercaller</Filter>
+    </ClInclude>
+    <ClInclude Include="UGC\packfile.h">
+      <Filter>Source Files\UGC</Filter>
+    </ClInclude>
+    <ClInclude Include="UGC\Reloaded.h">
+      <Filter>Source Files\UGC</Filter>
+    </ClInclude>
+    <ClInclude Include="UGC\AT.h">
+      <Filter>Source Files\UGC</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

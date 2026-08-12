@@ -503,49 +503,6 @@ namespace RPCHandler {
 	{
 		if (!EDiscordCreate)
 			Logger::TypedLog(CHN_RPC, "Discord RPC Initialization failed !!!!!!!!\n");
-#if !RELOADED
-		memset(&app, 0, sizeof(Application));
-		memset(&users_events, 0, sizeof(users_events));
-		memset(&activities_events, 0, sizeof(activities_events));
-		memset(&relationships_events, 0, sizeof(relationships_events));
-
-		DiscordCreateParamsSetDefault(&params);
-		params.client_id = 1263159254903164948;
-		params.flags = DiscordCreateFlags_NoRequireDiscord;
-		params.event_data = &app;
-		params.activity_events = &activities_events;
-		params.relationship_events = &relationships_events;
-		params.user_events = &users_events;
-		int fail = EDiscordCreate(DISCORD_VERSION, &params, &app.core);
-		if (fail)
-		{
-			Logger::TypedLog(CHN_RPC, "Discord RPC Initialization failed !!!!!!!!\n");
-			Logger::TypedLog(CHN_RPC, "Error code: {}\n", fail);
-			Enabled = 0;
-		}
-		else
-		{
-			Enabled = 1;
-			Logger::TypedLog(CHN_RPC, "Discord RPC Initialization Succeeded!\n");
-			if (Enabled)
-			{
-				Logger::TypedLog(CHN_RPC, "Sending Info to Rich Presence.\n");
-				app.users = app.core->get_user_manager(app.core);
-				app.achievements = app.core->get_achievement_manager(app.core);
-				app.activities = app.core->get_activity_manager(app.core);
-				app.application = app.core->get_application_manager(app.core);
-				app.lobbies = app.core->get_lobby_manager(app.core);
-
-				std::time_t CurrentTime = std::time(0);
-				//Initialize a basic Rich Presence.
-				pres.timestamps.start = CurrentTime;
-				//pres.timestamps.end = 0;
-				strcpy_s(pres.assets.large_image, "sr2");
-				app.activities->update_activity(app.activities, &pres, 0, 0);
-				// ---------------------------------
-			}
-		}
-#else 
 		memset(&app, 0, sizeof(Application));
 		memset(&users_events, 0, sizeof(users_events));
 		memset(&activities_events, 0, sizeof(activities_events));
@@ -587,7 +544,6 @@ namespace RPCHandler {
 				// ---------------------------------
 			}
 		}
-#endif
 	}
 
 	void ChangeDetails(const char* newdetails)

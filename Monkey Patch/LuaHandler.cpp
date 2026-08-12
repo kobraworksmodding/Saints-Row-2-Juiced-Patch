@@ -98,9 +98,3 @@ INT WINAPIV HookedDebugPrint(lua_State* lua)
 
 	return 0;
 }
-#if !RELOADED
-bool GOTR() {
-	return isGOTR;
-
-}
-#endif

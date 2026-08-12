@@ -1017,7 +1017,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 					}
 				}
 
-#if !RELOADED
 				if (allowJuicedAPI) {
 					bool externallyModified = false;
 
@@ -1032,7 +1031,6 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 					modified = externallyModified;
 
 				}
-#endif
 				if (is_pause_menu) {
 					if (!modified) {
 						finalContent = std::string(currentBuff, currentSize);

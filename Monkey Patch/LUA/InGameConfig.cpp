@@ -16,11 +16,7 @@
 #include <string>
 using namespace General;
 import OptionsManager; 
-#if !RELOADED
-const wchar_t* gameindheader = L"Juiced";
-#else
 const wchar_t* gameindheader = L"thaRow";
-#endif
 namespace InGameConfig {
     typedef bool(*isCoopT)();
     isCoopT isCoop = (isCoopT)0x007F7AD0;
@@ -157,21 +153,6 @@ namespace InGameConfig {
         }
     }
     void GLuaWrapper(const char* var, int* value, bool write) {
-#if !RELOADED
-        if (!write && strcmp(var,"JuicedCall") == 0 && !GameConfig::GetValue("Debug", "ReadJuicedWarning", 0) && *value == 1) {
-            const wchar_t* JuicedWelcome =
-                L"[format][color:#B200FF]Juiced[/format] options and the options available in display & controls "
-                L"is not representative of all the options that are available to change.\n\n"
-                L"Refer to Juiced.ini for the full options list.\n"
-                L"- [format][color:#B200FF]Juiced Team[/format]"
-                L"[format][scale:1.0][image:ui_hud_inv_d_ginjuice][/format]";
-            const wchar_t* Options[] = { L"OK", L"[format][color:#D41111]Do not repeat this pop-up[/format]\n\n" };
-
-            int Result = AddMessageCustomized(gameindheader, JuicedWelcome, Options, _countof(Options));
-
-            *(void**)(Result + 0x930) = &UserUnderstands;
-        }
-#else 
         if (!write && strcmp(var, "JuicedCall") == 0 && !GameConfig::GetValue("Debug", "ReadJuicedWarning", 0) && *value == 1) {
             const wchar_t* JuicedWelcome =
                 L"[format][color:#B200FF]thaRow[/format] options and the options available in display & controls "
@@ -185,7 +166,6 @@ namespace InGameConfig {
 
             *(void**)(Result + 0x930) = &UserUnderstands;
         }
-#endif
 #if !JLITE
         if (strcmp(var, "IVRadarScaling") == 0) {
             if (!write) {
@@ -684,13 +664,8 @@ namespace InGameConfig {
 
                             // First add the "Juiced Options" header
                             int headerIndex = currentNumItems;
-#if !RELOADED
-                            menuEntries += "\t[" + std::to_string(headerIndex) +
-                                "] = { label = \"J_OPTIONS\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
-#else 
                             menuEntries += "\t[" + std::to_string(headerIndex) +
                                 "] = { label = \"thaRow Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
-#endif
                             // Then add all display sliders
                             for (size_t i = 0; i < displaySliders.size(); i++) {
                                 auto& slider = *displaySliders[i];
@@ -833,14 +808,8 @@ namespace InGameConfig {
 
                                 // First add the "Juiced Options" header
                                 int headerIndex = currentNumItems;
-#if !RELOADED
-                                menuEntries += "\t[" + std::to_string(headerIndex) +
-                                    "] = { label = \"J_OPTIONS\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
-
-#else
                                 menuEntries += "\t[" + std::to_string(headerIndex) +
                                     "] = { label = \"thaRow Options\", type = MENU_ITEM_TYPE_SELECTABLE, on_select = nil, disabled = true, it_is_caption_label = true, dimm_disabled = true },\n";
-#endif
                                 // Then add all control sliders
                                 for (size_t i = 0; i < controlSliders.size(); i++) {
                                     auto& slider = *controlSliders[i];
@@ -1036,11 +1005,7 @@ namespace InGameConfig {
 
                 // Now add the Juiced_options menu after the functions
                 std::string juicedOptionsMenu = juicedFunctions + "Juiced_options = {\n";
-#if !RELOADED
-                juicedOptionsMenu += "\theader_label_str\t= \"J_OPTIONS\",\n";
-#else
                 juicedOptionsMenu += "\theader_label_str\t= \"thaRow Options\",\n";
-#endif
                 juicedOptionsMenu += "\tmax_height = 450,\t-- Default: 375 [nclok1405]\n";
                 juicedOptionsMenu += "\ton_show \t\t\t= juiced_menu_build_display_options_menu_PC,\n";
                 juicedOptionsMenu += "\ton_alt_select \t\t= pause_menu_options_restore_defaults,\n";
@@ -1174,13 +1139,8 @@ namespace InGameConfig {
                                             }
 
                                             // Insert Juiced_options entry
-#if !RELOADED
-                                            std::string juicedEntry = "\t[" + std::to_string(juicedIndex) +
-                                                "] = { label = \"J_OPTIONS\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";
-#else
                                             std::string juicedEntry = "\t[" + std::to_string(juicedIndex) +
                                                 "] = { label = \"thaRow Options\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";
-#endif 
                                             buffer.insert(entryEnd, juicedEntry);
                                             modified = true;
                                         }
@@ -1254,13 +1214,9 @@ namespace InGameConfig {
                                             }
 
                                             // Insert Juiced_options entry
-#if !RELOADED
-                                            std::string juicedEntry = "\t[" + std::to_string(juicedIndex) +
-                                                "] = { label = \"J_OPTIONS\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";
-#else
+
                                             std::string juicedEntry = "\t[" + std::to_string(juicedIndex) +
                                                 "] = { label = \"thaRow Options\",\ttype = MENU_ITEM_TYPE_SUB_MENU, \tsub_menu = Juiced_options, \t\t},\n";
-#endif
                                             buffer.insert(entryEnd, juicedEntry);
                                             modified = true;
                                         }

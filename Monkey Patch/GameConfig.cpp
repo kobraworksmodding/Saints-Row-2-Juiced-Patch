@@ -13,11 +13,7 @@
 #include "FileLogger.h"
 #include "Patcher/patch.h"
 
-#if !RELOADED
-char ini_name[] = "juiced.ini";
-#else
-char ini_name[] = "reloaded.ini";
-#endif
+char ini_name[] = "thaRow.ini";
 
 namespace GameConfig
 {

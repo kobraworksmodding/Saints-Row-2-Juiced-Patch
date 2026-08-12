@@ -22,7 +22,7 @@
 #include "Hooker.h"
 const char* ERROR_MESSAGE = "ERROR";
 // MainHooks.cpp
-#if !RELOADED
+#if RLDEV
 void ToggleNoclip();
 #endif
 void SlewModeToggle();
@@ -141,7 +141,7 @@ namespace BlingMenuInstall
     }
 
     const char* BM_ToggleNoclip(void* userdata, int action) {
-#if !RELOADED
+#if RLDEV
         if (action != -1) {
             ToggleNoclip();
         }

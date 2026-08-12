@@ -89,9 +89,7 @@ namespace Game
 		extern bool IsCoopOrSP;
 		extern char* ClanTag[3];
 		extern bool UsingClanTag;
-#if RELOADED
 		extern void RLServerNameUpdateOnce();
-#endif
 		extern void FrameChecks();
 	}
 	namespace xml {

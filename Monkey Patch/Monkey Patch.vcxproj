@@ -99,20 +99,20 @@
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>DFEngine</TargetName>
+    <TargetName>RLEngine</TargetName>
     <LibraryPath>C:\Users\Uzis\Desktop\sr2mprw-dev\DLL\source\Discord;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>DFEngine</TargetName>
+    <TargetName>RLEngine</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug - LITE|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>DFEngine</TargetName>
+    <TargetName>RLEngine</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RELOADED|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
@@ -179,7 +179,7 @@
       <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
     <Link>
-      <OutputFile>$(OutDir)DFEngine.dll</OutputFile>
+      <OutputFile>$(OutDir)RLEngine.dll</OutputFile>
       <Version>0.1</Version>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -218,7 +218,7 @@
       <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
     <Link>
-      <OutputFile>$(OutDir)DFEngine.dll</OutputFile>
+      <OutputFile>$(OutDir)RLEngine.dll</OutputFile>
       <Version>0.1</Version>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -228,11 +228,11 @@
     </Link>
     <PostBuildEvent>
       <Command>if not defined GITHUB_ACTIONS (
-copy /Y "$(TargetDir)DFEngine.dll" "C:\Games\GOG\Saints Row 2\DFEngine.dll" || ^
-copy /Y "$(TargetDir)DFEngine.dll" "C:\Program Files (x86)\Steam\steamapps\common\Saints Row 2\DFEngine.dll" || ^
-copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEngine.dll" || ^
-copy /Y "$(TargetDir)DFEngine.dll" "Z:\Games\Saints Row 2\DFEngine.dll" ||  ^
-copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2"
+copy /Y "$(TargetDir)RLEngine.dll" "C:\Games\GOG\Saints Row 2\RLEngine.dll" || ^
+copy /Y "$(TargetDir)RLEngine.dll" "C:\Program Files (x86)\Steam\steamapps\common\Saints Row 2\RLEngine.dll" || ^
+copy /Y "$(TargetDir)RLEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\RLEngine.dll" || ^
+copy /Y "$(TargetDir)RLEngine.dll" "Z:\Games\Saints Row 2\RLEngine.dll" ||  ^
+copy /Y "$(TargetDir)RLEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2"
 )</Command>
     </PostBuildEvent>
     <PreBuildEvent>
@@ -283,6 +283,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <AdditionalIncludeDirectories>$(ProjectDir)Ext;$(ProjectDir)Ext\DirectXTex;$(ProjectDir)Ext\safetyhook;$(ProjectDir)..\external\spdlog\include;$(ProjectDir)Ext\xbyak;$(ProjectDir)Ext\usercaller;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4409;4731;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <AdditionalOptions>/utf-8</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)RLEngine.dll</OutputFile>
@@ -317,7 +318,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <AdditionalOptions>/utf-8</AdditionalOptions>
     </ClCompile>
     <Link>
-      <OutputFile>$(OutDir)DFEngine.dll</OutputFile>
+      <OutputFile>$(OutDir)RLEngine.dll</OutputFile>
       <Version>0.1</Version>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -328,9 +329,9 @@ copy /Y "$(TargetDir)DFEngine.dll" "D:\Steam Games\steamapps\common\Saints Row 2
       <AdditionalLibraryDirectories>;$(ProjectDir)ext\lib\x86</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetDir)DFEngine.dll" "C:\Games\GOG\Saints Row 2\DFEngine.dll"
-copy /Y "$(TargetDir)DFEngine.dll" "C:\Program Files (x86)\Steam\steamapps\common\Saints Row 2\DFEngine.dll"
-copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEngine.dll"
+      <Command>copy /Y "$(TargetDir)RLEngine.dll" "C:\Games\GOG\Saints Row 2\RLEngine.dll"
+copy /Y "$(TargetDir)RLEngine.dll" "C:\Program Files (x86)\Steam\steamapps\common\Saints Row 2\RLEngine.dll"
+copy /Y "$(TargetDir)RLEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\RLEngine.dll"
 </Command>
     </PostBuildEvent>
     <PreBuildEvent>
@@ -389,10 +390,13 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClCompile Include="RPCHandler.cpp" />
     <ClCompile Include="SafeWrite.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="UGC\AT.cpp" />
     <ClCompile Include="UGC\CModLoader.cpp" />
     <ClCompile Include="UGC\Debug.cpp" />
     <ClCompile Include="UGC\InternalPrint.cpp" />
     <ClCompile Include="UGC\MStrings.cpp" />
+    <ClCompile Include="UGC\packfile.cpp" />
+    <ClCompile Include="UGC\Reloaded.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Audio\Audio.h" />
@@ -460,10 +464,13 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="RPCHandler.h" />
     <ClInclude Include="SafeWrite.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="UGC\AT.h" />
     <ClInclude Include="UGC\CModLoader.h" />
     <ClInclude Include="UGC\Debug.h" />
     <ClInclude Include="UGC\InternalPrint.h" />
     <ClInclude Include="UGC\MStrings.h" />
+    <ClInclude Include="UGC\packfile.h" />
+    <ClInclude Include="UGC\Reloaded.h" />
     <ClInclude Include="UtilsGlobal.h" />
   </ItemGroup>
   <ItemGroup>

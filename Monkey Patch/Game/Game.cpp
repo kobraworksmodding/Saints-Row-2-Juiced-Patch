@@ -621,7 +621,6 @@ namespace Game
 			const_cast<char*>(""),
 			const_cast<char*>("]")
 		};
-#if RELOADED
 		bool ChangedRLServerName = 0;
 
 		void RLServerNameUpdateOnce() {
@@ -631,7 +630,6 @@ namespace Game
 			char* GameName = reinterpret_cast<char*>(0x0212AA08);
 			strcpy(GameName, finalSName);
 		}
-#endif
 
 		void FrameChecks() { // Updates some specific stuff we need to loop all the time
 			BYTE CurrentGamemode = *(BYTE*)0x00E8B210; // Parses the current gamemode from EXE
@@ -650,7 +648,6 @@ namespace Game
 				lastTick2 = currentTick2;
 				if (LobbyCheck == 0x44) // Game Lobby
 				{
-#if RELOADED
 					if (UsingClanTag == 1)
 					{
 						char* currentPlayerName = playerName;
@@ -666,11 +663,8 @@ namespace Game
 							}
 						}
 					}
-#endif
 					if (MatchType == (BYTE)2) { // If in ranked
-#if RELOADED
 						* (BYTE*)0x02A4D134 = 0x1; // Force Friendly Fire to Full Damage.
-#endif
 						if (!CurrentGamemode == 0xD || !CurrentGamemode == 0xC || CurrentGamemode == 0xB) // And gamemode is not TGB or Strong Arm but is Gangsta Brawl
 						{
 							AbleToStartGame = 1; // Force Able to Start
@@ -684,7 +678,6 @@ namespace Game
 				}
 				if (LobbyCheck == 0x0) // Usually Menus Check
 				{
-#if RELOADED
 					if (GamespyStatus == 0x4) {
 						if (ChangedRLServerName == 0) {
 							RLServerNameUpdateOnce();
@@ -707,7 +700,6 @@ namespace Game
 						}
 					}
 					*(BYTE*)0x02A4D134 = 0x0; // Force Friendly Fire to Off.
-#endif
 					AbleToStartGame = 0; // Reset Able to Start to 0 in Main Menu
 				}
 				if (!LobbyCheck == 0x0 && CurrentGamemode == 0xFF) // This should be CO-OP / Singleplayer

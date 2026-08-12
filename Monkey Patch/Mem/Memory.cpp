@@ -89,12 +89,10 @@ namespace Memory
 	void Init()
 	{
 		// ~ PatchLogos();
-#if RELOADED
 		if (GameConfig::GetValue("Debug", "GangstaBrawlMemoryExtender", 1)) // Replaces GB MemLimits with SA.
 		{
 			GangstaBrawlMemoryExt();
 		}
-#endif
 #if !JLITE
 
 	int perm_mesh_cpu_new_size = std::clamp((int)GameConfig::GetValue("Mempool", "perm_mesh_cpu", 1114112  * 2, "Default 1114112"), 1114112,INT32_MAX / 4);

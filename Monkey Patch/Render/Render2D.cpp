@@ -331,43 +331,6 @@ int processtextwidth(int width) {
 			__asm popad
 		}
 #else
-#if !RELOADED
-		if (*(BYTE*)0x02527B75 == 1 && *(BYTE*)0xE8D56B == 1) {
-
-			int x = 0;
-			int y = 0;
-			if (r_is_widescreen) {
-				x = processtextwidth(1120);
-				y = 680;
-			}
-
-			ChangeTextColor(160, 160, 160, 128);
-
-#ifdef GITHUB_ACTIONS
-			__asm pushad
-			InGamePrint(("NIGHTLY " + UtilsGlobal::getShortCommitHash()).c_str(),35, 0, 6);
-			__asm popad
-#endif
-			__asm pushad
-			InGamePrint((JuicedText + std::string(UtilsGlobal::juicedversion)).c_str(), y, x, 2);
-			__asm popad
-
-			if (*(BYTE*)0x02529334 == 4) {
-				ChangeTextColor(160, 160, 160, 128);
-				__asm pushad
-				InGamePrint(UtilsGlobal::mynat_type.c_str(), y + 15, Render2D::processtextwidth(10), 6);
-				__asm popad
-				if (!hasChangedLobbyName) {
-					char* playerName = (CHAR*)0x0212AB48;
-					char* GameName = reinterpret_cast<char*>(0x0212AA08);
-
-					snprintf(GameName, 256, "[%s]", playerName);
-					DLC::SetDLCNameFlagOnline();
-					hasChangedLobbyName = true;
-				}
-			}
-		}
-#else
 		if (*(BYTE*)0xE8D56B == 1) {
 
 			int x = 0;
@@ -382,7 +345,6 @@ int processtextwidth(int width) {
 			InGamePrint(("THAROW " + std::string(UtilsGlobal::thaRowmenuversion)).c_str(), y, x, 2);
 			__asm popad
 		}
-#endif
 #endif
 
 		// Call original func

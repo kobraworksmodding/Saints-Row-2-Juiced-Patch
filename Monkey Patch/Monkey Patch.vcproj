@@ -133,7 +133,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)\DFEngine.dll"
+				OutputFile="$(OutDir)\RLEngine.dll"
 				Version="0.1"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"

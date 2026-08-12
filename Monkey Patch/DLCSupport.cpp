@@ -1646,32 +1646,5 @@ void online()
 
 
 void DLC::Init() {
-#if !RELOADED
-    auto EnableDLC = GameConfig::GetValue("DLC", "EnableDLC", 1, "Requires DLC content to be installed otherwise does nothing");
-    if (EnableDLC == -1)
-        return;
-    online();
-    // Patch max memory for Cust Data to prevent mod crashes with DLC.
-    patchByte((BYTE*)0x0051EE15, 0x0C);
-    patchByte((BYTE*)0x0051EE53, 0x0C);
-    // -- 737280 > 802816 (This is enough to have GOTR work, which is main priority i suppose.)
-    DLCSaveSetup();
-    VehArr = (VehiclePadding*)0x2FAD1F8;
-    if (!UtilsGlobal::FolderExists("DLC") || !EnableDLC) return;
-    AppendSetup();
-    PatchFollowerHeads();
-    static SafetyHookMid MissionFailure = safetyhook::create_mid(0x00A3994C, &MissionFStringFix);
-    CHooks_cutscene();
-    CHooks_unlockable();
-    WriteRelJump(0x005207FE, (UInt32)&AddInterfacePeg);
-    if (GameConfig::GetValue("DLC", "UnlockEmergentMission", 1)) WriteRelCall(0x0068D167, (UInt32)DLCGlobals);
-    static SafetyHookMid DLCVoice = safetyhook::create_mid(0x0047AD09, &LoadDLCPersonaVoice);
-    IncreaseVoiceMemPool();
-    IncreaseVehLimits();
-    static auto PlaceholderStringFix = safetyhook::create_mid(0x00B92C0F, [](SafetyHookContext& ctx) {
-        if (ctx.eax)
-            if (*(short*)ctx.eax == 0x0001) ctx.ebp = ctx.eax + 2; // eax + 2 so we can get the image tags displaying in the outfits section of the wardrobe like in TU3
-        });
 
-#endif
 }
