@@ -14,6 +14,7 @@
 #include "../SafeWrite.h"
 #include "../GameConfig.h"
 #include "../Patcher/patch.h"
+#include "../Hooker.h"
 
 uint32_t string_hash_table::estimate_maximum_memory_usage(uint32_t hash_table_size, uint32_t string_pool_size)
 {
@@ -112,7 +113,7 @@ int __cdecl bm_add_bitmap(const char* filename)
         return -1;
     if ((strcmp("null", filename) == 0) || (strcmp(".tga", filename) == 0))
         return -1;
-    if (*Bm_entry_count <= *Bm_bitmap_count + 1)
+    if (*Bm_entry_count > *Bm_bitmap_count + 1)
     {
         int f = 0;
         bitmap_entry* frame = nullptr;
@@ -233,6 +234,14 @@ constexpr size_t permanent_default = 0x00800000;
 #define KB (size_t)(1024)
 #define MB (size_t)(1024 * KB)
 #define GB (size_t)(1024 * MB)
+uintptr_t bm_load_bitmaps_file_og = 0;
+int bm_load_bitmaps_file()
+{
+    auto result = cdecl_call<int>(bm_load_bitmaps_file_og);
+    uintptr_t Bm_bitmaps_data = *(uintptr_t*)(0x023478A4_g);
+    *Bm_entry_count = *(int*)(Bm_bitmaps_data + 0x4);
+    return result;
+}
     void Init() {
         if (GameConfig::GetValue("Modding", "addon_bitmaps", 1)) {
             static auto interface_gpu_increase = safetyhook::create_mid(0x51E322, [](SafetyHookContext& ctx) {
@@ -241,6 +250,9 @@ constexpr size_t permanent_default = 0x00800000;
                     Logger::TypedLog("Mempool", "Patched interface_gpu size to {}\n", ctx.esi);
                 }
                 });
+
+            InterceptCall(0xC0884A, bm_load_bitmaps_file_og, bm_load_bitmaps_file);
+
             size_t new_permanent_size = std::clamp(GameConfig::GetValue("Mempool", "permanent", permanent_default + (permanent_default / 2)), permanent_default, GB / 2);
 
             size_t first_increase_hastable = std::clamp(GameConfig::GetValue("Mempool", "Bitmap_Image_Names_hashtable", (size_t)first_increase), (size_t)12000, GB);
