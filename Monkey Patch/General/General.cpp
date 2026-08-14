@@ -1484,8 +1484,89 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		return (int16_t)streamman_trigger_chunk_swap(id);
 	}
 
+	constexpr uint16_t LANG(char a, char b)
+	{
+		return (static_cast<uint16_t>(a) << 8) |
+			static_cast<uint8_t>(b);
+	}
+
+	void ForceLanguage()
+	{
+		char language[MAX_PATH]{};
+
+		uint32_t* game_setting_language = (uint32_t*)(0xE98AF8_g);
+
+		GameConfig::GetStringValue(
+			"Misc",
+			"ForceLanguage",
+			"NA",
+			language,
+			"Choose either EN,DE,FR,ES,IT,NL,SE,DK,PL,CZ,RU,CH,JP"
+		);
+
+		switch (LANG(language[0], language[1]))
+		{
+		case LANG('E', 'N'):
+			*game_setting_language = LANG_ENGLISH;
+			break;
+
+		case LANG('D', 'E'):
+			*game_setting_language = LANG_GERMAN;
+			break;
+
+		case LANG('F', 'R'):
+			*game_setting_language = LANG_FRENCH;
+			break;
+
+		case LANG('E', 'S'):
+			*game_setting_language = LANG_SPANISH;
+			break;
+
+		case LANG('I', 'T'):
+			*game_setting_language = LANG_ITALIAN;
+			break;
+
+		case LANG('N', 'L'):
+			*game_setting_language = LANG_DUTCH;
+			break;
+
+		case LANG('S', 'E'):
+			*game_setting_language = LANG_SWEDISH;
+			break;
+
+		case LANG('D', 'K'):
+			*game_setting_language = LANG_DANISH;
+			break;
+
+		case LANG('P', 'L'):
+			*game_setting_language = LANG_POLISH;
+			break;
+
+		case LANG('C', 'Z'):
+			*game_setting_language = LANG_CZECH;
+			break;
+
+		case LANG('R', 'U'):
+			*game_setting_language = LANG_RUSSIAN;
+			break;
+
+		case LANG('C', 'H'):
+			*game_setting_language = LANG_CHINESE;
+			break;
+
+		case LANG('J', 'P'):
+			*game_setting_language = LANG_JAPANESE;
+			break;
+
+		case LANG('N', 'A'):
+		default:
+			break;
+		}
+	}
+
 	void TopWinMain() {
 		Logger::TypedLog("D3D9", "D3D9 Hook: {}\n", D3D9Hook::initialize());
+		ForceLanguage();
 		InterceptCall(0x5456E7, chunk_get_uid_cribsHook_addr, chunk_get_uid_cribsHook);
 		CModLoader::Init();
 		allowJuicedAPI = GameConfig::GetValue("API", "JuicedAPI", 1);

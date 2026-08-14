@@ -56,3 +56,4 @@ Fixes marked with ⚙️ can be configured/toggled via the INI file / BlingMenu
 * ⚙️ UseWeaponAfterEmpty - Keep your empty weapon equipped after you've run out of ammo for that weapon
 * ⚙️ RemoveVignette (off by default)
 * ⚙️ FasterLoading - Reduces Stuttering and also make loading screens fasters.
+* ⚙️ ForceLanguage - Force Language from ini
