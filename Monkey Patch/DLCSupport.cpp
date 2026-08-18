@@ -1388,12 +1388,17 @@ void AppendItemsInventory() {
         });
 }
 
+int& CustItemCount = *(int*)0x025288D8_g;
+int& HairItemCount = *(int*)0x025289A4_g;
+int BaseCustItemCount;
+int BaseHairItemCount;
 void AppendCustomizationItems() {
     static bool IsDLC = false;
 
     static auto Append = safetyhook::create_mid(0x007BF9CE, [](SafetyHookContext& ctx)
         {
             ((void(*)())0x7BBA50)();
+            BaseCustItemCount = CustItemCount;
             IsDLC = true;
         });
 
@@ -1403,6 +1408,11 @@ void AppendCustomizationItems() {
             ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E20E64);
             ctx.eip = 0x007BBA61;
             IsDLC = false;
+        });
+    
+    static auto GetBaseHairCount = safetyhook::create_mid(0x007D64E9, [](SafetyHookContext& ctx)
+        {
+            if (BaseCustItemCount && ctx.esi == BaseCustItemCount) BaseHairItemCount = ctx.ebx;
         });
 }
 
@@ -1746,6 +1756,23 @@ void AppendSpawnInfoCategories() {
     IncreaseSpawnInfoStringPool();
 }
 
+int GetHairItemCount() {
+    int GameMode = *(int*)0xE96C00_g;
+
+    if (GameMode >= 7 && GameMode <= 8) return BaseHairItemCount;
+
+    return HairItemCount;
+}
+
+void DisableDLCItemsMP() {
+    static int HairItemCountNew;
+    SafeWrite32((UInt32)0x007D1AEE, (UInt32)&HairItemCountNew);
+    SafeWrite32((UInt32)0x007D1982, (UInt32)&HairItemCountNew);
+    static auto PCRGetHairItems = safetyhook::create_mid(0x007D1980, [](SafetyHookContext& ctx) {
+        HairItemCountNew = GetHairItemCount();
+        });
+}
+
 void AppendSetup() {
     AppendFollowerHeads();
     AppendHomies();
@@ -1903,6 +1930,6 @@ void DLC::Init() {
         if (ctx.eax)
             if (*(short*)ctx.eax == 0x0001) ctx.ebp = ctx.eax + 2; // eax + 2 so we can get the image tags displaying in the outfits section of the wardrobe like in TU3
         });
-
+    DisableDLCItemsMP();
 #endif
 }
