@@ -15,6 +15,7 @@
 #include "../GameConfig.h"
 #include "../Patcher/patch.h"
 #include "../Hooker.h"
+#include "../Game/CrashFixes.h"
 
 uint32_t string_hash_table::estimate_maximum_memory_usage(uint32_t hash_table_size, uint32_t string_pool_size)
 {
@@ -137,6 +138,7 @@ int __cdecl bm_add_bitmap(const char* filename)
         bitmap_entry* Bogus_static_bitmap_entry = (bitmap_entry*)*(int*)(0x252A564);
         if (b != nullptr)
             *b = *Bogus_static_bitmap_entry;
+        AssertHandler::AssertOnce("Bm_entry_count_over", "bm_add_bitmap trying to add bitmap when there's not enough slots in bitmaps_pc");
     }
     return handle;
 }
