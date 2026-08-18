@@ -1764,12 +1764,43 @@ int GetHairItemCount() {
     return HairItemCount;
 }
 
+void MultiItemNotice() {
+    __asm pushad
+    wchar_t* Title = RequestString(nullptr, "MENU_TITLE_NOTICE");
+    wchar_t* Message = RequestString(nullptr, "DLC_MULTI_CUSTOMIZATION_DLC_NOT_LOADED");
+    const wchar_t* Options[] = { RequestString(nullptr, "CONTROL_OKAY") };
+    __asm popad
+    AddMessageCustomized(Title, Message, Options, 1);
+}
+
 void DisableDLCItemsMP() {
+    static bool IsDLCHair;
     static int HairItemCountNew;
     SafeWrite32((UInt32)0x007D1AEE, (UInt32)&HairItemCountNew);
     SafeWrite32((UInt32)0x007D1982, (UInt32)&HairItemCountNew);
     static auto PCRGetHairItems = safetyhook::create_mid(0x007D1980, [](SafetyHookContext& ctx) {
         HairItemCountNew = GetHairItemCount();
+        });
+
+    static auto CheckImportedItems = safetyhook::create_mid(0x0081E157, [](SafetyHookContext& ctx)
+        {
+            uintptr_t* HairItems = *(uintptr_t**)0x025289A0_g;
+
+            for (int i = BaseHairItemCount; i < HairItemCount; i++) {
+                if (HairItems[i] == ctx.edi) {
+                    ctx.edi = 0;
+                    IsDLCHair = true;
+                    break;
+                }
+            }
+        });
+
+    static auto ShowNotice = safetyhook::create_mid(0x0081E4E2, [](SafetyHookContext&)
+        {
+            if (IsDLCHair) {
+                MultiItemNotice();
+                IsDLCHair = false;
+            }
         });
 }
 
