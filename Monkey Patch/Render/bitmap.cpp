@@ -2,6 +2,12 @@
 // --------------------
 // Created: 19/6/2025
 #include <mutex>
+#include <algorithm>
+#include <cctype>
+#include <limits>
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <safetyhook.hpp>
 #include "d3d9.h"
 #include "../General/General.h"
@@ -16,6 +22,13 @@
 #include "../Patcher/patch.h"
 #include "../Hooker.h"
 #include "../Game/CrashFixes.h"
+
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 
 uint32_t string_hash_table::estimate_maximum_memory_usage(uint32_t hash_table_size, uint32_t string_pool_size)
 {
@@ -69,6 +82,48 @@ int Bm_discovery_callback(bitmap_entry* fuck) {
 uint32_t* Bm_entry_count = (uint32_t*)0x2348904;
 uint32_t* Bm_bitmap_count = (uint32_t*)0x2348908;
 bitmap_entry** Bm_bitmaps = (bitmap_entry**)0x234890C;
+int* Bm_bogus_static_bitmap = (int*)0xE8314C;
+static_assert(sizeof(bitmap_entry) == 12, "SR2 bitmap_entry must remain 12 bytes");
+
+
+namespace {
+// bm_find returns a signed 16-bit handle. 0xFFFF is the not-found sentinel, so
+// 0x7FFF is the largest handle that can safely make the round trip through it.
+constexpr uint32_t maximum_bitmap_entries = 0x8000;
+constexpr uint32_t bitmap_capacity_growth = 256;
+
+struct dynamic_bitmap_record {
+    int handle;
+    std::string filename;
+};
+
+std::unique_ptr<bitmap_entry[]> Dynamic_bm_bitmaps;
+uint32_t Dynamic_bm_storage_capacity = 0;
+std::unordered_map<std::string, std::unique_ptr<dynamic_bitmap_record>> Dynamic_bm_names;
+
+std::string canonical_bitmap_name(const char* filename);
+
+class scoped_critical_section {
+public:
+    explicit scoped_critical_section(LPCRITICAL_SECTION critical_section)
+        : critical_section_(critical_section)
+    {
+        EnterCriticalSection(critical_section_);
+    }
+
+    ~scoped_critical_section()
+    {
+        LeaveCriticalSection(critical_section_);
+    }
+
+    scoped_critical_section(const scoped_critical_section&) = delete;
+    scoped_critical_section& operator=(const scoped_critical_section&) = delete;
+
+private:
+    LPCRITICAL_SECTION critical_section_;
+};
+}
+
 void __cdecl file_remove_extension(char* filename, size_t ext, const char* new_filename_array_size)
 {
     const char* new_filename;
@@ -89,6 +144,77 @@ void __cdecl file_remove_extension(char* filename, size_t ext, const char* new_f
     }
 }
 
+namespace {
+std::string canonical_bitmap_name(const char* filename)
+{
+    char extension_less[64] = {};
+    file_remove_extension(extension_less, sizeof(extension_less), filename);
+
+    std::string result(extension_less);
+    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char character) {
+        return static_cast<char>(std::tolower(character));
+    });
+    return result;
+}
+
+bool initialize_dynamic_bitmap_storage(uint32_t original_entry_count)
+{
+    if (Dynamic_bm_bitmaps)
+        return true;
+
+    if (!*Bm_bitmaps || original_entry_count == 0)
+        return false;
+
+    // Keep the table contiguous because PEG registration, unregistration and
+    // multiframe animation all perform pointer arithmetic on bitmap_entry.
+    Dynamic_bm_storage_capacity = std::max(original_entry_count, maximum_bitmap_entries);
+
+    try {
+        auto new_storage = std::make_unique<bitmap_entry[]>(Dynamic_bm_storage_capacity);
+        std::copy_n(*Bm_bitmaps, original_entry_count, new_storage.get());
+        Dynamic_bm_bitmaps = std::move(new_storage);
+    }
+    catch (const std::bad_alloc&) {
+        Dynamic_bm_storage_capacity = 0;
+        AssertHandler::AssertOnce("Bm_dynamic_storage_allocation", "Unable to allocate the dynamic bitmap entry table");
+        return false;
+    }
+
+    *Bm_bitmaps = Dynamic_bm_bitmaps.get();
+    *Bm_entry_count = original_entry_count;
+
+    Logger::TypedLog(
+        "Modding",
+        "Relocated {} bitmap entries into stable dynamic storage ({} entry limit)\n",
+        original_entry_count,
+        Dynamic_bm_storage_capacity);
+    return true;
+}
+
+bool ensure_bitmap_capacity(uint32_t entries_needed)
+{
+    if (!Dynamic_bm_bitmaps || entries_needed > Dynamic_bm_storage_capacity)
+        return false;
+
+    if (entries_needed <= *Bm_entry_count)
+        return true;
+
+    const uint32_t grown_capacity = std::min(
+        Dynamic_bm_storage_capacity,
+        std::max(entries_needed, *Bm_entry_count + bitmap_capacity_growth));
+    *Bm_entry_count = grown_capacity;
+
+    Logger::TypedLog("Modding", "Grew bitmap entry capacity to {}\n", grown_capacity);
+    return true;
+}
+
+int find_dynamic_bitmap_locked(const std::string& canonical_name)
+{
+    const auto found = Dynamic_bm_names.find(canonical_name);
+    return found == Dynamic_bm_names.end() ? -1 : found->second->handle;
+}
+}
+
 string_hash_table* Extra_bm_filename_hash_table = (string_hash_table*)0xEC5D38;
 mempool* pool = (mempool*)0xEC5DA8;
 
@@ -106,41 +232,54 @@ void set_thread_ownership(mempool* test) {
 }
 LPCRITICAL_SECTION Bm_add_lock = (LPCRITICAL_SECTION)0x33DA354;
 
+
 int __cdecl bm_add_bitmap(const char* filename)
 {
-    bitmap_entry* b = nullptr;
-    int handle = 0;
     if (filename == NULL)
         return -1;
     if ((strcmp("null", filename) == 0) || (strcmp(".tga", filename) == 0))
         return -1;
-    if (*Bm_entry_count > *Bm_bitmap_count + 1)
+
+    const std::string canonical_name = canonical_bitmap_name(filename);
+    scoped_critical_section lock(Bm_add_lock);
+
+    if (const int existing_handle = find_dynamic_bitmap_locked(canonical_name); existing_handle >= 0)
+        return existing_handle;
+
+    const uint32_t handle = *Bm_bitmap_count;
+    if (handle > static_cast<uint32_t>(std::numeric_limits<int16_t>::max()) ||
+        !ensure_bitmap_capacity(handle + 2))
     {
-        int f = 0;
-        bitmap_entry* frame = nullptr;
+        AssertHandler::AssertOnce("Bm_entry_count_over", "bm_add_bitmap exhausted the signed 16-bit bitmap handle space");
+        return *Bm_bogus_static_bitmap;
+    }
+
+    try {
+        auto record = std::make_unique<dynamic_bitmap_record>();
+        record->handle = static_cast<int>(handle);
+
         char extension_less[64] = {};
-        int entries_needed = 0;
-        EnterCriticalSection(Bm_add_lock);
-        set_thread_ownership(pool);
-        set_thread_ownership((mempool*)Extra_bm_filename_hash_table);
-        handle = (*Bm_bitmap_count)++;
-        bitmap_entry* Bm_bitmaps = (bitmap_entry*)*(uintptr_t*)(0x234890C);
-        b = (bitmap_entry*)&Bm_bitmaps[handle];;
-        file_remove_extension(extension_less, 0x40u, filename);
-        b->filename_ptr = (char*)add_string(Extra_bm_filename_hash_table, extension_less, handle);
-        b->frame_number = 0;
-        b->this_peg = (peg_entry*)*(uintptr_t*)0x0252A560;
-        Bm_discovery_callback(b);
-        LeaveCriticalSection(Bm_add_lock);
+        file_remove_extension(extension_less, sizeof(extension_less), filename);
+        record->filename = extension_less;
+
+        const auto [record_it, inserted] = Dynamic_bm_names.emplace(canonical_name, std::move(record));
+        if (!inserted)
+            return record_it->second->handle;
+
+        bitmap_entry& entry = (*Bm_bitmaps)[handle];
+        entry = {};
+        entry.filename_ptr = record_it->second->filename.data();
+        entry.this_peg = *(peg_entry**)0x0252A560;
+        entry.frame_number = 0;
+        ++(*Bm_bitmap_count);
+
+        Bm_discovery_callback(&entry);
+        return static_cast<int>(handle);
     }
-    else
-    {
-        bitmap_entry* Bogus_static_bitmap_entry = (bitmap_entry*)*(int*)(0x252A564);
-        if (b != nullptr)
-            *b = *Bogus_static_bitmap_entry;
-        AssertHandler::AssertOnce("Bm_entry_count_over", "bm_add_bitmap trying to add bitmap when there's not enough slots in bitmaps_pc");
+    catch (const std::bad_alloc&) {
+        AssertHandler::AssertOnce("Bm_dynamic_name_allocation", "Unable to allocate a dynamic bitmap name record");
+        return *Bm_bogus_static_bitmap;
     }
-    return handle;
 }
 
 
@@ -173,6 +312,11 @@ SAFETYHOOK_NOINLINE __int16 __fastcall bm_find_og(void* dummy1, void* dummy2, ui
     }
     else {
         hndl = bm_findT.thiscall<__int16>(dummy1, a2, String2);
+    }
+    if (a2 == 0xEC5D38 && hndl == -1) {
+        const std::string canonical_name = canonical_bitmap_name(String2);
+        scoped_critical_section lock(Bm_add_lock);
+        hndl = find_dynamic_bitmap_locked(canonical_name);
     }
     return hndl;
 }
@@ -240,8 +384,12 @@ uintptr_t bm_load_bitmaps_file_og = 0;
 int bm_load_bitmaps_file()
 {
     auto result = cdecl_call<int>(bm_load_bitmaps_file_og);
+    if (!result)
+        return result;
+
     uintptr_t Bm_bitmaps_data = *(uintptr_t*)(0x023478A4_g);
     *Bm_entry_count = *(int*)(Bm_bitmaps_data + 0x4);
+    initialize_dynamic_bitmap_storage(*Bm_entry_count);
     return result;
 }
     void Init() {
