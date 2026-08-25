@@ -16,3 +16,5 @@ Monkey Patch/UGC/thaRow
 .vs/
 *.VC.db
 *.VC.opendb
+Monkey Patch/UGC/AT.cpp
+Monkey Patch/UGC/AT.h
