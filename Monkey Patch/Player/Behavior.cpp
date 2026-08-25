@@ -39,6 +39,10 @@ namespace Behavior
 		patchNop((BYTE*)0x00E92364, 3); // WalkToStop
 		patchNop((BYTE*)0x00E92394, 3); // WalkToStand
 		patchNop((BYTE*)0x00E92388, 3); // StandToWalk
+		// Return "human_spinebend_do_lean"
+		// this function literally ONLY controls the left and right sway that SR2 added when jogging and sprinting
+		// removing this makes it feel more close to SR1.
+		patchByte((BYTE*)0x009B5B10, 0xC3);
 	}
 	
 	int FindMeleeTarget(int NPCPointer) {
