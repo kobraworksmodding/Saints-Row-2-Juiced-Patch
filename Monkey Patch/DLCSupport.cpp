@@ -13,11 +13,13 @@
 #include "FileLogger.h"
 #include "GameConfig.h"
 #include <cwchar>
+#include "Hooker.h"
 using namespace General;
 using namespace Game::xml;
 using namespace DLC;
 
 
+#define SPAWN_INFO_STRING_POOL_SIZE 5120 // base game is 4096, this is what DLC increases it
 #define MAX_VEH 168
 #define STORE_ITEM_LIMIT 512
 // can be increased to 30! 31 will static_assert, reasons why are below (probably but 10 is also safe) (clippy95)
@@ -1386,12 +1388,17 @@ void AppendItemsInventory() {
         });
 }
 
+int& CustItemCount = *(int*)0x025288D8_g;
+int& HairItemCount = *(int*)0x025289A4_g;
+int BaseCustItemCount;
+int BaseHairItemCount;
 void AppendCustomizationItems() {
     static bool IsDLC = false;
 
     static auto Append = safetyhook::create_mid(0x007BF9CE, [](SafetyHookContext& ctx)
         {
             ((void(*)())0x7BBA50)();
+            BaseCustItemCount = CustItemCount;
             IsDLC = true;
         });
 
@@ -1401,6 +1408,11 @@ void AppendCustomizationItems() {
             ctx.eax = (IsDLC ? (uintptr_t)Name : (uintptr_t)0x00E20E64);
             ctx.eip = 0x007BBA61;
             IsDLC = false;
+        });
+    
+    static auto GetBaseHairCount = safetyhook::create_mid(0x007D64E9, [](SafetyHookContext& ctx)
+        {
+            if (BaseCustItemCount && ctx.esi == BaseCustItemCount) BaseHairItemCount = ctx.ebx;
         });
 }
 
@@ -1517,6 +1529,280 @@ void AppendCharacterDesign() {
     ParseCharacterTable("des", Callback, "character_design.xtbl", 0, 0);
     ParseCharacterTable("des", Callback, "dlc_character_design.xtbl", 0, 0);
 }
+    
+int GetMultiplayerModeIndex(const char* ModeName) {
+    const char** MultiplayerModeNames = (const char**)0xE971F8_g;
+
+    for (int i = 0; i < 14; i++) {
+        if (MultiplayerModeNames[i] && _stricmp(ModeName, MultiplayerModeNames[i]) == 0) {
+            if (i < 11) return -1;
+            return i - 11;
+        }
+    }
+
+    return -1;
+}
+
+void CountMultiplayerLevels(xtbl_node* Table, int* MultiLevelsCount) {
+    if (!Table) return;
+
+    xtbl_node* Level = xtbl_find(Table, "MultiplayerLevel");
+
+    while (Level) {
+        const char* ModeName = xtbl_get_req_string_ref(Level, "Mode");
+        int ModeIndex = GetMultiplayerModeIndex(ModeName);
+
+        if (ModeIndex < 0) return;
+
+        MultiLevelsCount[ModeIndex]++;
+        Level = xtbl_find_next(Table, Level, "MultiplayerLevel");
+    }
+}
+
+int ParseLevelInfo(void* Info, xtbl_node* Level) {
+    return ((int(__cdecl*)(void*, xtbl_node*))0x821D10)(Info, Level);
+}
+
+void ParseMultiplayerLevelTable(xtbl_node* Table, void** Info, bool CopyStrings) {
+    if (!Table) return;
+
+    xtbl_node* Level = xtbl_find(Table, "MultiplayerLevel");
+
+    while (Level) {
+        const char* ModeName = xtbl_get_req_string_ref(Level, "Mode");
+        int ModeIndex = GetMultiplayerModeIndex(ModeName);
+
+        if (ModeIndex < 0) return;
+
+        char* CurrentInfo = (char*)Info[ModeIndex];
+
+        ParseLevelInfo(CurrentInfo, Level);
+
+        // lazy workaround because volition for some reason are keeping the multi level table
+        // permanently loaded, just to read two entries from it later...???
+        // this way that part can be avoided
+        if (CopyStrings) {
+            *(char**)(CurrentInfo + 52) = _strdup(*(char**)(CurrentInfo + 52));
+            *(char**)(CurrentInfo + 56) = _strdup(*(char**)(CurrentInfo + 56));
+        }
+
+        *(int*)(CurrentInfo + 36) = -1;
+        Info[ModeIndex] = CurrentInfo + 64;
+        Level = xtbl_find_next(Table, Level, "MultiplayerLevel");
+    }
+}
+
+void ParseMultiplayerLevels() {
+    int* MultiLevelsCount = *(int**)0x212F518_g;
+    void** MultiLevelsInfo = *(void***)0x212F51C_g;
+
+    xtbl_node* BaseTable = *(xtbl_node**)0x2528CC8_g;
+    xtbl_node* DLCTable = parse_table_node("dlc_multiplayer_levels.xtbl", 0);
+
+    for (int i = 0; i < 3; i++) MultiLevelsCount[i] = 0;
+
+    CountMultiplayerLevels(BaseTable, MultiLevelsCount);
+    CountMultiplayerLevels(DLCTable, MultiLevelsCount);
+
+    for (int i = 0; i < 3; i++) MultiLevelsInfo[i] = UtilsGlobal::malloc_game(MultiLevelsCount[i] * 64);
+
+    void* Info[3];
+
+    for (int i = 0; i < 3; i++) Info[i] = MultiLevelsInfo[i];
+
+    ParseMultiplayerLevelTable(BaseTable, Info, false);
+    ParseMultiplayerLevelTable(DLCTable, Info, true);
+
+    xtbl_free();
+}
+
+void AppendMultiLevels() {
+    patchJmp((void*)0x00822450_g, &ParseMultiplayerLevels);
+}
+
+int CountSpawnInfoGroups(const char* TableName) {
+    int Count = 0;
+    xtbl_node* Table = parse_table_node(TableName, 0);
+
+    if (!Table) return 0;
+
+    for (xtbl_node* Group = xtbl_find(Table, "Group"); Group; Group = xtbl_find_next(Table, Group, "Group")) Count++;
+
+    xtbl_free();
+    return Count;
+}
+
+void ParseGroup(char* Info, xtbl_node* Group) {
+    ((void(__cdecl*)(char*, xtbl_node*))0x4A7090)(Info, Group);
+}
+
+void ParseSpawnInfoGroupTable(const char* TableName, char*& Info) {
+    xtbl_node* Table = parse_table_node(TableName, 0);
+
+    if (!Table) return;
+
+    xtbl_node* Group = xtbl_find(Table, "Group");
+
+    while (Group) {
+        char* CurrentInfo = Info;
+
+        ParseGroup(CurrentInfo, Group);
+
+        if ((*(unsigned char*)(CurrentInfo + 4) & 2) == 0 || *(unsigned int*)(CurrentInfo + 28) >= 1) Info += 52;
+
+        *(int*)(CurrentInfo + 48) = -1;
+
+        Group = xtbl_find_next(Table, Group, "Group");
+    }
+
+    xtbl_free();
+}
+
+// temp, we need a mempool file..
+void* __fastcall static_mempool_align_alloc2(void* mempool, size_t size, uint32_t align)
+{
+    return thiscall_call<void*>(0xC00DB0_g, mempool, size, align);
+}
+
+void ParseSpawnInfoGroups() {
+    int& SpawnInfoGroupCount = *(int*)0x2526C68_g;
+    char*& SpawnInfoGroups = *(char**)0x2526C6C_g;
+
+    SpawnInfoGroupCount += CountSpawnInfoGroups("spawn_info_groups.xtbl");
+    SpawnInfoGroupCount += CountSpawnInfoGroups("dlc_spawn_info_groups.xtbl");
+
+    SpawnInfoGroups = (char*)static_mempool_align_alloc2((void*)0x2771278_g, SpawnInfoGroupCount * 52, 4);
+
+    char* Info = SpawnInfoGroups;
+
+    ParseSpawnInfoGroupTable("spawn_info_groups.xtbl", Info);
+    ParseSpawnInfoGroupTable("dlc_spawn_info_groups.xtbl", Info);
+}
+
+void AppendSpawnInfoGroups() {
+    patchJmp((void*)0x004A6460_g, &ParseSpawnInfoGroups);
+}
+
+__declspec(naked) int ParseSpawnInfoCategory(char* Info, xtbl_node* Category) {
+    __asm {
+        push ebp
+        mov ebp, esp
+        sub esp, __LOCAL_SIZE
+
+        mov ecx, [Category]
+        push dword ptr [Info]
+        mov eax, 0x004A7530
+        call eax
+
+        mov esp, ebp
+        pop ebp
+        ret
+    }
+}
+
+int CountSpawnInfoCategories(const char* TableName) {
+    int Count = 0;
+    xtbl_node* Table = parse_table_node(TableName, 0);
+
+    if (!Table) return 0;
+
+    for (xtbl_node* Category = xtbl_find(Table, "Category"); Category; Category = xtbl_find_next(Table, Category, "Category")) Count++;
+
+    xtbl_free();
+    return Count;
+}
+
+void ParseSpawnInfoCategoryTable(const char* TableName, char*& Info) {
+    xtbl_node* Table = parse_table_node(TableName, 0);
+
+    if (!Table) return;
+
+    xtbl_node* Category = xtbl_find(Table, "Category");
+
+    while (Category) {
+        ParseSpawnInfoCategory(Info, Category);
+        Info += 92;
+        Category = xtbl_find_next(Table, Category, "Category");
+    }
+
+    xtbl_free();
+}
+
+void ParseSpawnInfoCategories() {
+    int& SpawnInfoCategoryCount = *(int*)0x2526C70_g;
+    char*& SpawnInfoCategories = *(char**)0x2526C74_g;
+
+    SpawnInfoCategoryCount += CountSpawnInfoCategories("spawn_info_categories.xtbl");
+    SpawnInfoCategoryCount += CountSpawnInfoCategories("dlc_spawn_info_categories.xtbl");
+
+    SpawnInfoCategories = (char*)static_mempool_align_alloc2((void*)0x2771278_g, SpawnInfoCategoryCount * 92, 4);
+
+    char* Info = SpawnInfoCategories;
+
+    ParseSpawnInfoCategoryTable("spawn_info_categories.xtbl", Info);
+    ParseSpawnInfoCategoryTable("dlc_spawn_info_categories.xtbl", Info);
+}
+
+void IncreaseSpawnInfoStringPool() {
+    static char SpawnInfoStringPool[SPAWN_INFO_STRING_POOL_SIZE];
+    *(char**)0x2612840_g = SpawnInfoStringPool;
+    *(int*)0x2612844_g = sizeof(SpawnInfoStringPool);
+    *(int*)0x2612854_g = sizeof(SpawnInfoStringPool);
+    *(int*)0x2612858_g = sizeof(SpawnInfoStringPool);
+}
+
+void AppendSpawnInfoCategories() {
+    patchJmp((void*)0x004A6670_g, &ParseSpawnInfoCategories);
+    IncreaseSpawnInfoStringPool();
+}
+
+int GetHairItemCount() {
+    int GameMode = *(int*)0xE96C00_g;
+
+    if (GameMode >= 7 && GameMode <= 8) return BaseHairItemCount;
+
+    return HairItemCount;
+}
+
+void MultiItemNotice() {
+    __asm pushad
+    wchar_t* Title = RequestString(nullptr, "MENU_TITLE_NOTICE");
+    wchar_t* Message = RequestString(nullptr, "DLC_MULTI_CUSTOMIZATION_DLC_NOT_LOADED");
+    const wchar_t* Options[] = { RequestString(nullptr, "CONTROL_OKAY") };
+    __asm popad
+    AddMessageCustomized(Title, Message, Options, 1);
+}
+
+void DisableDLCItemsMP() {
+    static bool IsDLCHair;
+    static int HairItemCountNew;
+    SafeWrite32((UInt32)0x007D1AEE, (UInt32)&HairItemCountNew);
+    SafeWrite32((UInt32)0x007D1982, (UInt32)&HairItemCountNew);
+    static auto PCRGetHairItems = safetyhook::create_mid(0x007D1980, [](SafetyHookContext& ctx) {
+        HairItemCountNew = GetHairItemCount();
+        });
+
+    static auto CheckImportedItems = safetyhook::create_mid(0x0081E157, [](SafetyHookContext& ctx)
+        {
+            uintptr_t* HairItems = *(uintptr_t**)0x025289A0_g;
+
+            for (int i = BaseHairItemCount; i < HairItemCount; i++) {
+                if (HairItems[i] == ctx.edi) {
+                    ctx.edi = 0;
+                    IsDLCHair = true;
+                    break;
+                }
+            }
+        });
+
+    static auto ShowNotice = safetyhook::create_mid(0x0081E4E2, [](SafetyHookContext&)
+        {
+            if (IsDLCHair) {
+                MultiItemNotice();
+                IsDLCHair = false;
+            }
+        });
+}
 
 void AppendSetup() {
     AppendFollowerHeads();
@@ -1538,6 +1824,9 @@ void AppendSetup() {
     AppendCustomizationStores();
     AppendCharacter();
     AppendCharacterPresets();
+    AppendMultiLevels();
+    AppendSpawnInfoCategories();
+    AppendSpawnInfoGroups();
     patchCall((void*)0x004A3FCB, AppendCharacterDesign);
     WriteRelCall(0x00A248A3, (UInt32)AppendCityCTS);
 }
@@ -1672,6 +1961,6 @@ void DLC::Init() {
         if (ctx.eax)
             if (*(short*)ctx.eax == 0x0001) ctx.ebp = ctx.eax + 2; // eax + 2 so we can get the image tags displaying in the outfits section of the wardrobe like in TU3
         });
-
+    DisableDLCItemsMP();
 #endif
 }
