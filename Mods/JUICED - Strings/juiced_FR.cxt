@@ -14,7 +14,10 @@ Gamma Xbox 360 sur l'interface
 Filtrage des ombres
 
 [J_VEHFADE]
-Augmenter la distance d'affichage des véhicules
+Portée de disparition des véhicules améliorée
+
+[J_PEDFADE]
+Portée de disparition des piétons améliorée
 
 [J_SHDROVR]
 Remplacement de shader

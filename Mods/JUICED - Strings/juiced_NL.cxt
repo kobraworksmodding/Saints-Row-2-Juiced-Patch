@@ -14,7 +14,10 @@ Xbox 360 Gamma op interface
 Schaduwfiltering
 
 [J_VEHFADE]
-Verhoog vervaagafstand voertuigen
+Verbeterd bereik voor het verdwijnen van voertuigen
+
+[J_PEDFADE]
+Verbeterd bereik voor het verdwijnen van voetgangers
 
 [J_SHDROVR]
 Shader overschrijven

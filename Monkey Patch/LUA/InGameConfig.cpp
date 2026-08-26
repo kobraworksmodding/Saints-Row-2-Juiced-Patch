@@ -63,8 +63,8 @@ namespace InGameConfig {
 #endif
     {"SR1CrouchCam",nullptr,&Behavior::CSR1CrouchCam,"Gameplay","SR1CrouchCam"},
     {"DisableSprintCamShake",nullptr,&Behavior::CDisableSprintCamShake,"Gameplay","DisableSprintCamShake"},
-     { "IncreaseVehicleFadeDistance",nullptr ,&Render3D::CIncreaseVehicleDespawnDistance,"Gameplay","IncreaseVehicleFadeDistance"},
-     { "IncreaseVehicleFadeDistance",nullptr ,&Render3D::CIncreaseVehicleDespawnDistance,"Gameplay","IncreaseVehicleFadeDistance"},
+    { "ImprovedTrafficDespawnRange",nullptr ,&Render3D::CIncreaseVehicleDespawnDistance,"Gameplay","ImprovedTrafficDespawnRange"},
+    { "ImprovedPedestrianDespawnRange",nullptr ,&Render3D::CIncreaseNPCDespawnDistance,"Gameplay","ImprovedPedestrianDespawnRange"}
     };
     void AddOptions() {
         Input::EnableDynamicPrompts = GameConfig::GetValue("Input", "EnableDynamicPrompts", 2);
@@ -74,7 +74,8 @@ namespace InGameConfig {
         InGameConfig::RegisterBoolSlider("ShadowFiltering", "J_SHADOWFLT");
         //InGameConfig::RegisterBoolSlider("ExtendedRenderDistance", "Extended Render Distance");
         InGameConfig::RegisterBoolSlider("DynamicRenderDistance", "DynamicRenderDistance");
-        InGameConfig::RegisterBoolSlider("IncreaseVehicleFadeDistance", "J_VEHFADE");
+        InGameConfig::RegisterBoolSlider("ImprovedTrafficDespawnRange", "J_VEHFADE");
+        InGameConfig::RegisterBoolSlider("ImprovedPedestrianDespawnRange", "J_PEDFADE");
         InGameConfig::RegisterNumSlider("FOVMultiplier", "J_FOVMULT", "", 1, nullptr, MenuType::DISPLAY, -1, 1.0, 2.0, 2);
         /*if (GameConfig::GetValue("Graphics", "ExtendRenderBatches", 0)) {
             InGameConfig::RegisterBoolSlider("ToggleExtendedRenderDistance", "Toggle ExtendedRenderDistance");

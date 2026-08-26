@@ -14,7 +14,10 @@ Xbox 360 Gamma in der UI
 Schattenfilterung
 
 [J_VEHFADE]
-Fahrzeug-Sichtweite erhöhen
+Verbesserte Despawn-Reichweite für Fahrzeuge
+
+[J_PEDFADE]
+Verbesserte Despawn-Reichweite für Fußgänger
 
 [J_SHDROVR]
 Shader-Überschreibung

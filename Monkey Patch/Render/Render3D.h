@@ -31,6 +31,7 @@ namespace Render3D
     extern CPatch CBetterAO;
     extern CPatch CRemoveBlackBars;
     extern CPatch CIncreaseVehicleDespawnDistance;
+    extern CPatch CIncreaseNPCDespawnDistance;
     extern bool crash;
     extern SafetyHookMid add_to_entry_test;
     extern void AspectRatioFix(bool update_aspect_ratio = false);

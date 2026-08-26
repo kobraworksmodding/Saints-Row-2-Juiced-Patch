@@ -14,7 +14,10 @@ Xbox 360-gamma på UI
 Skyggefiltrering
 
 [J_VEHFADE]
-Forøg køretøjs synsafstand
+Forbedret rækkevidde for fjernelse af køretøjer
+
+[J_PEDFADE]
+Forbedret rækkevidde for fjernelse af fodgængere
 
 [J_SHDROVR]
 Shader-tilsidesættelse

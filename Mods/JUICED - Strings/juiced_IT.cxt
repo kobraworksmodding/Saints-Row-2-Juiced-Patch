@@ -14,7 +14,10 @@ Gamma Xbox 360 sull'interfaccia
 Filtraggio ombre
 
 [J_VEHFADE]
-Aumenta distanza dissolvenza veicoli
+Raggio di despawn dei veicoli migliorato
+
+[J_PEDFADE]
+Migliorato il raggio di despawn dei pedoni
 
 [J_SHDROVR]
 Sovrascrittura shader

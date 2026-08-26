@@ -26,7 +26,10 @@ Gamma z Xboxa 360 (interfejs użytkownika)
 Filtrowanie cieni
 
 [J_VEHFADE]
-Dalszy dystans rysowania pojazdów
+Zwiększony zasięg znikania pojazdów
+
+[J_PEDFADE]
+Zwiększony zasięg znikania pieszych
 
 [J_SHDROVR]
 Nadpisanie shadera skalowania LOD

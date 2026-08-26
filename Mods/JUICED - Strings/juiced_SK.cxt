@@ -14,7 +14,10 @@ Gamma Xbox 360 v UI
 Filtrovanie tieňov
 
 [J_VEHFADE]
-Zvýšiť vzdialenosť miznutia vozidiel
+Zväčšená vzdialenosť pre zmiznutie vozidiel
+
+[J_PEDFADE]
+Zväčšená vzdialenosť, pri ktorej miznú chodci
 
 [J_SHDROVR]
 Prepísanie shaderu

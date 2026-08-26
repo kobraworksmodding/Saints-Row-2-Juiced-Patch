@@ -14,7 +14,10 @@ Xbox 360-gamma på UI
 Skuggfiltrering
 
 [J_VEHFADE]
-Öka fordonsblekningsavstånd
+Förbättrat avstånd för borttagning av fordon
+
+[J_PEDFADE]
+Förbättrat avstånd för borttagning av fotgängare
 
 [J_SHDROVR]
 Shader-åsidosättning

@@ -14,7 +14,10 @@ Gamma Xbox 360 en la interfaz
 Filtrado de sombras
 
 [J_VEHFADE]
-Aumentar distancia de desvanecimiento de vehículos
+Rango de desaparición de vehículos mejorado
+
+[J_PEDFADE]
+Rango de desaparición de peatones mejorado
 
 [J_SHDROVR]
 Anulación de shader

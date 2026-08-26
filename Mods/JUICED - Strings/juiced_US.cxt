@@ -29,7 +29,10 @@ Xbox 360 Gamma on UI
 Shadow Filtering
 
 [J_VEHFADE]
-Increase Vehicle Fade Distance
+Improved Vehicle Despawn Distance
+
+[J_PEDFADE]
+Improved Pedestrian Despawn Distance
 
 [J_SHDROVR]
 Shader Override
