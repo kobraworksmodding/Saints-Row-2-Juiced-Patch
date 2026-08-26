@@ -493,8 +493,8 @@ void Slew() {
 
 void havokFrameTicker() { // Proper Frametime ticker by Tervel
 
-	if (*(float*)0xE84380 <= 0.03333333333f)
-		*(float*)(0x02527DA4) = *(float*)0xE84380 / 2;
+	if (*(float*)0xE8437C <= 0.03333333333f)
+		*(float*)(0x02527DA4) = *(float*)0xE8437C / 2;
 	else
 		*(float*)(0x02527DA4) = 0.01666666666f;
 
@@ -1388,7 +1388,7 @@ void PrintFrametime() {
 	DWORD currentTime = GetTickCount();
 	if (currentTime - lastUpdate >= 500) {
 		lastUpdate = currentTime;
-		fr = 1.0f / *(float*)(0xE84380);
+		fr = 1.0f / *(float*)(0xE8437C);
 		frms = 1.0f / fr * 1000;
 	}
 	char buffer[50];
@@ -1407,7 +1407,7 @@ void PrintGameFrametime() {
 	if (currentTime - lastUpdate >= 500) {
 		lastUpdate = currentTime;
 		ft = *(float*)(0x02527DA4) * 1000;
-		//fr = static_cast<int>(1.0f / *(float*)(0xE84380));
+		//fr = static_cast<int>(1.0f / *(float*)(0xE8437C));
 	}
 	char buffer[50];
 	snprintf(buffer, sizeof(buffer), "GameMS: %i", ft);
@@ -1424,11 +1424,11 @@ void PrintFramerate() {
 	DWORD currentTime = GetTickCount();
 	if (currentTime - lastUpdate >= 500) {
 		lastUpdate = currentTime;
-		fr = static_cast<int>(1.0f / *(float*)(0xE84380));
+		fr = static_cast<int>(1.0f / *(float*)(0xE8437C));
 	}
 
 	char buffer[50];
-	//int fr = 1.0f / *(float*)(0xE84380);
+	//int fr = 1.0f / *(float*)(0xE8437C);
 	snprintf(buffer, sizeof(buffer), "FPS: %i", fr);
 	if (fr < 20.0) {
 		Render2D::ChangeTextColor(255, 5, 5, 255);

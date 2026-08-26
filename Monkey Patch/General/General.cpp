@@ -1605,7 +1605,7 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		patchNop((BYTE*)0x005267F0, 6); // fix for black water in the distance with AA enabled
 		//patchDWord((void*)(0x007ECA66 + 1), (int)"PS3"); // patch get_platform to return ps3. Not ideal.
 		//patchDWord((void*)(0x0051F62F + 1), (int)"PS3bitmap_sheets"); // patch get_platform to return ps3. Not ideal.
-		SafeWrite32(0x004CBFEE + 2, (UInt32)0xE84380); // change the motion blur to directly read the current frametime (fix strength above 30 fps)
+		SafeWrite32(0x004CBFEE + 2, (UInt32)0xE8437C); // change the motion blur to directly read the current frametime (fix strength above 30 fps)
 		patchBytesM((BYTE*)0x004CBFF4, (BYTE*)"\xEB\x13", 2); // jump over the stupid checks
 		patchBytesM((BYTE*)0x0053818F, (BYTE*)"\xA1\x94\x89\xE9\x00", 5); // make shadow maps check shadows instead of shadow map type
 		patchBytesM((BYTE*)0x00538194, (BYTE*)"\x83\xE8\x02", 3); // make it check if full shadows are enabled (so none = no shadows, simple = stencil and full = stencil & s. maps)

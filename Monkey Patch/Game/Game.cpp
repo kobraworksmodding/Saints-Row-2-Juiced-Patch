@@ -18,7 +18,7 @@ namespace Game
 	namespace Timer {
 		// Returns game's frametime in ms
 		float GetFrameTime() {
-			return *(float*)0xE84380;
+			return *(float*)0xE8437C;
 		}
 		// Returns frametime / 33 ms,
 		// use this to fix calculations that are calculated FASTER than they should when game is running at a higher FPS.

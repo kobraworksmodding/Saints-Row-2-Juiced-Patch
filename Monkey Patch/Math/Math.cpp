@@ -253,7 +253,7 @@ namespace Math
 				vector2* cam_forward = (vector2*)(ctx.esp + 0x14);
 
 				/*if (SimulateWaterBug) {
-					float game_frametime = *(float*)0xE84380;
+					float game_frametime = *(float*)0xE8437C;
 					game_frametime = (std::min)(game_frametime, 0.1f);
 
 					bug_timer += game_frametime * 15.0f;  // Higher frequency for rapid changes
