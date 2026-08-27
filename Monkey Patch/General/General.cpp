@@ -1573,6 +1573,8 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 		bitmap_loader::Init();
 		WriteRelJump(0x00685858, (UInt32)&LowGravity_cheat_fix_basejumping); // LowGravity_Apply()
 		WriteRelJump(0x00685EE0, (UInt32)&LowGravity_cheat_fix_basejumping); // LowGravity_Restore()
+		// fix driveby_diversion_instance::uninitialize clearing old weapons unlimited ammo flag on restore - Clippy95
+		patchNop((BYTE*)0x00608B3D, 4);
 		patchNop((BYTE*)0x004D6795, 5); // Fix for the sun flare disappearing upon reloading a save. Prevents the game from deallocating the flare.
 		if(GameConfig::GetValue("Debug","AllowMultipleSR2Windows",1)) // in case this fucks up or something
 		SafeWrite8(0x00BFA6B6, 0xEB);

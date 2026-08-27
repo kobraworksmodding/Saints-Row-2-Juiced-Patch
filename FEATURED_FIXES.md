@@ -30,6 +30,7 @@ Fixes marked with ⚙️ can be configured/toggled via the INI file / BlingMenu
 * ⚙️ Fix mouse input in wardrobes.
 * Fix Ultrawide FOV
 * ⚙️ Fix incorrect GUID assignment for audio device.
+* Fixed an issue where the drive by diversion would not restore your unlimited ammo SMG
 
 ## Enhancements
 * Allow loading of loose files (VPP content) with folders to load from taken from loose.txt (default mods folder)
