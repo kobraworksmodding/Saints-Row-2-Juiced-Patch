@@ -1,4 +1,4 @@
-// CrashFixes.cpp (clippy95)
+﻿// CrashFixes.cpp (clippy95)
 // --------------------
 // Created: 20/4/2025
 #include <safetyhook.hpp>
@@ -10,6 +10,7 @@
 #include "../SafeWrite.h"
 #include "../Patcher/patch.h"
 #include "../General/General.h"
+#include "../Hooker.h"
 namespace AssertHandler {
 	static std::unordered_set<std::string> ignored_asserts;
 	static std::mutex assert_mutex;
@@ -87,6 +88,25 @@ namespace AssertHandler {
 	}
 }
 namespace CrashFixes {
+	namespace {
+
+
+		bool IsDmallocHeapReady() {
+			const auto heap = *reinterpret_cast<volatile uintptr_t*>(0x0252A648_g);
+			const auto heap_size = *reinterpret_cast<volatile uintptr_t*>(0x0252A64C_g);
+			return heap != 0 && heap_size != 0;
+		}
+
+		// A lost D3D device can reach release assets pre reset on the render thread before
+		// sr2_init_stage_1 has initialized dlmalloc. my_sbrk returns nullptr in that
+		// state, but sYSMALLOc treats only -1 as failure and writes through address
+		// 0x38. Defer the reset; TestCooperativeLevel will retry on a later frame.
+		SAFETYHOOK_NOINLINE void DeferDeviceResetUntilDmallocIsReady(SafetyHookContext& ctx) {
+			if (!IsDmallocHeapReady())
+				ctx.eip = 0x00D2035F_g;
+		}
+	}
+
 	// sidokuthps had a crash while playing The Ronin - Rest In Peace, this section of code seems to only execute in missions? need to confirm, either ways they jump to an else if v0 is null but not if *v0 is null
 // thus it crashes, here I check for that as well - Clippy95
 	SAFETYHOOK_NOINLINE void FixAudioLoop_null_crash1(SafetyHookContext& ctx) {
@@ -245,6 +265,7 @@ namespace CrashFixes {
 	void Init() {
 		AssertHandler::CvarFixCrashes = GameConfig::GetValue("Debug", "FixCrashes", 2);
 		AssertHandler::DisableAssertsPopUp = GameConfig::GetValue("Debug", "DisableAssertsPopUp", 0) != 0;
+		static auto DeferPrematureDeviceReset = safetyhook::create_mid(0x00D2026A_g, &DeferDeviceResetUntilDmallocIsReady);
 		static auto FixAudioLoop_null_crash1_hook = safetyhook::create_mid(0x0046EE64, &FixAudioLoop_null_crash1);
 		static auto player_vehicle_C4_crash = safetyhook::create_mid(0x4FA07B, [](SafetyHookContext& ctx) {
 			if (ctx.eax == NULL)
