@@ -838,18 +838,58 @@ namespace Render3D
 				}
 			});
 	}
-
-	volatile float VehicleDespawnDistance = 140.f;
-	volatile float NPCDespawnDistance = 8100.0;
+	volatile float VehicleDespawnDistance = 250.f;
+	volatile float NPCDespawnDistance = 8100.0f;
+	//volatile float DensityCap = 0.0;
+	//volatile float ExTrafficDensity = 10.0;
 	CMultiPatch CMPatches_CIncreaseNPCDespawnDistance = {
 
 		[](CMultiPatch& mp) {
-			mp.AddSafeWrite32(0x0093BDF9, (uint32_t)&VehicleDespawnDistance);
+			mp.AddSafeWrite32(0x0093BDF9, (uint32_t)&VehicleDespawnDistance); // these 4 patches apply aircraft vehicle keep-sake distance to regular vehicles, keeping them alive at a further distance and while off screen. 
+			//(65 > 250 off screen, 140 > 250 on screen)
 		},
 
 		[](CMultiPatch& mp) {
+			mp.AddSafeWrite32(0x0093BD4A + 2, (uint32_t)&VehicleDespawnDistance);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite32(0x0093BD90 + 2, (uint32_t)&VehicleDespawnDistance);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite32(0x0093BE0C + 2, (uint32_t)&VehicleDespawnDistance);
+		},
+
+
+		[](CMultiPatch& mp) { // These patches are specifically for NPCs and may not do too much at this moment
 			mp.AddSafeWrite32(0x0093842F, (uint32_t)&NPCDespawnDistance);
 		},
+
+		/*[](CMultiPatch& mp) {
+			mp.AddSafeWrite32(0x0093640D, (uint32_t)&DensityCap);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWriteBuf(0x0093D2C3, "\xB8\x32", 2);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWriteBuf(0x0093D2FC , "\xB8\x32", 2);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite32(0x0082803C + 2, (uint32_t)&ExTrafficDensity);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite32(0x00827F6A + 2, (uint32_t)&ExTrafficDensity);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite32(0x00827FD0 + 2, (uint32_t)&ExTrafficDensity);
+		},*/
+
 	};
 
 
