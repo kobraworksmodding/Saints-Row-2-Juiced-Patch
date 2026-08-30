@@ -840,10 +840,18 @@ namespace Render3D
 	}
 
 	volatile float VehicleDespawnDistance = 140.f;
-	CPatch CIncreaseVehicleDespawnDistance = CPatch::SafeWrite32(0x0093BDF9, (uint32_t)&VehicleDespawnDistance);
-
 	volatile float NPCDespawnDistance = 8100.0;
-	CPatch CIncreaseNPCDespawnDistance = CPatch::SafeWrite32(0x0093842F, (uint32_t)&NPCDespawnDistance);
+	CMultiPatch CMPatches_CIncreaseNPCDespawnDistance = {
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite32(0x0093BDF9, (uint32_t)&VehicleDespawnDistance);
+		},
+
+		[](CMultiPatch& mp) {
+			mp.AddSafeWrite32(0x0093842F, (uint32_t)&NPCDespawnDistance);
+		},
+	};
+
 
 	static inline void setBL(SafetyHookContext& ctx, int val)
 	{
@@ -1325,12 +1333,8 @@ namespace Render3D
 			(void)add_to_entry_test.enable();
 		}
 
-		if (GameConfig::GetValue("Gameplay", "ImprovedTrafficDespawnRange", 1, "Increases the distance where vehicles fade if you are not looking at them")) {
-			CIncreaseVehicleDespawnDistance.Apply();
-		}
-
-		if (GameConfig::GetValue("Gameplay", "ImprovedPedestrianDespawnRange", 1, "Increases the distance where pedestrians fade if you are not looking at them")) {
-			CIncreaseNPCDespawnDistance.Apply();
+		if (GameConfig::GetValue("Gameplay", "ImprovedNPCDespawnRange", 1, "Increases the distance where pedestrians and vehicles fade if you are not looking at them")) {
+			CMPatches_CIncreaseNPCDespawnDistance.Apply();
 		}
 
 
