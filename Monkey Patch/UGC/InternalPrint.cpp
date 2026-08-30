@@ -16,40 +16,7 @@ namespace InternalPrint
 
 	int vsprintfHook(char* const Buffer, const char* const Format, va_list ArgList) {
 		int a = vsprintf(Buffer, Format, ArgList);
-		if (retAddr == (void*)0X004813BC) {
-			Logger::TypedLog(CHN_XACT, "- 0X{}] Loaded Soundbank: {}\n", retAddr, Buffer);
-			return a;
-		}
-		if (retAddr == (void*)0X00481379) {
-			Logger::TypedLog(CHN_XACT, "- 0X{}] Loaded Wavebank: {}\n", retAddr, Buffer);
-			return a;
-		}
-		if (retAddr == (void*)0X00481313) {
-			Logger::TypedLog(CHN_XACT, "- 0X{}] Loaded Music Wavebank: {}\n", retAddr, Buffer);
-			return a;
-		}
-		if (retAddr == (void*)0X0047986E) {
-			Logger::TypedLog(CHN_XACT, "- 0X{}] Loaded Audioevent: {}\n", retAddr, Buffer);
-			return a;
-		}
-		if (retAddr == (void*)0X0069C708) {
-			Logger::TypedLog(CHN_CHUNK, "- 0X{}] Loaded City Chunk: {}\n", retAddr, Buffer);
-			return a;
-		}
-		if (retAddr == (void*)0X00541D3E) {
-			Logger::TypedLog(CHN_CHUNK, "- 0X{}] Loaded Chunk Swap: {}\n", retAddr, Buffer);
-			return a;
-		}
-		if (retAddr == (void*)0X00A842B0) {
-			Logger::TypedLog(CHN_ANIM, "- 0X{}] Loaded Non-Permanent Animation: {}\n", retAddr, Buffer);
-			return a;
-		}
-		if (retAddr == (void*)0X00C0AD2B) {
-			Logger::TypedLog(CHN_ASSET, "- 0X{}] Accessing Asset: {}\n", retAddr, Buffer);
-			return a;
-		}
 		Logger::TypedLog(CHN_INTPR, "- 0X{}] {}\n", retAddr, Buffer);
-
 		return a;
 	}
 
