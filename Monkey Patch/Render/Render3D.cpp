@@ -47,6 +47,7 @@ namespace Render3D
 	double FOVMultiplier = 1;
 	double UltrawideFixRatio = 1;
 	const double fourbythreeAR = 1.333333373069763;
+	int& MSAA = *(int*)0x252A2DC_g;
 	//TODO: put this dds in some file somewhere instead of a header
 	IDirect3DCubeTexture9* shd_cubedefault_tex;
 	bool DitherFilter;
@@ -771,6 +772,10 @@ namespace Render3D
 		RenderBuffer.WritePos += 12 + (16 * count);
 	}
 
+	void SetRenderState(D3DRENDERSTATETYPE State, DWORD Val) {
+		fastcall_call<void>(0x00D21900_g, State, Val);
+	}
+
 	void ChangeShaderOptions() {
 		float arr4[4];
 		arr4[0] = (ShaderOptions.X360Gamma) != 0 ? 0.0f : 1.0f;
@@ -1158,7 +1163,6 @@ namespace Render3D
 
 	static uint32_t alpha_lastframe = 0;
 	bool AlphaMaskAvailable() { // 2 in 1, fix for the NVIDIA oversight (no unnecessary additional check), as well as updating the shader constant for our modified shaders
-		int MSAA = *(int*)DynAddress(0x252A2DC);
 		bool AlphaMaskVal = *(bool*)DynAddress(0x0252A2EC);
 
 		bool Result = MSAA > 0 && AlphaMaskVal;
@@ -1341,6 +1345,16 @@ namespace Render3D
 		CreateRTs.call();
 	}
 
+	SafetyHookInline AddSMap;
+	void FixMSAAShadowGap() {
+		if (MSAA > 0) {
+			SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, FALSE);
+			AddSMap.unsafe_ccall();
+			SetRenderState(D3DRS_MULTISAMPLEANTIALIAS, TRUE);
+		}
+		else AddSMap.unsafe_ccall();
+	}
+
 	void Init()
 	{
 
@@ -1520,6 +1534,7 @@ namespace Render3D
 
 		ReleaseTextures = safetyhook::create_inline(0xD1F960, &ReleaseTexturesHook);
 		CreateRTs = safetyhook::create_inline(0xD1E9A0, &CreateRTsHook);
+		AddSMap = safetyhook::create_inline(0x51C8E0_g, &FixMSAAShadowGap);
 
 		// - Tervel
 		// the game uses a shared shader (sr2_carpaint1) which expects a sampler cube but the default cubemap
