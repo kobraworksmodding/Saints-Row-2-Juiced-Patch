@@ -1471,7 +1471,7 @@ namespace Render3D
 			}
 		);
 
-		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 1, "2 = Maps the resolution to your screens resolution\n1 = Same as above but half res (Example: 1920x1080 > 1280x720 resolution scale.)\n0 = Vanilla Resolution\nIncreases resolution of Depth-of-field, skydive blur, reflections and bloom (Tervel)"))
+		if (GameConfig::GetValue("Graphics", "UHQScreenEffects", 1, "Increases resolution of Depth-of-field, skydive blur, reflections and bloom (Tervel)"))
 		{
 			UHQEffects();
 		}
