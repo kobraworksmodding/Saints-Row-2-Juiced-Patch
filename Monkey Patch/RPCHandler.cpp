@@ -302,11 +302,12 @@ namespace RPCHandler {
 		std::wstring wPartnerName = partnerName; // parse co-op partner name to a wstring
 		std::string f_PartnerName = wstring_to_string(wPartnerName); // THEN to a string
 		const char* COOPPartner = f_PartnerName.c_str(); // now to a const char because discord is a picky bitch
-		char finalUsername[2048];
+		char finalStory[2048];
+		char finalStoryCOOP[2048];
 		char finalMPDesc[2048];
-		char finalCOOPDescCutsc[2048];
 		char finalCOOPDesc[2048];
 		char finalSPDesc[2048];
+		char CutsceneWMission[2048];
 		char smalltxtmission[256];
 
 		// -- Get Current Players District
@@ -318,6 +319,21 @@ namespace RPCHandler {
 				district_test += L"Stilwater";
 		}
 		// -----
+
+		std::string Difficulty = "";
+		if (CurDifficulty == 0x0) {
+			Difficulty = "Casual";
+		}
+		else if (CurDifficulty == 0x1) {
+			Difficulty = "Normal";
+		}
+		else {
+			Difficulty = "Hardcore";
+		}
+
+		sprintf(finalCOOPDesc, "%s", wchar_to_utf8(district_test).c_str());
+		sprintf(finalSPDesc, "%s", wchar_to_utf8(district_test).c_str());
+		sprintf(CutsceneWMission, "Watching a Cutscene");
 
 		const wchar_t* mission_name = (const wchar_t*)UtilsGlobal::ReadPointer(0x027B3C60, { 0x34,0 });
 		gang* mission_team = (gang*)UtilsGlobal::ReadPointer(0x027B3C60, { 0x40 });
@@ -333,31 +349,27 @@ namespace RPCHandler {
 			}
 			if (mission_name) {
 	sprintf(smalltxtmission, "%s", wchar_to_utf8(mission_name).c_str());
-				strcpy_s(pres.assets.small_text, smalltxtmission);
+				//strcpy_s(pres.assets.small_text, smalltxtmission);
+				sprintf(finalCOOPDesc, "%s - %s", wchar_to_utf8(district_test).c_str(), smalltxtmission);
+				sprintf(finalSPDesc, "%s - %s", wchar_to_utf8(district_test).c_str(), smalltxtmission);
+				if (IsInCutscene == 1)
+				{
+					sprintf(CutsceneWMission, "Watching a Cutscene - %s", smalltxtmission);
+				}
 			}
 	    }
 		else {
 			//wprintf(L"mission name: %i\n", Activity_Type());
-			strcpy_s(pres.assets.small_text, activitiesToString[Current_Activity]);
+			strcpy_s(pres.assets.small_text, Difficulty.c_str());
 			strcpy_s(pres.assets.small_image, getActivityLowercase(Current_Activity).c_str());
+			sprintf(finalCOOPDesc, "%s - %s", wchar_to_utf8(district_test).c_str(), activitiesToString[Current_Activity]);
+			sprintf(finalSPDesc, "%s - %s", wchar_to_utf8(district_test).c_str(), activitiesToString[Current_Activity]);
 		}
 
-		std::string Difficulty = "";
-		if (CurDifficulty == 0x0) {
-			Difficulty = "Casual";
-		}
-		else if (CurDifficulty == 0x1) {
-			Difficulty = "Normal";
-		}
-		else {
-			Difficulty = "Hardcore";
-		}
 		//BYTE IsInMission = *(BYTE*)0x27B3C60; // parses mission (?)
-	sprintf(finalUsername, "%s", playerName);
-		sprintf(finalMPDesc, "%s (In Map: %s)", playerName, *FancyChunkName);
-		sprintf(finalCOOPDescCutsc, "Watching a Cutscene with %s", COOPPartner);
-		sprintf(finalCOOPDesc, "Exploring %s with %s - %s", wchar_to_utf8(district_test).c_str(), COOPPartner, Difficulty.c_str());
-		sprintf(finalSPDesc, "Exploring %s - %s", wchar_to_utf8(district_test).c_str(), Difficulty.c_str());
+	    sprintf(finalStory, "Story");
+		sprintf(finalStoryCOOP, "Story (Co-op)");
+		sprintf(finalMPDesc, "%s (%s)", playerName, *FancyChunkName);
 
 		static DWORD lastTick = 0;
 
@@ -375,24 +387,18 @@ namespace RPCHandler {
 			{
 				if (IsInCutscene == 1)
 				{
-					if (f_PartnerName == playerName || f_PartnerName.empty() || !isCoop) {
-						strcpy_s(pres.details, "Watching a Cutscene");
-					}
-					else
-					{
-						strcpy_s(pres.details, finalCOOPDescCutsc);
-						strcpy_s(pres.state, finalUsername);
-					}
+					strcpy_s(pres.details, CutsceneWMission);
 				}
 				else
 				{
 					if (f_PartnerName == playerName || f_PartnerName.empty() || !isCoop) {
 						strcpy_s(pres.details, finalSPDesc);
+						strcpy_s(pres.state, finalStory);
 					}
 					else
 					{
 						strcpy_s(pres.details, finalCOOPDesc);
-						strcpy_s(pres.state, finalUsername);
+						strcpy_s(pres.state, finalStoryCOOP);
 					}
 				}
 			}
@@ -427,7 +433,7 @@ namespace RPCHandler {
 			if (CurrentGamemode == 0xC) // Team Gangsta Brawl
 			{
 				MapDescAPI();
-				if (*FancyChunkName == "Prison Island (PTP Blitz)") {
+				/*if (*FancyChunkName == "Prison Island (PTP Blitz)") {
 					if (MatchType == (BYTE)1)
 						strcpy_s(pres.details, "Playing MP in PTP Blitz");
 
@@ -437,7 +443,7 @@ namespace RPCHandler {
 					if (MatchType == (BYTE)3)
 						strcpy_s(pres.details, "Playing Party MP in PTP Blitz");
 				}
-				else {
+				else {*/
 					if (MatchType == (BYTE)1)
 						strcpy_s(pres.details, "Playing MP in Team Gangsta Brawl");
 
@@ -446,7 +452,7 @@ namespace RPCHandler {
 
 					if (MatchType == (BYTE)3)
 						strcpy_s(pres.details, "Playing Party MP in Team Gangsta Brawl");
-				}
+				//}
 
 				strcpy_s(pres.state, finalMPDesc);
 			}
@@ -467,7 +473,7 @@ namespace RPCHandler {
 			}
 			if (LobbyCheck == 0x0) // Usually Menus Check
 			{
-				strcpy_s(pres.details, "In Menus...");
+				strcpy_s(pres.details, "In the Main-Menu...");
 				strcpy_s(pres.state, "");
 			}
 
