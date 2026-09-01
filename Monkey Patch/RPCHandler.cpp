@@ -302,12 +302,12 @@ namespace RPCHandler {
 		std::wstring wPartnerName = partnerName; // parse co-op partner name to a wstring
 		std::string f_PartnerName = wstring_to_string(wPartnerName); // THEN to a string
 		const char* COOPPartner = f_PartnerName.c_str(); // now to a const char because discord is a picky bitch
-		char finalStory[2048];
-		char finalStoryCOOP[2048];
-		char finalMPDesc[2048];
-		char finalCOOPDesc[2048];
-		char finalSPDesc[2048];
-		char CutsceneWMission[2048];
+		char finalStory[256];
+		char finalStoryCOOP[256];
+		char finalMPDesc[256];
+		char finalCOOPDesc[256];
+		char finalSPDesc[256];
+		char CutsceneWMission[256];
 		char smalltxtmission[256];
 
 		// -- Get Current Players District

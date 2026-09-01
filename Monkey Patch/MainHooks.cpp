@@ -1567,7 +1567,7 @@ int* sub_73D900() {
 		Logger::TypedLog(CHN_DEBUG, "Updater error {}\n", result.errorMessage.c_str());
 	}
 	if (result.checkSuccessful) {
-		Logger::TypedLog(CHN_DEBUG, result.latestVersion.c_str());
+		Logger::TypedLog(CHN_DEBUG, "REPO: {}\n", result.latestVersion.c_str());
 
 		if (result.updateAvailable) {
 			std::string updateMessage =
