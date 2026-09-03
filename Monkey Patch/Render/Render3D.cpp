@@ -1355,6 +1355,61 @@ namespace Render3D
 		else AddSMap.unsafe_ccall();
 	}
 
+	void FixVanityPlateRendering()
+	{
+		patchByte((BYTE*)0x00AEFE8F, 7);
+		patchByte((BYTE*)0x00AEFE93, 7);
+
+		static auto UseVanityPlateGlyphWidth = safetyhook::create_mid(0x00AEFF80, [](SafetyHookContext& ctx) {
+			constexpr int FirstAscii = 32;
+			constexpr uintptr_t FontCharSize = 16;
+			const auto character = *reinterpret_cast<const signed char*>(ctx.esp + 4);
+			const auto glyphIndex = static_cast<int>(character) - FirstAscii;
+			ctx.eax += glyphIndex * FontCharSize;
+			});
+
+		static auto UseFullVanityPlateGlyph = safetyhook::create_mid(0x00AF078B, [](SafetyHookContext& ctx) {
+			constexpr size_t HalfSlotsPerPlate = 14;
+			constexpr size_t FloatsPerHalfQuad = 8;
+			constexpr uintptr_t HalfIndicesStackOffset = 0x274;
+
+			float* const uvs = reinterpret_cast<float*>(ctx.esi);
+			const auto* const halfIndices = reinterpret_cast<const uint8_t*>(ctx.esp + HalfIndicesStackOffset);
+			for (size_t half = 0; half + 1 < HalfSlotsPerPlate;) {
+				float* const leftHalf = uvs + half * FloatsPerHalfQuad;
+				float* const rightHalf = leftHalf + FloatsPerHalfQuad;
+
+				// Text is centered to a half-slot, so a character pair is not always
+				// aligned to an even slot. Use the constructor's half-index array to
+				// identify an exact (2 * character, 2 * character + 1) pair.
+				if ((halfIndices[half] & 1) != 0 || halfIndices[half + 1] != halfIndices[half] + 1) {
+					++half;
+					continue;
+				}
+
+				const float halfGlyphWidth = rightHalf[0] - leftHalf[0];
+				leftHalf[2] = rightHalf[0];
+				leftHalf[4] = rightHalf[0];
+				rightHalf[2] = rightHalf[0] + halfGlyphWidth;
+				rightHalf[4] = rightHalf[0] + halfGlyphWidth;
+				half += 2;
+			}
+			});
+		static auto ScaleVanityPlateText = safetyhook::create_mid(0x00AF10BA, [](SafetyHookContext& ctx) {
+			constexpr size_t TextVertexCount = 14 * 4;
+			constexpr size_t FloatsPerVertex = 6;
+			constexpr float TextScale = 0.88f;
+			constexpr float TextCenterY = -0.005f;
+
+			float* const vertices = reinterpret_cast<float*>(ctx.ecx);
+			for (size_t vertexIndex = 0; vertexIndex < TextVertexCount; ++vertexIndex) {
+				float* const position = vertices + vertexIndex * FloatsPerVertex;
+				position[0] *= TextScale;
+				position[1] = TextCenterY + (position[1] - TextCenterY) * TextScale;
+			}
+			});
+	}
+
 	void Init()
 	{
 
@@ -1365,7 +1420,8 @@ namespace Render3D
 		OptionsManager::registerOption("Graphics", "ToggleExtendedRenderDistance", (int*)&UseExtendedRenderBatch, 0);*/
 
 		patchJmp((void*)DynAddress(0x00D755F0), &AlphaMaskAvailable);
-		// ~ Shadows::Init(); // Don't know if this is needed, this gets called again at the end of init. (Uzis)
+
+		FixVanityPlateRendering();
 
 		if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1, "Patches in Juiced Patch custom updates to settings adding MSAA 8x Support and fixing up label names, required for Ultrawide support.")) { // cuz rn this just patches in the resolutions, if init is expanded, please move this check inside
 			patchCall((void*)0xD1526E, init_directx9);

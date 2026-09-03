@@ -34,6 +34,7 @@ Fixes marked with ⚙️ can be configured/toggled via the INI file / BlingMenu
 
 ## Enhancements
 * Allow loading of loose files (VPP content) with folders to load from taken from loose.txt (default mods folder)
+* Improved license plate font rendering
 * ⚙️ addon_bitmaps - allows for custom textures support, meaning you can load new texture entries with new names.
 * ⚙️ Ported over 30 animations from the console versions.
 * ⚙️ Implemented SDL3 controller support.
