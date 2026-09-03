@@ -1357,6 +1357,7 @@ namespace Render3D
 
 	void FixVanityPlateRendering()
 	{
+		SafeWrite32(0x00AF0A4B_g, 0x022FD8DC_g);
 		patchByte((BYTE*)0x00AEFE8F, 7);
 		patchByte((BYTE*)0x00AEFE93, 7);
 
