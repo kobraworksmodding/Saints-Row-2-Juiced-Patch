@@ -33,6 +33,7 @@ namespace Debug
 	void PatchDatafiles() {
 		bool LooseCache = CreateCache((char*)"loose.txt");
 		bool DLCCache = ScanDLCDir("DLC");
+		initialize_modpack_save_prefix();
 		if (LooseCache || DLCCache)
 		{
 			CacheConflicts();

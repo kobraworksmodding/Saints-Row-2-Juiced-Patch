@@ -60,3 +60,7 @@ const char* TranslateFilePath(const char* FilePath);
 FILEDATA* TranslateFilePathData(const char* FilePath);
 
 extern void loaded_files_push_filename(const char* string);
+
+// Reads the highest-priority loose modpack_save.txt and, when present, isolates
+// this modpack's save files behind the configured filename prefix.
+extern void initialize_modpack_save_prefix();

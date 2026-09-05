@@ -1,7 +1,9 @@
 #include "loose files.h"
 #include "FileLogger.h"
 #include "GameConfig.h"
+#include "Patcher/patch.h"
 #include <algorithm>
+#include <cctype>
 
 
 #pragma warning(disable : 4996) // remove fopen warning
@@ -160,6 +162,119 @@ _declspec(naked) void hook_loose_files()
 
 LooseFileCache DirCache;
 LooseFileCache DLCCache;
+
+namespace
+{
+    constexpr size_t MAX_MODPACK_SAVE_PREFIX_LENGTH = 32;
+    
+
+    std::string ModpackSavePrefix;
+
+    const char* get_legacy_save_descriptor(const char* filename)
+    {
+        if (!filename || ModpackSavePrefix.empty())
+            return filename;
+
+        const size_t prefix_length = ModpackSavePrefix.length();
+        if (!_strnicmp(filename, ModpackSavePrefix.c_str(), prefix_length) && filename[prefix_length] == '_')
+            return filename + prefix_length;
+
+        return filename;
+    }
+
+    int __cdecl format_modpack_save_search(char* buffer, const char*, const char* save_path, const char* extension)
+    {
+        return _snprintf_s(buffer, MAX_PATH, _TRUNCATE, "%s\\%s_*%s", save_path, ModpackSavePrefix.c_str(), extension);
+    }
+
+    int __cdecl format_modpack_save_path(char* buffer, const char*, const char* save_path, const char* descriptor, const char* extension)
+    {
+        const char* legacy_descriptor = get_legacy_save_descriptor(descriptor);
+        return _snprintf_s(buffer, MAX_PATH, _TRUNCATE, "%s\\%s%s%s", save_path, ModpackSavePrefix.c_str(), legacy_descriptor, extension);
+    }
+
+    char* __cdecl copy_legacy_save_descriptor(char* destination, const char* source, size_t count)
+    {
+        return strncpy(destination, get_legacy_save_descriptor(source), count);
+    }
+
+    bool __cdecl parse_legacy_save_descriptor(void* descriptor_info, const char* filename)
+    {
+        using ParseSavegameDescriptor = bool(__cdecl*)(void*, const char*);
+        constexpr uintptr_t PARSE_SAVEGAME_DESCRIPTOR = 0x00695740;
+        return reinterpret_cast<ParseSavegameDescriptor>(PARSE_SAVEGAME_DESCRIPTOR)(descriptor_info, get_legacy_save_descriptor(filename));
+    }
+
+    bool is_valid_modpack_save_prefix(const std::string& prefix)
+    {
+        if (prefix.empty() || prefix.length() > MAX_MODPACK_SAVE_PREFIX_LENGTH)
+            return false;
+
+        static constexpr char invalid_filename_characters[] = "<>:\"/\\|?*";
+        return std::none_of(prefix.begin(), prefix.end(), [](unsigned char character) {
+            return character < 32 || strchr(invalid_filename_characters, character) != nullptr;
+        }) && prefix.back() != ' ' && prefix.back() != '.';
+    }
+
+    bool read_modpack_save_prefix(const char* path, std::string& prefix)
+    {
+        FILE* file = fopen(path, "rb");
+        if (!file)
+            return false;
+
+        char buffer[256]{};
+        const size_t bytes_read = fread(buffer, 1, sizeof(buffer) - 1, file);
+        const bool read_error = ferror(file) != 0;
+        fclose(file);
+        if (read_error)
+            return false;
+
+        prefix.assign(buffer, bytes_read);
+        if (prefix.size() >= 3 && static_cast<unsigned char>(prefix[0]) == 0xEF &&
+            static_cast<unsigned char>(prefix[1]) == 0xBB && static_cast<unsigned char>(prefix[2]) == 0xBF)
+            prefix.erase(0, 3);
+
+        const auto is_space = [](unsigned char character) { return std::isspace(character) != 0; };
+        prefix.erase(prefix.begin(), std::find_if_not(prefix.begin(), prefix.end(), is_space));
+        prefix.erase(std::find_if_not(prefix.rbegin(), prefix.rend(), is_space).base(), prefix.end());
+        return true;
+    }
+}
+
+void initialize_modpack_save_prefix()
+{
+    FILEDATA* prefix_file = TranslateFilePathData("modpack_save.txt");
+    if (!prefix_file)
+    {
+        Logger::TypedLog(CHN_DLL, "No loose modpack_save.txt found; using the vanilla save namespace.\n");
+        return;
+    }
+
+    std::string prefix;
+    if (!read_modpack_save_prefix(prefix_file->FilePath.c_str(), prefix))
+    {
+        Logger::TypedLog(CHN_DLL, "Unable to read modpack save prefix from {}.\n", prefix_file->FilePath.c_str());
+        return;
+    }
+
+    if (!is_valid_modpack_save_prefix(prefix))
+    {
+        Logger::TypedLog(CHN_DLL, "Ignoring invalid modpack save prefix from {} (must be 1-{} valid filename characters).\n",
+            prefix_file->FilePath.c_str(), MAX_MODPACK_SAVE_PREFIX_LENGTH);
+        return;
+    }
+
+    ModpackSavePrefix = std::move(prefix);
+
+    InjectHook(0x00691CBB, reinterpret_cast<void*>(format_modpack_save_search));
+    InjectHook(0x00691D1D, reinterpret_cast<void*>(copy_legacy_save_descriptor));
+    InjectHook(0x00691D6E, reinterpret_cast<void*>(parse_legacy_save_descriptor));
+    InjectHook(0x00691E4A, reinterpret_cast<void*>(format_modpack_save_path));
+    InjectHook(0x00695180, reinterpret_cast<void*>(format_modpack_save_path));
+    InjectHook(0x0069522D, reinterpret_cast<void*>(format_modpack_save_path));
+
+    Logger::TypedLog(CHN_DLL, "Using modpack save prefix '{}' from {}.\n", ModpackSavePrefix, prefix_file->FilePath.c_str());
+}
 
 std::string StringToUpper(std::string strToConvert)
 {
