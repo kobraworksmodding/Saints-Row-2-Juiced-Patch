@@ -165,10 +165,13 @@ LooseFileCache DLCCache;
 
 namespace
 {
-    constexpr size_t MAX_MODPACK_SAVE_PREFIX_LENGTH = 32;
-    
+    // filename struct is 65 bytes. Vanilla descriptors use
+    // at most 35 bytes including their leading underscore.
+    constexpr size_t MAX_MODPACK_SAVE_PREFIX_LENGTH = 29;
+    constexpr size_t SAVEGAME_DESCRIPTOR_FILENAME_SIZE = 65;
 
     std::string ModpackSavePrefix;
+    SafetyHookInline CreateSavegameDescriptorHook;
 
     const char* get_legacy_save_descriptor(const char* filename)
     {
@@ -187,22 +190,21 @@ namespace
         return _snprintf_s(buffer, MAX_PATH, _TRUNCATE, "%s\\%s_*%s", save_path, ModpackSavePrefix.c_str(), extension);
     }
 
-    int __cdecl format_modpack_save_path(char* buffer, const char*, const char* save_path, const char* descriptor, const char* extension)
-    {
-        const char* legacy_descriptor = get_legacy_save_descriptor(descriptor);
-        return _snprintf_s(buffer, MAX_PATH, _TRUNCATE, "%s\\%s%s%s", save_path, ModpackSavePrefix.c_str(), legacy_descriptor, extension);
-    }
-
-    char* __cdecl copy_legacy_save_descriptor(char* destination, const char* source, size_t count)
-    {
-        return strncpy(destination, get_legacy_save_descriptor(source), count);
-    }
-
     bool __cdecl parse_legacy_save_descriptor(void* descriptor_info, const char* filename)
     {
         using ParseSavegameDescriptor = bool(__cdecl*)(void*, const char*);
         constexpr uintptr_t PARSE_SAVEGAME_DESCRIPTOR = 0x00695740;
         return reinterpret_cast<ParseSavegameDescriptor>(PARSE_SAVEGAME_DESCRIPTOR)(descriptor_info, get_legacy_save_descriptor(filename));
+    }
+
+    void __cdecl create_modpack_save_descriptor(char* descriptor, void* save_game_data, bool is_autosave)
+    {
+        CreateSavegameDescriptorHook.ccall<void>(descriptor, save_game_data, is_autosave);
+
+        char prefixed_descriptor[SAVEGAME_DESCRIPTOR_FILENAME_SIZE]{};
+        _snprintf_s(prefixed_descriptor, sizeof(prefixed_descriptor), _TRUNCATE, "%s%s",
+            ModpackSavePrefix.c_str(), get_legacy_save_descriptor(descriptor));
+        strcpy_s(descriptor, SAVEGAME_DESCRIPTOR_FILENAME_SIZE, prefixed_descriptor);
     }
 
     bool is_valid_modpack_save_prefix(const std::string& prefix)
@@ -267,11 +269,10 @@ void initialize_modpack_save_prefix()
     ModpackSavePrefix = std::move(prefix);
 
     InjectHook(0x00691CBB, reinterpret_cast<void*>(format_modpack_save_search));
-    InjectHook(0x00691D1D, reinterpret_cast<void*>(copy_legacy_save_descriptor));
     InjectHook(0x00691D6E, reinterpret_cast<void*>(parse_legacy_save_descriptor));
-    InjectHook(0x00691E4A, reinterpret_cast<void*>(format_modpack_save_path));
-    InjectHook(0x00695180, reinterpret_cast<void*>(format_modpack_save_path));
-    InjectHook(0x0069522D, reinterpret_cast<void*>(format_modpack_save_path));
+    CreateSavegameDescriptorHook = safetyhook::create_inline(
+        0x00695450,
+        reinterpret_cast<void*>(create_modpack_save_descriptor));
 
     Logger::TypedLog(CHN_DLL, "Using modpack save prefix '{}' from {}.\n", ModpackSavePrefix, prefix_file->FilePath.c_str());
 }
