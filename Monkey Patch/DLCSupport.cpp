@@ -222,13 +222,15 @@ void __declspec(naked) AddInterfacePeg()
     static const char* DLC = "ui_dlc.peg";
     static int jmp_continue = 0x00520803;
     __asm {
-        mov edi, dword ptr[0x522450]
+        push edi
+        mov edi, 0x522450
         call edi
         mov edx, 0x27716E4
         mov ecx, DLC
         call edi
         mov DLCInstalled, al
         call SetDLCNameFlagOnline
+        pop edi
         jmp jmp_continue
     }
 }
@@ -955,6 +957,7 @@ void AppendBitmaps() {
             LoadBitmapTable((const char*)(ctx.esp + 24));
             IsDLC = true;
             LoadBitmapTable("dlc_bitmap_sheets.xtbl");
+            IsDLC = false; // Also clear if the table is missing or empty.
             ctx.eip = 0x0051F651;
         });
 

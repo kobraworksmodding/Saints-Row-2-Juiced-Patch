@@ -2,6 +2,7 @@
 // --------------------
 // Created: 19/6/2025
 #include <mutex>
+#include <array>
 #include <algorithm>
 #include <cctype>
 #include <limits>
@@ -348,9 +349,14 @@ __declspec(naked) void LoadBitmapTableasm(const char* FileName) {
 bitmap_statusT bitmap_status{};
 
 void LoadExtraBitMapTable(const char* fileName) {
+    // Preserve all five bytes, including the DLC append hook at this address.
+    std::array<uint8_t, 5> saved;
+    memcpy(saved.data(), reinterpret_cast<const void*>(0xB875B0), saved.size());
     patchJmp((void*)0xB875B0, (void*)0xB875C4);
+    FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<void*>(0xB875B0), saved.size());
     LoadBitmapTableasm(fileName);
-    patchDWord((void*)0xB875B0, 0xA1A005C7);
+    Memory::VP::Patch(0xB875B0, saved);
+    FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<void*>(0xB875B0), saved.size());
 }
 SafetyHookInline load_pegT;
 bool __fastcall load_peg_hook(const char* filename, uintptr_t mempool) {
