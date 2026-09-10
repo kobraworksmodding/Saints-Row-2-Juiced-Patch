@@ -1355,6 +1355,80 @@ namespace Render3D
 		else AddSMap.unsafe_ccall();
 	}
 
+	constexpr int PlayerImageSize = 256;
+	constexpr int PlayerImageRowBytes = PlayerImageSize * 4;
+	constexpr int PlayerImageTarget = 8;
+	static HANDLE PlayerImageReadbackComplete = nullptr;
+	static BYTE PlayerImagePixels[PlayerImageSize * PlayerImageRowBytes];
+	static bool PlayerImageReadbackSucceeded = false;
+	static volatile LONG PlayerImageReadbackPending = 0;
+
+	static void* __cdecl ReadQueuedRenderTarget(int target, int* pitch, void* output)
+	{
+		if (target != PlayerImageTarget || InterlockedCompareExchange(&PlayerImageReadbackPending, 0, 1) != 1)
+			return reinterpret_cast<void* (__cdecl*)(int, int*, void*)>(0x00D1C530_g)(target, pitch, output);
+
+		auto* device = *reinterpret_cast<IDirect3DDevice9**>(0x0252A2D0_g);
+		auto* surface = reinterpret_cast<IDirect3DSurface9**>(0x022FDBA8_g)[PlayerImageTarget];
+		IDirect3DSurface9* staging = nullptr;
+		D3DSURFACE_DESC desc{};
+		D3DLOCKED_RECT locked{};
+		bool copied = false;
+		if (device && surface && SUCCEEDED(surface->GetDesc(&desc)) &&
+			desc.Width == PlayerImageSize && desc.Height == PlayerImageSize && desc.Format == D3DFMT_A8R8G8B8 &&
+			SUCCEEDED(device->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format, D3DPOOL_SYSTEMMEM, &staging, nullptr))) {
+			if (SUCCEEDED(device->GetRenderTargetData(surface, staging)) &&
+				SUCCEEDED(staging->LockRect(&locked, nullptr, D3DLOCK_READONLY))) {
+				if (locked.pBits && locked.Pitch >= PlayerImageRowBytes) {
+					for (int row = 0; row < PlayerImageSize; ++row)
+						memcpy(PlayerImagePixels + row * PlayerImageRowBytes,
+							static_cast<const BYTE*>(locked.pBits) + row * locked.Pitch, PlayerImageRowBytes);
+					copied = true;
+				}
+				staging->UnlockRect();
+			}
+			staging->Release();
+		}
+		PlayerImageReadbackSucceeded = copied;
+		SetEvent(PlayerImageReadbackComplete);
+		return nullptr;
+	}
+
+	static void* __cdecl ReadPlayerImage(int, int*, void*)
+	{
+		// Publish the capture together with its readback. Queue consumption alone
+		// is not a completion fence: the last command may still be executing.
+		InterlockedExchange(&PlayerImageReadbackPending, 1);
+		reinterpret_cast<void (__cdecl*)(int)>(0x00D1CB00_g)(PlayerImageTarget);
+		WaitForSingleObject(PlayerImageReadbackComplete, INFINITE);
+		return PlayerImageReadbackSucceeded ? PlayerImagePixels : nullptr;
+	}
+
+	void FixPlayerImageRendering()
+	{
+		// Each player-image capture reuses the depth surface. Clear stale depth so
+		// earlier rendering cannot hide all or part of the player.
+		patchByte((BYTE*)0x0053198D_g, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL);
+
+		PlayerImageReadbackComplete = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+		if (!PlayerImageReadbackComplete) {
+			Logger::TypedLog(CHN_DLL, "Could not create player-image readback event.\n");
+			return;
+		}
+		patchCall((void*)0x00D21133_g, ReadQueuedRenderTarget);
+		patchCall((void*)0x00532078_g, ReadPlayerImage);
+
+		static auto CopyPlayerImage = safetyhook::create_mid(0x005320AB_g, [](SafetyHookContext& ctx) {
+			const auto& destination = *reinterpret_cast<const D3DLOCKED_RECT*>(ctx.esp + 0xB4);
+			if (destination.pBits && destination.Pitch >= PlayerImageRowBytes) {
+				for (int row = 0; row < PlayerImageSize; ++row)
+					memcpy(static_cast<BYTE*>(destination.pBits) + row * destination.Pitch,
+						PlayerImagePixels + row * PlayerImageRowBytes, PlayerImageRowBytes);
+			}
+			ctx.eip = 0x005320C1_g; // Continue with UnlockRect.
+		});
+	}
+
 	void FixVanityPlateRendering()
 	{
 		SafeWrite32(0x00AF0A4B_g, 0x022FD8DC_g);
@@ -1423,6 +1497,7 @@ namespace Render3D
 		patchJmp((void*)DynAddress(0x00D755F0), &AlphaMaskAvailable);
 
 		FixVanityPlateRendering();
+		FixPlayerImageRendering();
 
 		if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1, "Patches in Juiced Patch custom updates to settings adding MSAA 8x Support and fixing up label names, required for Ultrawide support.")) { // cuz rn this just patches in the resolutions, if init is expanded, please move this check inside
 			patchCall((void*)0xD1526E, init_directx9);
