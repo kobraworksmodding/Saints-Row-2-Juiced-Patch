@@ -1601,16 +1601,16 @@ int* sub_73D900() {
 	}
 #if !RELOADED
 	if (Game::xtbl_scan_status.gotr_detected) {
-		ModWarningMessage("GOTR.txt",L"Gentlemen of the Row", L"does not increase stability or fix the game, in some cases it can even do the opposite.\n"
-			L"Crashes and issues that may occur are usually NOT the cause of Juiced Patch.\n"
-			L"Think of GOTR as a DLC mod rather than a fix patch.\n"
-			L"This message is only to spread awareness, make a GOTR.txt file in your game directory to remove this message."
+		ModWarningMessage("GOTR.txt", L"Gentlemen of the Row - Warning", L"This message is only to spread awareness.\n\nMAKE A gotr.txt FILE IN YOUR GAME DIRECTORY TO REMOVE THIS MESSAGE.\n\n"
+			L"GotR does not increase stability or fix the game, in some cases it can even do the opposite.\n"
+			L"Crashes & issues that may occur are usually NOT the cause of Juiced Patch.\n"
+			L"Think of GOTR as a DLC mod rather than a fix.\n"
 			L"\n-Juiced Team");
 	}
 	else if (Game::xtbl_scan_status.overhauled_stilwater_detected()) {
-		ModWarningMessage("overhauled_stilwater.txt",L"Overhauled Stilwater", L"does not increase stability or fix issues within the game, and has files that conflict with Juiced\n"
-			L"Crashes and issues that may occur are usually NOT the cause of Juiced Patch.\n"
-			L"This message is only to spread awareness, create a overhauled_stilwater.txt file in your game directory to remove this message."
+		ModWarningMessage("overhauled_stilwater.txt", L"Overhauled Stilwater - Warning", L"This message is only to spread awareness.\n\nMAKE A overhauled_stilwater.txt FILE IN YOUR GAME DIRECTORY TO REMOVE THIS MESSAGE.\n\n"
+			L"Overhauled Stilwater does not increase stability or fix issues within the game, and has files that conflict with Juiced.\n"
+			L"Crashes & issues that may occur are usually NOT the cause of Juiced Patch.\n"
 			L"\n-Juiced Team");
 	}
 
