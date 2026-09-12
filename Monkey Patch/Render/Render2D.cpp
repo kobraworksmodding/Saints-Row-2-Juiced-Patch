@@ -672,14 +672,15 @@ void gr_rect_letterbox_below(int x1, int y1, int w, int h, int* state)
 // is pulled out to the screen edge.
 float hud_offset_y = 0.f; // pixels
 float hud_canvas_h = 0.f; // canvas height in pixels
-int hud_pinned_depth = 0; // > 0 while rendering an element pinned to top/bottom via cvint.dat
+bool hud_scissor_full = true; // last scissor rect covered the whole canvas height
+static float hud_edge_px()
+{
+	return 4.f * hud_canvas_h / 720.f;
+}
 static float hud_remap_y(float y)
 {
-	// Pinned elements were already moved to their edge; don't let the edge rule stretch them.
-	if (hud_pinned_depth > 0)
-		return y + hud_offset_y;
 	// Full-screen quads (letterbox, tint) overshoot the canvas by ~1.5 vint units, so match at-or-past the edge.
-	const float edge = 4.f * hud_canvas_h / 720.f;
+	const float edge = hud_edge_px();
 	if (y <= edge)
 		return y;
 	if (y >= hud_canvas_h - edge)
@@ -1184,6 +1185,8 @@ SAFETYHOOK_NOINLINE bool modify_vint_anchor(const vint_cint_custom* cint, vint_e
 			return true;
 		}
 		// 16:10: the canvas is centred, push T/B elements back out to the screen edge.
+		// Done on the anchor (main thread, vint space): 2D batches are flushed lazily and possibly on
+		// the render thread, so per-element state can't be tracked at flush time.
 		if (hud_offset_y != 0.f && (align.v_top || align.v_bottom))
 		{
 			float y = hud_offset_y / (hud_canvas_h / 720.f);
@@ -1225,7 +1228,6 @@ void __fastcall vint_element_base_render(
 	bool visible = this_element->visible && Cvint_render_params->alpha > 0.00000011920929;
 	bool modified_anchor = false;
 	bool modified_scale = false;
-	bool pinned_y = false;
 	vector2 old_anchor;
 	vector2 old_scale;
 	if (r_is_widescreen && visible)
@@ -1246,7 +1248,6 @@ void __fastcall vint_element_base_render(
 				DrawUltraWideLeftRightBars(alpha);
 			old_anchor = this_element->v_anchor;
 			modified_anchor = modify_vint_anchor(custom, this_element);
-			pinned_y = modified_anchor && hud_offset_y != 0.f && (custom->align.v_top || custom->align.v_bottom);
 			if (custom->align.IVRadar) {
 				modified_scale = ApplyIVRadarScaling(this_element);
 				if (modified_scale) 
@@ -1259,11 +1260,7 @@ void __fastcall vint_element_base_render(
 		}
 
 	}
-	if (pinned_y)
-		++hud_pinned_depth;
 	vint_element_base_renderD.unsafe_thiscall<void>(this_element, Cvint_render_params, Base, a4);
-	if (pinned_y)
-		--hud_pinned_depth;
 	if (modified_anchor) {
 		this_element->v_anchor = old_anchor;
 	}
@@ -1430,14 +1427,22 @@ void diversion_image_sizeup()
 		if (hud_offset_y == 0.f || *(uint8_t*)0x252A2A2 != 1)
 			return;
 		int count = *(int*)0x252A2F8;
+		// Only stretch to the screen edge under a full-screen clip (tint, letterbox, fades). Clipped geometry,
+		// like the rotating minimap image, hangs far past the canvas and would get its corners pulled unevenly.
 		for (int i = 0; i < count; i++) {
 			float& y = *(float*)(0x22F643C + i * 0x1C);
-			y = hud_remap_y(y);
+			y = hud_scissor_full ? hud_remap_y(y) : y + hud_offset_y;
 		}
 		});
 	// vint scissor rect after scaling: esi = top, eax = bottom.
 	hud_scissor_offset_hook = safetyhook::create_mid(0xD1E82F, [](SafetyHookContext& ctx) {
-		if (hud_offset_y == 0.f || *(uint8_t*)0x252A2A2 != 1)
+		if (hud_offset_y == 0.f)
+			return;
+		// Scissor and draw commands go through the same (possibly deferred) queue in order,
+		// so this is the clip the next flushed batch was recorded under.
+		const float edge = hud_edge_px();
+		hud_scissor_full = (float)(int)ctx.esi <= edge && (float)(int)ctx.eax >= hud_canvas_h - edge;
+		if (*(uint8_t*)0x252A2A2 != 1)
 			return;
 		ctx.esi = (uintptr_t)(int)hud_remap_y((float)(int)ctx.esi);
 		ctx.eax = (uintptr_t)(int)hud_remap_y((float)(int)ctx.eax);
