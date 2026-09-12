@@ -666,6 +666,26 @@ void gr_rect_letterbox_below(int x1, int y1, int w, int h, int* state)
 	cdecl_call<void>(gr_rect_og, x1, y1, w, h, state);
 }
 
+// 16:10: the 1280x720 vint canvas is drawn with square pixels, which leaves it shorter than the screen.
+// The engine maps vint to pixels as a plain multiply (0xD1DF50), so we add the missing Y offset ourselves:
+// the canvas is centred, and anything touching its top/bottom edge (fades, menu backgrounds, letterbox)
+// is pulled out to the screen edge.
+float hud_offset_y = 0.f; // pixels
+float hud_canvas_h = 0.f; // canvas height in pixels
+static float hud_remap_y(float y)
+{
+	// Full-screen quads (letterbox, tint) overshoot the canvas by ~1.5 vint units, so match at-or-past the edge.
+	const float edge = 4.f * hud_canvas_h / 720.f;
+	if (y <= edge)
+		return y;
+	if (y >= hud_canvas_h - edge)
+		return y + hud_offset_y * 2.f;
+	return y + hud_offset_y;
+}
+SafetyHookMid hud_vertex_offset_hook;
+SafetyHookMid hud_scissor_offset_hook;
+SafetyHookMid hud_project_offset_hook;
+
 char SR2Ultrawide_HUDScale() {
 	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD {}\n", 1);
 	float currentX = (float)(*(unsigned int*)0x022f63f8);
@@ -673,6 +693,7 @@ char SR2Ultrawide_HUDScale() {
 	char result;
 
 	float aspectRatio = currentX / currentY;
+	hud_offset_y = 0.f;
 	// Cutscene black bars
 	//SafeWrite32((0x00755C49 + 1), 1280);
 	Render3D::AspectRatioFix(true);
@@ -707,19 +728,26 @@ char SR2Ultrawide_HUDScale() {
 		RefreshHUD_thread = std::thread(RefreshHUD_loop);
 		RefreshHUD_thread.detach();
 	}
+	bool is1610 = (aspectRatio > 1.59f && aspectRatio < 1.76f);
+
 	if ((GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1)) {
-		if (aspectRatio <= 1.79777777778f && aspectRatio != 1.5f) {
+		if (is1610) {
+			// 16:10 - fall through to the correction below instead of the stock path
+			UltrawideFix = false;
+			General::CleanupModifiedScript();
+		}
+		else if (aspectRatio <= 1.79777777778f && aspectRatio != 1.5f) {
 
 			UltrawideFix = false;
 			General::CleanupModifiedScript();
 			return ((char(*)())0xD1C910)(); // Original HUD scale function.
-			
+
 		}
 		else {
 
 			Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD {}\n", 4);
-			if(aspectRatio != 1.5f)
-			UltrawideFix = true;
+			if (aspectRatio != 1.5f)
+				UltrawideFix = true;
 			if (aspectRatio == 1.5f) {
 				General::CleanupModifiedScript();
 			}
@@ -737,6 +765,16 @@ char SR2Ultrawide_HUDScale() {
 		*(uint8_t*)0x025272dd = 0;
 		*(float*)0x022fdcc0 = currentX / 640.0;
 		*(float*)0x022fdcbc = currentY / 480.0f;
+	}
+	else if (is1610) {
+		// 16:10 - shrink Y rather than grow X, or the HUD runs off the sides
+		result = 1;
+		*(uint8_t*)0x0213c383 = 1;
+		*(uint8_t*)0x025272dd = 1;
+		*(float*)0x022fdcc0 = stretchedX;
+		*(float*)0x022fdcbc = (currentY / 720.0f) / correctionFactor;
+		hud_canvas_h = 720.0f * stretchedX;
+		hud_offset_y = (currentY - hud_canvas_h) * 0.5f;
 	}
 	else {
 		result = 1;
@@ -1365,6 +1403,33 @@ void diversion_image_sizeup()
 	InterceptCall(0x755C81, gr_rect_og, gr_rect_letterbox_below);
 
 	bSmartCutsceneBorder = GameConfig::GetValue("Graphics", "SmartCutsceneBorders", 1,"Proper letterboxing for different aspect ratios above widescreen while in cutscenes (clippy95)");
+
+	// 16:10 vertical centring, see hud_remap_y. All three are no-ops unless hud_offset_y is set.
+	// After the vint vertex scale loop: XYZRHW vertices, stride 0x1C, y at +4.
+	hud_vertex_offset_hook = safetyhook::create_mid(0xD1DFB2, [](SafetyHookContext& ctx) {
+		if (hud_offset_y == 0.f || *(uint8_t*)0x252A2A2 != 1)
+			return;
+		int count = *(int*)0x252A2F8;
+		for (int i = 0; i < count; i++) {
+			float& y = *(float*)(0x22F643C + i * 0x1C);
+			y = hud_remap_y(y);
+		}
+		});
+	// vint scissor rect after scaling: esi = top, eax = bottom.
+	hud_scissor_offset_hook = safetyhook::create_mid(0xD1E82F, [](SafetyHookContext& ctx) {
+		if (hud_offset_y == 0.f || *(uint8_t*)0x252A2A2 != 1)
+			return;
+		ctx.esi = (uintptr_t)(int)hud_remap_y((float)(int)ctx.esi);
+		ctx.eax = (uintptr_t)(int)hud_remap_y((float)(int)ctx.eax);
+		});
+	// 3D to vint projection maps the full screen height onto 720; spread it over the taller canvas instead.
+	hud_project_offset_hook = safetyhook::create_mid(0xD22C66, [](SafetyHookContext& ctx) {
+		if (hud_offset_y == 0.f || *(uint8_t*)0x213C383 != 1)
+			return;
+		float& y = *(float*)(ctx.esp + 0x10);
+		float stretch = (hud_canvas_h + hud_offset_y * 2.f) / hud_canvas_h;
+		y = 360.f + (y - 360.f) * stretch;
+		});
 
 	Juiced::onInputPoll() += []() 
 		{
