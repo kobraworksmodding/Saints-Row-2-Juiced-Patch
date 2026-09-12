@@ -1187,10 +1187,12 @@ SAFETYHOOK_NOINLINE bool modify_vint_anchor(const vint_cint_custom* cint, vint_e
 		// 16:10: the canvas is centred, push T/B elements back out to the screen edge.
 		// Done on the anchor (main thread, vint space): 2D batches are flushed lazily and possibly on
 		// the render thread, so per-element state can't be tracked at flush time.
+		// Direction comes from where the element currently sits, not the T/B flag: HUD mods move groups
+		// between edges at runtime (SuperUI's modern layout puts health_grp at the bottom).
 		if (hud_offset_y != 0.f && (align.v_top || align.v_bottom))
 		{
 			float y = hud_offset_y / (hud_canvas_h / 720.f);
-			if (align.v_top)
+			if (element->v_anchor.y < 360.f)
 				element->v_anchor.y -= y;
 			else
 				element->v_anchor.y += y;
