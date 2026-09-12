@@ -17,6 +17,7 @@ namespace Render2D
 	extern const float widescreenvalue;
 	extern float* currentAR;
 	extern bool UltrawideFix;
+	extern float hud_offset_y;
 	extern float get_vint_x_resolution();
 	extern char SR2Ultrawide_HUDScale();
 	extern SafetyHookMid vint_create_process_hook;
