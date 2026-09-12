@@ -1559,7 +1559,7 @@ namespace Render3D
 		WriteRelJump(0x00494080, (UInt32)&GetFOV);
 		// CLIPPY TODO MAKE THIS A TOGGLEABLE OPTION!!!
 		screen_3d_to_2d_midhook = safetyhook::create_mid(0xD22BE8, [](SafetyHookContext& ctx) {
-			// At 16:10 the vint canvas spans the full screen width, so there is no extra width to compensate for.
+			// Taller than 16:9 the vint canvas spans the full screen width, so there is no extra width to compensate for.
 			if (UltrawideFixRatio == 1.0 || Render2D::hud_offset_y != 0.f)
 				return;
 			float x_bound = 1.0f / static_cast<float>(UltrawideFixRatio);

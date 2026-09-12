@@ -666,10 +666,11 @@ void gr_rect_letterbox_below(int x1, int y1, int w, int h, int* state)
 	cdecl_call<void>(gr_rect_og, x1, y1, w, h, state);
 }
 
-// 16:10: the 1280x720 vint canvas is drawn with square pixels, which leaves it shorter than the screen.
-// The engine maps vint to pixels as a plain multiply (0xD1DF50), so we add the missing Y offset ourselves:
-// the canvas is centred, and anything touching its top/bottom edge (fades, menu backgrounds, letterbox)
-// is pulled out to the screen edge.
+// Widescreen taller than 16:9 (16:10, 5:3): the 1280x720 vint canvas is drawn with square pixels, which
+// leaves it shorter than the screen. The engine maps vint to pixels as a plain multiply (0xD1DF50), so we
+// add the missing Y offset ourselves: the canvas is centred, anything touching its top/bottom edge (fades,
+// menu backgrounds, letterbox) is pulled out to the screen edge, and cvint.dat T/B elements are pinned to
+// their edge in modify_vint_anchor.
 float hud_offset_y = 0.f; // pixels
 float hud_canvas_h = 0.f; // canvas height in pixels
 bool hud_scissor_full = true; // last scissor rect covered the whole canvas height
@@ -733,11 +734,12 @@ char SR2Ultrawide_HUDScale() {
 		RefreshHUD_thread = std::thread(RefreshHUD_loop);
 		RefreshHUD_thread.detach();
 	}
-	bool is1610 = (aspectRatio > 1.59f && aspectRatio < 1.76f);
+	// Between the 3:2 cutoff (0xE5C080 is patched to 1.55) and 16:9. 1360x768 (1.771) stays on the stock path.
+	bool tall_widescreen = aspectRatio > 1.55f && aspectRatio < 1.76f;
 
 	if ((GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1)) {
-		if (is1610) {
-			// 16:10 - fall through to the correction below instead of the stock path
+		if (tall_widescreen) {
+			// Fall through to the square-pixel scale below instead of the stretching stock path.
 			UltrawideFix = false;
 			General::CleanupModifiedScript();
 		}
@@ -764,22 +766,22 @@ char SR2Ultrawide_HUDScale() {
 	float stretchedX = currentX / 1280.0f;
 	float adjustedX = stretchedX * correctionFactor;
 
-	if (aspectRatio <= 1.59f) {
+	if (tall_widescreen) {
+		// Scale both axes by width (square pixels); the canvas is then shorter than the screen and gets centred.
+		result = 1;
+		*(uint8_t*)0x0213c383 = 1;
+		*(uint8_t*)0x025272dd = 1;
+		*(float*)0x022fdcc0 = stretchedX;
+		*(float*)0x022fdcbc = stretchedX;
+		hud_canvas_h = 720.0f * stretchedX;
+		hud_offset_y = (currentY - hud_canvas_h) * 0.5f;
+	}
+	else if (aspectRatio <= 1.59f) {
 		result = 0;
 		*(uint8_t*)0x0213c383 = 0;
 		*(uint8_t*)0x025272dd = 0;
 		*(float*)0x022fdcc0 = currentX / 640.0;
 		*(float*)0x022fdcbc = currentY / 480.0f;
-	}
-	else if (is1610) {
-		// 16:10 - shrink Y rather than grow X, or the HUD runs off the sides
-		result = 1;
-		*(uint8_t*)0x0213c383 = 1;
-		*(uint8_t*)0x025272dd = 1;
-		*(float*)0x022fdcc0 = stretchedX;
-		*(float*)0x022fdcbc = (currentY / 720.0f) / correctionFactor;
-		hud_canvas_h = 720.0f * stretchedX;
-		hud_offset_y = (currentY - hud_canvas_h) * 0.5f;
 	}
 	else {
 		result = 1;
@@ -788,7 +790,8 @@ char SR2Ultrawide_HUDScale() {
 		*(float*)0x022fdcc0 = adjustedX;
 		*(float*)0x022fdcbc = currentY / 720.0f;
 	}
-	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: {:f} Y: {:f} bool: {} \n", adjustedX, currentY / 720.0f, UltrawideFix);
+	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: {:f} Y: {:f} offset Y: {:f} bool: {} \n",
+		*(float*)0x022fdcc0, *(float*)0x022fdcbc, hud_offset_y, UltrawideFix);
 	return result;
 }
 float saturate(float x) {
@@ -1184,7 +1187,7 @@ SAFETYHOOK_NOINLINE bool modify_vint_anchor(const vint_cint_custom* cint, vint_e
 				element->v_anchor.x += x;
 			return true;
 		}
-		// 16:10: the canvas is centred, push T/B elements back out to the screen edge.
+		// Taller than 16:9: the canvas is centred, push T/B elements back out to the screen edge.
 		// Done on the anchor (main thread, vint space): 2D batches are flushed lazily and possibly on
 		// the render thread, so per-element state can't be tracked at flush time.
 		// Direction comes from where the element currently sits, not the T/B flag: HUD mods move groups
@@ -1423,7 +1426,7 @@ void diversion_image_sizeup()
 
 	bSmartCutsceneBorder = GameConfig::GetValue("Graphics", "SmartCutsceneBorders", 1,"Proper letterboxing for different aspect ratios above widescreen while in cutscenes (clippy95)");
 
-	// 16:10 vertical centring, see hud_remap_y. All three are no-ops unless hud_offset_y is set.
+	// Vertical centring for widescreen taller than 16:9, see hud_remap_y. All three are no-ops unless hud_offset_y is set.
 	// After the vint vertex scale loop: XYZRHW vertices, stride 0x1C, y at +4.
 	hud_vertex_offset_hook = safetyhook::create_mid(0xD1DFB2, [](SafetyHookContext& ctx) {
 		if (hud_offset_y == 0.f || *(uint8_t*)0x252A2A2 != 1)
