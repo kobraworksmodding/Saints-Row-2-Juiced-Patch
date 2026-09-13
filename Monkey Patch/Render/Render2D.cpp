@@ -727,6 +727,15 @@ static void __cdecl hud_vint_render_all()
 	hud_vint_render_all_hook.unsafe_ccall<void>();
 	hud_vint_depth--;
 }
+// Mission loading card ("LOADING", mission name, gang name and icon), drawn outside vint by the load and
+// cutscene code but laid out on the same 1280x720 canvas, so it gets the vint treatment too.
+SafetyHookInline hud_loading_card_hook;
+static void __cdecl hud_loading_card()
+{
+	hud_vint_depth++;
+	hud_loading_card_hook.unsafe_ccall<void>();
+	hud_vint_depth--;
+}
 
 char SR2Ultrawide_HUDScale() {
 	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD {}\n", 1);
@@ -1466,6 +1475,7 @@ void diversion_image_sizeup()
 
 	// Track which 2D draws come from vint, see hud_draw_is_vint.
 	hud_vint_render_all_hook = safetyhook::create_inline(0xB8BD40, hud_vint_render_all);
+	hud_loading_card_hook = safetyhook::create_inline(0x69B3F0, hud_loading_card);
 	// Queue record, just before the entry count is incremented: eax = write buffer.
 	hud_queue_record_hook = safetyhook::create_mid(0xCF8F4E, [](SafetyHookContext& ctx) {
 		int b = hud_queue_buffer_index(ctx.eax);
