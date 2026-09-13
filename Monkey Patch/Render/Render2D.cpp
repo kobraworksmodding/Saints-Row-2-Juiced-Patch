@@ -674,6 +674,30 @@ void gr_rect_letterbox_below(int x1, int y1, int w, int h, int* state)
 float hud_offset_y = 0.f; // pixels
 float hud_canvas_h = 0.f; // canvas height in pixels
 bool hud_scissor_full = true; // last scissor rect covered the whole canvas height
+// Non-zero while vint renders (the document loop or an element). The 2D pipeline (0xD1E070 begin, 0xD1DF50 end)
+// is shared with non-vint drawing (game font text, gr_rect, overlays), which is laid out for the stock stretched
+// scale, so only vint gets the square-pixel centring below.
+int hud_vint_depth = 0;
+// In game, 2D draws are recorded into a command queue (0xCF8EA0) and replayed later (0xCF8FA0), after
+// the vint render call has returned. Remember per queue entry whether it was recorded by vint.
+// The queue is two fixed buffers that swap every frame, each holding up to 3000 entries.
+static bool hud_queue_vint[2][3000];
+static DWORD hud_replay_thread = 0;
+static bool hud_replay_vint = false;
+static int hud_queue_buffer_index(uintptr_t buffer)
+{
+	return buffer == 0x2305980 ? 0 : buffer == 0x2321F48 ? 1 : -1;
+}
+static bool hud_draw_is_vint()
+{
+	if (hud_replay_thread != 0 && hud_replay_thread == GetCurrentThreadId())
+		return hud_replay_vint;
+	return hud_vint_depth > 0;
+}
+static float hud_stock_y_ratio()
+{
+	return (hud_canvas_h + hud_offset_y * 2.f) / hud_canvas_h;
+}
 static float hud_edge_px()
 {
 	return 4.f * hud_canvas_h / 720.f;
@@ -691,6 +715,18 @@ static float hud_remap_y(float y)
 SafetyHookMid hud_vertex_offset_hook;
 SafetyHookMid hud_scissor_offset_hook;
 SafetyHookMid hud_project_offset_hook;
+// Renders every open vint document (HUD, menus). Some vint drawing happens here at document level,
+// outside vint_element_base_render, so both count as vint.
+SafetyHookInline hud_vint_render_all_hook;
+SafetyHookMid hud_queue_record_hook;
+SafetyHookMid hud_queue_replay_hook;
+SafetyHookMid hud_queue_replay_end_hook;
+static void __cdecl hud_vint_render_all()
+{
+	hud_vint_depth++;
+	hud_vint_render_all_hook.unsafe_ccall<void>();
+	hud_vint_depth--;
+}
 
 char SR2Ultrawide_HUDScale() {
 	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD {}\n", 1);
@@ -1265,7 +1301,9 @@ void __fastcall vint_element_base_render(
 		}
 
 	}
+	hud_vint_depth++;
 	vint_element_base_renderD.unsafe_thiscall<void>(this_element, Cvint_render_params, Base, a4);
+	hud_vint_depth--;
 	if (modified_anchor) {
 		this_element->v_anchor = old_anchor;
 	}
@@ -1426,12 +1464,38 @@ void diversion_image_sizeup()
 
 	bSmartCutsceneBorder = GameConfig::GetValue("Graphics", "SmartCutsceneBorders", 1,"Proper letterboxing for different aspect ratios above widescreen while in cutscenes (clippy95)");
 
+	// Track which 2D draws come from vint, see hud_draw_is_vint.
+	hud_vint_render_all_hook = safetyhook::create_inline(0xB8BD40, hud_vint_render_all);
+	// Queue record, just before the entry count is incremented: eax = write buffer.
+	hud_queue_record_hook = safetyhook::create_mid(0xCF8F4E, [](SafetyHookContext& ctx) {
+		int b = hud_queue_buffer_index(ctx.eax);
+		int i = *(int*)(ctx.eax + 0x5DC0);
+		if (b >= 0 && i >= 0 && i < 3000)
+			hud_queue_vint[b][i] = hud_vint_depth > 0;
+		});
+	// Queue replay loop head: eax = read buffer, esi = entry index.
+	hud_queue_replay_hook = safetyhook::create_mid(0xCF8FC0, [](SafetyHookContext& ctx) {
+		int b = hud_queue_buffer_index(ctx.eax);
+		int i = (int)ctx.esi;
+		hud_replay_vint = b >= 0 && i >= 0 && i < 3000 && hud_queue_vint[b][i];
+		hud_replay_thread = GetCurrentThreadId();
+		});
+	hud_queue_replay_end_hook = safetyhook::create_mid(0xCF8FFF, [](SafetyHookContext& ctx) {
+		hud_replay_thread = 0;
+		});
 	// Vertical centring for widescreen taller than 16:9, see hud_remap_y. All three are no-ops unless hud_offset_y is set.
 	// After the vint vertex scale loop: XYZRHW vertices, stride 0x1C, y at +4.
 	hud_vertex_offset_hook = safetyhook::create_mid(0xD1DFB2, [](SafetyHookContext& ctx) {
 		if (hud_offset_y == 0.f || *(uint8_t*)0x252A2A2 != 1)
 			return;
 		int count = *(int*)0x252A2F8;
+		if (!hud_draw_is_vint()) {
+			// Not vint: give back the stock per-axis scale this drawing was positioned for.
+			const float k = hud_stock_y_ratio();
+			for (int i = 0; i < count; i++)
+				*(float*)(0x22F643C + i * 0x1C) *= k;
+			return;
+		}
 		// Only stretch to the screen edge under a full-screen clip (tint, letterbox, fades). Clipped geometry,
 		// like the rotating minimap image, hangs far past the canvas and would get its corners pulled unevenly.
 		for (int i = 0; i < count; i++) {
@@ -1443,6 +1507,14 @@ void diversion_image_sizeup()
 	hud_scissor_offset_hook = safetyhook::create_mid(0xD1E82F, [](SafetyHookContext& ctx) {
 		if (hud_offset_y == 0.f)
 			return;
+		if (!hud_draw_is_vint()) {
+			if (*(uint8_t*)0x252A2A2 != 1)
+				return;
+			const float k = hud_stock_y_ratio();
+			ctx.esi = (uintptr_t)(int)((float)(int)ctx.esi * k);
+			ctx.eax = (uintptr_t)(int)((float)(int)ctx.eax * k);
+			return;
+		}
 		// Scissor and draw commands go through the same (possibly deferred) queue in order,
 		// so this is the clip the next flushed batch was recorded under.
 		const float edge = hud_edge_px();
