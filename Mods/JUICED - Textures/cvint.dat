@@ -17,6 +17,9 @@ radial_grp,RB
 vehicle_logo,RB
 [hud_msg]
 msg_diversion_anchor,LB,IV
+msg_help_anchor,B
+msg_subtitle_anchor,B
+cs_help_anchor,B
 [mp_hud]
 perk_grp,LB,IV
 [dialog_box]
