@@ -384,7 +384,7 @@ namespace BlingMenuInstall
                if (!UtilsGlobal::getplayer())
                    return;
                int* character_id = General::GetCharacterID(character);
-               General::ChangeCharacter(&character_id);
+               General::ChangeCharacter(&character_id, true);
                });
        }
        BlingMenuAddFunc("Juiced spawn_npc", "Delete all spawned NPCs", General::YeetAllNPCs);

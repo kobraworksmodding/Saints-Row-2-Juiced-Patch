@@ -1128,7 +1128,7 @@ void LuaExecutor() {
 
 			else if (sscanf_s(Converted.c_str(), "play_as %s", Arg1) == 1) {
 				int* Character = General::GetCharacterID(Arg1);
-				General::ChangeCharacter(&Character); // pointer to pointer because of **
+				General::ChangeCharacter(&Character, true); // pointer to pointer because of **
 			}
 
 			else if (Converted == "reset_player") {
@@ -1296,6 +1296,7 @@ int RenderLoopStuff_Hacked()
 #if !JLITE
 
 	Game::InLoop::FrameChecks();
+	//General::RefreshPlayerRigReferences();
 
 	if (RPCHandler::Enabled) 
 	{

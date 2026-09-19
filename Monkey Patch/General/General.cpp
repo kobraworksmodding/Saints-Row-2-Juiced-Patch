@@ -63,6 +63,121 @@ namespace General {
 	ResetCharacterT ResetCharacter = (ResetCharacterT)0x685D50;
 	DeleteNPCT DeleteNPC = (DeleteNPCT)0x960240;
 
+	void RefreshPlayerRigReferences()
+	{
+		static uintptr_t last_player = 0, last_character = 0, last_rig = 0, last_buffer = 0;
+		static int last_handle = -1;
+		const uintptr_t player = *reinterpret_cast<uintptr_t*>(0x021703D4);
+		if (!*GameLoaded || !player) {
+			last_player = last_character = last_rig = last_buffer = 0;
+			last_handle = -1;
+			return;
+		}
+		const uintptr_t character = *reinterpret_cast<uintptr_t*>(player + 0x5E0);
+		if (!character) { last_handle = -1; return; }
+		const int handle = *reinterpret_cast<int*>(character);
+		if (handle < 0) { last_handle = -1; return; }
+		const uintptr_t instance = 0x0340D240 + (handle % 190) * 0x5E8;
+		const uintptr_t rig = *reinterpret_cast<uintptr_t*>(instance + 24);
+		if (!rig || (*reinterpret_cast<unsigned int*>(rig + 32) & 3) != 3) {
+			last_handle = -1;
+			return;
+		}
+		const uintptr_t buffer = *reinterpret_cast<uintptr_t*>(rig + 68);
+		if (player == last_player && character == last_character && handle == last_handle
+			&& rig == last_rig && buffer == last_buffer) return;
+		const unsigned int bones = *reinterpret_cast<unsigned int*>(rig + 36);
+		const unsigned int tags = *reinterpret_cast<unsigned int*>(rig + 48);
+		const unsigned int data_size = *reinterpret_cast<unsigned int*>(rig + 64);
+		if (!buffer || !bones || bones > 128 || tags > 256) return;
+		const uintptr_t tables[] = {
+			*reinterpret_cast<uintptr_t*>(rig + 56), *reinterpret_cast<uintptr_t*>(rig + 60)
+		};
+		const unsigned int counts[] = { bones, tags }, strides[] = { 36, 60 };
+		// Validate all relocated records and strings before changing any cache.
+		for (int kind = 0; kind < 2; ++kind) {
+			if (!counts[kind]) continue;
+			const uintptr_t table = tables[kind];
+			if (table < buffer || table - buffer > data_size
+				|| counts[kind] * strides[kind] > data_size - (table - buffer)) return;
+			for (unsigned int i = 0; i < counts[kind]; ++i) {
+				const uintptr_t name = *reinterpret_cast<uintptr_t*>(table + i * strides[kind]);
+				if (name < buffer || name - buffer >= data_size
+					|| !memchr(reinterpret_cast<const void*>(name), 0, data_size - (name - buffer))) return;
+			}
+		}
+		struct Binding { unsigned short offset; const char* name; bool tag; };
+		static const Binding bindings[] = {
+			{ 0xCA4, "R-hand", true },
+			{ 0xCA6, "L-hand", true },
+			{ 0xCA8, "HSAttach", true },
+			{ 0xCAA, "HS-R-Hand", true },
+			{ 0xCAC, "L-IKNode", false },
+			{ 0xCAE, "R-IKNode", false },
+			{ 0xCB0, "root", false },
+			{ 0xCB2, "pelvis", false },
+			{ 0xCB4, "spine", false },
+			{ 0xCB6, "po-back-upper", true },
+			{ 0xCB8, "po-back-lower", true },
+			{ 0xCBA, "neck", true },
+			{ 0xCBC, "mouth", true },
+			{ 0xCBE, "head", true },
+			{ 0xCC0, "po-head-front", true },
+			{ 0xCC2, "po-l-cheek", true },
+			{ 0xCC4, "po-r-cheek", true },
+			{ 0xCC6, "po-head-l-back", true },
+			{ 0xCC8, "po-head-r-back", true },
+			{ 0xCCA, "l-upperarmtwist1", false },
+			{ 0xCCC, "r-upperarmtwist1", false },
+			{ 0xCCE, "po-l-bicep-upper", true },
+			{ 0xCD0, "po-r-bicep-upper", true },
+			{ 0xCD2, "po-l-bicep-lower", true },
+			{ 0xCD4, "po-r-bicep-lower", true },
+			{ 0xCD6, "l-foretwist", false },
+			{ 0xCD8, "r-foretwist", false },
+			{ 0xCDA, "po-l-farm-upr-top", true },
+			{ 0xCDC, "po-r-farm-upr-top", true },
+			{ 0xCE0, "po-l-farm-upr-btm", true },
+			{ 0xCDE, "po-r-farm-upr-btm", true },
+			{ 0xCE2, "L-hand", false },
+			{ 0xCE4, "R-hand", false },
+			{ 0xCE6, "l-thigh", false },
+			{ 0xCE8, "r-thigh", false },
+			{ 0xCEA, "l-calf", false },
+			{ 0xCEC, "r-calf", false },
+			{ 0x806, "l-foot", false },
+			{ 0x804, "l-toe0", false },
+			{ 0x80A, "r-foot", false },
+			{ 0x808, "r-toe0", false },
+			{ 0xCF0, "camTarget", false },
+			{ 0xCEE, "Camera", false },
+		};
+		for (const auto& binding : bindings) {
+			const unsigned int kind = binding.tag ? 1 : 0;
+			short index = -1;
+			for (unsigned int i = 0; i < counts[kind]; ++i) {
+				const char* name = *reinterpret_cast<const char* const*>(tables[kind] + i * strides[kind]);
+				if (_stricmp(name, binding.name) == 0) {
+					index = static_cast<short>((binding.tag ? bones : 0) + i);
+					break;
+				}
+			}
+			*reinterpret_cast<short*>(player + binding.offset) = index;
+		}
+		static const unsigned short ik_sources[4][3] = {
+			{ 0xCCA, 0xCD6, 0xCA6 }, { 0xCCC, 0xCD8, 0xCA4 },
+			{ 0xCE6, 0xCEA, 0x806 }, { 0xCE8, 0xCEC, 0x80A }
+		};
+		for (unsigned int limb = 0; limb < 4; ++limb) {
+			const uintptr_t joint = player + 0x6E0 + limb * 16;
+			for (unsigned int field = 0; field < 3; ++field)
+				*reinterpret_cast<short*>(joint + field * 2) = *reinterpret_cast<short*>(player + ik_sources[limb][field]);
+			*reinterpret_cast<unsigned char*>(joint + 6) = static_cast<unsigned char>(limb);
+		}
+		last_player = player; last_character = character; last_handle = handle;
+		last_rig = rig; last_buffer = buffer;
+	}
+
 	bool IsSRFocused()
 	{
 		DWORD pid;
