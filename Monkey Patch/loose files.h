@@ -47,7 +47,7 @@ struct FILEDATA
 
 using LooseFileCache = ankerl::unordered_dense::map<std::string, FILEDATA>;
 
-bool CreateCache(char* DirListFile);
+bool CreateCache(const char* DirListFile);
 bool ScanDLCDir(const char* Dir);
 void DumpCache();
 void CacheConflicts();

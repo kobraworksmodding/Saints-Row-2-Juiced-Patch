@@ -439,6 +439,7 @@ copy /Y "$(TargetDir)DFEngine.dll" "E:\Steam\steamapps\common\Saints Row 2\DFEng
     <ClInclude Include="LUA\GLua.h" />
     <ClInclude Include="LAAPatcher.h" />
     <ClInclude Include="loose files.h" />
+    <ClInclude Include="ExecutableProfile.h" />
     <ClInclude Include="LuaHandler.h" />
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Mem\Memory.h" />

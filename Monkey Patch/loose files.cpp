@@ -354,7 +354,7 @@ bool ScanDLCDir(const char* Directory)
     return true;
 }
 
-bool CreateCache(char* DirListFile)
+bool CreateCache(const char* DirListFile)
 {   
 	FILE *DirListHandle = fopen(DirListFile, "r");
 	if (!DirListHandle)

@@ -8,6 +8,8 @@
 #include "../SafeWrite.h"
 #include "../loose files.h"
 #include "Debug.h"
+#include "../ExecutableProfile.h"
+#include <cstdlib>
 #include "../Render/Render2D.h"
 #include <safetyhook.hpp>
 
@@ -31,7 +33,16 @@ namespace Debug
 	};
 
 	void PatchDatafiles() {
-		bool LooseCache = CreateCache((char*)"loose.txt");
+        const auto profile = ExecutableProfile::ForCurrentProcess();
+        if (!profile.error.empty())
+        {
+            Logger::TypedLog(CHN_DLL, "{}\n", profile.error);
+            MessageBoxA(nullptr, profile.error.c_str(), "Juiced executable profile", MB_OK | MB_ICONERROR);
+            std::exit(EXIT_FAILURE);
+        }
+        Logger::TypedLog(CHN_DLL, "Executable profile: {} -> {} (configured={})\n",
+            profile.executable, profile.loose_list, profile.configured);
+        bool LooseCache = CreateCache(profile.loose_list.c_str());
 		bool DLCCache = ScanDLCDir("DLC");
 		initialize_modpack_save_prefix();
 		if (LooseCache || DLCCache)
@@ -42,7 +53,7 @@ namespace Debug
 			static SafetyHookMid InsertHashes = safetyhook::create_mid(0x00C0A8E0, &InsertFileHashes);
 		}
 		else
-			Logger::TypedLog(CHN_DLL, "Create loose file cache failed for both loose.txt & DLC.\n");
+			Logger::TypedLog(CHN_DLL, "Create loose file cache failed for {} & DLC.\n", profile.loose_list);
 	}
 	constexpr auto MEGABYTE = 1048576.0;
 	int UseDynamicRenderDistance = false;
