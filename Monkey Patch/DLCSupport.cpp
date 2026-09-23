@@ -103,8 +103,8 @@ void __declspec(naked) ParseCharacterTable(const char* Extension, int Callback1,
         push TableName
         mov edx, Callback1
         mov ecx, Extension
-        mov ebx, 0x4A4870
-        call ebx
+        mov eax, 0x4A4870
+        call eax
 
         mov esp, ebp
         pop ebp
