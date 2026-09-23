@@ -1012,15 +1012,9 @@ namespace XACT
 			return Clamp01(FloatMax(interior, exterior) * scale);
 		}
 
-		float Compute3DReverbSend(const uint8_t* ac, const bool use_recent_environment = true)
+		float Compute3DReverbSend(const uint8_t* ac)
 		{
 			float reverb = ComputeChannelReverbSend(ac);
-
-			if (reverb <= XACT_CUE_WET_BUS_MIN_SEND && UsesListenerEnvironmentReverb(ac, true))
-				reverb = ComputeListenerEnvironmentReverbSend(ac);
-
-			if (!use_recent_environment)
-				return Clamp01(reverb);
 
 			float distance_reverb = 1.0f;
 
@@ -1069,19 +1063,20 @@ namespace XACT
 
 		float Compute2DReverbSend(const uint8_t* ac)
 		{
-			// Initial play hooks run before listener wetness is copied into the audio channel.
-			float reverb = UsesListenerEnvironmentReverb(ac, false) ?
-				ComputeListenerEnvironmentReverbSend(ac) :
-				ComputeChannelReverbSend(ac);
-			return Clamp01(reverb * ReadReverbScaleFactor2D());
+			return Clamp01(ComputeChannelReverbSend(ac) * ReadReverbScaleFactor2D());
 		}
 
 		float ComputeInitialXactPlayReverbSend(const uint8_t* ac, const bool is_3d)
 		{
-			if (!is_3d)
-				return Compute2DReverbSend(ac);
+			// Play hooks run before listener wetness is copied into the audio channel.
+			float reverb = ComputeChannelReverbSend(ac);
+			if (reverb <= XACT_CUE_WET_BUS_MIN_SEND && UsesListenerEnvironmentReverb(ac, is_3d))
+				reverb = ComputeListenerEnvironmentReverbSend(ac);
 
-			return Compute3DReverbSend(ac, false);
+			if (!is_3d)
+				reverb *= ReadReverbScaleFactor2D();
+
+			return Clamp01(reverb);
 		}
 
 		struct XAudio2EffectDescriptorLite
