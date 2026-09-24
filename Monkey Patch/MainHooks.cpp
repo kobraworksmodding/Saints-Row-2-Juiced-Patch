@@ -1048,6 +1048,7 @@ typedef void(*LoadLevelT)();
 LoadLevelT LoadLevel = (LoadLevelT)0x73C000;
 char LUA_Key = VK_INSERT;
 #if !RELOADED
+static bool play_as_refresh_request = false;
 void LuaExecutor() {
 	static bool OpenedByExecutor = false;
 	BOOL* IsOpen = (BOOL*)(0x0252A5B3);
@@ -1127,6 +1128,7 @@ void LuaExecutor() {
 			}
 
 			else if (sscanf_s(Converted.c_str(), "play_as %s", Arg1) == 1) {
+				play_as_refresh_request = true;
 				int* Character = General::GetCharacterID(Arg1);
 				General::ChangeCharacter(&Character, true); // pointer to pointer because of **
 			}
@@ -1296,8 +1298,11 @@ int RenderLoopStuff_Hacked()
 #if !JLITE
 
 	Game::InLoop::FrameChecks();
-	//General::RefreshPlayerRigReferences();
-
+	if (play_as_refresh_request)
+	{
+		General::RefreshPlayerRigReferences();
+		play_as_refresh_request = false;
+	}
 	if (RPCHandler::Enabled) 
 	{
 		RPCHandler::DiscordCallbacks();
