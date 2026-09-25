@@ -246,6 +246,9 @@ namespace Shadows {
         }
         Logger::TypedLog(CHN_DEBUG, "Patching amount of Shadow job threads to be {}\n", std::clamp((int)GameConfig::GetValue("Debug", "ShadowThreadCount", 4), 1, (int)std::thread::hardware_concurrency()));
 	SafeWrite32(0x528524, std::clamp((int)GameConfig::GetValue("Debug", "ShadowThreadCount", 4, "Dedicates amount of Shadow Jobs threads that should be created, game by default creates 4 threads. (Clippy95)\n!!!!With sync_shadows_threads on, it's recommended to keep it at 4!!!!"), 1, (int)std::thread::hardware_concurrency()));
+    // fix attempt for tree culling (clippy95)
+        Memory::VP::Nop(0x00A8EC7E_g, 6); 
+
         static auto ShadowMapBBoxFix = safetyhook::create_mid(0x00536373_g, [](SafetyHookContext& ctx)
             {
                 float* Min = (float*)ctx.edx;
