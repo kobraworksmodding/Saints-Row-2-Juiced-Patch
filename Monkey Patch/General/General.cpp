@@ -184,7 +184,7 @@ namespace General {
 		HWND Window = GetForegroundWindow();
 		GetWindowThreadProcessId(GetForegroundWindow(), &pid);
 		if (Window != ConsoleWindow) {
-			ClipCursor(0); // Make SR2 let go of the Cursor, hopefully.
+			//ClipCursor(0); // Make SR2 let go of the Cursor, hopefully. // clippy95 this doesnt work and makes things worse so commented it out
 			return pid == GetCurrentProcessId();
 		}
 		return false;
