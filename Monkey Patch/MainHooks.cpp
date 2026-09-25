@@ -1134,6 +1134,7 @@ void LuaExecutor() {
 			}
 
 			else if (Converted == "reset_player") {
+				play_as_refresh_request = true;
 				General::ResetCharacter(0,255); // passing 0 to the unknown arg to avoid crashing
 			}
 
