@@ -1,14 +1,29 @@
+[DIVERSION_AMBULANCE_MINIGAME_CPR,pad]
+Bewege {ANALOG_LS_IMG} und {ANALOG_RS_IMG} gleichzeitig auf und ab, um wiederzubeleben
+
+[TUT_WAYPOINT_2,pad]
+Navigiere mit {ANALOG_LS_IMG} deinen Zeiger über verschiedene Symbole, um mehr über sie zu erfahren.
+
+[TUT_AMBULANCE_SHOCK_PADDLES,pad]
+Bewege {ANALOG_LS_IMG} und {ANALOG_RS_IMG} in entgegengesetzter Richtung rasch auf und ab, um den Defibrillator aufzuladen.
+
+[DIVERSION_VEHICLE_SURFING_STYLE_TWO_BALANCE_MESSAGE_TEXT,pad]
+Mit {ON_FOOT_STRAFE_LEFT} kannst du auf dem Fahrzeug das Gleichgewicht halten
+
+[DIVERSION_AMBULANCE_MINIGAME_CPR,pad]
+Bewege zum Wiederbeleben {ANALOG_LS_IMG} und {ANALOG_RS_IMG} gleichzeitig auf und ab
+
 [J_OPTIONS]
-Juiced Optionen
+Juiced-Optionen
 
 [J_UNCFPS]
 Vanilla FX Plus
 
 [J_XBGAMMA]
-Xbox 360 Gamma
+Xbox-360-Gamma
 
 [J_XBGAMMA_UI]
-Xbox 360 Gamma in der UI
+Xbox-360-Gamma in der UI
 
 [J_SHADOWFLT]
 Schattenfilterung
@@ -17,16 +32,16 @@ Schattenfilterung
 Verbesserte Despawn-Reichweite für Fahrzeuge
 
 [J_PEDFADE]
-Verbesserte Despawn-Reichweite für Fußgänger
+Verbesserte Despawn-Reichweite für Passanten
 
 [J_SHDROVR]
 Shader-Überschreibung
 
 [J_SHDROVR_HI]
-Höchstes LOD erzwingen
+Höchsten LOD erzwingen
 
 [J_SHDROVR_DIST]
-Erhöhte Distanz
+Größere Reichweite
 
 [J_VFXPLUS]
 Vanilla FX Plus
@@ -41,13 +56,13 @@ Nebel deaktivieren
 Himmelsreflexionen deaktivieren
 
 [J_IVRADAR]
-IV-Radar-Skalierung
+IV-Radarskalierung
 
 [J_NOTUT]
 Tutorials deaktivieren
 
 [J_INPROMPT]
-Eingabe-Hinweis erzwingen
+Art der Eingabehinweise erwzingen
 
 [J_AUTO]
 Automatisch
@@ -59,7 +74,7 @@ Controller
 Tastatur und Maus
 
 [J_CTRLPROMPT]
-Controller-Hinweise
+Controller-Symbole
 
 [J_DECK]
 Steam Deck
@@ -71,37 +86,37 @@ Xbox Series X
 Nintendo Switch
 
 [J_DS]
-Dualsense
+DualSense
 
 [J_DS3]
-Dualshock 3
+DualShock 3
 
 [J_X360]
 Xbox 360
 
 [J_HOLDAIM]
-Feinzielen halten
+Gedrückthalten für präzises Zielen
 
 [J_NOAIMASSIST]
 Zielhilfe deaktivieren
 
 [J_MOUSEONLY]
-Nur bei Maus
+Nur bei Maussteuerung
 
 [J_ALWAYS]
 Immer
 
 [J_AUTOCENTER]
-Fahrzeug-Auto-Zentrierung
+Modifikator f. Kamerazentrierung in Fahrz.
 
 [J_DBCAM]
-Bessere Drive-by-Kamera
+Verbesserte Drive-By-Kamera
 
 [J_HBCAM]
-Bessere Handbremskamera
+Verbesserte Handbremsenkamera
 
 [J_NOSPRINTSHK]
-Sprint-Kamerawackeln deaktivieren
+Kamerawackeln beim Sprinten deaktivieren
 
 [J_SR1RELOAD]
 SR1-Nachladen
@@ -110,10 +125,10 @@ SR1-Nachladen
 SR1-Schnellwechsel
 
 [J_SR1CROUCHCAM]
-SR1-Duck-Kamera
+SR1-Kamera beim Ducken
 
 [J_NOMELEELOCK]
-Kein Nahkampf-Lock-On
+Keine Zielerfassung im Nahkampf
 
 [J_NOFARPEDS]
 Entfernte Passanten deaktivieren
@@ -122,7 +137,7 @@ Entfernte Passanten deaktivieren
 Entfernte Fahrzeuge deaktivieren
 
 [J_MAPROT]
-Spielerrotation in Karte
+Spielerrotation in In-Game-Karte
 
 [J_DISXINP_R]
 XInput deaktivieren (R)
@@ -140,7 +155,7 @@ Randlos (R)
 Vignette entfernen (R)
 
 [J_NOPIXEL_R]
-Pixelierungs-Shader entfernen (R)
+Verpixelungs-Shader deaktivieren (R)
 
 [J_FASTLOAD_R]
 Schnelleres Laden (R)
@@ -149,3 +164,12 @@ Schnelleres Laden (R)
 Metrisches System erzwingen (R)
 
 [MP_SERVER_IP]
+
+[J_MOUSEFOV]
+Mausempfindlichkeit an FOV anpassen
+
+[J_FINEAIMONLY]
+Nur im präzisen Zielmodus
+
+[J_FOVMULT]
+FOV-Multiplikator
