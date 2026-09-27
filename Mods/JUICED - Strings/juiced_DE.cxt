@@ -1,5 +1,5 @@
 [DIVERSION_AMBULANCE_MINIGAME_CPR,pad]
-Bewege {ANALOG_LS_IMG} und {ANALOG_RS_IMG} gleichzeitig auf und ab, um wiederzubeleben
+Bewege zum Wiederbeleben {ANALOG_LS_IMG} und {ANALOG_RS_IMG} gleichzeitig auf und ab
 
 [TUT_WAYPOINT_2,pad]
 Navigiere mit {ANALOG_LS_IMG} deinen Zeiger über verschiedene Symbole, um mehr über sie zu erfahren.
@@ -62,7 +62,7 @@ IV-Radarskalierung
 Tutorials deaktivieren
 
 [J_INPROMPT]
-Art der Eingabehinweise erwzingen
+Art der Eingabehinweise erzwingen
 
 [J_AUTO]
 Automatisch
