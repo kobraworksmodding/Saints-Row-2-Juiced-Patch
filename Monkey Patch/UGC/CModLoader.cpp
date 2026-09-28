@@ -10,6 +10,7 @@
 #include "../loose files.h"
 #include "../FileLogger.h"
 #include "MStrings.h"
+#include "VoiceTables.h"
 
 namespace CModLoader {
     namespace Audio {
@@ -312,6 +313,7 @@ namespace CModLoader {
         if (GameConfig::GetValue("UGC", "CModLoader", 1)) {
             static auto idx_map_hook = safetyhook::create_mid(0x46FA76, &Audio::audio_idx_map_hook_start);
             Audio::sub_46FA20T = safetyhook::create_inline(0x46FA20, &Audio::sub_46FA20);
+            VoiceTables::Init();
         }
 
         MStrings::Init();
