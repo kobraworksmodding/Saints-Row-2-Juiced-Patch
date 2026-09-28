@@ -12,6 +12,7 @@
 #include "../Shaders.h"
 #include "../BlingMenu_public.h"
 #include "Render3D.h"
+#include <algorithm>
 #include <cstring>
 #include <mutex>
 
@@ -1430,69 +1431,101 @@ namespace Render3D
 		});
 	}
 
-	void FixVanityPlateRendering()
-	{
-		SafeWrite32(0x00AF0A4B_g, 0x022FD8DC_g);
-		patchByte((BYTE*)0x00AEFE8F, 7);
-		patchByte((BYTE*)0x00AEFE93, 7);
+#define VANITY_PLATE_TEXT_WIDTH 0.953f
+#define VANITY_PLATE_TEXT_HEIGHT 0.751f
+#define VANITY_PLATE_TEXT_X -0.013f
+#define VANITY_PLATE_TEXT_Y 0.0f
+#define VANITY_PLATE_UV_WIDTH 1.0f
+#define VANITY_PLATE_UV_HEIGHT 1.0f
+#define VANITY_PLATE_UV_X 0.0f
+#define VANITY_PLATE_UV_Y 0.0f
+#define VANITY_PLATE_PAD_LEFT -0.193f
+#define VANITY_PLATE_PAD_RIGHT 0.388f
+#define VANITY_PLATE_PAD_TOP 0.660f
+#define VANITY_PLATE_PAD_BOTTOM -0.155f
+#define VANITY_PLATE_SEAM_OVERLAP 0.0f
+#define VANITY_PLATE_ALPHA_CUTOFF 160
 
-		static auto UseVanityPlateGlyphWidth = safetyhook::create_mid(0x00AEFF65, [](SafetyHookContext& ctx) {
-			constexpr uintptr_t FontPegNameOffset = 0x28;
-			constexpr uintptr_t FontCharDataOffset = 0xAC;
-			constexpr uintptr_t FontCharSize = 16;
-			constexpr uintptr_t ContinueAfterCharDataLoad = 0x00AEFF6B;
+    void FixVanityPlateRendering()
+    {
+        static thread_local int bitmapWidth = 1024;
+        static thread_local int bitmapHeight = 1024;
 
-			// Asian languages, Chinese and Japanese do not work, this is a stupid skip for those languages for now
-			const auto* const pegName = reinterpret_cast<const char*>(ctx.ecx + FontPegNameOffset);
-			if (strcmp(pegName, "ug-debug.peg") != 0)
-				return;
+        SafeWrite32(0x00AF0A4B_g, 0x022FD8DC_g);
+        SafeWrite32(0x00AF0A03_g, VANITY_PLATE_ALPHA_CUTOFF);
+        // Fourteen half-glyph slots hold at most seven complete characters.
+        patchByte((BYTE*)0x00AEFE8F, 7);
+        patchByte((BYTE*)0x00AEFE93, 7);
 
-			const auto charData = *reinterpret_cast<const uintptr_t*>(ctx.ecx + FontCharDataOffset);
-			ctx.eax = charData + ctx.eax * FontCharSize;
-			ctx.eip = ContinueAfterCharDataLoad;
-			});
+        static auto UseVanityPlateGlyphWidth = safetyhook::create_mid(0x00AEFF65, [](SafetyHookContext& ctx) {
+            // The caller's dimensions are still intact here (saved EBX adds four bytes).
+            bitmapWidth = *reinterpret_cast<const int*>(ctx.esp + 0x0C);
+            bitmapHeight = *reinterpret_cast<const int*>(ctx.esp + 0x10);
+            constexpr uintptr_t FontCharDataOffset = 0xAC;
+            constexpr uintptr_t FontCharSize = 16;
 
-		static auto UseFullVanityPlateGlyph = safetyhook::create_mid(0x00AF078B, [](SafetyHookContext& ctx) {
-			constexpr size_t HalfSlotsPerPlate = 14;
-			constexpr size_t FloatsPerHalfQuad = 8;
-			constexpr uintptr_t HalfIndicesStackOffset = 0x274;
+            // EAX is the glyph index already validated against this font's first_ascii
+            // and num_chars. Use it for every font, including body and Asian fallbacks.
+            // The character argument is overwritten with render_h later in this routine.
+            const auto charData = *reinterpret_cast<const uintptr_t*>(ctx.ecx + FontCharDataOffset);
+            ctx.eax = charData + ctx.eax * FontCharSize;
+            ctx.eip = 0x00AEFF6B;
+        });
 
-			float* const uvs = reinterpret_cast<float*>(ctx.esi);
-			const auto* const halfIndices = reinterpret_cast<const uint8_t*>(ctx.esp + HalfIndicesStackOffset);
-			for (size_t half = 0; half + 1 < HalfSlotsPerPlate;) {
-				float* const leftHalf = uvs + half * FloatsPerHalfQuad;
-				float* const rightHalf = leftHalf + FloatsPerHalfQuad;
+        static auto UseFullVanityPlateGlyph = safetyhook::create_mid(0x00AF078B, [](SafetyHookContext& ctx) {
+            constexpr size_t HalfSlots = 14;
+            constexpr size_t MaxCharacters = HalfSlots / 2;
+            float* const uvs = reinterpret_cast<float*>(ctx.esi);
+            // EBP retains the original text; the half-index array at ESP+0x274
+            // has already been overwritten by get_Half_glyph_size and the UV builder.
+            const auto* const text = reinterpret_cast<const char*>(ctx.ebp);
+            size_t characterCount = 0;
+            while (characterCount < MaxCharacters && text[characterCount] != '\0')
+                ++characterCount;
 
-				// Text is centered to a half-slot, so a character pair is not always
-				// aligned to an even slot. Use the constructor's half-index array to
-				// identify an exact (2 * character, 2 * character + 1) pair.
-				if ((halfIndices[half] & 1) != 0 || halfIndices[half + 1] != halfIndices[half] + 1) {
-					++half;
-					continue;
-				}
+            const float texelU = 1024.0f / (std::max)(bitmapWidth, 1);
+            const float texelV = 1024.0f / (std::max)(bitmapHeight, 1);
+            const size_t firstHalf = MaxCharacters - characterCount;
+            const auto setQuad = [](float* quad, float u0, float v0, float u1, float v1) {
+                quad[0] = u0; quad[1] = v0;
+                quad[2] = u1; quad[3] = v0;
+                quad[4] = u1; quad[5] = v1;
+                quad[6] = u0; quad[7] = v1;
+            };
+            for (size_t character = 0; character < characterCount; ++character) {
+                float* left = uvs + (firstHalf + character * 2) * 8;
+                float* right = left + 8;
+                const float width = 2.0f * (right[0] - left[0]);
+                const float height = left[7] - left[1];
+                const float centerU = left[0] + width * 0.5f + VANITY_PLATE_UV_X * texelU;
+                const float centerV = left[1] + height * 0.5f + VANITY_PLATE_UV_Y * texelV;
+                const float u0 = centerU - width * VANITY_PLATE_UV_WIDTH * 0.5f - VANITY_PLATE_PAD_LEFT * texelU;
+                const float v0 = centerV - height * VANITY_PLATE_UV_HEIGHT * 0.5f - VANITY_PLATE_PAD_TOP * texelV;
+                const float u1 = (std::max)(u0 + texelU * 0.25f,
+                    centerU + width * VANITY_PLATE_UV_WIDTH * 0.5f + VANITY_PLATE_PAD_RIGHT * texelU);
+                const float v1 = (std::max)(v0 + texelV * 0.25f,
+                    centerV + height * VANITY_PLATE_UV_HEIGHT * 0.5f + VANITY_PLATE_PAD_BOTTOM * texelV);
+                const float middle = (u0 + u1) * 0.5f;
+                const float overlap = std::clamp(VANITY_PLATE_SEAM_OVERLAP * texelU * 0.5f,
+                    -(u1 - u0) * 0.45f, (u1 - u0) * 0.45f);
+                setQuad(left, u0, v0, middle + overlap, v1);
+                setQuad(right, middle - overlap, v0, u1, v1);
+            }
+        });
 
-				const float halfGlyphWidth = rightHalf[0] - leftHalf[0];
-				leftHalf[2] = rightHalf[0];
-				leftHalf[4] = rightHalf[0];
-				rightHalf[2] = rightHalf[0] + halfGlyphWidth;
-				rightHalf[4] = rightHalf[0] + halfGlyphWidth;
-				half += 2;
-			}
-			});
-		static auto ScaleVanityPlateText = safetyhook::create_mid(0x00AF10BA, [](SafetyHookContext& ctx) {
-			constexpr size_t TextVertexCount = 14 * 4;
-			constexpr size_t FloatsPerVertex = 6;
-			constexpr float TextScale = 0.88f;
-			constexpr float TextCenterY = -0.005f;
-
-			float* const vertices = reinterpret_cast<float*>(ctx.ecx);
-			for (size_t vertexIndex = 0; vertexIndex < TextVertexCount; ++vertexIndex) {
-				float* const position = vertices + vertexIndex * FloatsPerVertex;
-				position[0] *= TextScale;
-				position[1] = TextCenterY + (position[1] - TextCenterY) * TextScale;
-			}
-			});
-	}
+        static auto ScaleVanityPlateText = safetyhook::create_mid(0x00AF10BA, [](SafetyHookContext& ctx) {
+            float* const vertices = reinterpret_cast<float*>(ctx.ecx);
+            // Apply once before upload. The last four vertices are the untouched background.
+            const float plateWidth = vertices[56 * 6] - vertices[58 * 6];
+            const float plateHeight = vertices[57 * 6 + 1] - vertices[56 * 6 + 1];
+            for (size_t vertex = 0; vertex < 56; ++vertex) {
+                float* position = vertices + vertex * 6;
+                position[0] = position[0] * VANITY_PLATE_TEXT_WIDTH + VANITY_PLATE_TEXT_X * plateWidth;
+                position[1] = -0.005f + (position[1] + 0.005f) * VANITY_PLATE_TEXT_HEIGHT
+                    + VANITY_PLATE_TEXT_Y * plateHeight;
+            }
+        });
+    }
 
 	void Init()
 	{
