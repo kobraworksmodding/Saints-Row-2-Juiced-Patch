@@ -19,6 +19,7 @@
 #include "Math/Math.h"
 #include "Player/Input.h"
 #include "Game/Game.h"
+#include "Audio/XACT.h"
 #include "Hooker.h"
 const char* ERROR_MESSAGE = "ERROR";
 // MainHooks.cpp
@@ -364,6 +365,25 @@ namespace BlingMenuInstall
        BlingMenuAddFuncCustom("Juiced", "SR1 Reloading", NULL, &BM_SR1Reloading, NULL);
        BlingMenuAddFuncCustom("Juiced", "SR1 Quick Switching", NULL, &BM_SR1QuickSwitch, NULL);
        BlingMenuAddFuncCustom("Juiced", "Juiced", NULL, &BM_ReportVersion, NULL);
+       BlingMenuAddCategory("Juiced Audio Tuning");
+       BlingMenuAddBool("Juiced Audio Tuning", "Stereo Fix Enabled", &XACT::AudioStereoFixEnabled, &XACT::SaveAudioTuningConfig);
+       BlingMenuAddBool("Juiced Audio Tuning", "3D LPF Fix Enabled", &XACT::Audio3DLpfFixEnabled, &XACT::SaveAudioTuningConfig);
+       BlingMenuAddBool("Juiced Audio Tuning", "Reverb Fix Enabled", &XACT::AudioReverbFixEnabled, &XACT::SaveAudioTuningConfig);
+       BlingMenuAddBool("Juiced Audio Tuning", "LPF Debug Log", &XACT::AudioLpfDebugLog, &XACT::SaveAudioTuningConfig);
+       //BlingMenuAddBool("Juiced Audio Tuning", "Source Reverb Enabled", &XACT::AudioSourceReverbEnabled, &XACT::SaveAudioTuningConfig);
+       BlingMenuAddFloat("Juiced Audio Tuning", "LPF Default Q", &XACT::AudioLpfDefaultQ, &XACT::SaveAudioTuningConfig, 0.05f, 0.1f, 10.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "LPF Strength", &XACT::AudioLpfStrength, &XACT::SaveAudioTuningConfig, 0.05f, 0.0f, 5.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "LPF Volume Scale", &XACT::AudioLpfVolumeScale, &XACT::SaveAudioTuningConfig, 0.05f, 0.0f, 4.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "LPF Open Hz", &XACT::AudioLpfOpenFrequency, &XACT::SaveAudioTuningConfig, 250.0f, 1000.0f, 48000.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "LPF Closed Hz", &XACT::AudioLpfClosedFrequency, &XACT::SaveAudioTuningConfig, 50.0f, 40.0f, 24000.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "LPF Shelf Compensation", &XACT::AudioLpfShelfDepthToCutoffCompensation, &XACT::SaveAudioTuningConfig, 0.05f, 0.0f, 2.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "LPF Close Transition ms", &XACT::AudioLpfCloseTransitionMs, &XACT::SaveAudioTuningConfig, 25.0f, 0.0f, 2000.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "LPF Open Transition ms", &XACT::AudioLpfOpenTransitionMs, &XACT::SaveAudioTuningConfig, 25.0f, 0.0f, 2000.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "Reverb Wet Scale", &XACT::AudioReverbWetScale, &XACT::SaveAudioTuningConfig, 1.0f, 0.0f, 200.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "Reverb Stereo Endpoint Scale", &XACT::AudioReverbStereoEndpointScale, &XACT::SaveAudioTuningConfig, 0.05f, 0.0f, 2.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "Reverb Reflection Boost dB", &XACT::AudioReverbReflectionBoostDb, &XACT::SaveAudioTuningConfig, 0.5f, -24.0f, 24.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "Reverb Late Boost dB", &XACT::AudioReverbLateBoostDb, &XACT::SaveAudioTuningConfig, 0.5f, -24.0f, 24.0f);
+       BlingMenuAddFloat("Juiced Audio Tuning", "Reverb Min Decay Sec", &XACT::AudioReverbMinDecayTime, &XACT::SaveAudioTuningConfig, 0.1f, 0.1f, 20.0f);
        BlingMenuAddBool("Juiced Misc", "HUD (WILL DISABLE MENU RENDERING, PRESS F2 TO RESTORE)", (bool*)0x0252737C, NULL);
        BlingMenuAddFuncCustom("Juiced Cheats", "Noclip", NULL, &BM_ToggleNoclip, NULL);
        BlingMenuAddFuncCustom("Juiced Cheats", "Toggle Cheats flagging saves", NULL, &BM_AllowCheatFlagging, NULL);
