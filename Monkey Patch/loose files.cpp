@@ -4,6 +4,35 @@
 #include "Patcher/patch.h"
 #include <algorithm>
 #include <cctype>
+#include <string_view>
+
+
+std::string LooseAssetKey(std::string_view path)
+{
+    std::string key(path);
+    for (char& c : key) if (c >= 'A' && c <= 'Z') c += 'a' - 'A';
+    if (key.size() > 5 && key.compare(0, 4, "data") == 0 &&
+        (key[4] == '\\' || key[4] == '/')) {
+        const auto separator = key.find_last_of("\\/");
+        if (separator + 1 < key.size()) key.erase(0, separator + 1);
+    }
+    return key;
+}
+
+const char* LooseStreamedExtension(std::string_view filename)
+{
+    constexpr const char* extensions[] = {
+        ".cmesh_pc", ".g_cmesh_pc", ".peg_pc", ".g_peg_pc", ".pcm_pc", ".sim_pc", ".cvtf", ".morph_pc",
+        ".car_pc", ".g_car_pc", ".smesh_pc", ".g_smesh_pc", ".chunk_pc", ".g_chunk_pc", ".effect_pc",
+        ".g_effect_pc", ".cts"
+    };
+    for (const char* extension : extensions) {
+        const std::string_view suffix(extension);
+        if (filename.size() >= suffix.size() && filename.substr(filename.size() - suffix.size()) == suffix)
+            return extension;
+    }
+    return nullptr;
+}
 
 
 #pragma warning(disable : 4996) // remove fopen warning
@@ -486,34 +515,19 @@ void CacheConflicts()
 
 const char* TranslateFilePath(const char* FilePath)
 {
-    std::string FilePathString(FilePath);
-    FilePathString = StringToLower(FilePathString);
-
-    auto FoundFilePath = DirCache.find(FilePathString);
-    if (FoundFilePath != DirCache.end())
-        return(FoundFilePath->second.FilePath.c_str());
-
-    FoundFilePath = DLCCache.find(FilePathString);
-    if (FoundFilePath != DLCCache.end())
-        return(FoundFilePath->second.FilePath.c_str());
-
-    return(NULL);
+    if (auto* data = TranslateFilePathData(FilePath))
+        return data->FilePath.c_str();
+    return nullptr;
 }
 
 FILEDATA* TranslateFilePathData(const char* FilePath)
 {
-    std::string FilePathString(FilePath);
-    FilePathString = StringToLower(FilePathString);
-
-    auto FoundFilePath = DirCache.find(FilePathString);
-    if (FoundFilePath != DirCache.end())
-        return(&FoundFilePath->second);
-
-    FoundFilePath = DLCCache.find(FilePathString);
-    if (FoundFilePath != DLCCache.end())
-        return(&FoundFilePath->second);
-
-    return(NULL);
+    const auto key = LooseAssetKey(FilePath);
+    auto found = DirCache.find(key);
+    if (found != DirCache.end()) return &found->second;
+    found = DLCCache.find(key);
+    if (found != DLCCache.end()) return &found->second;
+    return nullptr;
 }
 
 void ClearDirCache()
@@ -549,27 +563,9 @@ int GetStringHash(const char* String) {
 
 void ProcessCacheHashes(LooseFileCache& Cache) {
 
-    const char* validExts[] = {
-        ".cmesh_pc", ".g_cmesh_pc", ".peg_pc", ".g_peg_pc", ".pcm_pc", ".sim_pc", ".cvtf", ".morph_pc",
-        ".car_pc", ".g_car_pc", ".smesh_pc", ".g_smesh_pc", ".chunk_pc", ".g_chunk_pc", ".effect_pc",
-        ".g_effect_pc"
-    };
-
-    int extCount = sizeof(validExts) / sizeof(validExts[0]);
-
     for (auto it = Cache.begin(), it_end = Cache.end(); it != it_end; ++it) {
         const std::string& filename = it->first;
-        const char* matchedExt = NULL;
-        for (int i = 0; i < extCount; i++) {
-            const char* ext = validExts[i];
-            size_t extLen = strlen(ext);
-            if (filename.length() >= extLen) {
-                if (filename.compare(filename.length() - extLen, extLen, ext) == 0) {
-                    matchedExt = ext;
-                    break;
-                }
-            }
-        }
+        const char* matchedExt = LooseStreamedExtension(filename);
         if (!matchedExt)
             continue;
 
