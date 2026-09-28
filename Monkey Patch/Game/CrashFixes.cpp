@@ -271,6 +271,15 @@ namespace CrashFixes {
 			if (ctx.eax == NULL)
 				ctx.eip = 0x4FA09E;
 			});
+
+		// persisted variant random data uses the next power-of-two bit width, so
+		// corrupt or stale data can decode to an index above the current option
+		// count. Retail only rejects index == count before indexing the arrays.
+		// JNZ -> JB keeps valid unsigned indices and sends every index >= count
+		// through the game's existing 0xFF/no-override fallback.
+		patchByte((void*)0x006E20D4, 0x72); // color scheme option
+		patchByte((void*)0x006E2485, 0x72); // texture group option
+
 		// The one above should work always..
 		if (GameConfig::GetValue("Debug", "FixCrashes", 2)) {	
 			static auto Fix_0x0055B681_hook = safetyhook::create_mid(0x0055B681, &Fix_0x0055B681_crash);
