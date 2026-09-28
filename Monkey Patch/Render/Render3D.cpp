@@ -12,6 +12,7 @@
 #include "../Shaders.h"
 #include "../BlingMenu_public.h"
 #include "Render3D.h"
+#include <cstring>
 #include <mutex>
 
 #include <safetyhook.hpp>
@@ -1435,12 +1436,20 @@ namespace Render3D
 		patchByte((BYTE*)0x00AEFE8F, 7);
 		patchByte((BYTE*)0x00AEFE93, 7);
 
-		static auto UseVanityPlateGlyphWidth = safetyhook::create_mid(0x00AEFF80, [](SafetyHookContext& ctx) {
-			constexpr int FirstAscii = 32;
+		static auto UseVanityPlateGlyphWidth = safetyhook::create_mid(0x00AEFF65, [](SafetyHookContext& ctx) {
+			constexpr uintptr_t FontPegNameOffset = 0x28;
+			constexpr uintptr_t FontCharDataOffset = 0xAC;
 			constexpr uintptr_t FontCharSize = 16;
-			const auto character = *reinterpret_cast<const signed char*>(ctx.esp + 4);
-			const auto glyphIndex = static_cast<int>(character) - FirstAscii;
-			ctx.eax += glyphIndex * FontCharSize;
+			constexpr uintptr_t ContinueAfterCharDataLoad = 0x00AEFF6B;
+
+			// Asian languages, Chinese and Japanese do not work, this is a stupid skip for those languages for now
+			const auto* const pegName = reinterpret_cast<const char*>(ctx.ecx + FontPegNameOffset);
+			if (strcmp(pegName, "ug-debug.peg") != 0)
+				return;
+
+			const auto charData = *reinterpret_cast<const uintptr_t*>(ctx.ecx + FontCharDataOffset);
+			ctx.eax = charData + ctx.eax * FontCharSize;
+			ctx.eip = ContinueAfterCharDataLoad;
 			});
 
 		static auto UseFullVanityPlateGlyph = safetyhook::create_mid(0x00AF078B, [](SafetyHookContext& ctx) {
