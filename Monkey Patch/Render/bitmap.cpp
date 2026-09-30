@@ -98,6 +98,20 @@ struct dynamic_bitmap_record {
     std::string filename;
 };
 
+
+volatile LONG Dynamic_bm_frame_redirects[maximum_bitmap_entries]{};
+uint16_t Dynamic_bm_frame_counts[maximum_bitmap_entries]{};
+
+uint32_t resolve_dynamic_bitmap(uint32_t handle) {
+    if (handle >= maximum_bitmap_entries) return handle;
+    while (const LONG next = Dynamic_bm_frame_redirects[handle])
+        handle = next - 1;
+    return handle;
+}
+
+uint32_t dynamic_frame_capacity(uint32_t handle) {
+    return handle < maximum_bitmap_entries ? Dynamic_bm_frame_counts[resolve_dynamic_bitmap(handle)] : 0;
+}
 std::unique_ptr<bitmap_entry[]> Dynamic_bm_bitmaps;
 uint32_t Dynamic_bm_storage_capacity = 0;
 std::unordered_map<std::string, std::unique_ptr<dynamic_bitmap_record>> Dynamic_bm_names;
@@ -249,7 +263,7 @@ int __cdecl bm_add_bitmap(const char* filename)
 
     const uint32_t handle = *Bm_bitmap_count;
     if (handle > static_cast<uint32_t>(std::numeric_limits<int16_t>::max()) ||
-        !ensure_bitmap_capacity(handle + 2))
+        !ensure_bitmap_capacity(handle + 1))
     {
         AssertHandler::AssertOnce("Bm_entry_count_over", "bm_add_bitmap exhausted the signed 16-bit bitmap handle space");
         return *Bm_bogus_static_bitmap;
@@ -272,6 +286,7 @@ int __cdecl bm_add_bitmap(const char* filename)
         entry.filename_ptr = record_it->second->filename.data();
         entry.this_peg = *(peg_entry**)0x0252A560;
         entry.frame_number = 0;
+        Dynamic_bm_frame_counts[handle] = 1;
         ++(*Bm_bitmap_count);
 
         Bm_discovery_callback(&entry);
@@ -320,6 +335,128 @@ SAFETYHOOK_NOINLINE __int16 __fastcall bm_find_og(void* dummy1, void* dummy2, ui
         hndl = find_dynamic_bitmap_locked(canonical_name);
     }
     return hndl;
+}
+
+namespace {
+int reserve_dynamic_frames(int handle, uint32_t frames) {
+    scoped_critical_section lock(Bm_add_lock);
+    if (handle < 0 || !dynamic_frame_capacity(handle)) return handle;
+    bitmap_entry empty{};
+    empty.this_peg = *(peg_entry**)0x0252A560;
+    const auto old_capacity = dynamic_frame_capacity(handle);
+    const uint32_t old = resolve_dynamic_bitmap(handle);
+    int result = static_cast<int>(old);
+    if (!frames || frames > maximum_bitmap_entries) {
+        result = -1;
+    } else if (frames > old_capacity) {
+        const bool at_end = old + old_capacity == *Bm_bitmap_count;
+        const uint32_t target = at_end ? old : *Bm_bitmap_count;
+        if (target > maximum_bitmap_entries - frames || !ensure_bitmap_capacity(target + frames)) {
+            result = -1;
+        } else {
+            bitmap_entry* entries = *Bm_bitmaps;
+            if (!at_end)
+                for (uint32_t i = 0; i < old_capacity; ++i)
+                    entries[target + i] = entries[old + i];
+            for (uint32_t i = old_capacity; i < frames; ++i) {
+                entries[target + i] = empty;
+                entries[target + i].filename_ptr = entries[target].filename_ptr;
+                entries[target + i].frame_number = static_cast<uint16_t>(i);
+                Bm_discovery_callback(entries + target + i);
+            }
+            Dynamic_bm_frame_counts[target] = static_cast<uint16_t>(frames);
+            *Bm_bitmap_count = target + frames;
+            if (!at_end) {
+                Dynamic_bm_frame_counts[old] = 0;
+                for (uint32_t i = 0; i < old_capacity; ++i) {
+                    entries[old + i] = empty;
+                    InterlockedExchange(Dynamic_bm_frame_redirects + old + i, target + i + 1);
+                }
+            }
+            result = static_cast<int>(target);
+        }
+    }
+    if (result < 0) {
+        AssertHandler::AssertOnce("Bm_animated_capacity", "Cannot reserve consecutive addon bitmap animation frames");
+    } else {
+        for (uint32_t i = 0; i < frames; ++i)
+            (*Bm_bitmaps)[result + i].frame_number = static_cast<uint16_t>(i);
+    }
+    if (result >= 0 && frames > old_capacity) {
+        Logger::TypedLog("Modding", "Addon animated bitmap {}: {} frames, handle {} -> {}\n",
+            (*Bm_bitmaps)[result].filename_ptr, frames, handle, result);
+    }
+    return result;
+}
+
+void register_dynamic_frames(SafetyHookContext& ctx) {
+    scoped_critical_section lock(Bm_add_lock);
+    const int handle = static_cast<int16_t>(ctx.eax);
+    if (handle < 0 || !dynamic_frame_capacity(handle)) return;
+    const auto frames = ctx.ebp;
+    const int resolved = reserve_dynamic_frames(handle, frames);
+    if (resolved < 0) {
+        // Skip the complete group; never register its remaining descriptors as unrelated single images after an allocation failure.
+        *reinterpret_cast<uint32_t*>(ctx.esp + 0x10) += frames;
+        ctx.eip = 0xC084A3;
+        return;
+    }
+    ctx.ebx = resolved;
+    // Bypass the native "addon = one frame" clamp; EBP is the authored count.
+    ctx.eip = 0xC0844C;
+}
+
+void stream_dynamic_frames(SafetyHookContext& ctx) {
+    scoped_critical_section lock(Bm_add_lock);
+    const int handle = static_cast<int16_t>(ctx.eax);
+    if (handle < 0 || !dynamic_frame_capacity(handle)) return;
+    const auto frames = *reinterpret_cast<uint16_t*>(ctx.esi + 16);
+    const int resolved = reserve_dynamic_frames(handle, frames);
+    if (resolved < 0) {
+        const auto gpu = *reinterpret_cast<uint32_t*>(ctx.ebx + 4);
+        for (uint32_t i = 0; i < frames; ++i) {
+            auto& data = *reinterpret_cast<uint32_t*>(ctx.esi + 48 * i);
+            data = data == 0xFFFFFFFF ? 0 : data + gpu;
+        }
+        *reinterpret_cast<uint32_t*>(ctx.ebx + 8) += frames;
+        ctx.eip = 0xC09025;
+        return;
+    }
+    ctx.ebp = resolved;
+    ctx.eax = frames;
+    // Bypass the separate native 20-frame addon limit in streamed PEGs.
+    ctx.eip = 0xC08FBB;
+}
+
+void unregister_dynamic_frames(SafetyHookContext& ctx) {
+    scoped_critical_section lock(Bm_add_lock);
+    const int handle = static_cast<int16_t>(ctx.eax);
+    if (handle < 0 || !dynamic_frame_capacity(handle)) return;
+    if (ctx.edi > dynamic_frame_capacity(handle)) {
+        // Registration failed before this group acquired any bitmap nodes.
+        ctx.eax = 0xFFFFFFFF;
+        return;
+    }
+    ctx.eax = resolve_dynamic_bitmap(handle);
+}
+
+void install_animated_bitmap_hooks() {
+    static auto registration = safetyhook::create_mid(0xC08429, register_dynamic_frames, safetyhook::MidHook::StartDisabled);
+    static auto streaming = safetyhook::create_mid(0xC08F71, stream_dynamic_frames, safetyhook::MidHook::StartDisabled);
+    static auto unregister = safetyhook::create_mid(0xC08559, unregister_dynamic_frames, safetyhook::MidHook::StartDisabled);
+    static auto lookup = safetyhook::create_mid(0xC094E0, [](SafetyHookContext& ctx) {
+        ctx.eax = resolve_dynamic_bitmap(ctx.eax);
+    }, safetyhook::MidHook::StartDisabled);
+    if (!registration || !streaming || !unregister || !lookup
+        || !lookup.enable() || !unregister.enable() || !streaming.enable() || !registration.enable()) {
+        registration.reset(); streaming.reset(); unregister.reset(); lookup.reset();
+        AssertHandler::AssertOnce("Bm_animated_install", "Unable to install all addon animation hooks");
+        return;
+    }
+    // Unloading must only find existing entries. It must never create a new
+    // one-slot placeholder and then remove a multi-frame PEG through it.
+    WriteRelCall(0xC08551, (int)&bm_find_og);
+}
 }
 
 __declspec(naked) void LoadBitmapTableasm(const char* FileName) {
@@ -436,6 +573,7 @@ int bm_load_bitmaps_file()
             SafeWrite32(0x00C08817 + 1, 1806336);
             bm_findT = safetyhook::create_inline(0xC07160, &bm_find);
             static auto bitmap_test = safetyhook::create_mid(0xC083AB, &bitmap_testf);
+            install_animated_bitmap_hooks();
             if (GameConfig::GetValue("Modding", "addon_bitmaps", 0) == 180) {
                 WriteRelCall(0xC08421, (int)&bm_find_og);
                 WriteRelCall(0xC08F69, (int)&bm_find_og);
