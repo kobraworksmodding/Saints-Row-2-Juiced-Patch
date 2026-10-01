@@ -536,6 +536,13 @@ int bm_load_bitmaps_file()
     return result;
 }
     void Init() {
+        static auto cube_surface_release = safetyhook::create_mid(0xD198B7, [](SafetyHookContext& ctx) {
+            // pc_gr_texture_register has just unlocked one cubemap face/mip.
+            // GetCubeMapSurface added a reference that the native path never releases.
+            auto* surface = *reinterpret_cast<IDirect3DSurface9**>(ctx.esp + 0x20);
+            if (surface)
+                surface->Release();
+        });
         if (GameConfig::GetValue("Modding", "addon_bitmaps", 1)) {
             static auto interface_gpu_increase = safetyhook::create_mid(0x51E322, [](SafetyHookContext& ctx) {
                 if (double interface_gpu_new_size = GameConfig::GetDoubleValue("Mempool", "interface_gpu_multi", 1.5); interface_gpu_new_size >= 1.0) {
