@@ -5,8 +5,11 @@
 
 #include <windows.h>
 #include <vector>
-#pragma comment (lib, "Ext/lib/lua/lua50.lib")
+#if defined(_DEBUG)
 #pragma comment (lib, "Ext/lib/lua/lua50d.lib")
+#else
+#pragma comment (lib, "Ext/lib/lua/lua50.lib")
+#endif
 
 extern std::vector<char*> g_debugLines;
 
