@@ -12,6 +12,7 @@
 #include "../Shaders.h"
 #include "../BlingMenu_public.h"
 #include "Render3D.h"
+#include "ColorPipeline.h"
 #include <algorithm>
 #include <cstring>
 #include <mutex>
@@ -1335,6 +1336,7 @@ namespace Render3D
 	SafetyHookInline ReleaseTextures;
 	void ReleaseTexturesHook() {
 		TemporalAA::ReleaseResources();
+		ColorPipeline::ReleaseResources();
 		if (shd_cubedefault_tex) {
 			shd_cubedefault_tex->Release();
 			shd_cubedefault_tex = nullptr;
@@ -1543,6 +1545,7 @@ namespace Render3D
 		FixVanityPlateRendering();
 		FixPlayerImageRendering();
 		TemporalAA::Init();
+		ColorPipeline::Init();
 
 		if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1, "Patches in Juiced Patch custom updates to settings adding MSAA 8x Support and fixing up label names, required for Ultrawide support.")) { // cuz rn this just patches in the resolutions, if init is expanded, please move this check inside
 			patchCall((void*)0xD1526E, init_directx9);

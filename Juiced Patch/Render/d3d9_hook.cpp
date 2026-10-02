@@ -5,6 +5,7 @@
 #include <safetyhook.hpp>
 #include "../FileLogger.h"
 #include "d3d9_hook.h"
+#include "ColorPipeline.h"
 
 typedef IDirect3D9* (WINAPI* Direct3DCreate9_t)(UINT SDKVersion);
 SafetyHookInline g_create_device_hook;
@@ -19,6 +20,7 @@ HRESULT STDMETHODCALLTYPE hooked_CreateDevice(
     IDirect3DDevice9** ppReturnedDeviceInterface
 ) {
 
+    ColorPipeline::BeforeCreateDevice(pThis, pPresentationParameters);
     HRESULT result = g_create_device_hook.unsafe_stdcall<HRESULT>(
         pThis, Adapter, DeviceType, hFocusWindow,
         BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface
@@ -27,6 +29,7 @@ HRESULT STDMETHODCALLTYPE hooked_CreateDevice(
         Logger::TypedLog("D3D9", "CreateDevice succeeded - Device created\n");
     }
     if (!SUCCEEDED(result) || !ppReturnedDeviceInterface || !*ppReturnedDeviceInterface) {
+        ColorPipeline::CreationFailed(pPresentationParameters);
         Logger::TypedLog("D3D9", "CreateDevice Failed, Force Windowed mode!\n");
         pPresentationParameters->Windowed = true;
         result = g_create_device_hook.unsafe_stdcall<HRESULT>(
@@ -34,6 +37,8 @@ HRESULT STDMETHODCALLTYPE hooked_CreateDevice(
             BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface
         );
     }
+    if (SUCCEEDED(result) && ppReturnedDeviceInterface)
+        ColorPipeline::AfterCreateDevice(*ppReturnedDeviceInterface, pPresentationParameters);
     return result;
 }
 

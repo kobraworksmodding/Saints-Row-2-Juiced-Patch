@@ -455,5 +455,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\juiced.ini" />
+    <None Include="Render\ColorSR2.hlsl"><Filter>Source Files\Render</Filter></None>
+    <None Include="Render\DistortionColour.hlsl"><Filter>Source Files\Render</Filter></None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Render\ColorPipeline.cpp"><Filter>Source Files\Render</Filter></ClCompile>
+    <ClInclude Include="Render\ColorPipeline.h"><Filter>Source Files\Render</Filter></ClInclude>
+    <ClInclude Include="Render\ColorDXVK.h"><Filter>Source Files\Render</Filter></ClInclude>
+    <ClInclude Include="Render\ColorShaders.h"><Filter>Source Files\Render</Filter></ClInclude>
+    <ClInclude Include="Render\DistortionShader.h"><Filter>Source Files\Render</Filter></ClInclude>
   </ItemGroup>
 </Project>

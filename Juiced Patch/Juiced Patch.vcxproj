@@ -281,6 +281,7 @@
     <ClCompile Include="Render\Render2D.cpp" />
     <ClCompile Include="Render\Render3D.cpp" />
     <ClCompile Include="Render\TemporalAA.cpp" />
+    <ClCompile Include="Render\ColorPipeline.cpp" />
     <ClCompile Include="Render\Shadows.cpp" />
     <ClCompile Include="RPCHandler.cpp" />
     <ClCompile Include="SafeWrite.cpp" />
@@ -355,6 +356,10 @@
     <ClInclude Include="Player\Behavior.h" />
     <ClInclude Include="Render\Render3D.h" />
     <ClInclude Include="Render\TemporalAA.h" />
+    <ClInclude Include="Render\ColorPipeline.h" />
+    <ClInclude Include="Render\ColorDXVK.h" />
+    <ClInclude Include="Render\ColorShaders.h" />
+    <ClInclude Include="Render\DistortionShader.h" />
     <ClInclude Include="Render\TemporalMSAA.h" />
     <ClInclude Include="Render\TemporalProjection.h" />
     <ClInclude Include="Render\TemporalShader.h" />
@@ -375,6 +380,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\juiced.ini" />
+    <None Include="Render\ColorSR2.hlsl" />
+    <None Include="Render\DistortionColour.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

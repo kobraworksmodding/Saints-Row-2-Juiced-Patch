@@ -21,6 +21,16 @@ jobs:
     - name: Restore NuGet packages
       working-directory: ${{ env.GITHUB_WORKSPACE }}
       run: nuget restore "${{ env.SOLUTION_FILE_PATH }}"
+    - name: Build standalone FXO compiler
+      run: msbuild tools/FXOCompiler/FXOCompiler.vcxproj /m /p:Configuration=Release /p:Platform=x64
+    - name: Validate standalone FXO compiler
+      shell: pwsh
+      run: tools/FXOCompiler/Validate.ps1 -Compiler tools/FXOCompiler/.out/FXOCompiler.exe -Manifest shaders/colour/build.ini
+    - name: Compile HLSL shaders into matching FXO files and headers
+      shell: pwsh
+      run: |
+        & tools/FXOCompiler/.out/FXOCompiler.exe build shaders/colour/build.ini
+        if ($LASTEXITCODE -ne 0) { throw "FXO shader compilation failed." }
     - name: Build solution
       working-directory: ${{ env.GITHUB_WORKSPACE }}
       run: msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:Platform=Win32 "${{ env.SOLUTION_FILE_PATH }}"
@@ -43,3 +53,9 @@ jobs:
       with:
         name: SR2_JUICED
         path: upload
+    - name: Upload standalone FXO compiler
+      uses: actions/upload-artifact@v4
+      with:
+        name: SR2_FXOCompiler
+        path: tools/FXOCompiler/.out/FXOCompiler.exe
+        if-no-files-found: error
