@@ -21,17 +21,20 @@ This project was originally created using Visual Studio 2022 using C++23 and may
 Some main patching areas are included in the Juiced Patch project under General/General.cpp and MainHooks.cpp.
 
 ## Build Environments
-There are four build environments for Juiced Patch.
-- Debug
-- Release
-- RELOADED (THAROW/multiplayer build)
-- RELOADED - DEV (THAROW/multiplayer development build)
+The public Juiced Patch project supports Win32 builds in Visual Studio 2022:
+- Debug (unoptimized, with debug symbols and the debug runtime)
+- Release (optimized, with debug symbols; used by CI)
+
+RELOADED and RELOADED - DEV configurations are retained for THAROW/multiplayer development. They require private sources that are not included in this repository.
 
 ## How to build?
-- Run the Juiced Patch.sln file using VS 2022 on a version that supports C++23
-- Make sure the configuration is set to "Debug", "Release", "RELOADED", or "RELOADED - DEV"
-- Click "Build" then "Build Juiced Patch" or press CTRL+B
-- The exported Juiced Patch "DFEngine.dll" should output in a folder corresponding to the configuration name in your Juiced Patch project folder.
+- Install Visual Studio 2022 with Desktop development with C++ and a Windows SDK, using a version that supports C++23.
+- Clone with submodules, or run `git submodule update --init --recursive` in an existing checkout.
+- Open Juiced Patch.sln and select "Debug" or "Release" with the Win32 platform.
+- Click "Build" then "Build Juiced Patch" or press CTRL+B.
+- The exported DFEngine.dll and DFEngine.pdb appear in the Debug or Release folder at the repository root. Intermediate files stay under Juiced Patch/<configuration>/Win32.
+- Generated/BuildInfo.h is created automatically by the prebuild step and is not committed.
+- For local debugging, copy Juiced Patch/Juiced Patch.vcxproj.user.template to Juiced Patch/Juiced Patch.vcxproj.user and set the SR2_PATH environment variable to your game folder. Release builds also copy the DLL there when SR2_PATH is set.
 
 ## Active Developers
 - [Soaa](https://github.com/xSoaa)

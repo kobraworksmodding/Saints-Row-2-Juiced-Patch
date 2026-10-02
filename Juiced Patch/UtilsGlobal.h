@@ -1,6 +1,6 @@
 #pragma once
 #include <corecrt_math_defines.h>
-#include "..\Generated\BuildInfo.h"
+#include "Generated/BuildInfo.h"
 #include "Math\Math.h"
 #include <filesystem>
 #pragma warning( disable : 4219)
