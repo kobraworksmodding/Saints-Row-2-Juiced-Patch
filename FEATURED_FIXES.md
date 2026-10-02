@@ -29,6 +29,7 @@ Fixes marked with ⚙️ can be configured/toggled via the INI file / BlingMenu
 * ⚙️ Fix mouse input in tagging minigame.
 * ⚙️ Fix mouse input in wardrobes.
 * Fix Ultrawide FOV
+* ⚙️ Fix the HUD being vertically stretched on 16:10 and other aspect ratios between 3:2 and 16:9 (square pixels, centred canvas, corner elements pinned to the screen edges, full-screen tint/fades/cutscene bars, correct world marker placement) via FixUltrawideHUD
 * ⚙️ Fix incorrect GUID assignment for audio device.
 * Fixed an issue where the drive by diversion would not restore your unlimited ammo SMG
 

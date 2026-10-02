@@ -666,6 +666,77 @@ void gr_rect_letterbox_below(int x1, int y1, int w, int h, int* state)
 	cdecl_call<void>(gr_rect_og, x1, y1, w, h, state);
 }
 
+// Widescreen taller than 16:9 (16:10, 5:3): the 1280x720 vint canvas is drawn with square pixels, which
+// leaves it shorter than the screen. The engine maps vint to pixels as a plain multiply (0xD1DF50), so we
+// add the missing Y offset ourselves: the canvas is centred, anything touching its top/bottom edge (fades,
+// menu backgrounds, letterbox) is pulled out to the screen edge, and cvint.dat T/B elements are pinned to
+// their edge in modify_vint_anchor.
+float hud_offset_y = 0.f; // pixels
+float hud_canvas_h = 0.f; // canvas height in pixels
+bool hud_scissor_full = true; // last scissor rect covered the whole canvas height
+// Non-zero while vint renders (the document loop or an element). The 2D pipeline (0xD1E070 begin, 0xD1DF50 end)
+// is shared with non-vint drawing (game font text, gr_rect, overlays), which is laid out for the stock stretched
+// scale, so only vint gets the square-pixel centring below.
+int hud_vint_depth = 0;
+// In game, 2D draws are recorded into a command queue (0xCF8EA0) and replayed later (0xCF8FA0), after
+// the vint render call has returned. Remember per queue entry whether it was recorded by vint.
+// The queue is two fixed buffers that swap every frame, each holding up to 3000 entries.
+static bool hud_queue_vint[2][3000];
+static DWORD hud_replay_thread = 0;
+static bool hud_replay_vint = false;
+static int hud_queue_buffer_index(uintptr_t buffer)
+{
+	return buffer == 0x2305980 ? 0 : buffer == 0x2321F48 ? 1 : -1;
+}
+static bool hud_draw_is_vint()
+{
+	if (hud_replay_thread != 0 && hud_replay_thread == GetCurrentThreadId())
+		return hud_replay_vint;
+	return hud_vint_depth > 0;
+}
+static float hud_stock_y_ratio()
+{
+	return (hud_canvas_h + hud_offset_y * 2.f) / hud_canvas_h;
+}
+static float hud_edge_px()
+{
+	return 4.f * hud_canvas_h / 720.f;
+}
+static float hud_remap_y(float y)
+{
+	// Full-screen quads (letterbox, tint) overshoot the canvas by ~1.5 vint units, so match at-or-past the edge.
+	const float edge = hud_edge_px();
+	if (y <= edge)
+		return y;
+	if (y >= hud_canvas_h - edge)
+		return y + hud_offset_y * 2.f;
+	return y + hud_offset_y;
+}
+SafetyHookMid hud_vertex_offset_hook;
+SafetyHookMid hud_scissor_offset_hook;
+SafetyHookMid hud_project_offset_hook;
+// Renders every open vint document (HUD, menus). Some vint drawing happens here at document level,
+// outside vint_element_base_render, so both count as vint.
+SafetyHookInline hud_vint_render_all_hook;
+SafetyHookMid hud_queue_record_hook;
+SafetyHookMid hud_queue_replay_hook;
+SafetyHookMid hud_queue_replay_end_hook;
+static void __cdecl hud_vint_render_all()
+{
+	hud_vint_depth++;
+	hud_vint_render_all_hook.unsafe_ccall<void>();
+	hud_vint_depth--;
+}
+// Mission loading card ("LOADING", mission name, gang name and icon), drawn outside vint by the load and
+// cutscene code but laid out on the same 1280x720 canvas, so it gets the vint treatment too.
+SafetyHookInline hud_loading_card_hook;
+static void __cdecl hud_loading_card()
+{
+	hud_vint_depth++;
+	hud_loading_card_hook.unsafe_ccall<void>();
+	hud_vint_depth--;
+}
+
 char SR2Ultrawide_HUDScale() {
 	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD {}\n", 1);
 	float currentX = (float)(*(unsigned int*)0x022f63f8);
@@ -673,6 +744,7 @@ char SR2Ultrawide_HUDScale() {
 	char result;
 
 	float aspectRatio = currentX / currentY;
+	hud_offset_y = 0.f;
 	// Cutscene black bars
 	//SafeWrite32((0x00755C49 + 1), 1280);
 	Render3D::AspectRatioFix(true);
@@ -707,19 +779,27 @@ char SR2Ultrawide_HUDScale() {
 		RefreshHUD_thread = std::thread(RefreshHUD_loop);
 		RefreshHUD_thread.detach();
 	}
+	// Between the 3:2 cutoff (0xE5C080 is patched to 1.55) and 16:9. 1360x768 (1.771) stays on the stock path.
+	bool tall_widescreen = aspectRatio > 1.55f && aspectRatio < 1.76f;
+
 	if ((GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1)) {
-		if (aspectRatio <= 1.79777777778f && aspectRatio != 1.5f) {
+		if (tall_widescreen) {
+			// Fall through to the square-pixel scale below instead of the stretching stock path.
+			UltrawideFix = false;
+			General::CleanupModifiedScript();
+		}
+		else if (aspectRatio <= 1.79777777778f && aspectRatio != 1.5f) {
 
 			UltrawideFix = false;
 			General::CleanupModifiedScript();
 			return ((char(*)())0xD1C910)(); // Original HUD scale function.
-			
+
 		}
 		else {
 
 			Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD {}\n", 4);
-			if(aspectRatio != 1.5f)
-			UltrawideFix = true;
+			if (aspectRatio != 1.5f)
+				UltrawideFix = true;
 			if (aspectRatio == 1.5f) {
 				General::CleanupModifiedScript();
 			}
@@ -731,7 +811,17 @@ char SR2Ultrawide_HUDScale() {
 	float stretchedX = currentX / 1280.0f;
 	float adjustedX = stretchedX * correctionFactor;
 
-	if (aspectRatio <= 1.59f) {
+	if (tall_widescreen) {
+		// Scale both axes by width (square pixels); the canvas is then shorter than the screen and gets centred.
+		result = 1;
+		*(uint8_t*)0x0213c383 = 1;
+		*(uint8_t*)0x025272dd = 1;
+		*(float*)0x022fdcc0 = stretchedX;
+		*(float*)0x022fdcbc = stretchedX;
+		hud_canvas_h = 720.0f * stretchedX;
+		hud_offset_y = (currentY - hud_canvas_h) * 0.5f;
+	}
+	else if (aspectRatio <= 1.59f) {
 		result = 0;
 		*(uint8_t*)0x0213c383 = 0;
 		*(uint8_t*)0x025272dd = 0;
@@ -745,7 +835,8 @@ char SR2Ultrawide_HUDScale() {
 		*(float*)0x022fdcc0 = adjustedX;
 		*(float*)0x022fdcbc = currentY / 720.0f;
 	}
-	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: {:f} Y: {:f} bool: {} \n", adjustedX, currentY / 720.0f, UltrawideFix);
+	Logger::TypedLog(CHN_MOD, "SR2Ultrawide patched HUD scale X: {:f} Y: {:f} offset Y: {:f} bool: {} \n",
+		*(float*)0x022fdcc0, *(float*)0x022fdcbc, hud_offset_y, UltrawideFix);
 	return result;
 }
 float saturate(float x) {
@@ -1141,6 +1232,20 @@ SAFETYHOOK_NOINLINE bool modify_vint_anchor(const vint_cint_custom* cint, vint_e
 				element->v_anchor.x += x;
 			return true;
 		}
+		// Taller than 16:9: the canvas is centred, push T/B elements back out to the screen edge.
+		// Done on the anchor (main thread, vint space): 2D batches are flushed lazily and possibly on
+		// the render thread, so per-element state can't be tracked at flush time.
+		// Direction comes from where the element currently sits, not the T/B flag: HUD mods move groups
+		// between edges at runtime (SuperUI's modern layout puts health_grp at the bottom).
+		if (hud_offset_y != 0.f && (align.v_top || align.v_bottom))
+		{
+			float y = hud_offset_y / (hud_canvas_h / 720.f);
+			if (element->v_anchor.y < 360.f)
+				element->v_anchor.y -= y;
+			else
+				element->v_anchor.y += y;
+			return true;
+		}
 	}
 	return false;
 }
@@ -1205,7 +1310,9 @@ void __fastcall vint_element_base_render(
 		}
 
 	}
+	hud_vint_depth++;
 	vint_element_base_renderD.unsafe_thiscall<void>(this_element, Cvint_render_params, Base, a4);
+	hud_vint_depth--;
 	if (modified_anchor) {
 		this_element->v_anchor = old_anchor;
 	}
@@ -1365,6 +1472,76 @@ void diversion_image_sizeup()
 	InterceptCall(0x755C81, gr_rect_og, gr_rect_letterbox_below);
 
 	bSmartCutsceneBorder = GameConfig::GetValue("Graphics", "SmartCutsceneBorders", 1,"Proper letterboxing for different aspect ratios above widescreen while in cutscenes (clippy95)");
+
+	// Track which 2D draws come from vint, see hud_draw_is_vint.
+	hud_vint_render_all_hook = safetyhook::create_inline(0xB8BD40, hud_vint_render_all);
+	hud_loading_card_hook = safetyhook::create_inline(0x69B3F0, hud_loading_card);
+	// Queue record, just before the entry count is incremented: eax = write buffer.
+	hud_queue_record_hook = safetyhook::create_mid(0xCF8F4E, [](SafetyHookContext& ctx) {
+		int b = hud_queue_buffer_index(ctx.eax);
+		int i = *(int*)(ctx.eax + 0x5DC0);
+		if (b >= 0 && i >= 0 && i < 3000)
+			hud_queue_vint[b][i] = hud_vint_depth > 0;
+		});
+	// Queue replay loop head: eax = read buffer, esi = entry index.
+	hud_queue_replay_hook = safetyhook::create_mid(0xCF8FC0, [](SafetyHookContext& ctx) {
+		int b = hud_queue_buffer_index(ctx.eax);
+		int i = (int)ctx.esi;
+		hud_replay_vint = b >= 0 && i >= 0 && i < 3000 && hud_queue_vint[b][i];
+		hud_replay_thread = GetCurrentThreadId();
+		});
+	hud_queue_replay_end_hook = safetyhook::create_mid(0xCF8FFF, [](SafetyHookContext& ctx) {
+		hud_replay_thread = 0;
+		});
+	// Vertical centring for widescreen taller than 16:9, see hud_remap_y. All three are no-ops unless hud_offset_y is set.
+	// After the vint vertex scale loop: XYZRHW vertices, stride 0x1C, y at +4.
+	hud_vertex_offset_hook = safetyhook::create_mid(0xD1DFB2, [](SafetyHookContext& ctx) {
+		if (hud_offset_y == 0.f || *(uint8_t*)0x252A2A2 != 1)
+			return;
+		int count = *(int*)0x252A2F8;
+		if (!hud_draw_is_vint()) {
+			// Not vint: give back the stock per-axis scale this drawing was positioned for.
+			const float k = hud_stock_y_ratio();
+			for (int i = 0; i < count; i++)
+				*(float*)(0x22F643C + i * 0x1C) *= k;
+			return;
+		}
+		// Only stretch to the screen edge under a full-screen clip (tint, letterbox, fades). Clipped geometry,
+		// like the rotating minimap image, hangs far past the canvas and would get its corners pulled unevenly.
+		for (int i = 0; i < count; i++) {
+			float& y = *(float*)(0x22F643C + i * 0x1C);
+			y = hud_scissor_full ? hud_remap_y(y) : y + hud_offset_y;
+		}
+		});
+	// vint scissor rect after scaling: esi = top, eax = bottom.
+	hud_scissor_offset_hook = safetyhook::create_mid(0xD1E82F, [](SafetyHookContext& ctx) {
+		if (hud_offset_y == 0.f)
+			return;
+		if (!hud_draw_is_vint()) {
+			if (*(uint8_t*)0x252A2A2 != 1)
+				return;
+			const float k = hud_stock_y_ratio();
+			ctx.esi = (uintptr_t)(int)((float)(int)ctx.esi * k);
+			ctx.eax = (uintptr_t)(int)((float)(int)ctx.eax * k);
+			return;
+		}
+		// Scissor and draw commands go through the same (possibly deferred) queue in order,
+		// so this is the clip the next flushed batch was recorded under.
+		const float edge = hud_edge_px();
+		hud_scissor_full = (float)(int)ctx.esi <= edge && (float)(int)ctx.eax >= hud_canvas_h - edge;
+		if (*(uint8_t*)0x252A2A2 != 1)
+			return;
+		ctx.esi = (uintptr_t)(int)hud_remap_y((float)(int)ctx.esi);
+		ctx.eax = (uintptr_t)(int)hud_remap_y((float)(int)ctx.eax);
+		});
+	// 3D to vint projection maps the full screen height onto 720; spread it over the taller canvas instead.
+	hud_project_offset_hook = safetyhook::create_mid(0xD22C66, [](SafetyHookContext& ctx) {
+		if (hud_offset_y == 0.f || *(uint8_t*)0x213C383 != 1)
+			return;
+		float& y = *(float*)(ctx.esp + 0x10);
+		float stretch = (hud_canvas_h + hud_offset_y * 2.f) / hud_canvas_h;
+		y = 360.f + (y - 360.f) * stretch;
+		});
 
 	Juiced::onInputPoll() += []() 
 		{
