@@ -20,7 +20,9 @@ using namespace DLC;
 
 
 #define SPAWN_INFO_STRING_POOL_SIZE 5120 // base game is 4096, this is what DLC increases it
-#define MAX_VEH 168
+#define MAX_VEH 240 // Keep registered vehicle IDs within the native 8-bit save format.
+static_assert(MAX_VEH < 255);
+constexpr unsigned int VEHICLE_TABLE_POOL_BYTES = 2 * 1024 * 1024;
 #define STORE_ITEM_LIMIT 512
 // can be increased to 30! 31 will static_assert, reasons why are below (probably but 10 is also safe) (clippy95)
 #define MAX_VEHICLES_PER_UNLOCK 6
@@ -693,8 +695,8 @@ void IncreaseVehLimits() {
     SafeWrite32(0x00DB2050 + 1, (UInt32)PostLoadArr);
     SafeWrite32(0x00ADAEB2 + 3, (UInt32)PostLoadArr);
 
-    SafeWrite32(0x0051F0CB + 1, 1003520); // increased vehicle memory pool for other tables
-    SafeWrite32(0x0051F0FD + 1, 1003520);
+    SafeWrite32(0x0051F0CB + 1, VEHICLE_TABLE_POOL_BYTES); // fixed capacity for vehicle/customization tables
+    SafeWrite32(0x0051F0FD + 1, VEHICLE_TABLE_POOL_BYTES);
 
     ReplaceVehArray(); // swap out all the original veh array references
 }
@@ -1117,23 +1119,46 @@ void ParseVehicle(xtbl_node* TablePointer, int Unk) {
 
 void ParseVehicleTable(const char* TableName)
 {
-    xtbl_node* Vehicle;
-    char Buffer[32 * 65];
-    int Count = 0;
-
-    xtbl_node* Node = parse_table_node(TableName, 0);
-    for (Vehicle = xtbl_find(Node, "Vehicle"); Vehicle; Vehicle = xtbl_find_next(Node, Vehicle, "Vehicle")) {
-        const char* Name = xtbl_get_req_string_ref(Vehicle, "Name");
-        char* New = &Buffer[Count * 65];
-        Count++;
-        sprintf(New, "%s_veh.xtbl", Name);
+    // Copy names before xtbl_free invalidates the source table. The old
+    // 32-entry stack array overflowed when more DLC vehicles were registered.
+    char filenames[MAX_VEH][65]{};
+    int count = 0;
+    xtbl_node* node = parse_table_node(TableName, 0);
+    for (auto* vehicle = node ? xtbl_find(node, "Vehicle") : nullptr; vehicle;
+         vehicle = xtbl_find_next(node, vehicle, "Vehicle")) {
+        const char* name = xtbl_get_req_string_ref(vehicle, "Name");
+        if (count == MAX_VEH) {
+            Logger::Log("Vehicle table {} exceeds the {} filename capacity", TableName, MAX_VEH);
+            break;
+        }
+        if (!name || !*name || strlen(name) + sizeof("_veh.xtbl") > sizeof(filenames[0])) {
+            Logger::Log("Vehicle table {} contains an invalid or overlong model name", TableName);
+            continue;
+        }
+        sprintf_s(filenames[count++], "%s_veh.xtbl", name);
     }
-
     xtbl_free();
 
-    for (int i = 0; i < Count; i++) {
-        Node = parse_table_node(&Buffer[i * 65], 0);
-        ParseVehicle(Node, -1);
+    for (int i = 0; i < count; ++i) {
+        node = parse_table_node(filenames[i], 0);
+        int entries = 0;
+        for (auto* vehicle = node ? xtbl_find(node, "Vehicle") : nullptr; vehicle;
+             vehicle = xtbl_find_next(node, vehicle, "Vehicle")) {
+            ++entries;
+        }
+        if (!node || entries == 0) {
+            Logger::Log("Skipping missing or empty vehicle table {}", filenames[i]);
+            xtbl_free();
+            continue;
+        }
+        // Retail vehicle_parse_vehicle_table (AEDA10) appends without a bound.
+        const int registered = *reinterpret_cast<const int*>(0x252A0D8);
+        if (registered >= 0 && registered <= MAX_VEH && entries <= MAX_VEH - registered) {
+            ParseVehicle(node, -1);
+        } else {
+            Logger::Log("Skipping {}: {} existing plus {} entries exceeds vehicle capacity {}",
+                filenames[i], registered, entries, MAX_VEH);
+        }
         xtbl_free();
     }
 }
