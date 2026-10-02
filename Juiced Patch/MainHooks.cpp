@@ -234,7 +234,7 @@ BOOL __stdcall Hook_GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 	std::string cpu = getCPUName();
 	Logger::TypedLog(CHN_DLL, "RUNNING DIRECTORY: {}\n", static_cast<const char*>((LPSTR)executableDirectory));
 	Logger::TypedLog(CHN_DLL, "LOG FILE CREATED: {}\n", std::string_view(timeString));
-	Logger::TypedLog(CHN_DLL, "--- DLL Based on MonkeyPatch by scanti, additional work by Uzis, Tervel, jason098 and Clippy95. ---\n\n");
+	Logger::TypedLog(CHN_DLL, "--- Juiced Patch by Uzis, Tervel, jason098, Clippy95 and contributors. ---\n\n");
 
 	// ~~~ SPECS ~~~
 	Logger::TypedLog(CHN_DLL, "--- Specs: ---\nCPU: {}\n", cpu);

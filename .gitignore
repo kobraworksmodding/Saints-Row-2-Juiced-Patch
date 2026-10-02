@@ -1,20 +1,24 @@
-release
-Debug - LITE
-RELOADED - DEV
-RELOADED
-Monkey Patch/Debug - LITE
-Monkey Patch/RELOADED - DEV
-Monkey Patch/Release
-Monkey Patch/RELOADED
-Monkey Patch/UGC/thaRow
-Monkey Patch/UGC/thaRow
-.vs
-/Monkey Patch/Generated/BuildInfo.h
-/build_fmt.log
+# Build outputs and intermediate files (including older local build directories)
+Debug/
+Release/
+Debug - LITE/
+Reloaded Debug/
+RELOADED/
+RELOADED - DEV/
+Generated/
+
+# Private multiplayer sources
+/Juiced Patch/UGC/thaRow/
+/Juiced Patch/UGC/AT.cpp
+/Juiced Patch/UGC/AT.h
+/Monkey Patch/UGC/thaRow/
+/Monkey Patch/UGC/AT.cpp
+/Monkey Patch/UGC/AT.h
+
+# Local Visual Studio settings and build logs
+.vs/
 *.vcxproj.user
 *.suo
-.vs/
 *.VC.db
 *.VC.opendb
-Monkey Patch/UGC/AT.cpp
-Monkey Patch/UGC/AT.h
+/build_fmt.log

@@ -3,8 +3,8 @@ on:
   push:
   pull_request:
 env:
-  SOLUTION_FILE_PATH: .
-  BUILD_CONFIGURATION: Debug
+  SOLUTION_FILE_PATH: Juiced Patch.sln
+  BUILD_CONFIGURATION: Release
 permissions:
   contents: read
 jobs:
@@ -20,17 +20,17 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Restore NuGet packages
       working-directory: ${{ env.GITHUB_WORKSPACE }}
-      run: nuget restore ${{ env.SOLUTION_FILE_PATH }}
+      run: nuget restore "${{ env.SOLUTION_FILE_PATH }}"
     - name: Build solution
       working-directory: ${{ env.GITHUB_WORKSPACE }}
-      run: msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:Platform=Win32 ${{ env.SOLUTION_FILE_PATH }}
+      run: msbuild /m /p:Configuration=${{ env.BUILD_CONFIGURATION }} /p:Platform=Win32 "${{ env.SOLUTION_FILE_PATH }}"
     - name: Prepare output folder
       run: |
         mkdir upload
         copy "Release\DFEngine.dll" upload\
         copy "Release\DFEngine.pdb" upload\
         copy "Discord\discord_game_sdk.dll" upload\
-        copy "Monkey Patch\Ext\lib\x86\SDL3.dll" upload\
+        copy "Juiced Patch\Ext\lib\x86\SDL3.dll" upload\
         copy "external\SDL_GameControllerDB\gamecontrollerdb.txt" upload\
         copy "juiced.ini" upload\
         copy "loose.txt" upload\

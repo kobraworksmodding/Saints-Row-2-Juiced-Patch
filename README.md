@@ -15,25 +15,26 @@ Juiced Patch provides these fixes and enhancements to the Saints Row 2 PC port, 
 </p>
 
 
-This is the entire project of SR2 Juiced Patch in it's entirety minus some Tharow code. \
-Juiced Patch was originally based on Monkey Patch by [Scanti](https://github.com/scanti2) \
+This is the entire project of SR2 Juiced Patch in its entirety minus some Tharow code. \
 This project was originally created using Visual Studio 2022 using C++23 and may only be buildable using this setup.
 
-Some main patching areas are all included in Monkey Patch/General/General.cpp and Monkey Patch/MainHooks.cpp
+Some main patching areas are included in the Juiced Patch project under General/General.cpp and MainHooks.cpp.
 
 ## Build Environments
-There are three different build environments for Juiced Patch.
-- Debug (Full Juiced Patch)
-- RELOADED (Full Juiced Patch + Extra stuff for THAROW)
+The public Juiced Patch project supports Win32 builds in Visual Studio 2022:
+- Debug (unoptimized, with debug symbols and the debug runtime)
+- Release (optimized, with debug symbols; used by CI)
 
-(RELOADED Build Environment is still included in this source code but the code we have for SR2 Reloaded is scrapped out of
-this repository for security purposes, So code will not build properly when using the RELOADED Build Environment.)
+RELOADED and RELOADED - DEV configurations are retained for THAROW/multiplayer development. They require private sources that are not included in this repository.
 
 ## How to build?
-- Run the Juiced Patch.sln file using VS 2022 on a version that supports C++23
-- Make sure the configuration is set to "Debug" or "Debug - LITE"
-- Click "Build" then "Build Reloaded Patch" or press CTRL+B
-- The exported Juiced Patch "DFEngine.dll" should output in a folder corresponding to the configuration name in your Juiced Patch project folder.
+- Install Visual Studio 2022 with Desktop development with C++ and a Windows SDK, using a version that supports C++23.
+- Clone with submodules, or run `git submodule update --init --recursive` in an existing checkout.
+- Open Juiced Patch.sln and select "Debug" or "Release" with the Win32 platform.
+- Click "Build" then "Build Juiced Patch" or press CTRL+B.
+- The exported DFEngine.dll and DFEngine.pdb appear in the Debug or Release folder at the repository root. Intermediate files stay under Juiced Patch/<configuration>/Win32.
+- Generated/BuildInfo.h is created automatically by the prebuild step and is not committed.
+- For local debugging, copy Juiced Patch/Juiced Patch.vcxproj.user.template to Juiced Patch/Juiced Patch.vcxproj.user and set the SR2_PATH environment variable to your game folder. Release builds also copy the DLL there when SR2_PATH is set.
 
 ## Active Developers
 - [Soaa](https://github.com/xSoaa)
