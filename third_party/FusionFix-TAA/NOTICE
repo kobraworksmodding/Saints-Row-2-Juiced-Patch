@@ -1,0 +1,9 @@
+The temporal resolve in Monkey Patch/Render/TemporalSR2.hlsl is derived from
+GTAIV.EFLC.FusionFix source/resources/temporal/Temporal.hlsl, licensed under GPL-3.0.
+Upstream: https://github.com/ThirteenAG/GTAIV.EFLC.FusionFix
+Reference checkout commit: 0be7a85e14408a202b3dc80f8c624fbce8fc6a08
+Local reference: Z:/repos/GTAIV.EFLC.FusionFix-C
+SR2 adaptations: perspective depth, native vertex shader replay, single history output,
+per-pixel history validity, depth-history rejection, shared scene projection jitter,
+temporal native Bayer coverage, and preservation of SR2 scene alpha.
+See COPYING and the included editable HLSL source.

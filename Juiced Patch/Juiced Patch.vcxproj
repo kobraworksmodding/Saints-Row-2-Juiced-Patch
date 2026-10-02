@@ -280,6 +280,7 @@
     <ClCompile Include="Render\d3d9_hook.cpp" />
     <ClCompile Include="Render\Render2D.cpp" />
     <ClCompile Include="Render\Render3D.cpp" />
+    <ClCompile Include="Render\TemporalAA.cpp" />
     <ClCompile Include="Render\Shadows.cpp" />
     <ClCompile Include="RPCHandler.cpp" />
     <ClCompile Include="SafeWrite.cpp" />
@@ -353,6 +354,11 @@
     <ClInclude Include="Patches\QueryPerformance Fix.h" />
     <ClInclude Include="Player\Behavior.h" />
     <ClInclude Include="Render\Render3D.h" />
+    <ClInclude Include="Render\TemporalAA.h" />
+    <ClInclude Include="Render\TemporalMSAA.h" />
+    <ClInclude Include="Render\TemporalProjection.h" />
+    <ClInclude Include="Render\TemporalShader.h" />
+    <ClInclude Include="Render\TemporalShaders.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="RPCHandler.h" />
     <ClInclude Include="SafeWrite.h" />

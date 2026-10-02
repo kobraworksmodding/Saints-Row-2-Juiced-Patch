@@ -25,6 +25,7 @@
 #include "../Game/CrashFixes.h"
 #include "../LUA/InGameConfig.h"
 #include "Shadows.h"
+#include "TemporalAA.h"
 #include "../Math/Math.h"
 #include "../UtilsGlobal.h"
 #include <fstream>
@@ -1168,7 +1169,7 @@ namespace Render3D
 		bool AlphaMaskVal = *(bool*)DynAddress(0x0252A2EC);
 
 		bool Result = MSAA > 0 && AlphaMaskVal;
-		float AlphaMask[4] = { Result ? 1.0f : 0.0f, DitherFilter ? 1.0f : 0.0f, 0.0f, 0.0f };
+		float AlphaMask[4] = { Result ? 1.0f : 0.0f, (DitherFilter && !TemporalAA::UsesTemporalFiltering()) ? 1.0f : 0.0f, 0.0f, 0.0f };
 		if (alpha_lastframe != Game::Timer::GetFrameCount()) {
 			ChangeShaderOptions();
 			SetPSConstF(189, &AlphaMask[0], 1);
@@ -1333,6 +1334,7 @@ namespace Render3D
 	}
 	SafetyHookInline ReleaseTextures;
 	void ReleaseTexturesHook() {
+		TemporalAA::ReleaseResources();
 		if (shd_cubedefault_tex) {
 			shd_cubedefault_tex->Release();
 			shd_cubedefault_tex = nullptr;
@@ -1540,6 +1542,7 @@ namespace Render3D
 
 		FixVanityPlateRendering();
 		FixPlayerImageRendering();
+		TemporalAA::Init();
 
 		if (GameConfig::GetValue("Debug", "Hook_lua_load_dynamic_script_buffer", 1, "Patches in Juiced Patch custom updates to settings adding MSAA 8x Support and fixing up label names, required for Ultrawide support.")) { // cuz rn this just patches in the resolutions, if init is expanded, please move this check inside
 			patchCall((void*)0xD1526E, init_directx9);

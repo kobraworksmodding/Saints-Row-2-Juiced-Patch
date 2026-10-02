@@ -22,3 +22,5 @@ Generated/
 *.VC.db
 *.VC.opendb
 /build_fmt.log
+/tests
+__pycache__/

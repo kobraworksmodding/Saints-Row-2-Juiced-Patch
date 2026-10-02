@@ -739,9 +739,18 @@ LONG WINAPI CustomUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
         ex.ExceptionPointers = ExceptionInfo;
         ex.ClientPointers = TRUE;
 
-        if (FAILED(MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpWithDataSegs, &ex, NULL, NULL)))
-
+        const BOOL dump_written = MiniDumpWriteDump(
+            GetCurrentProcess(),
+            GetCurrentProcessId(),
+            hFile,
+            MiniDumpWithFullMemory,
+            &ex,
+            NULL,
+            NULL);
         CloseHandle(hFile);
+
+        if (!dump_written)
+            OutputDebugStringA("MiniDumpWriteDump failed.\n");
     }
 
     // step 2: write log

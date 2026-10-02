@@ -101,6 +101,9 @@
     <ClCompile Include="Mem\Memory.cpp">
       <Filter>Source Files\Mem</Filter>
     </ClCompile>
+    <ClCompile Include="Render\TemporalAA.cpp">
+      <Filter>Source Files\Render</Filter>
+    </ClCompile>
     <ClCompile Include="Render\Render3D.cpp">
       <Filter>Source Files\Render</Filter>
     </ClCompile>
@@ -277,6 +280,21 @@
     </ClInclude>
     <ClInclude Include="Mem\Memory.h">
       <Filter>Source Files\Mem</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\TemporalAA.h">
+      <Filter>Source Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\TemporalMSAA.h">
+      <Filter>Source Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\TemporalProjection.h">
+      <Filter>Source Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\TemporalShader.h">
+      <Filter>Source Files\Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Render\TemporalShaders.h">
+      <Filter>Source Files\Render</Filter>
     </ClInclude>
     <ClInclude Include="Render\Render3D.h">
       <Filter>Source Files\Render</Filter>
