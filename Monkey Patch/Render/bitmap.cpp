@@ -459,6 +459,153 @@ void install_animated_bitmap_hooks() {
 }
 }
 
+namespace {
+constexpr int render_readback_count = 29;
+
+struct native_render_readback {
+    BYTE pending;
+    BYTE padding[3];
+    BYTE* pixels;
+    int pitch;
+    IDirect3DSurface9* surface;
+};
+static_assert(sizeof(native_render_readback) == 16);
+
+struct render_readback_storage {
+    BYTE* pixels = nullptr;
+    size_t size = 0;
+    UINT width = 0;
+    UINT height = 0;
+    D3DFORMAT format = D3DFMT_UNKNOWN;
+    IDirect3DSurface9* surface = nullptr;
+    IDirect3DDevice9* device = nullptr;
+};
+
+render_readback_storage Render_readbacks[render_readback_count];
+CRITICAL_SECTION Render_readback_lock;
+
+void release_render_readback(render_readback_storage& storage) {
+    if (storage.surface) storage.surface->Release();
+    if (storage.pixels) HeapFree(GetProcessHeap(), 0, storage.pixels);
+    storage = {};
+}
+
+void reset_render_readbacks(SafetyHookContext&) {
+    scoped_critical_section lock(&Render_readback_lock);
+    auto* native = reinterpret_cast<native_render_readback*>(0x22FD678);
+    for (int target = 0; target < render_readback_count; ++target) {
+        auto& storage = Render_readbacks[target];
+        if (storage.surface) storage.surface->Release();
+        storage.surface = nullptr;
+        storage.device = nullptr;
+        // Water code caches the returned CPU pointer. Keep its allocation stable
+        // through device resets, but discard the old frame and staging surface.
+        if (storage.pixels) memset(storage.pixels, 0, storage.size);
+        native[target] = {};
+        native[target].pixels = storage.pixels;
+        if (storage.height) native[target].pitch = static_cast<int>(storage.size / storage.height);
+    }
+}
+
+void* __cdecl read_render_target(int target, int* pitch, void* output) {
+    if (pitch) *pitch = 0;
+    if (target < 0 || target >= render_readback_count) return nullptr;
+
+    scoped_critical_section lock(&Render_readback_lock);
+    auto& native = reinterpret_cast<native_render_readback*>(0x22FD678)[target];
+    auto& storage = Render_readbacks[target];
+    auto* device = *reinterpret_cast<IDirect3DDevice9**>(0x252A2D0);
+    auto* source = reinterpret_cast<IDirect3DSurface9**>(0x22FDBA8)[target];
+    if (!device) return nullptr;
+
+    D3DSURFACE_DESC desc{};
+    desc.Width = reinterpret_cast<UINT*>(0xDC8F00)[target];
+    desc.Height = reinterpret_cast<UINT*>(0xDC8E78)[target];
+    desc.Format = reinterpret_cast<D3DFORMAT*>(0xDC8FB0)[target];
+    if (source && FAILED(source->GetDesc(&desc))) return nullptr;
+
+    size_t pixel_bytes = 0;
+    switch (desc.Format) {
+    case D3DFMT_A8R8G8B8:
+    case D3DFMT_X8R8G8B8:
+    case D3DFMT_D24S8:
+    case D3DFMT_R32F: pixel_bytes = 4; break;
+    case D3DFMT_R5G6B5: pixel_bytes = 2; break;
+    case D3DFMT_G32R32F: pixel_bytes = 8; break;
+    default: return nullptr;
+    }
+    if (!desc.Width || !desc.Height || desc.Width > INT_MAX / pixel_bytes) return nullptr;
+    const size_t row_bytes = desc.Width * pixel_bytes;
+    if (desc.Height > SIZE_MAX / row_bytes) return nullptr;
+    const size_t size = row_bytes * desc.Height;
+
+    if (storage.device != device) {
+        if (storage.surface) storage.surface->Release();
+        storage.surface = nullptr;
+        storage.device = device;
+    }
+    if (!storage.pixels || storage.width != desc.Width || storage.height != desc.Height
+        || storage.format != desc.Format) {
+        auto* pixels = static_cast<BYTE*>(HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size));
+        if (!pixels) return nullptr;
+        release_render_readback(storage);
+        storage.pixels = pixels;
+        storage.size = size;
+        storage.width = desc.Width;
+        storage.height = desc.Height;
+        storage.format = desc.Format;
+        storage.device = device;
+        if (output) memset(output, 0, size);
+    }
+
+    // Water callers keep this pointer between render commands. Publish owned
+    // pixels, never LockRect's pointer, whose lifetime ends at UnlockRect.
+    native.pixels = storage.pixels;
+    native.pitch = static_cast<int>(row_bytes);
+    native.surface = storage.surface;
+    if (pitch) *pitch = native.pitch;
+
+    if (native.pending && source && SUCCEEDED(device->TestCooperativeLevel())) {
+        native.pending = 0;
+        if (!storage.surface) {
+            device->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format,
+                D3DPOOL_SYSTEMMEM, &storage.surface, nullptr);
+            native.surface = storage.surface;
+        }
+        bool copied = false;
+        if (storage.surface && SUCCEEDED(device->GetRenderTargetData(source, storage.surface))) {
+            D3DLOCKED_RECT locked{};
+            if (SUCCEEDED(storage.surface->LockRect(&locked, nullptr, D3DLOCK_READONLY))) {
+                if (locked.pBits && locked.Pitch >= static_cast<int>(row_bytes)) {
+                    for (UINT row = 0; row < desc.Height; ++row)
+                        memcpy(storage.pixels + row * row_bytes,
+                            static_cast<const BYTE*>(locked.pBits) + row * static_cast<size_t>(locked.Pitch), row_bytes);
+                    copied = true;
+                }
+                storage.surface->UnlockRect();
+            }
+        }
+        if (!copied) native.pending = 1;
+    }
+    return storage.pixels;
+}
+
+void install_render_readback_hooks() {
+    InitializeCriticalSection(&Render_readback_lock);
+    static auto readback = safetyhook::create_inline(0xD1C530, read_render_target, safetyhook::InlineHook::StartDisabled);
+    // Clear our owned cache before native initialization/reset rebuilds targets.
+    // These sites avoid the existing CreateRTs hook in Render3D.cpp.
+    static auto initial = safetyhook::create_mid(0xD1F6EC, reset_render_readbacks, safetyhook::MidHook::StartDisabled);
+    static auto reset = safetyhook::create_mid(0xD1F893, reset_render_readbacks, safetyhook::MidHook::StartDisabled);
+    if (!readback || !initial || !reset || !initial.enable() || !reset.enable() || !readback.enable()) {
+        readback.reset(); initial.reset(); reset.reset();
+        AssertHandler::AssertOnce("Bm_render_readback", "Unable to install owned render-target readbacks");
+        return;
+    }
+    Logger::TypedLog("Bitmap", "Installed owned render-target readbacks (including water).\n");
+}
+}
+
 __declspec(naked) void LoadBitmapTableasm(const char* FileName) {
 
 
@@ -536,6 +683,7 @@ int bm_load_bitmaps_file()
     return result;
 }
     void Init() {
+        install_render_readback_hooks();
         static auto cube_surface_release = safetyhook::create_mid(0xD198B7, [](SafetyHookContext& ctx) {
             // pc_gr_texture_register has just unlocked one cubemap face/mip.
             // GetCubeMapSurface added a reference that the native path never releases.
