@@ -1,0 +1,76 @@
+// Register-mapped HLSL reconstructed from this material's preserved FXO template.
+// RGB colour clamps lift only with Juiced FP16 active (c223.x); scalar masks stay native.
+float4 c4:register(c4);
+float4 c5:register(c5);
+float4 c6:register(c6);
+float4 c8:register(c8);
+float4 c9:register(c9);
+float4 c14:register(c14);
+float4 c24:register(c24);
+float4 c25:register(c25);
+float4 c26:register(c26);
+float4 c28:register(c28);
+float4 c29:register(c29);
+float4 JuicedColour:register(c223);
+sampler2D s0:register(s0);
+sampler2D s1:register(s1);
+sampler2D s15:register(s15);
+float4 Select4(float4 t,float4 a,float4 b) { return float4(t.x>=0?a.x:b.x,t.y>=0?a.y:b.y,t.z>=0?a.z:b.z,t.w>=0?a.w:b.w); }
+struct Inputs {
+    float4 v0:TEXCOORD0;
+    float4 v1:TEXCOORD1;
+};
+float4 PS_Main(Inputs input,float2 pixel:VPOS):COLOR0 {
+    float4 v0=input.v0;
+    float4 v1=input.v1;
+    float4 vPos=float4(pixel,0,0);
+    const float4 c0=float4(-0.5,-2.0,1.0,0.0);
+    const float4 c1=float4(0.300000012,0.589999974,0.109999999,0.0);
+    float4 r0=0;
+    float4 r1=0;
+    float4 r2=0;
+    float4 r3=0;
+    float4 r4=0;
+    float4 colour=0;
+    r0.xy=((c28.zwzw+-c28.yzzw)).xy;
+    r0.x=((1/r0.xxxx)).x;
+    r0.y=((r0.xxxx*r0.yyyy)).y;
+    r0.z=((c28.zzzz+c28.wwww)).z;
+    r1.xyz=(c0.xyzw).xyz;
+    r0.z=((r0.zzzz*r1.xxxx+c8.yyyy)).z;
+    r0.x=((r0.zzzz*r0.xxxx)).x;
+    r0.x=(saturate((r0.yyyy*c0.xxxx+abs(r0.xxxx)))).x;
+    r0.y=((r0.xxxx*c0.yyyy+c0.zzzz)).y;
+    r0.x=((c29.yyyy*r0.yyyy+r0.xxxx)).x;
+    r0.y=((c29.xxxx+-c29.zzzz)).y;
+    r0.x=(Select4(r0.yyyy,r0.xxxx,c0.wwww)).x;
+    r2=(tex2D(s1,(v0.zwzw).xy)).xyzw;
+    r0.y=(float4(dot((r2.xyzw).xyz,(c1.xyzw).xyz),dot((r2.xyzw).xyz,(c1.xyzw).xyz),dot((r2.xyzw).xyz,(c1.xyzw).xyz),dot((r2.xyzw).xyz,(c1.xyzw).xyz))).y;
+    r0.y=((r0.yyyy*r0.xxxx)).y;
+    r0.xzw=((r0.xxxx*c26.xyyz)).xzw;
+    r1.x=((r0.yyyy*c25.xxxx)).x;
+    r0.y=((r0.yyyy*-c25.xxxx+r1.zzzz)).y;
+    r1.zw=((r0.yyyy*v1.xyxy)).zw;
+    r3.xyz=(lerp(c5.xyzw,-r1.yyyy,r1.xxxx)).xyz;
+    r3.xyz=((-r3.xyzw+c0.zzzz)).xyz;
+    r1.xy=((-c0.xxxx+vPos.xyzw)).xy;
+    r1.xy=((r1.xyzw*c9.zwzw)).xy;
+    r4=(tex2D(s15,(r1.xyzw).xy)).xyzw;
+    r3.xyz=((r4.xyzw*c4.yyyy+-r3.xyzw)).xyz;
+    r3.xyz=((r3.xyzw+c0.zzzz)).xyz;
+    r4=(tex2D(s0,(v0.xyzw).xy)).xyzw;
+    r4=((r4.xyzw*c24.xyzw)).xyzw;
+    r0.xyz=((JuicedColour.x>.5 ? max((r2.xyzw*r0.xzww+r4.xyzw),0) : saturate((r2.xyzw*r0.xzww+r4.xyzw)))).xyz;
+    r0.w=((r4.wwww*c4.wwww)).w;
+    r2=(c6.xyzw).xyzw;
+    r2=((-r2.xyzw+c14.xyzw)).xyzw;
+    r2=((r1.wwww*r2.xyzw+c6.xyzw)).xyzw;
+    r1.x=((r1.zzzz*r2.wwww)).x;
+    r1.yzw=((r0.xxyz*-r3.xxyz+r2.xxyz)).yzw;
+    r1.xyz=((r1.yzww*r1.xxxx)).xyz;
+    r0.xyz=((r0.xyzw*r3.xyzw+r1.xyzw)).xyz;
+    r1.x=(max(r0.wwww,c4.xxxx)).x;
+    colour.w=(r0.wwww).w;
+    colour.xyz=((r0.xyzw*r1.xxxx)).xyz;
+    return colour;
+}

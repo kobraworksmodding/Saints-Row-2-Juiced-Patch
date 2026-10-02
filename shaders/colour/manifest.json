@@ -1,0 +1,38 @@
+[
+  {
+    "file": "bb-moon_s.fxo_pc",
+    "colour_clamps": 1,
+    "before_sha256": "83ae319b0b0f44a1b5cf2f96db02ffdc6444876f71073dfc5d8ab611282b2d73",
+    "after_sha256": "4c6b4d80b46283417c47011ab8902d2aba7a2321c582bfc188e178202c5d800c"
+  },
+  {
+    "file": "bb-tod-window3_juiced_s.fxo_pc",
+    "colour_clamps": 6,
+    "before_sha256": "f833decd5744c0e79a789ffdae6185beb9032f5ab26416bf1517bec01487f3f5",
+    "after_sha256": "ad674b7d84e42384561a6cdb5870203b048762bea9c65137984a5711b6e170f2"
+  },
+  {
+    "file": "bb-tod-window3_s.fxo_pc",
+    "colour_clamps": 6,
+    "before_sha256": "48a2448b90f639b4c009bd977360deecbefc8bb04bf7040a5b9085e4d732a9dd",
+    "after_sha256": "b92fed309a34cfa09d529595b28d16e54016435ff41aa89f21ff99aebdaa71c9"
+  },
+  {
+    "file": "sr2-simple-tod-window4_ms.fxo_pc",
+    "colour_clamps": 3,
+    "before_sha256": "e345eae69c1f3bab4771e81f04ec8c9e0cc824652b2775223ea021c59099baa3",
+    "after_sha256": "b2313055e4dcd24fab0ad0e38b0d12415daa01ab243ff68294eee733ca94426a"
+  },
+  {
+    "file": "sr2-simple-tod-window4_s.fxo_pc",
+    "colour_clamps": 3,
+    "before_sha256": "db5aae97eccb89f2c488759925769eb11dc27aaa85f05ecec1a48194b14d8333",
+    "after_sha256": "6341761ddc337d642638493cb9002c7dc76df0c487445fa149935916bfccde97"
+  },
+  {
+    "file": "sr2-water3_s.fxo_pc",
+    "colour_clamps": 5,
+    "before_sha256": "ed6d3786a9aa3a020fb5e020939fde1554596d1ee43990434eb443a9f64bea1b",
+    "after_sha256": "78d235a39875c4badb74b4141b3bebae3bc4bbad4c51a52c3b4c6d3c18c4f82e"
+  }
+]
