@@ -1142,7 +1142,7 @@ namespace XACT
 			XAudio2FxReverbParametersLite params{};
 
 			const int room = exterior ? -1000 : -10000;
-			const int room_hf = exterior ? 0 : -600;
+			const int room_hf = exterior ? -600 : -600;
 			const int reflections = exterior ? -602 : -400;
 			const int reverb = exterior ? -302 : 500;
 			const float decay_time = exterior ? 2.91f : 1.10f;
