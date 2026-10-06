@@ -537,16 +537,29 @@ void ClearDirCache()
     return;
 }
 
-struct VPPFile
+
+
+
+struct LoosePackfileEntry
 {
-    const char* FileName;
-    const char* Extension;
+    const char* filename;
+    const char* extension;
+    uint32_t sector;
+    uint32_t start;
+    uint32_t size;
+    uint32_t compressed_size;
+    void* parent;
 };
+static_assert(sizeof(LoosePackfileEntry) == 0x1C);
+static_assert(offsetof(LoosePackfileEntry, size) == 0x10);
+static_assert(offsetof(LoosePackfileEntry, compressed_size) == 0x14);
+static_assert(offsetof(LoosePackfileEntry, parent) == 0x18);
+
 
 struct VPPFileData
 {
     unsigned int Hash;
-    VPPFile* Data;
+    LoosePackfileEntry* Data;
 };
 
 int FileHashExists(const char* FileName) {
@@ -575,9 +588,7 @@ void ProcessCacheHashes(LooseFileCache& Cache) {
             std::string Extension = (matchedExt[0] == '.') ? matchedExt + 1 : matchedExt;
             char* tempBase = _strdup(BaseName.c_str());
             char* tempExt = _strdup(Extension.c_str());
-            VPPFile* Entry = new VPPFile();
-            Entry->FileName = tempBase;
-            Entry->Extension = tempExt;
+            auto* Entry = new LoosePackfileEntry{tempBase, tempExt, 0, 0, it->second.file_size, 0, nullptr};
             VPPFileData* Data = new VPPFileData();
             Data->Hash = Hash;
             Data->Data = Entry;
