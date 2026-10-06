@@ -392,6 +392,31 @@ CMultiPatch CMPatches_SR1Reloading = {
 
 	void Init()
 	{
+		// A streaming-stalled NPC can reserve a seat forever while the player waits
+		// in ENTER_TELEPORT with controls disabled. The stock branch cancels a
+		// PATHFIND queue head; use that same native cancellation for the stalled NPC.
+		static auto vehicle_entry_queue_hook = safetyhook::create_mid(0xB0F315, [](SafetyHookContext& ctx) {
+			if (ctx.esi >= 8 || !ctx.ebx || !ctx.ebp) return;
+			const uint32_t requester_index = *(uint32_t*)(ctx.ebp + 12);
+			if (requester_index >= 8 || requester_index == ctx.esi) return;
+			const uintptr_t player = UtilsGlobal::getplayer();
+			if (!player || *(uintptr_t*)(player + 4320) != ctx.ebx) return;
+			const uintptr_t requester = ctx.ebx + 844 + 168 * requester_index;
+			const uintptr_t head = ctx.ebx + 844 + 168 * ctx.esi;
+			const uint32_t player_handle = *(uint32_t*)(player + 68);
+			const uint32_t head_handle = *(uint32_t*)(head);
+			if (!player_handle || *(uint32_t*)(requester) != player_handle
+				|| *(int*)(requester + 4) != 1 || *(int*)(requester + 8) != 4
+				|| !head_handle || head_handle == player_handle
+				|| *(int*)(head + 4) != 1 || *(int*)(head + 8) != 7) return;
+			const int seat = *(int*)(requester + 88);
+			if (seat < 0 || seat >= 8 || *(int*)(head + 88) != seat) return;
+			const uintptr_t npc = *(uintptr_t*)(0x2149C64 + 16 * (head_handle & 0xFFF));
+			if (!npc || *(uint32_t*)(npc + 68) != head_handle
+				|| *(uint32_t*)(npc + 76) != 1 || *(uint8_t*)(npc + 972) != 2) return;
+			// Reuse the existing ENTER_CANCEL branch; preserve every other flag.
+			ctx.eflags |= 0x40u;
+			});
 		// (clippy95) fixes https://github.com/kobraworksmodding/SR2IssuesList/issues/46
 		// Kneecapper visuals weren't stopped when vehicle is stopped.
 		static auto vehicle_kneecapper_unequip_midhook = safetyhook::create_mid(0xADDD92, [](SafetyHookContext& ctx) {
