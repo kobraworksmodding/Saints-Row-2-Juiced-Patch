@@ -20,6 +20,7 @@ static float garbagedata = 0;
 double bogusPi = 2.90;
 double bogusRagForce = 2.5;
 double animBlend = 3.0;
+double staticLean = 1.0;
 
 namespace Behavior
 {
@@ -42,7 +43,10 @@ namespace Behavior
 		// Return "human_spinebend_do_lean"
 		// this function literally ONLY controls the left and right sway that SR2 added when jogging and sprinting
 		// removing this makes it feel more close to SR1.
-		patchByte((BYTE*)0x009B5B10, 0xC3);
+		// patchByte((BYTE*)0x009B5B10, 0xC3);
+		//patchFloat((BYTE*)0x009B5BB1 + 2, staticLean); //Lean_hip
+		//patchFloat((BYTE*)0x009B5BBD + 2, staticLean); //lean_foot
+		//patchFloat((BYTE*)0x009B5BC9 + 2, staticLean);
 	}
 	
 	int FindMeleeTarget(int NPCPointer) {
