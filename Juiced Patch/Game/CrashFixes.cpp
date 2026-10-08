@@ -6,6 +6,8 @@
 #include "../GameConfig.h"
 #include "../FileLogger.h"
 #include <unordered_set>
+#include <cstdint>
+#include <cstring>
 #include "CrashFixes.h"
 #include "../SafeWrite.h"
 #include "../Patcher/patch.h"
@@ -263,6 +265,29 @@ namespace CrashFixes {
 		ctx.eip = 0x00D07249;
 	}
 	void Init() {
+        const auto rejectInvalidVelocity = [](SafetyHookContext& ctx) {
+            const auto velocity = reinterpret_cast<const uint8_t*>(ctx.esp + 0x20);
+            for (size_t i = 0; i < 3; ++i) {
+                uint32_t bits;
+                std::memcpy(&bits, velocity + i * sizeof(float), sizeof(bits));
+                if ((bits & 0x7F800000u) == 0x7F800000u) {
+                    ctx.eip = 0x00B30893; 
+                    return;
+                }
+            }
+        };
+        static auto ownVelocity = safetyhook::create_mid(0x00B307C1, rejectInvalidVelocity);
+        static auto repulsorVelocity = safetyhook::create_mid(0x00B30809, rejectInvalidVelocity);
+
+        static auto splineAdvance = safetyhook::create_mid(0x00B21010, [](SafetyHookContext& ctx) {
+            auto distance = reinterpret_cast<void*>(ctx.esp + 0x1C);
+            uint32_t bits;
+            std::memcpy(&bits, distance, sizeof(bits));
+            if ((bits & 0x7F800000u) == 0x7F800000u) {
+                const uint32_t zero = 0;
+                std::memcpy(distance, &zero, sizeof(zero));
+            }
+        });
 		AssertHandler::CvarFixCrashes = GameConfig::GetValue("Debug", "FixCrashes", 2);
 		AssertHandler::DisableAssertsPopUp = GameConfig::GetValue("Debug", "DisableAssertsPopUp", 0) != 0;
 		static auto DeferPrematureDeviceReset = safetyhook::create_mid(0x00D2026A_g, &DeferDeviceResetUntilDmallocIsReady);
