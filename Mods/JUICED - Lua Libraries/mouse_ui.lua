@@ -233,6 +233,10 @@ function mouse_ui_do(action, a, b)
 		mouse_ui_menu_grid_set(a)
 	elseif action == "menu_scroll" then
 		mouse_ui_menu_scroll_to(a)
+	elseif action == "plist_item" then
+		mouse_ui_plist_set(a, b)
+	elseif action == "plist_view" then
+		mouse_ui_plist_view(a, b)
 	elseif action == "main_menu_hover" then
 		if mui_get("Main_menu_can_has_input") == true and mui_get("Menu_active") == 0 and menu_input_is_blocked() == false then
 			main_menu_update_nav_bar(a)
@@ -446,6 +450,7 @@ function mouse_ui_menu_handler()
 
 	local can_act = m.active == true and menu_input_is_blocked() == false and Menu_transition_in_progress ~= true
 	local hover = false
+	local plab, pdata = mouse_ui_plist_get()
 
 	if mouse_ui_menu_slider_drag(m) or mouse_ui_menu_scroll_drag(m, can_act) then
 		hover = true
@@ -453,7 +458,13 @@ function mouse_ui_menu_handler()
 		if mouse_ui_menu_horz(m, can_act) then
 			hover = true
 		end
-		if Menu_active.custom_show ~= true and Menu_option_labels ~= nil and mouse_ui_visible(Menu_option_labels.frame) then
+		if mouse_ui_menu_tips(m, can_act) then
+			hover = true
+		elseif plab ~= nil then
+			if mouse_ui_plist(m, can_act, plab, pdata) then
+				hover = true
+			end
+		elseif Menu_active.custom_show ~= true and Menu_option_labels ~= nil and mouse_ui_visible(Menu_option_labels.frame) then
 			if mouse_ui_menu_scroll_bar(m, can_act) then
 				hover = true
 			elseif mouse_ui_menu_rows(m, can_act) then
@@ -462,7 +473,10 @@ function mouse_ui_menu_handler()
 		end
 		if can_act then
 			mouse_ui_back(m)
-			mouse_ui_wheel(m, "nav_up", "nav_down")
+			-- the playlist and the phone handle the wheel themselves
+			if plab == nil and mouse_ui_phone_open() == false then
+				mouse_ui_wheel(m, "nav_up", "nav_down")
+			end
 		end
 	end
 
@@ -686,7 +700,19 @@ end
 -- scroll bar drag
 
 -- kind, total, visible, first of the list/grid using the scroll bar
-function mouse_ui_scroll_target()
+-- owner is nil for the menu, "edit" / "playlist" for the playlist editor panes
+function mouse_ui_scroll_target(owner)
+	if owner == "edit" or owner == "playlist" then
+		local lab, data = mouse_ui_plist_get()
+		if lab == nil then
+			return nil
+		end
+		local pd = data[owner]
+		if pd == nil or pd.has_scroll_bar ~= true or pd.scroll_bar == nil then
+			return nil
+		end
+		return "plist", pd.num_items, mui_get("PLAYLIST_MAX_ITEMS"), pd.first_vis_item
+	end
 	local menu = Menu_active
 	local labels = Menu_option_labels
 	if menu == nil or menu == 0 or labels == nil or labels.scroll_bar == nil then
@@ -735,7 +761,11 @@ function mouse_ui_menu_scroll_bar(m, can_act)
 	if kind == nil or total <= vis then
 		return false
 	end
-	local sd = Menu_option_labels.scroll_bar
+	return mouse_ui_scroll_bar_click(m, can_act, Menu_option_labels.scroll_bar, nil)
+end
+
+-- true when the cursor is on the bar, a click grabs it
+function mouse_ui_scroll_bar_click(m, can_act, sd, owner)
 	local x0, y0, x1, y1 = mouse_ui_bbox(sd.bar_grp)
 	if x0 == nil or m.x < x0 - 6 or m.x > x1 + 6 or m.y < y0 or m.y > y1 then
 		return false
@@ -753,7 +783,7 @@ function mouse_ui_menu_scroll_bar(m, can_act)
 			if pos == nil then
 				pos = 0
 			end
-			Mouse_ui.sdrag = { grab = grab, top = ty0 - pos * travel, travel = travel, sound_frame = 0 }
+			Mouse_ui.sdrag = { owner = owner, grab = grab, top = ty0 - pos * travel, travel = travel, sound_frame = 0 }
 			mouse_ui_menu_scroll_drag(m, can_act)
 		end
 	end
@@ -769,7 +799,7 @@ function mouse_ui_menu_scroll_drag(m, can_act)
 		Mouse_ui.sdrag = nil
 		return false
 	end
-	local kind, total, vis, first = mouse_ui_scroll_target()
+	local kind, total, vis, first = mouse_ui_scroll_target(d.owner)
 	if kind == nil or total <= vis then
 		Mouse_ui.sdrag = nil
 		return false
@@ -786,7 +816,11 @@ function mouse_ui_menu_scroll_drag(m, can_act)
 	end
 	local target = floor(pos * (total - vis) + 0.5)
 	if target ~= first then
-		mouse_ui_call("menu_scroll", target)
+		if kind == "plist" then
+			mouse_ui_call("plist_view", d.owner, target)
+		else
+			mouse_ui_call("menu_scroll", target)
+		end
 		if m.frame >= d.sound_frame then
 			audio_play(Menu_sound_item_nav)
 			d.sound_frame = m.frame + 3
@@ -1101,6 +1135,299 @@ function mouse_ui_menu_grid_set(idx)
 	end
 end
 
+-- button tips along the bottom (and in menu footers) are clickable
+
+Mouse_ui_tip_events = { [0] = "select", [1] = "alt_select", [2] = "back" }
+
+function mouse_ui_tip_hit(m, bmp_h, label_h)
+	return mouse_ui_hit_visible(bmp_h, m, 4) or mouse_ui_hit_visible(label_h, m, 4)
+end
+
+function mouse_ui_menu_tips(m, can_act)
+	local ev = nil
+	local tips = mui_get("Menu_base_btn_tips")
+	if tips ~= nil then
+		for i = 0, 2 do
+			local t = tips[i]
+			if t ~= nil and t.visible == true and mouse_ui_tip_hit(m, t.bitmap_h, t.label_h) then
+				ev = Mouse_ui_tip_events[i]
+				break
+			end
+		end
+	end
+	local f = Menu_active.footer
+	if ev == nil and f ~= nil and f.footer_grp ~= nil and f.footer_grp ~= 0 then
+		local g = f.footer_grp
+		if mouse_ui_tip_hit(m, vint_object_find("footer_tip_a_bmp", g), vint_object_find("footer_tip_a_label", g)) then
+			ev = "select"
+		elseif mouse_ui_tip_hit(m, vint_object_find("footer_tip_b_bmp", g), vint_object_find("footer_tip_b_label", g)) then
+			ev = "back"
+		end
+	end
+	if ev == nil then
+		return false
+	end
+	if can_act and m.lpress == true and mouse_ui_locked(m) == false then
+		mouse_ui_inject(ev, 0)
+		mouse_ui_lock(m, 8)
+	end
+	return true
+end
+
+-- playlist editor (two panes: tracks on the left, playlist on the right)
+
+function mouse_ui_plist_get()
+	local t = mui_get("PAUSE_MENU_CONTROL_PLAYLIST_EDITOR")
+	if t == nil or Menu_option_labels == nil or Menu_active.num_items ~= 1 or Menu_active[0] == nil or Menu_active[0].type ~= t then
+		return nil
+	end
+	local lab = Menu_option_labels[0]
+	local data = Menu_active[0]
+	if lab == nil or lab.edit == nil or lab.playlist == nil or lab.active_pane == nil then
+		return nil
+	end
+	if lab.edit.option_labels == nil or lab.playlist.option_labels == nil then
+		return nil
+	end
+	if data.edit == nil or data.playlist == nil or data.active_pane == nil then
+		return nil
+	end
+	return lab, data
+end
+
+-- row 0 centre, row step, x range of a pane
+function mouse_ui_plist_rows(pl, pd)
+	local max = mui_get("PLAYLIST_MAX_ITEMS")
+	if max == nil or pl.option_labels == nil then
+		return nil
+	end
+	for i = 0, max - 1 do
+		local o = pl.option_labels[i]
+		if o ~= nil then
+			local x0, y0, x1, y1 = mouse_ui_bbox(o.label_h)
+			local w, h = element_get_actual_size(o.label_h)
+			if x0 ~= nil and h ~= nil and h > 1 and y1 - y0 > 1 then
+				local s = (y1 - y0) / h
+				local step = 33 * s
+				local width = pl.select_bar_width
+				if width == nil then
+					width = 330
+				end
+				if pd.has_scroll_bar == true then
+					width = width - 40
+				end
+				return (y0 + y1) * 0.5 - i * step, step, x0 - 6 * s, x0 + (width - 10) * s, max
+			end
+		end
+	end
+	return nil
+end
+
+-- pane name and row under the cursor, row is -1 when between rows / past the end
+function mouse_ui_plist_pick(m, lab, data)
+	for k = 1, 2 do
+		local name = "edit"
+		if k == 2 then
+			name = "playlist"
+		end
+		local pd = data[name]
+		local cy0, step, x0, x1, max = mouse_ui_plist_rows(lab[name], pd)
+		if cy0 ~= nil and m.x >= x0 and m.x <= x1 then
+			local top = cy0 - step * 0.5
+			if m.y >= top and m.y <= top + step * max then
+				local r = floor((m.y - top) / step)
+				local item = pd.first_vis_item + r
+				if r < 0 or r >= max or item >= pd.num_items or pd.no_items == true then
+					return name, -1
+				end
+				return name, item
+			end
+		end
+	end
+	return nil, -1
+end
+
+function mouse_ui_plist(m, can_act, lab, data)
+	-- pane scroll bars
+	if data.edit.has_scroll_bar == true and data.edit.scroll_bar ~= nil and mouse_ui_scroll_bar_click(m, can_act, data.edit.scroll_bar, "edit") then
+		return true
+	end
+	if data.playlist.has_scroll_bar == true and data.playlist.scroll_bar ~= nil and mouse_ui_scroll_bar_click(m, can_act, data.playlist.scroll_bar, "playlist") then
+		return true
+	end
+
+	local name, item = mouse_ui_plist_pick(m, lab, data)
+	if can_act and item >= 0 then
+		local pd = data[name]
+		local current = data.active_pane == pd and pd.highlighted_item == item
+		if current == false and mouse_ui_locked(m) == false and (m.moved == true or m.lpress == true) then
+			mouse_ui_call("plist_item", name, item)
+		end
+		if m.lpress == true and mouse_ui_locked(m) == false then
+			Mouse_ui.plist_click = { pane = name, item = item, expire = m.frame + 30 }
+			mouse_ui_lock(m, 8)
+		end
+	end
+
+	-- click lands once the row is highlighted
+	local pc = Mouse_ui.plist_click
+	if pc ~= nil then
+		local pd = data[pc.pane]
+		if m.frame > pc.expire then
+			Mouse_ui.plist_click = nil
+		elseif can_act and data.active_pane == pd and pd.highlighted_item == pc.item then
+			Mouse_ui.plist_click = nil
+			mouse_ui_inject("select", 0)
+		end
+	end
+
+	-- wheel scrolls the pane under the cursor, or the active one
+	if can_act and m.wheel ~= 0 and mouse_ui_take("wheel_frame", m) then
+		if name == nil then
+			name = "edit"
+			if data.active_pane == data.playlist then
+				name = "playlist"
+			end
+		end
+		local n = m.wheel
+		if n > 4 then
+			n = 4
+		elseif n < -4 then
+			n = -4
+		end
+		local pd = data[name]
+		if pd.num_items > mui_get("PLAYLIST_MAX_ITEMS") then
+			mouse_ui_call("plist_view", name, pd.first_vis_item - n)
+			audio_play(Menu_sound_item_nav)
+		end
+	end
+	return item >= 0
+end
+
+-- like pause_menu_control_playlist_update_scroll_bar, but with the given first row
+function mouse_ui_plist_set_first(lab, data, pd, first)
+	local max = mui_get("PLAYLIST_MAX_ITEMS")
+	local top = pd.num_items - max
+	if top < 0 then
+		top = 0
+	end
+	if first > top then
+		first = top
+	end
+	if first < 0 then
+		first = 0
+	end
+	pd.first_vis_item = first
+	pause_menu_playlist_update_labels(lab, data)
+	pause_menu_control_playlist_update_arrow(lab, data)
+	if top > 0 then
+		pause_menu_playlist_set_thumb_pos_scroll_bar(pd, first / top)
+	end
+end
+
+-- like pause_menu_control_playlist_update_selectbar without re-centring
+function mouse_ui_plist_refresh(lab, data)
+	local pd = data.active_pane
+	local pl = lab.active_pane
+	if pd.highlighted_item >= pd.num_items then
+		pd.highlighted_item = pd.num_items - 1
+	end
+	if pd.highlighted_item < 0 then
+		pd.highlighted_item = 0
+	end
+	mouse_ui_plist_set_first(lab, data, pd, pd.first_vis_item)
+
+	local opt = pl.option_labels[pd.highlighted_item - pd.first_vis_item]
+	if opt == nil or pd[pd.highlighted_item] == nil then
+		return
+	end
+	local clip = lab.edit_clip_h
+	if pd == data.playlist then
+		clip = lab.playlist_clip_h
+	end
+	local cx, cy = vint_get_property(clip, "anchor")
+	local ax, ay = vint_get_property(opt.label_h, "anchor")
+	vint_set_property(Menu_option_labels.hl_bar, "anchor", ax + cx + 6, ay + cy + 100)
+	vint_set_property(vint_object_find("menu_sel_bar_label", Menu_option_labels.hl_bar), "text_tag", pd[pd.highlighted_item].label)
+end
+
+function mouse_ui_plist_footer(pd)
+	local it = pd[pd.highlighted_item]
+	if it ~= nil then
+		pause_menu_playlist_update_footer(it.artist_name, it.track_name)
+	end
+end
+
+-- highlight a row, switching panes if needed
+function mouse_ui_plist_set(name, item)
+	local lab, data = mouse_ui_plist_get()
+	if lab == nil or menu_input_is_blocked() or Menu_transition_in_progress == true then
+		return
+	end
+	local pd = data[name]
+	if pd == nil or item < 0 or item >= pd.num_items then
+		return
+	end
+	local switch = data.active_pane ~= pd
+	if switch == false and pd.highlighted_item == item then
+		return
+	end
+	pd.highlighted_item = item
+	if switch then
+		lab.active_pane = lab[name]
+		data.active_pane = pd
+		Menu_active.btn_tips = pd.btn_tips
+		btn_tips_update()
+	end
+	mouse_ui_plist_refresh(lab, data)
+	if switch then
+		pause_menu_playlist_resize_select_bar()
+		pause_menu_playlist_update_clip_region()
+	end
+	mouse_ui_plist_footer(pd)
+	audio_play(Menu_sound_item_nav)
+end
+
+-- scroll a pane, the highlight stays inside it
+function mouse_ui_plist_view(name, first)
+	local lab, data = mouse_ui_plist_get()
+	if lab == nil or menu_input_is_blocked() or Menu_transition_in_progress == true then
+		return
+	end
+	local pd = data[name]
+	local max = mui_get("PLAYLIST_MAX_ITEMS")
+	if pd == nil or pd.num_items == nil or pd.num_items <= max then
+		return
+	end
+	local top = pd.num_items - max
+	if first > top then
+		first = top
+	end
+	if first < 0 then
+		first = 0
+	end
+	if first == pd.first_vis_item then
+		return
+	end
+	local hl = pd.highlighted_item
+	if hl < first then
+		hl = first
+	elseif hl > first + max - 1 then
+		hl = first + max - 1
+	end
+	local moved = hl ~= pd.highlighted_item
+	pd.highlighted_item = hl
+	pd.first_vis_item = first
+	if pd == data.active_pane then
+		mouse_ui_plist_refresh(lab, data)
+		if moved then
+			mouse_ui_plist_footer(pd)
+		end
+	else
+		mouse_ui_plist_set_first(lab, data, pd, first)
+	end
+end
+
 -- main menu top list (the game calls main_menu_nav itself, no vint input)
 
 function mouse_ui_main_menu_item_h(i)
@@ -1398,6 +1725,431 @@ function mouse_ui_poker_handler()
 end
 Mouse_ui_handlers["poker"] = mouse_ui_poker_handler
 
+-- phone lists (contacts, homies, garage, cheats)
+-- hovering highlights without moving the list, only the wheel and scroll bar scroll it
+
+function mouse_ui_phone_open()
+	local c = mui_get("Cellphone")
+	return c ~= nil and c.input_subs ~= nil
+end
+
+function mouse_ui_cell_alive(it)
+	return it ~= nil and it.grp_h ~= nil and it.grp_h ~= -1 and it.grp_h ~= 0
+end
+
+function mouse_ui_cell_is_book(ma)
+	return ma.menu_type == "phonebook" and ma.handles ~= nil and ma.handles.grp ~= nil and ma.num_items ~= nil and ma.num_items > 0 and ma.cur_idx ~= nil
+end
+
+-- view state, rebuilt when the game moved the list itself (keys, new list)
+function mouse_ui_cell_state(md)
+	local s = Mouse_ui.cell
+	local ex, ey = vint_get_property(Cellphone.handles.book_slider_tween, "end_value")
+	if s ~= nil and s.md == md and s.grp == md.handles.grp and s.num == md.num_items and s.cur == md.cur_idx then
+		if s.slide == nil or ey == nil or mui_abs(ey - s.slide) < 0.5 then
+			return s
+		end
+	end
+
+	s = { md = md, grp = md.handles.grp, num = md.num_items, cur = md.cur_idx }
+	-- same numbers as cellphone_phonebook_update_layout
+	if md.image_peg == -1 then
+		s.tl = 4
+		s.bl = 6
+		s.disp = 10.5
+	else
+		s.tl = 2
+		s.bl = 5
+		s.disp = 7
+	end
+	s.rows = s.tl + s.bl
+	s.scrolls = s.num >= s.disp
+	s.maxtop = s.num - s.bl - s.tl
+	if s.maxtop < 0 then
+		s.maxtop = 0
+	end
+	s.top = s.cur - s.tl
+	if s.top < 0 then
+		s.top = 0
+	elseif s.top > s.maxtop then
+		s.top = s.maxtop
+	end
+	if s.scrolls then
+		s.slide = ey
+	end
+	-- items that exist around the current one
+	s.lo = s.cur
+	while s.lo > 0 and mouse_ui_cell_alive(md[s.lo - 1]) do
+		s.lo = s.lo - 1
+	end
+	s.hi = s.cur
+	while s.hi < s.num - 1 and mouse_ui_cell_alive(md[s.hi + 1]) do
+		s.hi = s.hi + 1
+	end
+	Mouse_ui.cell = s
+	return s
+end
+
+function mouse_ui_cell_text_bottom(it)
+	if mouse_ui_cell_alive(it) == false then
+		return nil
+	end
+	local x0, y0, x1, y1 = mouse_ui_bbox(vint_object_find("book_item_text", it.grp_h))
+	return y1
+end
+
+-- create an item next to an existing one and line it up
+function mouse_ui_cell_add(md, i, below)
+	if mouse_ui_cell_alive(md[i]) then
+		return
+	end
+	cellphone_phonebook_add_to_list(i)
+	local h = md[i].grp_h
+	if below then
+		local p = md[i - 1].grp_h
+		local t = vint_object_find("book_item_text", p)
+		local tx, ty = vint_get_property(t, "anchor")
+		local w, th = element_get_actual_size(t)
+		local x, y = vint_get_property(p, "anchor")
+		vint_set_property(h, "anchor", x, y + ty + th)
+	elseif i > 0 then
+		local n = md[i + 1].grp_h
+		local w, th = element_get_actual_size(vint_object_find("book_item_text", h))
+		local x, y = vint_get_property(n, "anchor")
+		vint_set_property(h, "anchor", x, y - th)
+	end
+end
+
+-- grow / shrink the range of created items one step at a time so each new one has a neighbour
+function mouse_ui_cell_range(s, lo, hi)
+	local md = s.md
+	if lo < 0 then
+		lo = 0
+	end
+	if hi > s.num - 1 then
+		hi = s.num - 1
+	end
+	while s.hi < hi do
+		s.hi = s.hi + 1
+		mouse_ui_cell_add(md, s.hi, true)
+	end
+	while s.lo > lo do
+		s.lo = s.lo - 1
+		mouse_ui_cell_add(md, s.lo, false)
+	end
+	while s.lo < lo do
+		if mouse_ui_cell_alive(md[s.lo]) then
+			cellphone_phonebook_remove_from_list(s.lo)
+		end
+		s.lo = s.lo + 1
+	end
+	while s.hi > hi do
+		if mouse_ui_cell_alive(md[s.hi]) then
+			cellphone_phonebook_remove_from_list(s.hi)
+		end
+		s.hi = s.hi - 1
+	end
+end
+
+-- cellphone_phonebook_nav without the scrolling and the 1 step limit
+function mouse_ui_cell_select(md, idx, old)
+	local c = Cellphone
+	local hd = c.handles
+	c.cur_idx = idx
+	md.cur_idx = idx
+	cellphone_nav_block(true)	-- the upscale tween's end event unblocks
+
+	local grp = md[idx].grp_h
+	local text_h = vint_object_find("book_item_text", grp)
+	vint_set_property(hd.book_text_select_anim, "target_handle", grp)
+	if vint_get_property(text_h, "text_tag") ~= nil then
+		cellphone_resize_upscale_animation(text_h)
+	end
+	lua_play_anim(hd.book_text_select_anim, 0)
+	if md.image_peg ~= -1 then
+		vint_set_property(hd.book_image_select_anim, "target_handle", grp)
+		lua_play_anim(hd.book_image_select_anim, 0)
+	end
+	vint_set_property(hd.book_item_pulse_anim, "target_handle", grp)
+	lua_play_anim(hd.book_item_pulse_anim, 0)
+
+	if old ~= idx and mouse_ui_cell_alive(md[old]) then
+		local ogrp = md[old].grp_h
+		local otext_h = vint_object_find("book_item_text", ogrp)
+		vint_set_property(otext_h, "alpha", 1)
+		vint_set_property(hd.book_text_deselect_anim, "target_handle", ogrp)
+		if vint_get_property(otext_h, "text_tag") ~= nil then
+			cellphone_resize_dnscale_animation(otext_h)
+		end
+		lua_play_anim(hd.book_text_deselect_anim, 0)
+		if md.image_peg ~= -1 then
+			vint_set_property(hd.book_image_deselect_anim, "target_handle", ogrp)
+			lua_play_anim(hd.book_image_deselect_anim, 0)
+		end
+	end
+	audio_play(Cellphone_audio["nav"])
+end
+
+-- slide the list and move the scroll bar
+function mouse_ui_cell_slide(s, top)
+	local md = s.md
+	local text_h = vint_object_find("book_item_text", md[md.cur_idx].grp_h)
+	local w, lh = vint_get_property(text_h, "unscaled_size")
+	if lh == nil then
+		return
+	end
+	local y_to = -top * lh
+	local box = vint_object_find("book_slider", md.handles.grp)
+	local x, y = vint_get_property(box, "anchor")
+	local tw = Cellphone.handles.book_slider_tween
+	vint_set_property(tw, "start_value", x, y)
+	vint_set_property(tw, "end_value", 0, y_to)
+	vint_set_property(tw, "target_handle", box)
+	lua_play_anim(Cellphone.handles.book_slider_anim, 0)
+	s.slide = y_to
+
+	local h = 304 * s.disp / s.num
+	local pos = 0
+	if s.maxtop > 0 then
+		pos = top * (304 - h) / s.maxtop
+	end
+	element_set_actual_size(md.handles.scrollbar, 8, h)
+	vint_set_property(md.handles.scrollbar, "anchor", 0, pos)
+end
+
+-- move the view to top, want = item to highlight (nil keeps it, pulled into view)
+function mouse_ui_cell_apply(s, top, want)
+	local md = s.md
+	if top < 0 then
+		top = 0
+	elseif top > s.maxtop then
+		top = s.maxtop
+	end
+	local old = md.cur_idx
+	local cur = old
+	if cellphone_nav_is_blocked() == false then
+		if want ~= nil then
+			cur = want
+		end
+		local last = top + s.rows - 1
+		if last > s.num - 1 then
+			last = s.num - 1
+		end
+		if cur < top then
+			cur = top
+		elseif cur > last then
+			cur = last
+		end
+	end
+
+	-- keep the view and both highlights (+-10 like the game) created
+	local lo = top + s.tl
+	local hi = lo
+	if cur < lo then
+		lo = cur
+	end
+	if old < lo then
+		lo = old
+	end
+	if cur > hi then
+		hi = cur
+	end
+	if old > hi then
+		hi = old
+	end
+	mouse_ui_cell_range(s, lo - 10, hi + 10)
+
+	if cur ~= old then
+		mouse_ui_cell_select(md, cur, old)
+	end
+	s.cur = cur
+	if s.scrolls and top ~= s.top then
+		mouse_ui_cell_slide(s, top)
+	end
+	s.top = top
+end
+
+-- screen pixels per phone unit, from an unscaled item's text
+-- (the scroll bar bitmap is sized with "scale", which its screen box doesn't include)
+function mouse_ui_cell_scale(s)
+	local md = s.md
+	local fallback = nil
+	for i = s.lo, s.hi do
+		local it = md[i]
+		if mouse_ui_cell_alive(it) then
+			local t = vint_object_find("book_item_text", it.grp_h)
+			local x0, y0, x1, y1 = mouse_ui_bbox(t)
+			local w, uh = vint_get_property(t, "unscaled_size")
+			local sx, sy = vint_get_property(t, "scale")
+			if x0 ~= nil and uh ~= nil and uh > 1 and y1 - y0 > 1 then
+				if sy ~= nil and sy > 0.99 and sy < 1.01 then
+					return (y1 - y0) / uh
+				end
+				if fallback == nil and sy ~= nil and sy > 0.01 then
+					fallback = (y1 - y0) / (uh * sy)
+				end
+			end
+		end
+	end
+	return fallback
+end
+
+-- scroll bar thumb / track on screen, nil if there's none
+function mouse_ui_cell_track(s)
+	if s.scrolls == false then
+		return nil
+	end
+	local sb = s.md.handles.scrollbar
+	local x0, y0, x1, y1 = mouse_ui_bbox(sb)
+	local sc = mouse_ui_cell_scale(s)
+	if x0 == nil or sc == nil then
+		return nil
+	end
+	local h = 304 * s.disp / s.num
+	local ax, ay = vint_get_property(sb, "anchor")
+	return { x0 = x0, x1 = x0 + 8 * sc, ty0 = y0, ty1 = y0 + h * sc, top = y0 - ay * sc, sc = sc, h = h }
+end
+
+function mouse_ui_cell_drag(m, s, tr, can)
+	local d = Mouse_ui.cdrag
+	local travel = (304 - tr.h) * tr.sc
+	if can == false or travel <= 1 then
+		return
+	end
+	local pos = (m.y - d.grab - tr.top) / travel
+	if pos < 0 then
+		pos = 0
+	elseif pos > 1 then
+		pos = 1
+	end
+	local top = floor(pos * s.maxtop + 0.5)
+	if top ~= s.top then
+		mouse_ui_cell_apply(s, top, nil)
+	end
+end
+
+function mouse_ui_cell_book(m, c, ma)
+	local s = mouse_ui_cell_state(ma)
+	local can = m.active == true and c.cur_idx ~= nil
+	local blocked = cellphone_nav_is_blocked()
+	local tr = mouse_ui_cell_track(s)
+
+	-- scroll bar
+	local d = Mouse_ui.cdrag
+	if d ~= nil then
+		if m.ldown ~= true or tr == nil or d.md ~= ma then
+			Mouse_ui.cdrag = nil
+		else
+			mouse_ui_cell_drag(m, s, tr, can)
+			return true
+		end
+	end
+	if tr ~= nil and m.x >= tr.x0 - 6 and m.x <= tr.x1 + 6 and m.y >= tr.top and m.y <= tr.top + 304 * tr.sc then
+		if can and m.lpress == true then
+			local grab = (tr.ty1 - tr.ty0) * 0.5
+			if m.y >= tr.ty0 and m.y <= tr.ty1 then
+				grab = m.y - tr.ty0
+			end
+			Mouse_ui.cdrag = { md = ma, grab = grab }
+			mouse_ui_cell_drag(m, s, tr, can)
+		end
+		return true
+	end
+
+	-- items in view
+	local hit = -1
+	local gx0, gy0, gx1, gy1 = mouse_ui_bbox(ma.handles.grp)
+	local vy0 = -100000
+	local vy1 = 100000
+	if tr ~= nil and s.maxtop > 0 then
+		vy0 = tr.top
+		vy1 = tr.top + 310 * tr.sc
+	end
+	if gx0 ~= nil and m.x >= gx0 and m.x <= gx1 and m.y >= vy0 and m.y <= vy1 then
+		local last = s.top + s.rows - 1
+		if last > s.num - 1 then
+			last = s.num - 1
+		end
+		-- rows go from the previous item's text bottom to this item's text bottom
+		-- (the group's bbox includes the hidden picture, so use the text)
+		local prev_y1 = nil
+		if s.top > 0 then
+			prev_y1 = mouse_ui_cell_text_bottom(ma[s.top - 1])
+		end
+		for i = s.top, last do
+			local it = ma[i]
+			if mouse_ui_cell_alive(it) then
+				local x0, y0, x1, y1 = mouse_ui_bbox(vint_object_find("book_item_text", it.grp_h))
+				if y0 ~= nil then
+					if prev_y1 ~= nil and prev_y1 < y0 then
+						y0 = prev_y1
+					elseif i == 0 then
+						y0 = -100000
+					end
+					if m.y >= y0 and m.y <= y1 then
+						hit = i
+						break
+					end
+				end
+				prev_y1 = y1
+			else
+				prev_y1 = nil
+			end
+		end
+	end
+
+	if hit >= 0 and can then
+		if hit ~= ma.cur_idx and blocked == false and mouse_ui_locked(m) == false and (m.moved == true or m.lpress == true) then
+			mouse_ui_cell_apply(s, s.top, hit)
+		end
+		if m.lpress == true and mouse_ui_locked(m) == false then
+			Mouse_ui.cell_click = { md = ma, idx = hit, expire = m.frame + 60 }
+			mouse_ui_lock(m, 8)
+		end
+	end
+
+	-- click lands once the phone is done animating to that item
+	local pc = Mouse_ui.cell_click
+	if pc ~= nil then
+		if pc.md ~= ma or m.frame > pc.expire then
+			Mouse_ui.cell_click = nil
+		elseif cellphone_nav_is_blocked() == false then
+			if ma.cur_idx == pc.idx then
+				Mouse_ui.cell_click = nil
+				mouse_ui_inject("select", 0)
+			elseif pc.idx >= s.top and pc.idx <= s.top + s.rows - 1 then
+				mouse_ui_cell_apply(s, s.top, pc.idx)
+			else
+				Mouse_ui.cell_click = nil
+			end
+		end
+	end
+
+	if can and m.wheel ~= 0 and mouse_ui_take("wheel_frame", m) then
+		local n = m.wheel
+		if n > 4 then
+			n = 4
+		elseif n < -4 then
+			n = -4
+		end
+		if s.scrolls then
+			mouse_ui_cell_apply(s, s.top - n, nil)
+		elseif blocked == false then
+			if n > 0 then
+				mouse_ui_inject("nav_up", 0)
+			else
+				mouse_ui_inject("nav_down", 0)
+			end
+		end
+	end
+
+	-- highlight got left behind while the phone was busy
+	if can and cellphone_nav_is_blocked() == false and (ma.cur_idx < s.top or ma.cur_idx > s.top + s.rows - 1) then
+		mouse_ui_cell_apply(s, s.top, nil)
+	end
+	return hit >= 0
+end
+
 -- phone
 
 function mouse_ui_cellphone_handler()
@@ -1413,6 +2165,7 @@ function mouse_ui_cellphone_handler()
 
 	local can_act = m.active == true and cellphone_nav_is_blocked() == false and c.cur_idx ~= nil
 	local hover = false
+	local book = false
 	local ma = c.menu_active
 
 	if ma == Cellphone_menu_main and ma.num_items ~= nil then
@@ -1459,8 +2212,11 @@ function mouse_ui_cellphone_handler()
 				break
 			end
 		end
+	elseif mouse_ui_cell_is_book(ma) then
+		book = true
+		hover = mouse_ui_cell_book(m, c, ma)
 	elseif ma.num_items ~= nil then
-		-- lists scroll themselves, only clicking the current entry selects
+		-- anything else, only clicking the current entry selects
 		local it = ma[c.cur_idx]
 		if it ~= nil and it.grp_h ~= nil and it.grp_h ~= 0 and it.grp_h ~= -1 and mouse_ui_hit(it.grp_h, m.x, m.y, 0) then
 			hover = true
@@ -1473,7 +2229,9 @@ function mouse_ui_cellphone_handler()
 
 	if can_act then
 		mouse_ui_back(m)
-		mouse_ui_wheel(m, "nav_up", "nav_down")
+		if book == false then
+			mouse_ui_wheel(m, "nav_up", "nav_down")
+		end
 	end
 	mui_request(hover)
 end
