@@ -43,6 +43,22 @@ namespace ExecutableProfile
         return result;
     }
 
+    // true when running as SRPB_pc.exe, no allocations so it's safe from the crash handler
+    inline bool IsSR2PB()
+    {
+        char path[MAX_PATH]{};
+        const DWORD count = GetModuleFileNameA(nullptr, path, MAX_PATH);
+        if (count == 0 || count >= MAX_PATH)
+            return false;
+        const char* name = path;
+        for (const char* p = path; *p; ++p)
+        {
+            if (*p == '\\' || *p == '/')
+                name = p + 1;
+        }
+        return _stricmp(name, "SRPB_pc.exe") == 0;
+    }
+
     inline Selection ForCurrentProcess()
     {
         std::array<char, 32768> path{};

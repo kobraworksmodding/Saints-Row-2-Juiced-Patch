@@ -5,7 +5,40 @@
 #include <algorithm>
 #include <cctype>
 #include <string_view>
+#include <mutex>
 
+
+namespace {
+	// File streaming writes on a different thread from vint rendering. Keep the
+	// shared buffer private so every append, reset and snapshot uses this lock.
+	std::mutex looseLoadingTextMutex;
+	std::string looseLoadingText;
+}
+
+void loaded_files_push_filename(const char* string) {
+	if (!string)
+		return;
+	const std::string filename(string);
+	const int maxLines = *reinterpret_cast<const bool*>(0x025272DD) ? 41 : 26;
+	{
+		std::lock_guard<std::mutex> lock(looseLoadingTextMutex);
+		looseLoadingText.append(filename);
+		looseLoadingText.push_back('\n');
+		const auto lineCount = std::count(looseLoadingText.begin(), looseLoadingText.end(), '\n');
+		size_t removeThrough = 0;
+		for (auto excess = lineCount - maxLines; excess > 0; --excess)
+			removeThrough = looseLoadingText.find('\n', removeThrough) + 1;
+		if (removeThrough)
+			looseLoadingText.erase(0, removeThrough);
+	}
+	// Logging can load files itself; do not hold the display lock across it.
+	Logger::TypedLog("LOOSE_FILE", "{}\n", filename);
+}
+
+std::string SnapshotLooseLoadingText() {
+    std::lock_guard<std::mutex> lock(looseLoadingTextMutex);
+    return looseLoadingText;
+}
 
 std::string LooseAssetKey(std::string_view path)
 {
@@ -40,7 +73,6 @@ const char* LooseStreamedExtension(std::string_view filename)
 
 // This replaces the function that fills in the FILE_INFO structure if the file exists on the disk, with the file's information.
 
-std::string loaded_files_to_render;
 
 bool __stdcall raw_get_file_info_by_name_inner_wrapped(FILE_INFO* file_info, char* filename, BOOL override_check)
 {
@@ -88,32 +120,6 @@ bool __stdcall raw_get_file_info_by_name_inner_wrapped(FILE_INFO* file_info, cha
 }
 
 
-// Helper function to count lines in a string
-int count_lines(const std::string& str) {
-	return std::count(str.begin(), str.end(), '\n');
-}
-
-// Helper function to remove lines from the beginning until we're under the limit
-void trim_to_max_lines(std::string& str, int max_lines) {
-	int line_count = count_lines(str);
-	if (line_count <= max_lines) return;
-
-	int lines_to_remove = line_count - max_lines;
-	size_t pos = 0;
-
-	// Find the position after the lines we want to remove
-	for (int i = 0; i < lines_to_remove && pos != std::string::npos; ++i) {
-		pos = str.find('\n', pos);
-		if (pos != std::string::npos) {
-			pos++; // Move past the newline
-		}
-	}
-
-	if (pos != std::string::npos && pos < str.length()) {
-		str = str.substr(pos);
-	}
-}
-
 bool __stdcall raw_get_file_info_by_name_inner(FILE_INFO* file_info, char* filename, BOOL override_check) {
 	auto result = raw_get_file_info_by_name_inner_wrapped(file_info, filename, override_check);
 
@@ -125,28 +131,19 @@ bool __stdcall raw_get_file_info_by_name_inner(FILE_INFO* file_info, char* filen
 	return result;
 }
 
-void loaded_files_push_filename(const char* string) {
-	int MAX_LINES = 41;
-	if (!*(bool*)0x025272DD) {
-		MAX_LINES = 26;
-	}
-	loaded_files_to_render += std::string(string) + "\n";
-	Logger::TypedLog("LOOSE_FILE", "{}\n", string);
-	// Trim to maximum lines to prevent infinite growth
-	trim_to_max_lines(loaded_files_to_render, MAX_LINES);
-}
-
 void* raw_get_file_info_by_name_inner_cb = &raw_get_file_info_by_name_inner;
 
 void loose_files_render_status(bool get_ready_to_append_to_render) {
-	if (!get_ready_to_append_to_render) {
-		raw_get_file_info_by_name_inner_cb = &raw_get_file_info_by_name_inner_wrapped;
-		loaded_files_to_render.clear();
-	}
-	else {
+	std::lock_guard<std::mutex> lock(looseLoadingTextMutex);
+	if (get_ready_to_append_to_render) {
 		raw_get_file_info_by_name_inner_cb = &raw_get_file_info_by_name_inner;
+	} else {
+		raw_get_file_info_by_name_inner_cb = &raw_get_file_info_by_name_inner_wrapped;
+		looseLoadingText.clear();
 	}
 }
+
+
 
 // Wrapper to convert bool __usercall func@<eax> (FILE_INFO *file_info@<edi>, char * filename, BOOL override_check) to
 // bool __stdcall func (FILE_INFO *file_info, char *filename, BOOL override_check)

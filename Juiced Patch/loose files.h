@@ -35,7 +35,6 @@ extern void hook_loose_files();
 
 extern void loose_files_render_status(bool get_ready_to_append_to_render = false);
 
-extern std::string loaded_files_to_render;
 
 
 struct FILEDATA
@@ -60,6 +59,8 @@ const char* TranslateFilePath(const char* FilePath);
 FILEDATA* TranslateFilePathData(const char* FilePath);
 
 extern void loaded_files_push_filename(const char* string);
+// Returns an owned snapshot; the renderer never borrows the streaming buffer.
+std::string SnapshotLooseLoadingText();
 
 // Reads the highest-priority loose modpack_save.txt and, when present, isolates
 // this modpack's save files behind the configured filename prefix.

@@ -13,6 +13,9 @@
 #include "../Patcher/patch.h"
 #include "../General/General.h"
 #include "../Hooker.h"
+#include <mutex>
+#include <string>
+
 namespace AssertHandler {
 	static std::unordered_set<std::string> ignored_asserts;
 	static std::mutex assert_mutex;
@@ -92,6 +95,123 @@ namespace AssertHandler {
 namespace CrashFixes {
 	namespace {
 
+
+		// A poisoned free-camera heading survives a slew/ugly-mode transition:
+		// every frame rebuilds NaN X/Z positions, and replacing NaN matrix
+		// components with zero still leaves a singular camera basis.
+		struct CameraPose {
+			float position[3];
+			float orientation[9];
+		};
+
+		bool IsFiniteCameraFloat(float value) {
+			uint32_t bits;
+			std::memcpy(&bits, &value, sizeof(bits));
+			return (bits & 0x7F800000u) != 0x7F800000u;
+		}
+
+		bool IsUsableCameraPose(const CameraPose& pose) {
+			for (float value : pose.position)
+				if (!IsFiniteCameraFloat(value))
+					return false;
+			for (float value : pose.orientation)
+				if (!IsFiniteCameraFloat(value))
+					return false;
+			const auto& m = pose.orientation;
+			const float determinant = m[0] * (m[4] * m[8] - m[5] * m[7])
+				- m[1] * (m[3] * m[8] - m[5] * m[6])
+				+ m[2] * (m[3] * m[7] - m[4] * m[6]);
+			return IsFiniteCameraFloat(determinant)
+				&& (determinant > 0.0001f || determinant < -0.0001f);
+		}
+
+		CameraPose ReadCameraPose(uintptr_t position, uintptr_t orientation) {
+			CameraPose pose;
+			std::memcpy(pose.position, reinterpret_cast<const void*>(position), sizeof(pose.position));
+			std::memcpy(pose.orientation, reinterpret_cast<const void*>(orientation), sizeof(pose.orientation));
+			return pose;
+		}
+
+		void SetCameraPose(const CameraPose& pose) {
+			// Repair all three histories; interpolation must not reuse the bad frame.
+			for (uintptr_t address : {0x025F5B14u, 0x025F5B20u, 0x025F5B2Cu})
+				std::memcpy(reinterpret_cast<void*>(address), pose.position, sizeof(pose.position));
+			for (uintptr_t address : {0x025F5B38u, 0x025F5B5Cu, 0x025F5B80u})
+				std::memcpy(reinterpret_cast<void*>(address), pose.orientation, sizeof(pose.orientation));
+		}
+
+		void RecoverInvalidCamera() {
+			const int mode = *reinterpret_cast<const int*>(0x025F5AE8);
+			if (mode != 0 && mode != 2) // Follow and debug slew cameras only.
+				return;
+			const auto real = ReadCameraPose(0x025F5B14, 0x025F5B38);
+			const auto ideal = ReadCameraPose(0x025F5B20, 0x025F5B5C);
+			bool bad = !IsUsableCameraPose(real) || !IsUsableCameraPose(ideal);
+			if (mode == 0) {
+				for (uintptr_t address = 0x025F5C58; address <= 0x025F5C84; address += sizeof(float))
+					bad |= !IsFiniteCameraFloat(*reinterpret_cast<const float*>(address));
+			}
+			for (uintptr_t address = 0x025F5BA4; address <= 0x025F5BAC; address += sizeof(float)) {
+				const float fov = *reinterpret_cast<const float*>(address);
+				bad |= !IsFiniteCameraFloat(fov) || fov <= 0.0f || fov >= 180.0f;
+			}
+			if (!bad)
+				return;
+
+			const uint32_t handle = *reinterpret_cast<const uint32_t*>(0x025F5BB0);
+			if (!handle)
+				return;
+			const auto target = *reinterpret_cast<const uintptr_t*>(0x02149C64 + (handle & 0xFFFu) * 16);
+			if (!target || *reinterpret_cast<const uint32_t*>(target + 0x44) != handle)
+				return;
+			auto seed = ReadCameraPose(target + 0x14, target + 0x20);
+			if (!IsUsableCameraPose(seed))
+				return;
+			if (IsUsableCameraPose(real))
+				seed = real;
+			else if (IsUsableCameraPose(ideal))
+				seed = ideal;
+			else {
+				seed.position[0] -= seed.orientation[6] * 4.0f;
+				seed.position[1] += 1.7f - seed.orientation[7] * 4.0f;
+				seed.position[2] -= seed.orientation[8] * 4.0f;
+			}
+			SetCameraPose(seed);
+			for (uintptr_t address = 0x025F5BA4; address <= 0x025F5BAC; address += sizeof(float)) {
+				auto& fov = *reinterpret_cast<float*>(address);
+				if (!IsFiniteCameraFloat(fov) || fov <= 0.0f || fov >= 180.0f)
+					fov = 58.0f;
+			}
+			if (mode == 0) {
+				*reinterpret_cast<int*>(0x025F5C54) = 0;
+				for (uintptr_t address = 0x025F5C58; address <= 0x025F5C84; address += sizeof(float)) {
+					auto& value = *reinterpret_cast<float*>(address);
+					if (!IsFiniteCameraFloat(value))
+						value = 0.0f;
+				}
+				std::memset(reinterpret_cast<void*>(0x025F5D50), 0, 3 * sizeof(float));
+				reinterpret_cast<void(__cdecl*)()>(0x0049B2A0)();
+				reinterpret_cast<void(__cdecl*)()>(0x00492DF0)();
+				if (!IsUsableCameraPose(ReadCameraPose(0x025F5B20, 0x025F5B5C)))
+					SetCameraPose(seed);
+			}
+			static unsigned reports = 0;
+			if (reports++ < 4)
+				Logger::TypedLog(CHN_DEBUG, "Recovered invalid camera pose/heading (mode {}, target {})\n", mode, handle);
+		}
+
+		// havok_collide_debris leaves its selected contact null when every
+		// relative normal velocity is nonpositive or NaN. The sound call still
+		// reads contact + 0x3C. A stale debris handle can also resolve to null.
+		SAFETYHOOK_NOINLINE void SkipDebrisImpactWithoutContact(SafetyHookContext& ctx) {
+			const auto debris = *reinterpret_cast<const uintptr_t*>(ctx.esp + 0x10);
+			if (!ctx.edi || !debris) {
+				ctx.eip = 0x007091F4;
+				static unsigned reports = 0;
+				if (reports++ < 4)
+					Logger::TypedLog(CHN_DEBUG, "Skipped debris impact sound without a contact/object\n");
+			}
+		}
 
 		bool IsDmallocHeapReady() {
 			const auto heap = *reinterpret_cast<volatile uintptr_t*>(0x0252A648_g);
@@ -265,6 +385,37 @@ namespace CrashFixes {
 		ctx.eip = 0x00D07249;
 	}
 	void Init() {
+		// Repair before presim uses the heading, before camera history is copied,
+		// and before a newly computed pose reaches rendering/streaming.
+		//const auto repairCamera = [](SafetyHookContext&) { RecoverInvalidCamera(); };
+		//static auto cameraPresim = safetyhook::create_mid(0x0049B420, repairCamera);
+		//static auto cameraFrame = safetyhook::create_mid(0x004932F0, repairCamera);
+		//static auto cameraCommit = safetyhook::create_mid(0x004934F0, repairCamera);
+		//// Runs after the existing mouse rewrite and native mask/invert logic.
+		//// A zero frame-time divisor must not poison slew's angular velocity.
+		//static auto slewInput = safetyhook::create_mid(0x00C01236, [](SafetyHookContext& ctx) {
+		//	for (auto value : {&ctx.xmm0.f32[0], &ctx.xmm1.f32[0]})
+		//		if (!IsFiniteCameraFloat(*value))
+		//			*value = 0.0f;
+		//});
+		//static auto slewStep = safetyhook::create_mid(0x00C01650, [](SafetyHookContext& ctx) {
+		//	if (*reinterpret_cast<const uintptr_t*>(ctx.esp + 4) != 0x025F5B20
+		//		|| *reinterpret_cast<const uintptr_t*>(ctx.esp + 8) != 0x025F5B5C)
+		//		return;
+		//	RecoverInvalidCamera();
+		//	auto& seconds = *reinterpret_cast<float*>(ctx.esp + 12);
+		//	if (!IsFiniteCameraFloat(seconds) || seconds < 0.0f)
+		//		seconds = 0.0f;
+		//	for (uintptr_t address = 0x033DA324; address < 0x033DA354; address += sizeof(float)) {
+		//		// Vel, Rotvel, Desired_velocity and Desired_rotvel persist across toggles.
+		//		// The last word (0x33DA350) is roll input, included deliberately.
+		//		auto& value = *reinterpret_cast<float*>(address);
+		//		if (!IsFiniteCameraFloat(value))
+		//			value = 0.0f;
+		//	}
+		//});
+
+
         const auto rejectInvalidVelocity = [](SafetyHookContext& ctx) {
             const auto velocity = reinterpret_cast<const uint8_t*>(ctx.esp + 0x20);
             for (size_t i = 0; i < 3; ++i) {
@@ -307,6 +458,7 @@ namespace CrashFixes {
 
 		// The one above should work always..
 		if (GameConfig::GetValue("Debug", "FixCrashes", 2)) {	
+			static auto debrisImpactContact = safetyhook::create_mid(0x007091E0, &SkipDebrisImpactWithoutContact);
 			static auto Fix_0x0055B681_hook = safetyhook::create_mid(0x0055B681, &Fix_0x0055B681_crash);
 			static auto Fix_0x007B1D7E_hook = safetyhook::create_mid(0x007B1D7E, &Fix_0x007B1D7E_crash_weaponstore);
 			static auto Fix_0x007B510D_hook = safetyhook::create_mid(0x007B510D, &Fix_0x007B510D_crash);

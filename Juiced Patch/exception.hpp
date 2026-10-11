@@ -28,6 +28,7 @@
 #include <winnt.h>
 
 #include "errhandlingapi.h"
+#include "ExecutableProfile.h"
 #include <processthreadsapi.h>
 #include "Hooker.h"
 #pragma comment(lib, "Dbghelp.lib")
@@ -739,9 +740,20 @@ LONG WINAPI CustomUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
         ex.ExceptionPointers = ExceptionInfo;
         ex.ClientPointers = TRUE;
 
-        if (FAILED(MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpWithDataSegs, &ex, NULL, NULL)))
-
+        // full memory dumps are huge, only do them for SRPB_pc.exe
+        const MINIDUMP_TYPE dump_type = ExecutableProfile::IsSR2PB() ? MiniDumpWithFullMemory : MiniDumpWithDataSegs;
+        const BOOL dump_written = MiniDumpWriteDump(
+            GetCurrentProcess(),
+            GetCurrentProcessId(),
+            hFile,
+            dump_type,
+            &ex,
+            NULL,
+            NULL);
         CloseHandle(hFile);
+
+        if (!dump_written)
+            OutputDebugStringA("MiniDumpWriteDump failed.\n");
     }
 
     // step 2: write log
@@ -805,7 +817,7 @@ LONG WINAPI CustomUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
                 break;
 
             case 0x0051CE07:
-                wcscat_s(errorPopup,L"Details:\nFailed to Direct3DDevice9->CreateTexture as Direct3DDevice9 is NULL, most likely due to a non standard VESA display.\n\n Most commonly caused by native portrait displays (eg. Steam Deck running Windows), delete settings.dat and restart the game if you previously attempted to start the game without Juiced and creating a settings.dat.");
+                wcscat_s(errorPopup, L"Details:\nFailed to Direct3DDevice9->CreateTexture as Direct3DDevice9 is NULL, most likely due to a non standard VESA display.\n\n Most commonly caused by native portrait displays (eg. Steam Deck running Windows), delete settings.dat and restart the game if you previously attempted to start the game without Juiced and creating a settings.dat.");
                 break;
             case 0x004818D5:
                 wcscat_s(errorPopup, L"Details:\nUseFixedXAudio doesn't work on your system because XAudio2.3 isn't installed. This feature has been skipped and turned off in the .ini file. Please install DirectX End-User Runtimes to use this feature.");

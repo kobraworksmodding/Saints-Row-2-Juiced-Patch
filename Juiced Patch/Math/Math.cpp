@@ -6,6 +6,7 @@
 #include "../Patcher/patch.h"
 #include "../GameConfig.h"
 #include "Math.h"
+#include <cstdint>
 #include "../Player/Input.h"
 #include "../UtilsGlobal.h"
 namespace Math
@@ -182,6 +183,20 @@ namespace Math
 		}
 
 		void Init() {
+			// human_cash::operator+ adds two signed 32-bit cent balances, then
+			// sign-extends the already wrapped sum before applying its limits.
+			// $20m + $20m therefore becomes negative and adjust_cash clears it.
+			// Widen both operands before addition and saturate to the native range.
+			static auto cashAddition = safetyhook::create_mid(0x00549D40, [](SafetyHookContext& ctx) {
+				const int64_t sum = static_cast<int64_t>(static_cast<int32_t>(ctx.eax))
+					+ static_cast<int32_t>(ctx.edx);
+				const auto cash = static_cast<int32_t>((std::clamp)(sum,
+					int64_t{-2000000000}, int64_t{2000000000}));
+				*reinterpret_cast<int32_t*>(ctx.ecx) = cash;
+				ctx.eax = ctx.ecx;
+				ctx.edx = cash < 0 ? 0xFFFFFFFFu : 0u;
+				ctx.eip = 0x00549D74; // Existing return; no stack arguments are popped here.
+			});
 			// this is garage_get_repair_cost, returns 49 99 and so on PC, but console does 50, 100 
 			patchJmp((void*)0xAB81B4, _ftol2_sse_jmp_hook);
 			int cpuinfo[4]{};

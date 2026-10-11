@@ -887,12 +887,13 @@ CMultiPatch CMPatches_ProperPlayerCursor = {
 
 void __fastcall vint_sr2_render(void* thisa) {
 	((void(__thiscall*)(void*))0x7F33B0)(thisa);
-
-	if (!loaded_files_to_render.empty()) {
-		std::string display_text = loaded_files_to_render + "[JUICED] These are loose files loaded during THIS loading screen.";
+	std::string displayText = SnapshotLooseLoadingText();
+	// Own the snapshot through the native print call. Streaming can resize
+	// or clear its buffer without invalidating the renderer's characters.
+	if (!displayText.empty()) {
+		displayText += "[JUICED] These are loose files loaded during THIS loading screen.";
 		ChangeTextColor(238, 130, 238, 255);
-
-		InGamePrintScale(6, display_text.c_str(), processtextwidth(0), 0, 0.7f);
+		InGamePrintScale(6, displayText.c_str(), processtextwidth(0), 0, 0.7f);
 	}
 }
 int* GR_FILTER = (int*)0xEC2740;
