@@ -18,6 +18,7 @@
 #include "../GameConfig.h"
 #include "../LuaHandler.h"
 #include "../Hooker.h"
+#include "../Render/Render2D.h"
 #include <safetyhook.hpp>
 #include <usercaller.hpp>
 
@@ -36,7 +37,7 @@ namespace MouseUI
 
 	// scripts that get mouse_ui_attach() appended
 	static const char* const kAttachScripts[] = {
-		"menu_base", "main_menu", "dialog_box", "gmb_blackjack", "gmb_poker", "cellphone",
+		"menu_base", "main_menu", "dialog_box", "gmb_blackjack", "gmb_poker", "cellphone", "hud",
 	};
 
 	constexpr DWORD kRequestTimeoutMs = 120;  // cursor stays this long after the last mouse_ui_request()
@@ -62,6 +63,11 @@ namespace MouseUI
 	static bool  g_haveLastUiScreen = false;
 	static DWORD g_leaveTick        = 0;
 	static int   g_wheelAccum       = 0;
+
+	// mouse_ui_warp(), applied on the next poll once the cursor is ours
+	static bool  g_warpPending = false;
+	static float g_warpX = 0.f;
+	static float g_warpY = 0.f;
 
 	// counted in the window message callback
 	static LONG g_lPressCount = 0, g_lReleaseCount = 0, g_rPressCount = 0, g_mPressCount = 0;
@@ -103,6 +109,11 @@ namespace MouseUI
 	bool IsActive()
 	{
 		return g_uiActive;
+	}
+
+	bool IsEnabled()
+	{
+		return g_enabled && g_luaLoaded;
 	}
 
 	static int EventIndex(const char* name)
@@ -245,6 +256,28 @@ namespace MouseUI
 		(void)L;
 		g_requestedOnce = false;
 		g_hoverAccum = false;
+		g_warpPending = false;
+		return 0;
+	}
+
+	// mouse_ui_cvint_x(document, element), the ultrawide x shift cvint.dat draws that element with
+	static int __cdecl lua_mouse_ui_cvint_x(lua_State* L)
+	{
+		float x = 0.f;
+		if (lua_gettop(L) >= 2 && lua_type(L, 1) == LUA_TSTRING && lua_type(L, 2) == LUA_TSTRING)
+			x = Render2D::GetCvintAnchorOffsetX(lua_tostring(L, 1), lua_tostring(L, 2));
+		lua_pushnumber(L, x);
+		return 1;
+	}
+
+	// mouse_ui_warp(x, y), puts the cursor at a vint position (weapon wheel centre)
+	static int __cdecl lua_mouse_ui_warp(lua_State* L)
+	{
+		if (lua_gettop(L) >= 2 && lua_type(L, 1) == LUA_TNUMBER && lua_type(L, 2) == LUA_TNUMBER) {
+			g_warpX = (float)lua_tonumber(L, 1);
+			g_warpY = (float)lua_tonumber(L, 2);
+			g_warpPending = true;
+		}
 		return 0;
 	}
 
@@ -310,6 +343,8 @@ namespace MouseUI
 		RegisterGameLuaFunction(L, "mouse_ui_clear", &lua_mouse_ui_clear);
 		RegisterGameLuaFunction(L, "mouse_ui_end", &lua_mouse_ui_end);
 		RegisterGameLuaFunction(L, "mouse_ui_enabled", &lua_mouse_ui_enabled);
+		RegisterGameLuaFunction(L, "mouse_ui_warp", &lua_mouse_ui_warp);
+		RegisterGameLuaFunction(L, "mouse_ui_cvint_x", &lua_mouse_ui_cvint_x);
 
 		g_luaLoaded = LoadVintLuaLib(L, "mouse_ui.lua");
 		Logger::TypedLog(CHN_LUA, "MouseUI: mouse_ui.lua {}\n", g_luaLoaded ? "loaded" : "not found");
@@ -330,6 +365,29 @@ namespace MouseUI
 		RECT current;
 		if (!GetClipCursor(&current) || memcmp(&current, &clip, sizeof(RECT)) != 0)
 			ClipCursor(&clip);
+	}
+
+	// render resolution / client size and vint scale, false if anything isn't ready
+	static bool GetVintMapping(HWND hwnd, float& toRenderX, float& toRenderY, float& sx, float& sy)
+	{
+		RECT rc;
+		const int resW = *(int*)0x022F63F8_g;
+		const int resH = *(int*)0x022F63FC_g;
+		if (!GetClientRect(hwnd, &rc))
+			return false;
+		const int cw = rc.right - rc.left;
+		const int ch = rc.bottom - rc.top;
+		if (cw <= 0 || ch <= 0 || resW <= 0 || resH <= 0)
+			return false;
+		toRenderX = (float)resW / (float)cw;
+		toRenderY = (float)resH / (float)ch;
+		sx = *(float*)0x022FDCC0_g; // vint scale
+		sy = *(float*)0x022FDCBC_g;
+		if (!(sx > 0.0001f))
+			sx = 1.f;
+		if (!(sy > 0.0001f))
+			sy = 1.f;
+		return true;
 	}
 
 	static void SyncButtonCounters()
@@ -363,6 +421,7 @@ namespace MouseUI
 		ClearInjections();
 		g_hoverAccum = false;
 		g_hoverPrev = false;
+		g_warpPending = false;
 
 		// game measures deltas from the window centre, recentre so the camera doesn't jump
 		if (focused && hwnd) {
@@ -397,6 +456,19 @@ namespace MouseUI
 			return;
 		}
 
+		float rx = 1.f, ry = 1.f, sx = 1.f, sy = 1.f;
+		const bool mapped = GetVintMapping(hwnd, rx, ry, sx, sy);
+
+		if (g_warpPending) {
+			g_warpPending = false;
+			if (mapped) {
+				POINT wp{ (LONG)(g_warpX * sx / rx), (LONG)(g_warpY * sy / ry) };
+				ClientToScreen(hwnd, &wp);
+				SetCursorPos(wp.x, wp.y);
+				g_prevValid = false; // not a mouse move
+			}
+		}
+
 		POINT sp;
 		if (!GetCursorPos(&sp))
 			return;
@@ -404,27 +476,8 @@ namespace MouseUI
 		ScreenToClient(hwnd, &cp);
 
 		// client -> render resolution -> vint space (same space as "screen_nw"/"screen_se")
-		float px = (float)cp.x;
-		float py = (float)cp.y;
-		RECT rc;
-		const int resW = *(int*)0x022F63F8_g;
-		const int resH = *(int*)0x022F63FC_g;
-		if (GetClientRect(hwnd, &rc)) {
-			const int cw = rc.right - rc.left;
-			const int ch = rc.bottom - rc.top;
-			if (cw > 0 && ch > 0 && resW > 0 && resH > 0) {
-				px = px * (float)resW / (float)cw;
-				py = py * (float)resH / (float)ch;
-			}
-		}
-		float sx = *(float*)0x022FDCC0_g; // vint scale
-		float sy = *(float*)0x022FDCBC_g;
-		if (!(sx > 0.0001f))
-			sx = 1.f;
-		if (!(sy > 0.0001f))
-			sy = 1.f;
-		s.x = px / sx;
-		s.y = py / sy;
+		s.x = (float)cp.x * rx / sx;
+		s.y = (float)cp.y * ry / sy;
 
 		s.moved = g_prevValid && (sp.x != g_prevScreen.x || sp.y != g_prevScreen.y);
 
@@ -586,7 +639,7 @@ namespace MouseUI
 	void Init()
 	{
 		g_enabled = GameConfig::GetValue("Input", "MouseUI", 1,
-			"Mouse support in menus, dialogs, gambling and the phone. (Clippy95)") != 0;
+			"Mouse support in menus, dialogs, gambling, the phone and the weapon wheel. (Clippy95)") != 0;
 		if (!g_enabled)
 			return;
 

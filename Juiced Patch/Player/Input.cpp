@@ -20,6 +20,7 @@ import OptionsManager;
 #include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_init.h>
 #include "../Hooker.h"
+#include "MouseUI.h"
 #include "../LUA/InGameConfig.h"
 #include "../Render/Render3D.h"
 
@@ -1035,6 +1036,8 @@ namespace Input {
 	if (GameConfig::GetValue("Input", "better_inventory_keyboard", 1, "Allows extra binding for within the radial menu (food/drink menu) (Clippy95)")) {
 			static auto properInventory_keyboard = safetyhook::create_mid(0xB997F3, [](SafetyHookContext& ctx) {
 				if (!ctx.ebx || *is_controller_connect) // shouldn't allow this to work while a controller is connected, vanilla game bug but having a controller connected + using WASD will move the weapon wheel as if it's LS. -- Clippy95
+					return;
+				if (MouseUI::IsEnabled()) // the mouse picks food on the weapon wheel instead
 					return;
 				float& value = *(float*)(ctx.esp + 0x10);
 				const char* event = (const char*)*(uintptr_t*)(ctx.ebx + 0x14);

@@ -1146,6 +1146,47 @@ SAFETYHOOK_NOINLINE bool modify_vint_anchor(const vint_cint_custom* cint, vint_e
 	return false;
 }
 
+// x shift cvint.dat gives an element while it's drawn (modify_vint_anchor), the element itself
+// doesn't move so things hit testing vint positions need it (MouseUI weapon wheel)
+float GetCvintAnchorOffsetX(const char* document, const char* element)
+{
+	if (!r_is_widescreen || !document || !element || *currentAR <= widescreenvalue)
+		return 0.f;
+	const auto it = g_custom_vint_cint_data.find(Game::utils::str_to_hash(element));
+	if (it == g_custom_vint_cint_data.end())
+		return 0.f;
+
+	// same pick as FindVintCINT, this document's rule over [ANY]
+	const uint32_t document_crc = Game::utils::str_to_hash(document);
+	const vint_cint_custom* rule = nullptr;
+	for (const auto& r : it->second)
+	{
+		if (r.any_document)
+		{
+			if (!rule)
+				rule = &r;
+			continue;
+		}
+		if (r.document_crc == document_crc)
+		{
+			rule = &r;
+			break;
+		}
+	}
+	if (!rule)
+		return 0.f;
+
+	auto align = rule->align;
+	if (!align.will_it_be_anchored())
+		return 0.f;
+	const float x = ultrawide_get_x_difference() * std::clamp(ultrawide_safearea_x, 0.f, 1.f);
+	if (align.h_left)
+		return -x;
+	if (align.h_right)
+		return x;
+	return 0.f;
+}
+
 bool ApplyIVRadarScaling(vint_element_base* element)
 {
 	return false;

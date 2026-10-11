@@ -16,4 +16,7 @@ namespace MouseUI
 	bool PatchVintScript(const char* filename, std::string& content);
 
 	bool IsActive();
+
+	// MouseUI is on and mouse_ui.lua loaded
+	bool IsEnabled();
 }

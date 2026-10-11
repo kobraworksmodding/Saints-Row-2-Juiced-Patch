@@ -1,6 +1,6 @@
 -- mouse_ui.lua (Clippy95)
 -- Mouse support for vint menus, loaded by Juiced (Player/MouseUI.cpp).
--- Juiced appends mouse_ui_attach() to menu_base, main_menu, dialog_box, gmb_* and cellphone.
+-- Juiced appends mouse_ui_attach() to menu_base, main_menu, dialog_box, gmb_*, cellphone and hud.
 
 Mouse_ui = {
 	gens = { },			-- per screen thread id, thread exits when it changes
@@ -284,7 +284,7 @@ function mouse_ui_thread(kind, gen)
 	end
 end
 
-Mouse_ui_kinds = { "menu", "main_menu", "dialog", "blackjack", "poker", "cellphone" }
+Mouse_ui_kinds = { "menu", "main_menu", "dialog", "blackjack", "poker", "cellphone", "radial" }
 Mouse_ui.req = { }
 
 -- remembers which screen asked this frame
@@ -303,7 +303,7 @@ function mouse_ui_release(kind)
 	if f == nil then
 		f = 0
 	end
-	for i = 1, 6 do
+	for i = 1, 7 do
 		local k = Mouse_ui_kinds[i]
 		local rf = Mouse_ui.req[k]
 		if k ~= kind and rf ~= nil and rf >= f - 2 then
@@ -429,6 +429,10 @@ function mouse_ui_attach(script)
 	elseif script == "cellphone" then
 		mouse_ui_wrap("cellphone_init", nil, mouse_ui_cellphone_start)
 		mouse_ui_wrap("cellphone_cleanup", mouse_ui_cellphone_stop, nil)
+	elseif script == "hud" then
+		mouse_ui_wrap("hud_inventory_show", nil, mouse_ui_radial_start)
+		mouse_ui_wrap("hud_inventory_hide", mouse_ui_radial_stop, nil)
+		mouse_ui_radial_hook_input()
 	end
 end
 
@@ -1427,6 +1431,177 @@ function mouse_ui_plist_view(name, first)
 		mouse_ui_plist_set_first(lab, data, pd, first)
 	end
 end
+
+-- weapon wheel (hud.lua, hold Q)
+-- cursor starts on the stick in the middle, hover a weapon / food to pick it,
+-- release Q or click to equip, right click closes without changing anything
+
+function mouse_ui_radial_start()
+	local hi = mui_get("Hud_inventory")
+	if hi == nil or hi.thread == nil then
+		return	-- inventory disabled, nothing opened
+	end
+	if Mouse_ui.radial ~= nil and Mouse_ui.radial.open == true then
+		return
+	end
+	Mouse_ui.radial = { open = true, warped = false, mouse = false }
+	mouse_ui_start("radial")
+end
+
+function mouse_ui_radial_stop()
+	local r = Mouse_ui.radial
+	if r == nil or r.open ~= true then
+		return
+	end
+	r.open = false
+	mouse_ui_stop("radial")
+end
+
+-- the game also turns mouse movement into inventory_x / y, ignore that once the cursor is in use
+function mouse_ui_radial_hook_input()
+	local orig = mui_get("hud_inventory_input")
+	if type(orig) ~= "function" or Mouse_ui_wrapped["hud_inventory_input"] == orig then
+		return
+	end
+	local wrapper = function(event, value)
+		local r = Mouse_ui.radial
+		if r ~= nil and r.open == true and r.mouse == true and (event == "inventory_x" or event == "inventory_y") then
+			return
+		end
+		return orig(event, value)
+	end
+	Mouse_ui_wrapped["hud_inventory_input"] = wrapper
+	Mouse_ui_G["hud_inventory_input"] = wrapper
+end
+
+-- centre and radius of the stick base
+function mouse_ui_radial_centre(hr)
+	local stick = vint_object_find("control_stick", hr.radial_grp_h)
+	local x0, y0, x1, y1 = mouse_ui_bbox(vint_object_find("base", stick))
+	if x0 == nil or x1 - x0 < 1 then
+		return nil
+	end
+	return (x0 + x1) * 0.5, (y0 + y1) * 0.5, (x1 - x0) * 0.5
+end
+
+-- same angle -> slot table as hud_inventory_process (x right, y up)
+function mouse_ui_radial_slot(x, y)
+	local mag = sqrt(x * x + y * y)
+	local pi = 3.14159
+	local radians = acos(x / mag)
+	if y < 0 then
+		radians = pi + (pi - radians)
+	end
+	local eighth = pi / 8
+	local fourth = pi / 4
+	if radians < eighth then
+		return 2
+	elseif radians < fourth + eighth then
+		return 1
+	elseif radians < 2 * fourth + eighth then
+		return 0
+	elseif radians < 3 * fourth + eighth then
+		return 7
+	elseif radians < 4 * fourth + eighth then
+		return 6
+	elseif radians < 5 * fourth + eighth then
+		return 5
+	elseif radians < 6 * fourth + eighth then
+		return 4
+	elseif radians < 7 * fourth + eighth then
+		return 3
+	end
+	return 2
+end
+
+function mouse_ui_radial_handler()
+	local hr = mui_get("Hud_radial_menu")
+	local hi = mui_get("Hud_inventory")
+	local r = Mouse_ui.radial
+	if hr == nil or hi == nil or hi.thread == nil or r == nil or r.open ~= true then
+		return
+	end
+	local m = mouse_ui_state()
+	local cx, cy, rad = mouse_ui_radial_centre(hr)
+	if cx == nil then
+		mui_request(true)
+		return
+	end
+
+	-- ultrawide: cvint.dat draws radial_grp shifted sideways, its elements don't know about it
+	local ox = 0
+	local cvint_x = mui_get("mouse_ui_cvint_x")
+	if cvint_x ~= nil then
+		ox = cvint_x("hud", "radial_grp")
+	end
+	local mm = { x = m.x - ox, y = m.y }
+
+	-- cursor to the middle first, the poll after the request moves it
+	if r.warped ~= true then
+		r.warped = true
+		r.wait = 2
+		local warp = mui_get("mouse_ui_warp")
+		if warp ~= nil then
+			warp(cx + ox, cy)
+		end
+		mui_request(true)
+		return
+	end
+	if r.wait > 0 then
+		r.wait = r.wait - 1
+		mui_request(true)
+		return
+	end
+
+	if m.active == true and (m.moved == true or m.lpress == true) then
+		r.mouse = true
+	end
+
+	if r.mouse == true and m.active == true then
+		local dx = mm.x - cx
+		local dy = mm.y - cy
+		local dist = sqrt(dx * dx + dy * dy)
+
+		-- slots under the cursor (food on the d-pad too), otherwise the direction from the middle
+		local pick = -1
+		for i = 0, 11 do
+			local s = hr.slots[i]
+			if s ~= nil and s.grp_h ~= -1 and mouse_ui_hit_visible(s.grp_h, mm, 0) then
+				pick = i
+				break
+			end
+		end
+		if pick < 0 and dist > rad then
+			pick = mouse_ui_radial_slot(dx, -dy)
+		end
+		if pick >= 0 and pick ~= hr.slot_selected then
+			Hud_radial_menu_change_select(pick)
+		end
+
+		-- the little stick leans towards the cursor
+		local lean = dist / (rad * 3)
+		if lean > 1 then
+			lean = 1
+		end
+		if dist > 0.5 then
+			vint_set_property(hr.stick_grp_h, "anchor", dx / dist * lean * 12, dy / dist * lean * 12)
+		end
+		hr.stick_mag = 0	-- keeps the d-pad food events working
+
+		if m.lpress == true then
+			-- same as letting go of Q
+			mui_get("hud_inventory_input")("inventory", 0)
+			return
+		end
+	end
+
+	if m.rpress == true then
+		hud_inventory_hide()
+		return
+	end
+	mui_request(true)
+end
+Mouse_ui_handlers["radial"] = mouse_ui_radial_handler
 
 -- main menu top list (the game calls main_menu_nav itself, no vint input)
 

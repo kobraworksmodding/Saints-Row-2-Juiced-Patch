@@ -54,5 +54,6 @@ namespace Render2D
 	extern void ParseVintCINT();
 	extern int IVRadarScalingDyn;
 	extern float ultrawide_safearea_x;
+	extern float GetCvintAnchorOffsetX(const char* document, const char* element);
 	extern bool bSmartCutsceneBorder;
 }
