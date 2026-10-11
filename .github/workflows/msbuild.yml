@@ -35,6 +35,8 @@ jobs:
         copy "juiced.ini" upload\
         copy "loose.txt" upload\
         copy "license.txt" upload\
+        copy "license-exception.txt" upload\
+        copy "third_party_notices.txt" upload\
         copy "ship\readme.txt" upload\
         xcopy "ship" "upload" /E /I /Y
         xcopy Mods upload\Mods /E /I /Y

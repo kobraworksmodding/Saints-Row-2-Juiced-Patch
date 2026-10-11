@@ -58,6 +58,11 @@ This [issues list](https://github.com/kobraworksmodding/SR2IssuesList/issues) is
 - [CHC](https://github.com/chc) - Openspy
 
 
+## License
+Juiced Patch is licensed under the [GNU General Public License v3.0](license.txt) or later, with an additional permission for linking with Saints Row 2 and the Discord Game SDK, see [license-exception.txt](license-exception.txt).
+
+Third party code and its licenses are listed in [third_party_notices.txt](third_party_notices.txt). Files derived from Saints Row 2 game data are not covered by the GPL.
+
 ## Extra Information
 Our loose model, texture, etc patches are included in the "Mods" folder in this repository. \
 We've also made a [mod manager](https://github.com/kobraworksmodding/SR2JP-ModManager) for mods designed to be used with Juiced Patch, Check it out!
