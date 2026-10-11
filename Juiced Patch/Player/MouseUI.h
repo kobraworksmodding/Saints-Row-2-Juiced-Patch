@@ -19,4 +19,7 @@ namespace MouseUI
 
 	// MouseUI is on and mouse_ui.lua loaded
 	bool IsEnabled();
+
+	// weapon wheel picking with the cursor (Input/MouseWeaponWheel), can be switched in game
+	bool WeaponWheelEnabled();
 }

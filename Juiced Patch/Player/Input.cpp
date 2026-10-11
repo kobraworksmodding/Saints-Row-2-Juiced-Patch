@@ -1037,7 +1037,7 @@ namespace Input {
 			static auto properInventory_keyboard = safetyhook::create_mid(0xB997F3, [](SafetyHookContext& ctx) {
 				if (!ctx.ebx || *is_controller_connect) // shouldn't allow this to work while a controller is connected, vanilla game bug but having a controller connected + using WASD will move the weapon wheel as if it's LS. -- Clippy95
 					return;
-				if (MouseUI::IsEnabled()) // the mouse picks food on the weapon wheel instead
+				if (MouseUI::WeaponWheelEnabled()) // the mouse picks food on the weapon wheel instead
 					return;
 				float& value = *(float*)(ctx.esp + 0x10);
 				const char* event = (const char*)*(uintptr_t*)(ctx.ebx + 0x14);

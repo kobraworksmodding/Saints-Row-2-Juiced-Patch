@@ -95,6 +95,7 @@ namespace InGameConfig {
             InGameConfig::RegisterSlider("ForcedControllerPrompts", "J_CTRLPROMPT", { "J_AUTO","J_DECK","J_XSX","J_NSW","J_DS","J_DS3","J_X360" }, MenuType::CONTROLS);
         }
         InGameConfig::RegisterBoolSlider("HoldFineAim", "J_HOLDAIM", MenuType::CONTROLS);
+        InGameConfig::RegisterBoolSlider("MouseWeaponWheel", "Mouse Weapon Wheel", MenuType::CONTROLS);
         InGameConfig::RegisterSlider("DisableAimAssist", "J_NOAIMASSIST", { "CONTROL_NO","J_MOUSEONLY","J_ALWAYS" }, MenuType::CONTROLS);
 #if !JLITE
         InGameConfig::RegisterSlider(

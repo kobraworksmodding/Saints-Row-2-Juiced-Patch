@@ -21,6 +21,7 @@
 #include "../Render/Render2D.h"
 #include <safetyhook.hpp>
 #include <usercaller.hpp>
+import OptionsManager;
 
 namespace MouseUI
 {
@@ -46,6 +47,8 @@ namespace MouseUI
 	constexpr size_t kMaxQueued       = 16;
 
 	static bool g_enabled   = false;
+	static bool g_weaponWheel = true; // mouse picks on the weapon wheel, off = old mouse / WASD steering
+	static bool g_radialMouse = false; // weapon wheel is open and the mouse is picking (mouse_ui_radial)
 	static bool g_luaLoaded = false;
 
 	static DWORD g_lastRequestTick = 0;
@@ -105,6 +108,7 @@ namespace MouseUI
 	static SafetyHookInline g_msgHook{};
 	static SafetyHookMid g_passHook{};
 	static SafetyHookMid g_eventHook{};
+	static SafetyHookInline g_rawInputHook{};
 
 	bool IsActive()
 	{
@@ -114,6 +118,11 @@ namespace MouseUI
 	bool IsEnabled()
 	{
 		return g_enabled && g_luaLoaded;
+	}
+
+	bool WeaponWheelEnabled()
+	{
+		return IsEnabled() && g_weaponWheel;
 	}
 
 	static int EventIndex(const char* name)
@@ -257,6 +266,7 @@ namespace MouseUI
 		g_requestedOnce = false;
 		g_hoverAccum = false;
 		g_warpPending = false;
+		g_radialMouse = false;
 		return 0;
 	}
 
@@ -287,6 +297,26 @@ namespace MouseUI
 	{
 		lua_pushboolean(L, g_enabled);
 		return 1;
+	}
+
+	static int __cdecl lua_mouse_ui_wheel_enabled(lua_State* L)
+	{
+		lua_pushboolean(L, g_weaponWheel);
+		return 1;
+	}
+
+	// true when the last input came from a controller
+	static int __cdecl lua_mouse_ui_pad(lua_State* L)
+	{
+		lua_pushboolean(L, Input::g_lastInput == Input::CONTROLLER);
+		return 1;
+	}
+
+	// mouse_ui_radial(open), the weapon wheel is open with the mouse picking
+	static int __cdecl lua_mouse_ui_radial(lua_State* L)
+	{
+		g_radialMouse = lua_gettop(L) >= 1 && lua_toboolean(L, 1);
+		return 0;
 	}
 
 	// --- game lua functions -----------------------------------------------------------------------
@@ -346,6 +376,9 @@ namespace MouseUI
 		RegisterGameLuaFunction(L, "mouse_ui_end", &lua_mouse_ui_end);
 		RegisterGameLuaFunction(L, "mouse_ui_enabled", &lua_mouse_ui_enabled);
 		RegisterGameLuaFunction(L, "mouse_ui_warp", &lua_mouse_ui_warp);
+		RegisterGameLuaFunction(L, "mouse_ui_wheel_enabled", &lua_mouse_ui_wheel_enabled);
+		RegisterGameLuaFunction(L, "mouse_ui_pad", &lua_mouse_ui_pad);
+		RegisterGameLuaFunction(L, "mouse_ui_radial", &lua_mouse_ui_radial);
 		RegisterGameLuaFunction(L, "mouse_ui_cvint_offset", &lua_mouse_ui_cvint_offset);
 
 		g_luaLoaded = LoadVintLuaLib(L, "mouse_ui.lua");
@@ -628,6 +661,25 @@ namespace MouseUI
 		g_msgHook.unsafe_ccall<void>(msg, wparam);
 	}
 
+	// --- weapon wheel ---------------------------------------------------------------------------
+
+	// raw input subscription update (stdcall, subscription). The wheel's stick and d-pad inputs
+	// (inventory_x / y / up / down / left / right) mask the movement keys while subscribed, so while
+	// the mouse picks they're skipped and WASD still moves you. A controller keeps the vanilla wheel.
+	static void __stdcall RawInputUpdateHook(uintptr_t sub)
+	{
+		if (g_radialMouse && g_weaponWheel && sub && Input::g_lastInput != Input::CONTROLLER) {
+			const uint32_t index = *(uint32_t*)(sub + 0x30);
+			if (index < *(uint32_t*)0x0252A23C_g) {
+				const uintptr_t binding = *(uintptr_t*)0x0252A240_g + index * 24;
+				const char* name = *(const char**)(binding + 0x14);
+				if (name && strncmp(name, "inventory_", 10) == 0)
+					return;
+			}
+		}
+		g_rawInputHook.unsafe_stdcall<void>(sub);
+	}
+
 	// --- script attach --------------------------------------------------------------------------
 
 	static const char* MatchScript(const char* filename)
@@ -664,6 +716,10 @@ namespace MouseUI
 	{
 		g_enabled = GameConfig::GetValue("Input", "MouseUI", 1,
 			"Mouse support in menus, dialogs, gambling, the phone and the weapon wheel. (Clippy95)") != 0;
+		// in-game toggle (Controls), the slider reads / writes it through OptionsManager
+		GameConfig::GetValue("Input", "MouseWeaponWheel", 1,
+			"Pick weapons and food on the weapon wheel with the mouse cursor, 0 = old mouse / WASD steering. (Clippy95)");
+		OptionsManager::registerOption("Input", "MouseWeaponWheel", &g_weaponWheel, true);
 		if (!g_enabled)
 			return;
 
@@ -673,6 +729,7 @@ namespace MouseUI
 		g_msgHook = safetyhook::create_inline(0x00C1EFF0_g, &MouseMsgHook); // mouse window message callback
 		g_passHook = safetyhook::create_mid(0x00B99550_g, &VintInputPassBegin); // vint_sr2_process_input
 		g_eventHook = safetyhook::create_mid(0x00B99D72_g, &ProcessEventNotHit); // process_event, nothing pressed
+		g_rawInputHook = safetyhook::create_inline(0x00B996C0_g, &RawInputUpdateHook); // raw input subscription update
 
 		Logger::TypedLog(CHN_MOD, "MouseUI: hooks installed.\n");
 	}

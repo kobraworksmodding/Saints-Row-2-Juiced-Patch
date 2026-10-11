@@ -1,4 +1,4 @@
--- mouse_ui.lua (Clippy95)
+-- mouse_ui.lua
 -- Mouse support for vint menus, loaded by Juiced (Player/MouseUI.cpp).
 -- Juiced appends mouse_ui_attach() to menu_base, main_menu, dialog_box, gmb_*, cellphone and hud.
 
@@ -1434,17 +1434,31 @@ end
 
 -- weapon wheel (hud.lua, hold Q)
 -- cursor starts on the stick in the middle, hover a weapon / food to pick it,
--- release Q or click to equip, right click closes without changing anything
+-- release Q or click to equip, right click closes without changing anything, WASD keeps moving you
 
 function mouse_ui_radial_start()
 	local hi = mui_get("Hud_inventory")
 	if hi == nil or hi.thread == nil then
 		return	-- inventory disabled, nothing opened
 	end
+	-- Input/MouseWeaponWheel off, or opened with a controller: vanilla wheel
+	local wheel_on = mui_get("mouse_ui_wheel_enabled")
+	if wheel_on ~= nil and wheel_on() == false then
+		return
+	end
+	local pad = mui_get("mouse_ui_pad")
+	if pad ~= nil and pad() == true then
+		return
+	end
 	if Mouse_ui.radial ~= nil and Mouse_ui.radial.open == true then
 		return
 	end
 	Mouse_ui.radial = { open = true, warped = false, mouse = false }
+	-- Juiced skips the wheel's stick / d-pad inputs now so WASD still moves you
+	local radial = mui_get("mouse_ui_radial")
+	if radial ~= nil then
+		radial(true)
+	end
 	mouse_ui_start("radial")
 end
 
@@ -1454,6 +1468,10 @@ function mouse_ui_radial_stop()
 		return
 	end
 	r.open = false
+	local radial = mui_get("mouse_ui_radial")
+	if radial ~= nil then
+		radial(false)
+	end
 	mouse_ui_stop("radial")
 end
 
