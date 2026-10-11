@@ -151,6 +151,9 @@ UHQ Screen Effects (R)
 [J_BORDER_R]
 Borderless (R)
 
+[J_BORDER]
+Borderless
+
 [J_NOVIGN_R]
 Remove Vignette (R)
 

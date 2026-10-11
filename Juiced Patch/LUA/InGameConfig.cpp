@@ -28,7 +28,6 @@ namespace InGameConfig {
     { "Debug", "DisableXInput",MenuType::CONTROLS },
     { "Debug", "ForceDisableVibration",MenuType::CONTROLS },
     { "Graphics", "UHQScreenEffects" },
-    { "Graphics", "Borderless" },
 #if !JLITE
     { "Graphics", "RemoveVignette" },
 #endif
@@ -134,12 +133,12 @@ namespace InGameConfig {
             { "DisableXInput",          "J_DISXINP_R" },
             { "ForceDisableVibration",  "J_NOVIB_R"   },
             { "UHQScreenEffects",       "J_UHQ_R"     },
-            { "Borderless",             "J_BORDER_R"  },
             { "RemoveVignette",         "J_NOVIGN_R"  },
             { "RemovePixelationShader", "J_NOPIXEL_R" },
             { "FasterLoading",          "J_FASTLOAD_R"},
             { "ForceMetricSystem",      "J_METRIC_R"  },
         };
+        InGameConfig::RegisterBoolSlider("Borderless", "J_BORDER");
         for (const auto& opt : restart_option) {
             auto it = restart_label_keys.find(opt.keyname);
             const char* labelKey = (it != restart_label_keys.end()) ? it->second : opt.keyname;
@@ -185,6 +184,14 @@ namespace InGameConfig {
             *(void**)(Result + 0x930) = &UserUnderstands;
         }
 #endif
+        if (strcmp(var, "Borderless") == 0) {
+            // applied straight away, no restart
+            if (!write)
+                *value = Render2D::IsBorderless() ? 1 : 0;
+            else
+                Render2D::SetBorderless(*value != 0);
+            return;
+        }
 #if !JLITE
         if (strcmp(var, "IVRadarScaling") == 0) {
             if (!write) {

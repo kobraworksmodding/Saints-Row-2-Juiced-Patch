@@ -136,6 +136,9 @@ UHQ 屏幕效果 (R)
 [J_BORDER_R]
 无边框 (R)
 
+[J_BORDER]
+无边框
+
 [J_NOVIGN_R]
 移除暗角 (R)
 

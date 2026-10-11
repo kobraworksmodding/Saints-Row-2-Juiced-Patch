@@ -421,18 +421,104 @@ int processtextwidth(int width) {
 		}
 	}
 
-	void SetupBorderless()
+	// --- window mode, borderless or a normal window, can be switched while the game runs ---------
+
+	static bool g_borderless = true;
+	static bool g_window_was_borderless = false;
+	static SafetyHookMid g_window_shown_hook{};
+	static SafetyHookInline g_change_screen_hook{};
+
+	constexpr DWORD kBorderlessStyle = WS_POPUP | WS_VISIBLE;
+	constexpr DWORD kWindowedStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE; // caption, resizable, min/max
+
+	static bool GameIsWindowed()
 	{
-	int l_IsBorderless = GameConfig::GetValue("Graphics", "Borderless", 1, "Borderless windowed, this replaces Windowed mode in-game.");
-		uint32_t window_style = l_IsBorderless ? (WS_POPUP) : (WS_CAPTION | WS_BORDER);
-		patchDWord((void*)(0x00BFA35A + 4), window_style);
-		patchBytesM((BYTE*)0x00BFA494, (BYTE*)"\x6A\x03", 2); //Maximise Borderless so it fits perfectly.
+		return *(BOOL*)0x022F6418_g != FALSE; // d3d_present_params.Windowed
 	}
 
-	void SetupBetterWindowed()
+	// borderless covers the whole monitor (taskbar too), windowed gets a client area of w x h
+	static void ApplyWindowMode(bool windowed, int w, int h, bool center)
 	{
-		uint32_t windowed_style = (WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_DLGFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX);
-		patchDWord((void*)(0x00BFA35A + 4), windowed_style);
+		HWND hwnd = *(HWND*)0x0252A410_g;
+		if (!hwnd || !windowed)
+			return; // exclusive fullscreen keeps the game's window as is
+
+		MONITORINFO mi{};
+		mi.cbSize = sizeof(mi);
+		if (!GetMonitorInfoA(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &mi))
+			return;
+		const LONG ex = GetWindowLongA(hwnd, GWL_EXSTYLE) &
+			~(WS_EX_TOPMOST | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_DLGMODALFRAME | WS_EX_STATICEDGE);
+
+		if (g_borderless) {
+			const RECT& r = mi.rcMonitor;
+			SetWindowLongA(hwnd, GWL_STYLE, kBorderlessStyle);
+			SetWindowLongA(hwnd, GWL_EXSTYLE, ex);
+			SetWindowPos(hwnd, HWND_NOTOPMOST, r.left, r.top, r.right - r.left, r.bottom - r.top,
+				SWP_FRAMECHANGED | SWP_NOOWNERZORDER | SWP_SHOWWINDOW);
+			g_window_was_borderless = true;
+			return;
+		}
+
+		if (w <= 0 || h <= 0)
+			return;
+		RECT rc{ 0, 0, w, h };
+		AdjustWindowRectEx(&rc, kWindowedStyle, FALSE, ex);
+		const int ww = rc.right - rc.left;
+		const int wh = rc.bottom - rc.top;
+		const RECT& wa = mi.rcWork;
+		int x = wa.left + ((wa.right - wa.left) - ww) / 2;
+		int y = wa.top + ((wa.bottom - wa.top) - wh) / 2;
+		RECT cur;
+		if (!center && !g_window_was_borderless && GetWindowRect(hwnd, &cur)) {
+			// resolution change, keep the window where the player put it
+			x = cur.left;
+			y = cur.top;
+		}
+		if (x < wa.left)
+			x = wa.left;
+		if (y < wa.top)
+			y = wa.top; // keep the title bar reachable
+		SetWindowLongA(hwnd, GWL_STYLE, kWindowedStyle);
+		SetWindowLongA(hwnd, GWL_EXSTYLE, ex);
+		SetWindowPos(hwnd, HWND_NOTOPMOST, x, y, ww, wh, SWP_FRAMECHANGED | SWP_NOOWNERZORDER | SWP_SHOWWINDOW);
+		g_window_was_borderless = false;
+	}
+
+	// pc_change_d3d_screen, resizes the window with its own style on every resolution / mode change
+	static char __cdecl ChangeScreenHook(int w, int h, char fullscreen, char vsync)
+	{
+		const char result = g_change_screen_hook.unsafe_ccall<char>(w, h, fullscreen, vsync);
+		ApplyWindowMode(GameIsWindowed(), *(int*)0x022F63F8_g, *(int*)0x022F63FC_g, false);
+		return result;
+	}
+
+	bool IsBorderless()
+	{
+		return g_borderless;
+	}
+
+	void SetBorderless(bool borderless)
+	{
+		if (borderless == g_borderless)
+			return;
+		g_borderless = borderless;
+		GameConfig::SetValue("Graphics", "Borderless", borderless ? 1 : 0);
+		ApplyWindowMode(GameIsWindowed(), *(int*)0x022F63F8_g, *(int*)0x022F63FC_g, true);
+	}
+
+	void SetupWindowMode()
+	{
+		g_borderless = GameConfig::GetValue("Graphics", "Borderless", 1, "Borderless windowed, this replaces Windowed mode in-game.") != 0;
+		// style the window is created with, saves a flicker before the first ApplyWindowMode
+		patchDWord((void*)(0x00BFA35A + 4), (g_borderless ? kBorderlessStyle : kWindowedStyle) & ~WS_VISIBLE);
+		// after ShowWindow in the window setup, esi = launch settings (w, h, ..., +0x10 fullscreen)
+		g_window_shown_hook = safetyhook::create_mid(0x00BFA49D_g, [](SafetyHookContext& ctx) {
+			const uintptr_t settings = ctx.esi;
+			const bool fullscreen = *(uint8_t*)(settings + 0x10) != 0;
+			ApplyWindowMode(!fullscreen, *(int*)settings, *(int*)(settings + 4), true);
+			});
+		g_change_screen_hook = safetyhook::create_inline(0x00D1FF60_g, &ChangeScreenHook);
 	}
 
 	SafetyHookMid vint_create_process_hook;
@@ -1379,16 +1465,8 @@ void diversion_image_sizeup()
 			},safetyhook::MidHook::StartDisabled);
 	if (GameConfig::GetValue("Graphics", "X360GammaUI", 1, "Applies XBOX 360 gamma on HUD elements. (Clippy95)"))
 			final_2d_render.enable();
-	if (GameConfig::GetValue("Graphics", "Borderless", 1, "Borderless windowed, this replaces Windowed mode in-game."))
-		{
-			SetupBorderless();
-			Logger::TypedLog(CHN_DEBUG, "Enabling Borderless Windowed.\n");
-		}
-		else
-		{
-			SetupBetterWindowed();
-			Logger::TypedLog(CHN_DEBUG, "Fixing Windowed Mode.\n");
-		}
+	SetupWindowMode();
+	Logger::TypedLog(CHN_DEBUG, "Window mode: {}\n", g_borderless ? "borderless" : "windowed");
 
 	if (GameConfig::GetValue("Gameplay", "BetterChat", 1, "Increases character limit for Text Chat in Multiplayer (Creds to Tervel)")) // changes char limit from 64 to 128 and formats the input after the 64th character
 		{

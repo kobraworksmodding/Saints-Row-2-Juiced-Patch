@@ -56,4 +56,8 @@ namespace Render2D
 	extern float ultrawide_safearea_x;
 	extern float GetCvintAnchorOffsetX(const char* document, const char* element);
 	extern bool bSmartCutsceneBorder;
+
+	// borderless / windowed, switchable live from the in-game options
+	extern bool IsBorderless();
+	extern void SetBorderless(bool borderless);
 }
