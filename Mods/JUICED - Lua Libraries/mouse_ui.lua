@@ -1528,13 +1528,14 @@ function mouse_ui_radial_handler()
 		return
 	end
 
-	-- ultrawide: cvint.dat draws radial_grp shifted sideways, its elements don't know about it
+	-- ultrawide / 16:10: cvint.dat draws radial_grp shifted, its elements don't know about it
 	local ox = 0
-	local cvint_x = mui_get("mouse_ui_cvint_x")
-	if cvint_x ~= nil then
-		ox = cvint_x("hud", "radial_grp")
+	local oy = 0
+	local cvint = mui_get("mouse_ui_cvint_offset")
+	if cvint ~= nil then
+		ox, oy = cvint("hud", "radial_grp")
 	end
-	local mm = { x = m.x - ox, y = m.y }
+	local mm = { x = m.x - ox, y = m.y - oy }
 
 	-- cursor to the middle first, the poll after the request moves it
 	if r.warped ~= true then
@@ -1542,7 +1543,7 @@ function mouse_ui_radial_handler()
 		r.wait = 2
 		local warp = mui_get("mouse_ui_warp")
 		if warp ~= nil then
-			warp(cx + ox, cy)
+			warp(cx + ox, cy + oy)
 		end
 		mui_request(true)
 		return

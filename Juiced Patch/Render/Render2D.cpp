@@ -235,6 +235,25 @@ int processtextwidth(int width) {
 		else return 1280.f; 
 	}
 
+	// 16:10 and other screens between 4:3 and 16:9, the HUD keeps its 16:9 shape and is centred vertically
+	bool TallHUDFix = false;
+	float TallHUDHeight = 720.f;
+	float tall_safearea_y = 1.f;
+
+	float get_vint_y_resolution() {
+		if (TallHUDFix)
+			return TallHUDHeight;
+		return 720.f;
+	}
+
+	// where safe_frame goes, the 1280x720 frame centred in the vint screen
+	float get_safe_frame_x() {
+		return (get_vint_x_resolution() - 1280.f) / 2.f;
+	}
+	float get_safe_frame_y() {
+		return (get_vint_y_resolution() - 720.f) / 2.f;
+	}
+
 	void __declspec(naked) InGamePrintASM(const char* Text, int x, int y, int font) {
 		__asm {
 			push ebp
@@ -531,7 +550,7 @@ int processtextwidth(int width) {
 		cached_str[sizeof(cached_str) - 1] = '\0';
 		char buffer[256];
 		const char* lua_command = "vint_set_property(vint_object_find(\"%s\", 0, vint_document_find(\"%s\")), \"%s\", %f, %f)";
-		snprintf(buffer, sizeof(buffer), lua_command,"safe_frame", cached_str,"anchor", (get_vint_x_resolution() - 1280) / 2.f,0.f);
+		snprintf(buffer, sizeof(buffer), lua_command,"safe_frame", cached_str,"anchor", get_safe_frame_x(), get_safe_frame_y());
 		//Logger::TypedLog(CHN_DEBUG, "%s \n", possible_str);
 		General::VintExecute(buffer);
 
@@ -550,7 +569,9 @@ int processtextwidth(int width) {
 			snprintf(buffer, sizeof(buffer), lua_command, "health_large_grp", "hud", "anchor", (get_vint_x_resolution() - 1280) / 2.f, -500.f);
 			General::VintExecute(buffer);
 
-			float weirdscale = 1.f / (widescreenvalue / *currentAR);
+			// vignettes cover the whole screen, not just the safe frame
+			const float vignette_scale_x = get_vint_x_resolution() / 1280.f;
+			const float vignette_scale_y = get_vint_y_resolution() / 720.f;
 			//snprintf(buffer, sizeof(buffer), lua_command, "mayhem_grp", "hud", "scale", weirdscale, 1.f);
 			//General::VintExecute(buffer);
 
@@ -560,10 +581,10 @@ int processtextwidth(int width) {
 			snprintf(buffer, sizeof(buffer), lua_command, "multiplier_txt", "hud", "scale",
 				0.f, 0.f);
 
-			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "anchor", -((get_vint_x_resolution() - 1280) / 2.f), 0.f);
+			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "anchor", -get_safe_frame_x(), -get_safe_frame_y());
 			General::VintExecute(buffer);
 
-			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "scale", weirdscale, 1.f);
+			snprintf(buffer, sizeof(buffer), lua_command, "vignettes", "hud", "scale", vignette_scale_x, vignette_scale_y);
 			General::VintExecute(buffer);
 
 		}
@@ -571,7 +592,6 @@ int processtextwidth(int width) {
 
 bool UltrawideFix = false;
 bool bSmartCutsceneBorder = true;
-// Clippy TODO, maybe handle 16:10?
 std::thread RefreshHUD_thread;
 void RefreshHUD_loop() {
 	Logger::TypedLog(CHN_DEBUG, "SR2Ultrawide Refreshing HUD {}\n",2);
@@ -690,6 +710,13 @@ static void DrawBorderRect(int x, int y, int w, int h, int* state)
 
 void gr_rect_letterbox(int x1, int y1, int w, int h, int* state)
 {
+	if (TallHUDFix)
+	{
+		// 16:10, the game's top bar is in the 720 high frame, run it from the top of the screen
+		const int extra = (int)std::ceil(get_safe_frame_y());
+		DrawBorderRect(x1, 0, w, y1 + h + extra + 2, state);
+		return;
+	}
 	if (*currentAR > widescreenvalue && bSmartCutsceneBorder && r_is_widescreen)
 	{
 		SmartCutsceneFrame f = GetSmartCutsceneFrame();
@@ -742,6 +769,13 @@ void gr_rect_letterbox(int x1, int y1, int w, int h, int* state)
 
 void gr_rect_letterbox_below(int x1, int y1, int w, int h, int* state)
 {
+	if (TallHUDFix)
+	{
+		// bottom bar, moved into the centred frame and run to the bottom of the screen
+		const int extra = (int)std::ceil(get_safe_frame_y());
+		DrawBorderRect(x1, y1 + extra, w, h + extra + 2, state);
+		return;
+	}
 
 
 	if (*currentAR > widescreenvalue && bSmartCutsceneBorder && r_is_widescreen)
@@ -793,6 +827,34 @@ char SR2Ultrawide_HUDScale() {
 		RefreshHUD_thread = std::thread(RefreshHUD_loop);
 		RefreshHUD_thread.detach();
 	}
+	// 16:10 and friends: same scale on both axes so the HUD isn't stretched, safe_frame gets centred
+	// vertically and cvint.dat T/B pushes elements to the top/bottom (like ultrawide does sideways)
+	static const bool tall_hud_enabled = GameConfig::GetValue("Graphics", "FixTallHUD", 1,
+		"Stops the HUD stretching on screens between 4:3 and 16:9 like 16:10, uses the T/B flags in cvint.dat (Clippy95)") != 0;
+	const bool was_tall = TallHUDFix;
+	if (tall_hud_enabled && aspectRatio > 1.59f && aspectRatio < 1.77f) {
+		UltrawideFix = false;
+		TallHUDFix = true;
+		TallHUDHeight = 1280.f / aspectRatio;
+		*(uint8_t*)0x0213c383 = 1; // is_screen_aspect_ratio_16_9
+		*(uint8_t*)0x025272dd = 1; // r_is_widescreen
+		*(float*)0x022fdcc0 = currentX / 1280.0f;
+		*(float*)0x022fdcbc = currentX / 1280.0f;
+		Logger::TypedLog(CHN_MOD, "SR2Ultrawide tall HUD, scale {:f} height {:f}\n", currentX / 1280.0f, TallHUDHeight);
+		if (!was_tall) {
+			RefreshHUD_thread = std::thread(RefreshHUD_loop);
+			RefreshHUD_thread.detach();
+		}
+		return 1;
+	}
+	TallHUDFix = false;
+	TallHUDHeight = 720.f;
+	if (was_tall && aspectRatio < 1.77f) {
+		// put safe_frame back where it was
+		RefreshHUD_thread = std::thread(RefreshHUD_loop);
+		RefreshHUD_thread.detach();
+	}
+
 	if ((GameConfig::GetValue("Graphics", "FixUltrawideHUD", 1) == 1)) {
 		if (aspectRatio <= 1.79777777778f && aspectRatio != 1.5f) {
 
@@ -1007,7 +1069,18 @@ static uint32_t GetVintDocCRC(const void* element)
 }
 
 
-void DrawUltraWideLeftRightBars(float alpha)
+// element's box in vint screen space (x0, y0, x1, y1), what "screen_nw"/"screen_se" read
+static bool GetElementScreenCorners(void* element, float out[4])
+{
+	if (!element)
+		return false;
+	using get_corners_t = void(__thiscall*)(void*, float*, int);
+	const get_corners_t get_corners = (*(get_corners_t**)element)[11]; // vtable + 0x2C
+	get_corners(element, out, 1);
+	return true;
+}
+
+void DrawUltraWideLeftRightBars(float alpha, void* element = nullptr)
 
 	{
 	if (*currentAR > widescreenvalue) {
@@ -1016,6 +1089,28 @@ void DrawUltraWideLeftRightBars(float alpha)
 		auto bar_width = (float)((x1 - 1280) / 2);
 		gr_rect(0, 0, bar_width, 720, GR_FILTER);
 		gr_rect(x1 - bar_width, 0, bar_width, 720, GR_FILTER);
+	}
+	else if (TallHUDFix) {
+		// 16:10, bars above and below the 720 high frame
+		ChangeTextColor(0, 0, 0, (int)std::clamp((alpha * 255.f), 0.f, 255.f));
+		float top_end = get_safe_frame_y();
+		float bottom_start = TallHUDHeight - top_end;
+		// start where the element ends, overlapping alpha shows as a dark line
+		// (the sniper scope's bottom piece goes 2 units past the 720 frame)
+		float c[4];
+		if (GetElementScreenCorners(element, c)) {
+			if (c[1] < top_end)
+				top_end = c[1];
+			if (c[3] > bottom_start)
+				bottom_start = c[3];
+		}
+		const int height = (int)std::ceil(TallHUDHeight);
+		const int top = (int)std::floor(top_end);
+		const int bottom = (int)std::ceil(bottom_start);
+		if (top > 0)
+			gr_rect(0, 0, 1280, top, GR_FILTER);
+		if (bottom < height)
+			gr_rect(0, bottom, 1280, height - bottom + 1, GR_FILTER);
 	}
 	}
 SafetyHookInline vint_element_base_renderD;
@@ -1228,19 +1323,34 @@ SAFETYHOOK_NOINLINE bool modify_vint_anchor(const vint_cint_custom* cint, vint_e
 				element->v_anchor.x += x;
 			return true;
 		}
+		if (TallHUDFix)
+		{
+			// 16:10, T/B go to the top / bottom of the screen
+			const float y = get_safe_frame_y() * std::clamp(tall_safearea_y, 0.f, 1.f);
+			if (align.v_top)
+				element->v_anchor.y -= y;
+			else if (align.v_bottom)
+				element->v_anchor.y += y;
+			return true;
+		}
 	}
 	return false;
 }
 
-// x shift cvint.dat gives an element while it's drawn (modify_vint_anchor), the element itself
+// shift cvint.dat gives an element while it's drawn (modify_vint_anchor), the element itself
 // doesn't move so things hit testing vint positions need it (MouseUI weapon wheel)
-float GetCvintAnchorOffsetX(const char* document, const char* element)
+void GetCvintAnchorOffset(const char* document, const char* element, float& out_x, float& out_y)
 {
-	if (!r_is_widescreen || !document || !element || *currentAR <= widescreenvalue)
-		return 0.f;
+	out_x = 0.f;
+	out_y = 0.f;
+	if (!r_is_widescreen || !document || !element)
+		return;
+	const bool wide = *currentAR > widescreenvalue;
+	if (!wide && !TallHUDFix)
+		return;
 	const auto it = g_custom_vint_cint_data.find(Game::utils::str_to_hash(element));
 	if (it == g_custom_vint_cint_data.end())
-		return 0.f;
+		return;
 
 	// same pick as FindVintCINT, this document's rule over [ANY]
 	const uint32_t document_crc = Game::utils::str_to_hash(document);
@@ -1260,17 +1370,25 @@ float GetCvintAnchorOffsetX(const char* document, const char* element)
 		}
 	}
 	if (!rule)
-		return 0.f;
+		return;
 
 	auto align = rule->align;
 	if (!align.will_it_be_anchored())
-		return 0.f;
-	const float x = ultrawide_get_x_difference() * std::clamp(ultrawide_safearea_x, 0.f, 1.f);
-	if (align.h_left)
-		return -x;
-	if (align.h_right)
-		return x;
-	return 0.f;
+		return;
+	if (wide) {
+		const float x = ultrawide_get_x_difference() * std::clamp(ultrawide_safearea_x, 0.f, 1.f);
+		if (align.h_left)
+			out_x = -x;
+		else if (align.h_right)
+			out_x = x;
+	}
+	else {
+		const float y = get_safe_frame_y() * std::clamp(tall_safearea_y, 0.f, 1.f);
+		if (align.v_top)
+			out_y = -y;
+		else if (align.v_bottom)
+			out_y = y;
+	}
 }
 
 bool ApplyIVRadarScaling(vint_element_base* element)
@@ -1318,7 +1436,7 @@ void __fastcall vint_element_base_render(
 		if (auto* custom = FindVintCINT(this_element))
 		{
 			if (custom->align.black_bars && !drew_black_bars)
-				DrawUltraWideLeftRightBars(alpha);
+				DrawUltraWideLeftRightBars(alpha, this_element);
 			old_anchor = this_element->v_anchor;
 			modified_anchor = modify_vint_anchor(custom, this_element);
 			if (custom->align.IVRadar) {
@@ -1481,6 +1599,7 @@ void diversion_image_sizeup()
 	InterceptCall(0xB8A751, diversion_image_sizeup_addr, diversion_image_sizeup);
 
 	ultrawide_safearea_x = std::clamp((float)GameConfig::GetDoubleValue("Graphics", "SafeArea_X_UW", 1.f, "Safearea in ultrawide for elements defined in cvint.dat (clippy95)"),0.f,1.f);
+	tall_safearea_y = std::clamp((float)GameConfig::GetDoubleValue("Graphics", "SafeArea_Y_Tall", 1.f, "Safearea on 16:10 like screens for elements with T/B in cvint.dat (clippy95)"), 0.f, 1.f);
 	InterceptCall(0x755C56, gr_rect_og,gr_rect_letterbox);
 	InterceptCall(0x755C81, gr_rect_og, gr_rect_letterbox_below);
 

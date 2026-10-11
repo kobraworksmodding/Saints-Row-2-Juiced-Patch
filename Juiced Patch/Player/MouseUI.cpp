@@ -260,14 +260,16 @@ namespace MouseUI
 		return 0;
 	}
 
-	// mouse_ui_cvint_x(document, element), the ultrawide x shift cvint.dat draws that element with
-	static int __cdecl lua_mouse_ui_cvint_x(lua_State* L)
+	// mouse_ui_cvint_offset(document, element) -> x, y
+	// the ultrawide / 16:10 shift cvint.dat draws that element with
+	static int __cdecl lua_mouse_ui_cvint_offset(lua_State* L)
 	{
-		float x = 0.f;
+		float x = 0.f, y = 0.f;
 		if (lua_gettop(L) >= 2 && lua_type(L, 1) == LUA_TSTRING && lua_type(L, 2) == LUA_TSTRING)
-			x = Render2D::GetCvintAnchorOffsetX(lua_tostring(L, 1), lua_tostring(L, 2));
+			Render2D::GetCvintAnchorOffset(lua_tostring(L, 1), lua_tostring(L, 2), x, y);
 		lua_pushnumber(L, x);
-		return 1;
+		lua_pushnumber(L, y);
+		return 2;
 	}
 
 	// mouse_ui_warp(x, y), puts the cursor at a vint position (weapon wheel centre)
@@ -344,7 +346,7 @@ namespace MouseUI
 		RegisterGameLuaFunction(L, "mouse_ui_end", &lua_mouse_ui_end);
 		RegisterGameLuaFunction(L, "mouse_ui_enabled", &lua_mouse_ui_enabled);
 		RegisterGameLuaFunction(L, "mouse_ui_warp", &lua_mouse_ui_warp);
-		RegisterGameLuaFunction(L, "mouse_ui_cvint_x", &lua_mouse_ui_cvint_x);
+		RegisterGameLuaFunction(L, "mouse_ui_cvint_offset", &lua_mouse_ui_cvint_offset);
 
 		g_luaLoaded = LoadVintLuaLib(L, "mouse_ui.lua");
 		Logger::TypedLog(CHN_LUA, "MouseUI: mouse_ui.lua {}\n", g_luaLoaded ? "loaded" : "not found");
@@ -388,6 +390,25 @@ namespace MouseUI
 		if (!(sy > 0.0001f))
 			sy = 1.f;
 		return true;
+	}
+
+	// a normal window lets the cursor leave it in menus, borderless / fullscreen keep it in
+	static bool ShouldClipCursor()
+	{
+		const bool windowed = *(BOOL*)0x022F6418_g != FALSE;
+		return !windowed || Render2D::IsBorderless();
+	}
+
+	static void ReleaseClip()
+	{
+		RECT cur;
+		if (!GetClipCursor(&cur))
+			return;
+		const int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+		const int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+		const RECT desktop{ x, y, x + GetSystemMetrics(SM_CXVIRTUALSCREEN), y + GetSystemMetrics(SM_CYVIRTUALSCREEN) };
+		if (memcmp(&cur, &desktop, sizeof(RECT)) != 0)
+			ClipCursor(nullptr);
 	}
 
 	static void SyncButtonCounters()
@@ -558,7 +579,10 @@ namespace MouseUI
 				while (ShowCursor(FALSE) >= 0) {}
 				g_cursorShown = false;
 			}
-			ClipToClient(hwnd);
+			if (ShouldClipCursor())
+				ClipToClient(hwnd);
+			else
+				ReleaseClip();
 			return;
 		}
 

@@ -18,6 +18,11 @@ namespace Render2D
 	extern float* currentAR;
 	extern bool UltrawideFix;
 	extern float get_vint_x_resolution();
+	extern float get_vint_y_resolution();
+	extern float get_safe_frame_x();
+	extern float get_safe_frame_y();
+	extern bool TallHUDFix;
+	extern float TallHUDHeight;
 	extern char SR2Ultrawide_HUDScale();
 	extern SafetyHookMid vint_create_process_hook;
 	extern void create_process_hook(safetyhook::Context32& ctx);
@@ -54,7 +59,7 @@ namespace Render2D
 	extern void ParseVintCINT();
 	extern int IVRadarScalingDyn;
 	extern float ultrawide_safearea_x;
-	extern float GetCvintAnchorOffsetX(const char* document, const char* element);
+	extern void GetCvintAnchorOffset(const char* document, const char* element, float& out_x, float& out_y);
 	extern bool bSmartCutsceneBorder;
 
 	// borderless / windowed, switchable live from the in-game options
