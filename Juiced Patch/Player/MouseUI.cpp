@@ -299,7 +299,7 @@ namespace MouseUI
 	// replaces "call register_lua_funcs" in vint_lua_init
 	static void __cdecl RegisterLuaFuncsHook(lua_State* L)
 	{
-		((void(__cdecl*)(lua_State*))0x007F35A0_g)(L); // original register_lua_funcs
+		cdecl_call<void>(0x007F35A0_g, L); // original register_lua_funcs
 		if (!L)
 			return;
 
