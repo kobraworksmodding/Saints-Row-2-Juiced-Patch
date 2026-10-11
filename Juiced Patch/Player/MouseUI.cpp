@@ -16,7 +16,6 @@
 #include "Input.h"
 #include "../FileLogger.h"
 #include "../GameConfig.h"
-#include "../SafeWrite.h"
 #include "../LuaHandler.h"
 #include "../Hooker.h"
 #include <safetyhook.hpp>
@@ -296,10 +295,12 @@ namespace MouseUI
 		return load_script(L, L, pool, name) != 0;
 	}
 
+	static uintptr_t g_registerLuaFuncs = 0; // original register_lua_funcs
+
 	// replaces "call register_lua_funcs" in vint_lua_init
 	static void __cdecl RegisterLuaFuncsHook(lua_State* L)
 	{
-		cdecl_call<void>(0x007F35A0_g, L); // original register_lua_funcs
+		cdecl_call<void>(g_registerLuaFuncs, L);
 		if (!L)
 			return;
 
@@ -589,7 +590,7 @@ namespace MouseUI
 		if (!g_enabled)
 			return;
 
-		WriteRelCall(0x00B91539_g, (UInt32)&RegisterLuaFuncsHook); // vint lua init -> register_lua_funcs
+		InterceptCall(0x00B91539_g, g_registerLuaFuncs, &RegisterLuaFuncsHook); // vint lua init -> register_lua_funcs
 		g_pollHook = safetyhook::create_inline(0x00C1F320_g, &MousePollHook); // mouse_pc_poll
 		g_captureHook = safetyhook::create_inline(0x00C1F210_g, &MouseCaptureUpdateHook); // mouse capture update
 		g_msgHook = safetyhook::create_inline(0x00C1EFF0_g, &MouseMsgHook); // mouse window message callback
