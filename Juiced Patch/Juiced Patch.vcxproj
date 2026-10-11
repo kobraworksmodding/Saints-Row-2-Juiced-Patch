@@ -277,6 +277,7 @@
     <ClCompile Include="PatchNotifier.ixx" />
     <ClCompile Include="Player\Behavior.cpp" />
     <ClCompile Include="Player\Input.cpp" />
+    <ClCompile Include="Player\MouseUI.cpp" />
     <ClCompile Include="Render\bitmap.cpp" />
     <ClCompile Include="Render\d3d9_hook.cpp" />
     <ClCompile Include="Render\Render2D.cpp" />
@@ -322,6 +323,7 @@
     <ClInclude Include="Patcher\CMultiPatch.h" />
     <ClInclude Include="Patcher\CPatch.h" />
     <ClInclude Include="Player\Input.h" />
+    <ClInclude Include="Player\MouseUI.h" />
     <ClInclude Include="Render\bitmap.h" />
     <ClInclude Include="Render\d3d9_hook.h" />
     <ClInclude Include="Render\Render2D.h" />

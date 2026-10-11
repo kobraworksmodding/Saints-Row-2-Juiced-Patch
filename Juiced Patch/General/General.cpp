@@ -16,6 +16,7 @@ and / or run completely on startup or after we check everything else.*/
 #include "../Render/Render2D.h"
 #include "..\LUA\InGameConfig.h"
 #include "../Player/Input.h"
+#include "../Player/MouseUI.h"
 #include "../Math/Math.h"
 #include "../UtilsGlobal.h"
 #include "../Game/Game.h"
@@ -971,7 +972,8 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 #if !JLITE
 			|| Render2D::IVRadarScaling || allowJuicedAPI
 #endif
-			|| (is_pause_menu && !InGameConfig::g_sliders.empty()) || (strcmp(filename, "hud.lua") == 0);
+			|| (is_pause_menu && !InGameConfig::g_sliders.empty()) || (strcmp(filename, "hud.lua") == 0)
+			|| MouseUI::WantsScript(filename);
 		{
 			// Clean up previous buffer if it exists (regardless of which file it was for)
 			if (needBufferMod) {
@@ -1190,6 +1192,14 @@ void __declspec(naked) TextureCrashFixRemasteredByGroveStreetGames()
 					}
 				}
 
+
+				// MouseUI: lets mouse_ui.lua hook into the supported menu scripts
+				if (!modified) {
+					finalContent = std::string(currentBuff, currentSize);
+				}
+				if (MouseUI::PatchVintScript(filename, finalContent)) {
+					modified = true;
+				}
 
 				// If any modifications were made, create a new buffer
 				if (modified) {

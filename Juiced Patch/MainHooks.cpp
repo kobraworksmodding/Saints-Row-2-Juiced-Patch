@@ -24,6 +24,7 @@ import component;
 #include "UGC/InternalPrint.h"
 
 #include "Player/Input.h"
+#include "Player/MouseUI.h"
 #include "Player/Behavior.h"
 
 #include "Math/Math.h"
@@ -1711,6 +1712,7 @@ int WINAPI Hook_WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCm
 	Render3D::Init();
 	Render2D::Init();
 	GLua::Init();
+	MouseUI::Init();
 	Audio::Init();
 	XACT::Init();
 	Debug::Init();
