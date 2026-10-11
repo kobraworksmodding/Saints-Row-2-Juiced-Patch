@@ -2045,42 +2045,60 @@ function mouse_ui_cell_range(s, lo, hi)
 	end
 end
 
--- cellphone_phonebook_nav without the scrolling and the 1 step limit
+-- what the select / deselect animations end on, set straight away for the mouse
+function mouse_ui_cell_item_look(md, grp, selected)
+	local text_h = vint_object_find("book_item_text", grp)
+	vint_set_property(text_h, "alpha", 1)
+	if selected then
+		vint_set_property(text_h, "tint", .529, .725, .815)
+	else
+		vint_set_property(text_h, "tint", 0.1294, 0.1765, 0.204)
+	end
+	if vint_get_property(text_h, "text_tag") ~= nil then
+		if selected then
+			cellphone_phonebook_resize_static_text(text_h, 1.2, true)
+		else
+			cellphone_phonebook_resize_static_text(text_h, 1.0, false)
+		end
+	end
+	if md.image_peg ~= -1 then
+		-- homies: the picture opens above the selected name
+		local bmp_h = vint_object_find("book_image", grp)
+		local w, h = vint_get_property(bmp_h, "source_se")
+		local tx, ty = vint_get_property(text_h, "anchor")
+		if selected then
+			vint_set_property(bmp_h, "source_se", w, 98)
+			vint_set_property(bmp_h, "alpha", 1)
+			vint_set_property(text_h, "anchor", tx, 98)
+		else
+			vint_set_property(bmp_h, "source_se", w, 0)
+			vint_set_property(bmp_h, "alpha", 0)
+			vint_set_property(text_h, "anchor", tx, 0)
+		end
+	end
+end
+
+-- cellphone_phonebook_nav for the mouse: no fade, no scrolling, any distance
 function mouse_ui_cell_select(md, idx, old)
 	local c = Cellphone
 	local hd = c.handles
 	c.cur_idx = idx
 	md.cur_idx = idx
-	cellphone_nav_block(true)	-- the upscale tween's end event unblocks
 
-	local grp = md[idx].grp_h
-	local text_h = vint_object_find("book_item_text", grp)
-	vint_set_property(hd.book_text_select_anim, "target_handle", grp)
-	if vint_get_property(text_h, "text_tag") ~= nil then
-		cellphone_resize_upscale_animation(text_h)
-	end
-	lua_play_anim(hd.book_text_select_anim, 0)
-	if md.image_peg ~= -1 then
-		vint_set_property(hd.book_image_select_anim, "target_handle", grp)
-		lua_play_anim(hd.book_image_select_anim, 0)
-	end
-	vint_set_property(hd.book_item_pulse_anim, "target_handle", grp)
-	lua_play_anim(hd.book_item_pulse_anim, 0)
+	-- a fade from the keyboard could still be running on one of these
+	vint_set_property(hd.book_text_deselect_anim, "is_paused", true)
+	vint_set_property(hd.book_image_select_anim, "is_paused", true)
+	vint_set_property(hd.book_image_deselect_anim, "is_paused", true)
 
 	if old ~= idx and mouse_ui_cell_alive(md[old]) then
-		local ogrp = md[old].grp_h
-		local otext_h = vint_object_find("book_item_text", ogrp)
-		vint_set_property(otext_h, "alpha", 1)
-		vint_set_property(hd.book_text_deselect_anim, "target_handle", ogrp)
-		if vint_get_property(otext_h, "text_tag") ~= nil then
-			cellphone_resize_dnscale_animation(otext_h)
-		end
-		lua_play_anim(hd.book_text_deselect_anim, 0)
-		if md.image_peg ~= -1 then
-			vint_set_property(hd.book_image_deselect_anim, "target_handle", ogrp)
-			lua_play_anim(hd.book_image_deselect_anim, 0)
-		end
+		mouse_ui_cell_item_look(md, md[old].grp_h, false)
 	end
+	local grp = md[idx].grp_h
+	mouse_ui_cell_item_look(md, grp, true)
+	cellphone_phonebook_align()
+
+	vint_set_property(hd.book_item_pulse_anim, "target_handle", grp)
+	lua_play_anim(hd.book_item_pulse_anim, 0)
 	audio_play(Cellphone_audio["nav"])
 end
 
