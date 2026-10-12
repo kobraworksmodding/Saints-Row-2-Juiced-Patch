@@ -1560,6 +1560,10 @@ void ParseVintCINT()
 uintptr_t diversion_image_sizeup_addr;
 float saved_diversion_horz = 0.f;
 float* diversion_horz = (float*)0xE8D668_g;
+// the y of each diversion row, the game works them out once from 0xE8D66C on init
+float* diversion_rows = (float*)0x1F8B0B0_g;
+float saved_diversion_rows[6]{};
+bool diversion_rows_saved = false;
 void diversion_image_sizeup()
 {
 	cdecl_call<void>(diversion_image_sizeup_addr);
@@ -1567,6 +1571,9 @@ void diversion_image_sizeup()
 	{
 		saved_diversion_horz = *diversion_horz;
 	}
+	for (int i = 0; i < 6; i++)
+		saved_diversion_rows[i] = diversion_rows[i];
+	diversion_rows_saved = true;
 }
 	void Init() {
 	if(GameConfig::GetValue("Debug","DisplayLooseFilesLoading",1, "Renders the loose files that load during the initial loading screen (Clippy95)"))
@@ -1611,6 +1618,13 @@ void diversion_image_sizeup()
 			if (r_is_widescreen && saved_diversion_horz != 0.f)
 			{
 				*diversion_horz = saved_diversion_horz + (ultrawide_get_x_difference() * ultrawide_safearea_x);
+			}
+			// 16:10, diversions sit in the middle of the screen so move them down with safe_frame
+			if (diversion_rows_saved)
+			{
+				const float y = TallHUDFix ? get_safe_frame_y() : 0.f;
+				for (int i = 0; i < 6; i++)
+					diversion_rows[i] = saved_diversion_rows[i] + y;
 			}
 		};
 	}
