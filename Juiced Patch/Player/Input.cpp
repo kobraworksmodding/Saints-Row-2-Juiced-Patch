@@ -192,6 +192,7 @@ namespace Input {
 	int controllerConnected[4] = { 1, 1, 1, 1 };
 	bool NoControllers = false;
 	bool XInputEnabled = true;
+	bool XInputCheckRunning = false; // NoControllers only means something while XInputCheck runs
 
 	typedef DWORD(WINAPI* XInputGetCapabilitiesFunc)(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES* pCapabilities);
 
@@ -320,6 +321,7 @@ namespace Input {
 			patchNop((BYTE*)0x00BFA099, 5);
 			patchNop((BYTE*)0x00BFA0C8, 2);
 			patchNop((BYTE*)0x00BFA0CA, 5);
+			XInputCheckRunning = true;
 			CreateThread(0, 0, XInputCheck, 0, 0, 0);
 		}
 
@@ -771,6 +773,37 @@ namespace Input {
 		__asm popad
 	}
 
+	// SDL can miss a pad coming back (wireless pads that turn off to save battery and get turned on again),
+	// if XInput sees a pad for a few seconds and SDL still doesn't, restart SDL's gamepad side so it looks again.
+	static void SDL_RecoverLostGamepad()
+	{
+		static ULONGLONG next_check = 0;
+		static int missed = 0;
+		const ULONGLONG now = GetTickCount64();
+		if (now < next_check)
+			return;
+		next_check = now + 1000;
+
+		if (!XInputCheckRunning || NoControllers || SDL_HasGamepad()) {
+			missed = 0;
+			return;
+		}
+		// SDL rechecks 300ms and 2s after a device change by itself, give it that first
+		if (++missed < 3)
+			return;
+		missed = 0;
+		next_check = now + 5000;
+
+		Logger::TypedLog("SDL", "XInput sees a controller but SDL doesn't, restarting SDL gamepad support\n");
+		SDL_QuitSubSystem(SDL_INIT_GAMEPAD);
+		if (!SDL_InitSubSystem(SDL_INIT_GAMEPAD)) {
+			Logger::TypedLog("SDL", "Couldn't restart SDL gamepad support: {}\n", SDL_GetError());
+			return;
+		}
+		// mappings get freed on quit
+		SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt");
+	}
+
 	void __cdecl input_pc_poll_sdl(controller* cntrl)
 	{
 		bool& pad_is_connected = *(bool*)0x0252A58E;
@@ -806,6 +839,13 @@ namespace Input {
 			}
 		}
 
+		// lost it without a removed event
+		if (g_gamepad && !SDL_GamepadConnected(g_gamepad)) {
+			Logger::TypedLog("SDL", "Controller went away\n");
+			SDL_CloseGamepad(g_gamepad);
+			g_gamepad = NULL;
+		}
+
 		// Check if we need to find/reconnect a gamepad
 		if (!g_gamepad) {
 			// Try to find and open the first available gamepad
@@ -820,7 +860,9 @@ namespace Input {
 								controller_disconect_dialog_prevframe();
 							}
 							pad_is_connected = 1;
-							SDL_free(joysticks);
+							GamepadName = SDL_GetGamepadName(g_gamepad);
+							if (GamepadName)
+								Logger::TypedLog("SDL", "{} connected\n", GamepadName);
 							break;
 						}
 					}
@@ -834,6 +876,7 @@ namespace Input {
 					controller_flush(cntrl);
 				}
 				pad_is_connected = 0;
+				SDL_RecoverLostGamepad();
 				return;
 			}
 		}
