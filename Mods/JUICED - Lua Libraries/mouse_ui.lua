@@ -569,11 +569,45 @@ function mouse_ui_menu_rows(m, can_act)
 		if item ~= menu.highlighted_item and mouse_ui_locked(m) == false and (m.moved == true or m.lpress == true) then
 			mouse_ui_call("menu_item", item)
 		end
+		if item == menu.highlighted_item and data.type == MENU_ITEM_TYPE_PALETTE and mouse_ui_locked(m) == false and (m.moved == true or m.lpress == true) then
+			mouse_ui_menu_palette_hover(m, r, data)
+		end
 		if m.lpress == true and Menu_active == menu and menu.highlighted_item == item then
 			mouse_ui_menu_click(m, r, item, data)
 		end
 	end
 	return true
+end
+
+-- colour swatch (0 - 2) of a palette row under the cursor, -1 if none
+function mouse_ui_menu_palette_swatch(m, r, data)
+	local o = Menu_option_labels[r]
+	if o == nil or o.control == nil or o.control.grp_h == nil or data.palette_colors == nil then
+		return -1
+	end
+	local n = data.palette_colors.num_colors
+	if n == nil then
+		return -1
+	end
+	if n > 3 then
+		n = 3
+	end
+	for i = 0, n - 1 do
+		if mouse_ui_hit(vint_object_find("swatch_color_" .. i, o.control.grp_h), m.x, m.y, 2) then
+			return i
+		end
+	end
+	return -1
+end
+
+-- hovering a colour picks it, like nav_left / nav_right does
+function mouse_ui_menu_palette_hover(m, r, data)
+	local i = mouse_ui_menu_palette_swatch(m, r, data)
+	local o = Menu_option_labels[r]
+	if i >= 0 and o.control.highlighted_index ~= i then
+		menu_pallette_update_selected(o, data, i)
+		audio_play(Menu_sound_item_nav)
+	end
 end
 
 -- highlight without scrolling, otherwise the list runs away under the cursor
@@ -618,7 +652,28 @@ function mouse_ui_menu_click(m, r, item, data)
 		control = o.control
 	end
 
-	if control ~= nil and control.grp_h ~= nil and (t == MENU_ITEM_TYPE_NUM_SLIDER or t == MENU_ITEM_TYPE_TEXT_SLIDER or t == MENU_ITEM_TYPE_PALETTE) then
+	if t == MENU_ITEM_TYPE_PALETTE and control ~= nil and control.grp_h ~= nil then
+		-- click a colour: pick it and open the colour picker for it, the arrows still step
+		local i = mouse_ui_menu_palette_swatch(m, r, data)
+		if i >= 0 then
+			if control.highlighted_index ~= i then
+				menu_pallette_update_selected(o, data, i)
+			end
+		elseif mouse_ui_hit_visible(vint_object_find("arrow_w", control.grp_h), m, 4) then
+			mouse_ui_inject("nav_left", 2)
+			mouse_ui_lock(m, 6)
+			return
+		elseif mouse_ui_hit_visible(vint_object_find("arrow_e", control.grp_h), m, 4) then
+			mouse_ui_inject("nav_right", 2)
+			mouse_ui_lock(m, 6)
+			return
+		end
+		mouse_ui_inject("select", 0)
+		mouse_ui_lock(m, 8)
+		return
+	end
+
+	if control ~= nil and control.grp_h ~= nil and (t == MENU_ITEM_TYPE_NUM_SLIDER or t == MENU_ITEM_TYPE_TEXT_SLIDER) then
 		local cx0, cy0, cx1, cy1 = mouse_ui_bbox(control.grp_h)
 		if cx0 ~= nil and m.x >= cx0 - 8 then
 			if t == MENU_ITEM_TYPE_NUM_SLIDER then
