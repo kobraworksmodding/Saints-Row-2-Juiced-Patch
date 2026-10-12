@@ -378,6 +378,7 @@ end
 function mouse_ui_menu_stop()
 	Mouse_ui.drag = nil
 	Mouse_ui.sdrag = nil
+	mouse_ui_horz_hover(nil)
 	mouse_ui_stop("menu")
 end
 
@@ -386,6 +387,7 @@ function mouse_ui_menu_closing()
 	Mouse_ui.drag = nil
 	Mouse_ui.sdrag = nil
 	Mouse_ui.menu_closing = true
+	mouse_ui_horz_hover(nil)
 	mouse_ui_release("menu")
 end
 
@@ -444,13 +446,16 @@ function mouse_ui_menu_handler()
 	if active == nil or active == 0 or Mouse_ui.menu_closing == true then
 		Mouse_ui.drag = nil
 		Mouse_ui.sdrag = nil
+		mouse_ui_horz_hover(nil)
 		return
 	end
 	if mouse_ui_dialog_open() then
 		Mouse_ui.drag = nil
+		mouse_ui_horz_hover(nil)
 		mui_request(false)
 		return
 	end
+	Mouse_ui.horz_want = nil
 
 	local can_act = m.active == true and menu_input_is_blocked() == false and Menu_transition_in_progress ~= true
 	local hover = false
@@ -484,6 +489,11 @@ function mouse_ui_menu_handler()
 		end
 	end
 
+	if m.active == true then
+		mouse_ui_horz_hover(Mouse_ui.horz_want)
+	else
+		mouse_ui_horz_hover(nil)
+	end
 	mui_request(hover)
 end
 Mouse_ui_handlers["menu"] = mouse_ui_menu_handler
@@ -1027,6 +1037,7 @@ function mouse_ui_menu_horz(m, can_act)
 			local x0, y0, x1, y1 = mouse_ui_bbox(item.label_h)
 			if x0 ~= nil and m.x >= x0 - 6 and m.x <= x1 + 6 and m.y >= y0 - 4 and m.y <= y1 + 4
 				and (clip_x0 == nil or m.x >= clip_x0) and (clip_x1 == nil or m.x <= clip_x1) then
+				Mouse_ui.horz_want = i
 				if can_act and m.lpress == true and horz.num_items > 1 and i ~= horz.current_selection then
 					mouse_ui_call("menu_horz", i)
 					mouse_ui_lock(m, 8)
@@ -1036,6 +1047,43 @@ function mouse_ui_menu_horz(m, can_act)
 		end
 	end
 	return false
+end
+
+-- tab under the cursor goes light grey, the selected tab keeps its own colour
+MOUSE_UI_HORZ_HOVER_TINT = { r = 0.82, g = 0.82, b = 0.82 }
+
+function mouse_ui_horz_hover(index)
+	local horz = mui_get("Menu_horz_active")
+	if horz == 0 then
+		horz = nil
+	end
+	local new_h = nil
+	if index ~= nil and horz ~= nil and horz[index] ~= nil and index ~= horz.current_selection then
+		new_h = horz[index].label_h
+	end
+
+	local old_h = Mouse_ui.horz_hover
+	if old_h ~= nil and old_h ~= new_h then
+		-- only if it's still one of the tabs and isn't the selected one (its tween owns the colour)
+		if horz ~= nil and horz.num_items ~= nil and horz.norm_item ~= nil and horz.norm_item.tint ~= nil then
+			local t = horz.norm_item.tint
+			for i = 0, horz.num_items - 1 do
+				local item = horz[i]
+				if item ~= nil and item.label_h == old_h then
+					if i ~= horz.current_selection and t.r ~= nil then
+						vint_set_property(old_h, "tint", t.r, t.g, t.b)
+					end
+					break
+				end
+			end
+		end
+	end
+
+	Mouse_ui.horz_hover = new_h
+	if new_h ~= nil then
+		local c = MOUSE_UI_HORZ_HOVER_TINT
+		vint_set_property(new_h, "tint", c.r, c.g, c.b)
+	end
 end
 
 -- menu_horz_nav but straight to a tab
