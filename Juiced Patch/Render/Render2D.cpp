@@ -238,7 +238,7 @@ int processtextwidth(int width) {
 	// 16:10 and other screens between 4:3 and 16:9, the HUD keeps its 16:9 shape and is centred vertically
 	bool TallHUDFix = false;
 	float TallHUDHeight = 720.f;
-	float tall_safearea_y = 1.f;
+	float tall_safearea_y = 0.f;
 
 	float get_vint_y_resolution() {
 		if (TallHUDFix)
@@ -1599,7 +1599,7 @@ void diversion_image_sizeup()
 	InterceptCall(0xB8A751, diversion_image_sizeup_addr, diversion_image_sizeup);
 
 	ultrawide_safearea_x = std::clamp((float)GameConfig::GetDoubleValue("Graphics", "SafeArea_X_UW", 1.f, "Safearea in ultrawide for elements defined in cvint.dat (clippy95)"),0.f,1.f);
-	tall_safearea_y = std::clamp((float)GameConfig::GetDoubleValue("Graphics", "SafeArea_Y_Tall", 1.f, "Safearea on 16:10 like screens for elements with T/B in cvint.dat (clippy95)"), 0.f, 1.f);
+	tall_safearea_y = std::clamp((float)GameConfig::GetDoubleValue("Graphics", "SafeArea_Y_Tall", 0.f, "Safearea on 16:10 like screens for elements with T/B in cvint.dat, 0 = keep the HUD in the 16:9 area, 1 = push it to the screen edges (clippy95)"), 0.f, 1.f);
 	InterceptCall(0x755C56, gr_rect_og,gr_rect_letterbox);
 	InterceptCall(0x755C81, gr_rect_og, gr_rect_letterbox_below);
 
