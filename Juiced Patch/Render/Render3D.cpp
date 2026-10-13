@@ -1154,12 +1154,34 @@ namespace Render3D
 		InterlockedExchange(&read, start);
 	}
 
+	// the d3d thread checks the render thread's write position before every render command (~85k a frame),
+	// that sits in the cache line the render thread writes for every command it adds so each check missed,
+	// remember the end we last saw and only look again once we catch up to it (Clippy95)
+	struct alignas(64) render_stream_read_cache {
+		uint32_t last_read = 0;
+		uint32_t known_end = 0;
+	};
+	static render_stream_read_cache stream_read_cache;
+
+	bool __cdecl render_stream_has_data() {
+		const uint32_t read = *(volatile uint32_t*)0x033D6300;
+		if (read < stream_read_cache.last_read) // flushed, everything went back to the start
+			stream_read_cache.known_end = 0;
+		stream_read_cache.last_read = read;
+		if (read < stream_read_cache.known_end)
+			return true;
+		stream_read_cache.known_end = *(volatile uint32_t*)0x033D62F4;
+		return read < stream_read_cache.known_end;
+	}
+
 	void sync_handhake_render() {
 	if (GameConfig::GetValue("Debug", "FixPerformance", 1, "Fixes performance by waiting properly between main game thread and render thread.\nrecommended to be used alongside sync_shadows_threads=1 (Clippy95)") == 0) {
 			return;
 		}
 		SafeWrite8(0x005285A3, 0);
 		static auto flush_wait = safetyhook::create_inline(0x00D1C780, &pc_flush_command_buffer);
+		// render_from_buffer -> render_stream::has_data (eax = buffer, only ever the main one)
+		patchCall((void*)0x00D203BF, render_stream_has_data);
 
 		// sim thread busy spins on this flag while the render thread builds the frame,
 		// game sets an event right after the flag so sleep on that after a short spin (Clippy95)
