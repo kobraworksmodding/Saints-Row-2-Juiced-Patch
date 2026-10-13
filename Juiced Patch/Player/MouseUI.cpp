@@ -19,6 +19,7 @@
 #include "../LuaHandler.h"
 #include "../Hooker.h"
 #include "../Render/Render2D.h"
+#include "../loose files.h"
 #include <safetyhook.hpp>
 import OptionsManager;
 
@@ -68,6 +69,72 @@ namespace MouseUI
 
 	// mouse_ui_warp(), applied on the next poll once the cursor is ours
 	static bool  g_warpPending = false;
+
+	// --- cursors ----------------------------------------------------------------------------------
+	// SR2 styled cursors from JUICED - Textures, set as the window's class cursor so it's ours over
+	// the game window and Windows' own everywhere else. Link while hovering something clickable,
+	// busy while the loading screen is up.
+
+	static bool    g_customCursor  = false;
+	static bool    g_cursorsLoaded = false;
+	static HCURSOR g_curNormal     = nullptr;
+	static HCURSOR g_curLink       = nullptr;
+	static HCURSOR g_curBusy       = nullptr;
+	static HCURSOR g_curClass      = nullptr; // what the window class has right now
+	static volatile DWORD g_loadingScreenTick = 0;
+
+	static HCURSOR LoadJuicedCursor(const char* name)
+	{
+		const char* path = TranslateFilePath(name);
+		if (!path)
+			return nullptr;
+		HCURSOR cursor = LoadCursorFromFileA(path);
+		if (!cursor)
+			Logger::TypedLog(CHN_MOD, "MouseUI: couldn't load cursor {}\n", path);
+		return cursor;
+	}
+
+	static HCURSOR PickCursor()
+	{
+		if (!g_cursorsLoaded) {
+			g_cursorsLoaded = true;
+			g_curNormal = LoadJuicedCursor("juiced_cursor_normal.cur");
+			g_curLink = LoadJuicedCursor("juiced_cursor_link.cur");
+			g_curBusy = LoadJuicedCursor("juiced_cursor_busy.ani");
+		}
+		if (!g_curNormal)
+			return nullptr;
+		if (g_curBusy && GetTickCount() - g_loadingScreenTick < 250)
+			return g_curBusy;
+		if (g_curLink && g_uiActive && g_hoverPrev && !g_padHidden)
+			return g_curLink;
+		return g_curNormal;
+	}
+
+	// main thread only, SetCursor is per thread
+	static void UpdateCursor(HWND hwnd)
+	{
+		if (!g_customCursor || !hwnd)
+			return;
+		HCURSOR cursor = PickCursor();
+		if (!cursor)
+			return;
+		if (cursor != g_curClass) {
+			SetClassLongPtrA(hwnd, GCLP_HCURSOR, (LONG_PTR)cursor);
+			g_curClass = cursor;
+		}
+		// the game sets the windows arrow when it lets go of the mouse, and the class cursor only
+		// comes back on the next move, so swap it now if the cursor is over our client area
+		if (GetCursor() == cursor)
+			return;
+		POINT p;
+		if (!GetCursorPos(&p) || WindowFromPoint(p) != hwnd)
+			return;
+		RECT rc;
+		ScreenToClient(hwnd, &p);
+		if (GetClientRect(hwnd, &rc) && PtInRect(&rc, p))
+			SetCursor(cursor);
+	}
 	static float g_warpX = 0.f;
 	static float g_warpY = 0.f;
 
@@ -563,7 +630,9 @@ namespace MouseUI
 					g_cursorShown = true;
 				}
 				static HCURSOR arrow = LoadCursor(nullptr, IDC_ARROW);
-				if (arrow && GetCursor() != arrow)
+				if (g_customCursor)
+					UpdateCursor(hwnd);
+				else if (arrow && GetCursor() != arrow)
 					SetCursor(arrow);
 			}
 			else if (g_cursorShown) {
@@ -584,6 +653,7 @@ namespace MouseUI
 				*(int*)0x0252A620_g = 1; // let the game hide + clip it again
 		}
 		g_captureHook.unsafe_ccall<void>();
+		UpdateCursor(hwnd);
 	}
 
 	static void __cdecl MouseMsgHook(int msg, int wparam)
@@ -678,12 +748,21 @@ namespace MouseUI
 		GameConfig::GetValue("Input", "MouseWeaponWheel", 1,
 			"Pick weapons and food on the weapon wheel with the mouse cursor, 0 = old mouse / WASD steering. (Clippy95)");
 		OptionsManager::registerOption("Input", "MouseWeaponWheel", &g_weaponWheel, true);
+		g_customCursor = GameConfig::GetValue("Input", "CustomCursor", 1,
+			"Saints Row 2 styled mouse cursor while it's over the game window, Windows' own everywhere else, 0 = always the Windows cursor.") != 0;
+		if (g_enabled || g_customCursor)
+			g_captureHook = safetyhook::create_inline(0x00C1F210_g, &MouseCaptureUpdateHook); // mouse capture update
+		if (g_customCursor) {
+			// loading screen render, busy cursor while it's up
+			static auto loading_screen = safetyhook::create_mid(0x008238D0_g, [](SafetyHookContext&) {
+				g_loadingScreenTick = GetTickCount();
+				});
+		}
 		if (!g_enabled)
 			return;
 
 		InterceptCall(0x00B91539_g, g_registerLuaFuncs, &RegisterLuaFuncsHook); // vint lua init -> register_lua_funcs
 		g_pollHook = safetyhook::create_inline(0x00C1F320_g, &MousePollHook); // mouse_pc_poll
-		g_captureHook = safetyhook::create_inline(0x00C1F210_g, &MouseCaptureUpdateHook); // mouse capture update
 		g_msgHook = safetyhook::create_inline(0x00C1EFF0_g, &MouseMsgHook); // mouse window message callback
 		g_passHook = safetyhook::create_mid(0x00B99550_g, &VintInputPassBegin); // vint_sr2_process_input
 		g_eventHook = safetyhook::create_mid(0x00B99D72_g, &ProcessEventNotHit); // process_event, nothing pressed
