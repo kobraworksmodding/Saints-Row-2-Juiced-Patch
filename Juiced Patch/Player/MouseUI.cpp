@@ -743,13 +743,13 @@ namespace MouseUI
 	void Init()
 	{
 		g_enabled = GameConfig::GetValue("Input", "MouseUI", 1,
-			"Mouse support in menus, dialogs, gambling, the phone and the weapon wheel. (Clippy95)") != 0;
+			"Mouse support in menus (Clippy95)") != 0;
 		// in-game toggle (Controls), the slider reads / writes it through OptionsManager
 		GameConfig::GetValue("Input", "MouseWeaponWheel", 1,
 			"Pick weapons and food on the weapon wheel with the mouse cursor, 0 = old mouse / WASD steering. (Clippy95)");
 		OptionsManager::registerOption("Input", "MouseWeaponWheel", &g_weaponWheel, true);
-		g_customCursor = GameConfig::GetValue("Input", "CustomCursor", 1,
-			"Saints Row 2 styled mouse cursor while it's over the game window, Windows' own everywhere else, 0 = always the Windows cursor.") != 0;
+		g_customCursor = GameConfig::GetValue("Input", "CustomCursor", 0,
+			"Custom cursor icon") != 0;
 		if (g_enabled || g_customCursor)
 			g_captureHook = safetyhook::create_inline(0x00C1F210_g, &MouseCaptureUpdateHook); // mouse capture update
 		if (g_customCursor) {
