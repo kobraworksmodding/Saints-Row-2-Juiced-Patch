@@ -477,15 +477,29 @@ struct render_readback_storage {
     UINT width = 0;
     UINT height = 0;
     D3DFORMAT format = D3DFMT_UNKNOWN;
-    IDirect3DSurface9* surface = nullptr;
     IDirect3DDevice9* device = nullptr;
+    // copies are queued here and picked up a frame later so the d3d thread doesn't
+    // stall on the gpu every frame (water asks for one of these every frame) (Clippy95)
+    IDirect3DSurface9* ring[2]{};
+    bool in_flight[2]{};
+    int next = 0;
 };
 
 render_readback_storage Render_readbacks[render_readback_count];
 CRITICAL_SECTION Render_readback_lock;
+bool Async_render_readback = true;
+
+void release_render_readback_surfaces(render_readback_storage& storage) {
+    for (int slot = 0; slot < 2; ++slot) {
+        if (storage.ring[slot]) storage.ring[slot]->Release();
+        storage.ring[slot] = nullptr;
+        storage.in_flight[slot] = false;
+    }
+    storage.next = 0;
+}
 
 void release_render_readback(render_readback_storage& storage) {
-    if (storage.surface) storage.surface->Release();
+    release_render_readback_surfaces(storage);
     if (storage.pixels) HeapFree(GetProcessHeap(), 0, storage.pixels);
     storage = {};
 }
@@ -495,8 +509,7 @@ void reset_render_readbacks(SafetyHookContext&) {
     auto* native = reinterpret_cast<native_render_readback*>(0x22FD678);
     for (int target = 0; target < render_readback_count; ++target) {
         auto& storage = Render_readbacks[target];
-        if (storage.surface) storage.surface->Release();
-        storage.surface = nullptr;
+        release_render_readback_surfaces(storage);
         storage.device = nullptr;
         // Water code caches the returned CPU pointer. Keep its allocation stable
         // through device resets, but discard the old frame and staging surface.
@@ -504,6 +517,43 @@ void reset_render_readbacks(SafetyHookContext&) {
         native[target] = {};
         native[target].pixels = storage.pixels;
         if (storage.height) native[target].pitch = static_cast<int>(storage.size / storage.height);
+    }
+}
+
+// copy a locked staging surface into our owned pixels, false if it isn't ready yet (or failed)
+bool copy_render_readback(render_readback_storage& storage, int slot, DWORD flags, bool& still_drawing) {
+    still_drawing = false;
+    const size_t row_bytes = storage.size / storage.height;
+    D3DLOCKED_RECT locked{};
+    const HRESULT hr = storage.ring[slot]->LockRect(&locked, nullptr, D3DLOCK_READONLY | flags);
+    if (hr == D3DERR_WASSTILLDRAWING) {
+        still_drawing = true;
+        return false;
+    }
+    storage.in_flight[slot] = false;
+    if (FAILED(hr)) return false;
+    bool copied = false;
+    if (locked.pBits && locked.Pitch >= static_cast<int>(row_bytes)) {
+        for (UINT row = 0; row < storage.height; ++row)
+            memcpy(storage.pixels + row * row_bytes,
+                static_cast<const BYTE*>(locked.pBits) + row * static_cast<size_t>(locked.Pitch), row_bytes);
+        copied = true;
+    }
+    storage.ring[slot]->UnlockRect();
+    return copied;
+}
+
+// pick up every copy the gpu has finished, oldest first so the newest one wins
+void collect_render_readbacks(IDirect3DDevice9* device) {
+    for (auto& storage : Render_readbacks) {
+        if (storage.device != device || !storage.pixels || !storage.height) continue;
+        for (int i = 0; i < 2; ++i) {
+            const int slot = (storage.next + i) % 2;
+            if (!storage.in_flight[slot]) continue;
+            bool still_drawing;
+            copy_render_readback(storage, slot, D3DLOCK_DONOTWAIT, still_drawing);
+            if (still_drawing) break;
+        }
     }
 }
 
@@ -540,8 +590,7 @@ void* __cdecl read_render_target(int target, int* pitch, void* output) {
     const size_t size = row_bytes * desc.Height;
 
     if (storage.device != device) {
-        if (storage.surface) storage.surface->Release();
-        storage.surface = nullptr;
+        release_render_readback_surfaces(storage);
         storage.device = device;
     }
     if (!storage.pixels || storage.width != desc.Width || storage.height != desc.Height
@@ -562,36 +611,40 @@ void* __cdecl read_render_target(int target, int* pitch, void* output) {
     // pixels, never LockRect's pointer, whose lifetime ends at UnlockRect.
     native.pixels = storage.pixels;
     native.pitch = static_cast<int>(row_bytes);
-    native.surface = storage.surface;
+    native.surface = storage.ring[0];
     if (pitch) *pitch = native.pitch;
 
-    if (native.pending && source && SUCCEEDED(device->TestCooperativeLevel())) {
-        native.pending = 0;
-        if (!storage.surface) {
-            device->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format,
-                D3DPOOL_SYSTEMMEM, &storage.surface, nullptr);
-            native.surface = storage.surface;
-        }
-        bool copied = false;
-        if (storage.surface && SUCCEEDED(device->GetRenderTargetData(source, storage.surface))) {
-            D3DLOCKED_RECT locked{};
-            if (SUCCEEDED(storage.surface->LockRect(&locked, nullptr, D3DLOCK_READONLY))) {
-                if (locked.pBits && locked.Pitch >= static_cast<int>(row_bytes)) {
-                    for (UINT row = 0; row < desc.Height; ++row)
-                        memcpy(storage.pixels + row * row_bytes,
-                            static_cast<const BYTE*>(locked.pBits) + row * static_cast<size_t>(locked.Pitch), row_bytes);
-                    copied = true;
-                }
-                storage.surface->UnlockRect();
-            }
-        }
-        if (!copied) native.pending = 1;
+    // only the d3d thread (the one running the command buffer) queues copies without waiting,
+    // anything else asking keeps the old wait-for-it behaviour
+    const bool async = Async_render_readback && GetCurrentThreadId() == *reinterpret_cast<DWORD*>(0xFA2394);
+    if (!(native.pending || async) || FAILED(device->TestCooperativeLevel())) return storage.pixels;
+
+    if (async) collect_render_readbacks(device);
+    if (!native.pending || !source) return storage.pixels;
+    native.pending = 0;
+
+    const int slot = storage.next;
+    bool still_drawing;
+    // both slots busy, wait on the oldest instead of dropping the new copy
+    if (storage.in_flight[slot]) copy_render_readback(storage, slot, 0, still_drawing);
+    if (!storage.ring[slot]) {
+        device->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format,
+            D3DPOOL_SYSTEMMEM, &storage.ring[slot], nullptr);
+        native.surface = storage.ring[0];
     }
+    if (!storage.ring[slot] || FAILED(device->GetRenderTargetData(source, storage.ring[slot]))) {
+        native.pending = 1;
+        return storage.pixels;
+    }
+    storage.in_flight[slot] = true;
+    storage.next = (slot + 1) % 2;
+    if (!async && !copy_render_readback(storage, slot, 0, still_drawing)) native.pending = 1;
     return storage.pixels;
 }
 
 void install_render_readback_hooks() {
     InitializeCriticalSection(&Render_readback_lock);
+    Async_render_readback = GameConfig::GetValue("Debug", "AsyncRenderReadback", 1, "Reads water back from the GPU a frame late instead of stalling the render thread on it every frame, helps FPS. (Clippy95)") != 0;
     static auto readback = safetyhook::create_inline(0xD1C530, read_render_target, safetyhook::InlineHook::StartDisabled);
     // Clear our owned cache before native initialization/reset rebuilds targets.
     // These sites avoid the existing CreateRTs hook in Render3D.cpp.

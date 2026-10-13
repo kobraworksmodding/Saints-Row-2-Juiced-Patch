@@ -1134,11 +1134,43 @@ namespace Render3D
 		return ((unsigned int* (__thiscall*)(char*, int*))debug_metrics_start_addr)(metric_name,metric_handle);
 	}
 
+	// render thread waits in here for the d3d thread to finish last frame's commands before reusing the buffer,
+	// the Sleep(1) it had oversleeps by up to a ms every frame so spin on it instead (Clippy95)
+	void __cdecl pc_flush_command_buffer() {
+		const LONG start = *(LONG*)0x033D62EC;
+		volatile LONG& execute_write = *(volatile LONG*)0x033D62F4;
+		volatile LONG& read = *(volatile LONG*)0x033D6300;
+		for (int spins = 1; (uint32_t)read < (uint32_t)execute_write; ++spins) {
+			if (spins > 0x10000) // long waits (loading, minimized) go back to sleeping
+				Sleep(1);
+			else if ((spins & 63) == 0)
+				SwitchToThread();
+			else
+				YieldProcessor();
+		}
+		InterlockedExchange(&execute_write, start);
+		*(LONG*)0x033D62F8 = start;
+		*(LONG*)0x033D62FC = start;
+		InterlockedExchange(&read, start);
+	}
+
 	void sync_handhake_render() {
 	if (GameConfig::GetValue("Debug", "FixPerformance", 1, "Fixes performance by waiting properly between main game thread and render thread.\nrecommended to be used alongside sync_shadows_threads=1 (Clippy95)") == 0) {
 			return;
 		}
 		SafeWrite8(0x005285A3, 0);
+		static auto flush_wait = safetyhook::create_inline(0x00D1C780, &pc_flush_command_buffer);
+
+		// sim thread busy spins on this flag while the render thread builds the frame,
+		// game sets an event right after the flag so sleep on that after a short spin (Clippy95)
+		static auto sim_render_wait = safetyhook::create_mid(0x00522C03, [](SafetyHookContext& ctx) {
+			volatile bool& render_done = *(volatile bool*)0x0277419D;
+			const HANDLE render_done_event = *(HANDLE*)0x027741A4;
+			for (int spins = 0; !render_done && spins < 2000; ++spins)
+				YieldProcessor();
+			while (!render_done)
+				WaitForSingleObject(render_done_event, 1);
+			});
 		render_handshake_event = CreateEvent(NULL, FALSE, FALSE, NULL);
 		render_frame_event = CreateEvent(NULL, FALSE, FALSE, NULL);
 		memcpy(oldbytes, (void*)0x00521FAB, 0x48);
