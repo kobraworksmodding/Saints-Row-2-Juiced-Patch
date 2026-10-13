@@ -80,3 +80,13 @@ struct lua_State {
 static bool isGOTR = false;
 extern bool GOTR();
 #endif
+
+// helpers for the game's own lua states (gameplay and vint) (Clippy95)
+namespace GameLua
+{
+	// adds a global C function, use it from the game's register_lua_* functions
+	void RegisterFunction(lua_State* L, const char* name, lua_CFunction fn);
+
+	// loads a lua file through the game's file system, same as vint_lib.lua
+	bool LoadScript(lua_State* L, const char* name);
+}

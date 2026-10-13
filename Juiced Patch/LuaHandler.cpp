@@ -3,6 +3,10 @@
 #include "FileLogger.h"
 #include <tchar.h>
 #include <algorithm>
+#include <cstdint>
+#include "Hooker.h"
+#include <safetyhook.hpp>
+#include <usercaller.hpp>
 
 using namespace std;
 
@@ -104,3 +108,44 @@ bool GOTR() {
 
 }
 #endif
+
+namespace GameLua
+{
+	using pushstring_t = uc::function<uc::cleanup::caller, uc::void_ret<void>,
+		uc::esi_arg<lua_State*>, uc::stack_arg<const char*>>;
+	using pushcclosure_t = uc::function<uc::cleanup::caller, uc::void_ret<void>,
+		uc::esi_arg<lua_State*>, uc::stack_arg<lua_CFunction>, uc::stack_arg<int>>;
+	using load_script_t = uc::function<uc::cleanup::caller, uc::eax_ret<uint8_t>,
+		uc::ecx_arg<lua_State*>, uc::esi_arg<lua_State*>, uc::edi_arg<uintptr_t>, uc::stack_arg<const char*>>;
+	using luaV_settable_t = void(__cdecl*)(lua_State* L, void* t, void* key, void* val);
+
+	// Same as register_lua_vint_functions does it, so the name and closure live in the game's lua heap
+	// (lua50.lib's pushstring would allocate with our CRT).
+	void RegisterFunction(lua_State* L, const char* name, lua_CFunction fn)
+	{
+		static const pushstring_t pushstring = uc::make<uc::void_ret<void>,
+			uc::esi_arg<lua_State*>, uc::stack_arg<const char*>>(0x00CDCAF0_g);
+		static const pushcclosure_t pushcclosure = uc::make<uc::void_ret<void>,
+			uc::esi_arg<lua_State*>, uc::stack_arg<lua_CFunction>, uc::stack_arg<int>>(0x00CDCD30_g);
+		static const auto settable = (luaV_settable_t)0x00CD68D0_g;
+
+		pushstring(L, name);
+		pushcclosure(L, fn, 0);
+
+		uint8_t*& top = *(uint8_t**)((uintptr_t)L + 0x08);   // L->top, TObject is 16 bytes
+		void* globals = (void*)((uintptr_t)L + 0x40);         // L->_gt
+		settable(L, globals, top - 0x20, top - 0x10);
+		top -= 0x20;
+	}
+
+	bool LoadScript(lua_State* L, const char* name)
+	{
+		static const load_script_t load_script = uc::make<uc::eax_ret<uint8_t>,
+			uc::ecx_arg<lua_State*>, uc::esi_arg<lua_State*>, uc::edi_arg<uintptr_t>, uc::stack_arg<const char*>>(0x00CDDF30_g);
+
+		const uintptr_t pool = *(uintptr_t*)0x0252A250_g; // temp_mempool
+		if (!L || !pool)
+			return false;
+		return load_script(L, L, pool, name) != 0;
+	}
+}

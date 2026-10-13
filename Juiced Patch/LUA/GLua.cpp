@@ -582,6 +582,17 @@ namespace GLua
         register_custom_vint_functions(L);
     }
 
+    // TU3 backport (Clippy95): while a mission is running AI guided rockets (attack heli missiles etc.)
+    // keep homing instead of giving up after the weapon's guide time, missions can turn the timeout
+    // back on with rocket_guide_timers_disable(false), mission exit resets it
+    bool Rocket_guide_timers_enabled = false;
+
+    int __cdecl lua_func_rocket_guide_timers_disable(lua_State* L)
+    {
+        Rocket_guide_timers_enabled = !(lua_gettop(L) >= 1 && lua_toboolean(L, 1));
+        return 0;
+    }
+
     typedef char(__thiscall* cellphone_dial_numberT)(const char* number);
     cellphone_dial_numberT cellphone_dial_number = (cellphone_dial_numberT)0x788840;
 
@@ -596,6 +607,20 @@ namespace GLua
         return cellphone_dial_number(number);
     }
     void Init() {
+        if (GameConfig::GetValue("Gameplay", "TU3GuidedRockets", 1, "TU3 change, enemy guided rockets (helicopter missiles etc.) keep tracking you during missions instead of giving up after a few seconds. (Clippy95)")) {
+            static auto rocket_guide_timer = safetyhook::create_mid(0x0094AF83, [](SafetyHookContext& ctx) {
+                // al = rocket guide timer hasn't run out yet, 0x027B3C60 = Mission_in_progress.info
+                if (!Rocket_guide_timers_enabled && *(uintptr_t*)0x027B3C60)
+                    ctx.eax = (ctx.eax & ~0xFFu) | 1;
+                });
+            static auto rocket_guide_reset = safetyhook::create_mid(0x006A4F03, [](SafetyHookContext& ctx) {
+                Rocket_guide_timers_enabled = false; // mission_mode_exit
+                });
+        }
+        // register_lua_misc_funcs, right after register_lua_debug_funcs (esi = L)
+        static auto register_misc_lua = safetyhook::create_mid(0x00A52ACE, [](SafetyHookContext& ctx) {
+            GameLua::RegisterFunction((lua_State*)ctx.esi, "rocket_guide_timers_disable", &lua_func_rocket_guide_timers_disable);
+            });
 //#if !RELOADED
         static const char* HeliShootVehN = "helicopter_shoot_vehicle";
         static const char* VehTPCharN = "vehicle_teleport_character";

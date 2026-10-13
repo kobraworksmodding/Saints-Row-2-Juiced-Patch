@@ -20,7 +20,6 @@
 #include "../Hooker.h"
 #include "../Render/Render2D.h"
 #include <safetyhook.hpp>
-#include <usercaller.hpp>
 import OptionsManager;
 
 namespace MouseUI
@@ -319,47 +318,6 @@ namespace MouseUI
 		return 0;
 	}
 
-	// --- game lua functions -----------------------------------------------------------------------
-
-	using pushstring_t = uc::function<uc::cleanup::caller, uc::void_ret<void>,
-		uc::esi_arg<lua_State*>, uc::stack_arg<const char*>>;
-	using pushcclosure_t = uc::function<uc::cleanup::caller, uc::void_ret<void>,
-		uc::esi_arg<lua_State*>, uc::stack_arg<lua_CFunction>, uc::stack_arg<int>>;
-	using load_script_t = uc::function<uc::cleanup::caller, uc::eax_ret<uint8_t>,
-		uc::ecx_arg<lua_State*>, uc::esi_arg<lua_State*>, uc::edi_arg<uintptr_t>, uc::stack_arg<const char*>>;
-	using luaV_settable_t = void(__cdecl*)(lua_State* L, void* t, void* key, void* val);
-
-	// Same as register_lua_vint_functions does it, so the name and closure live in the game's lua heap
-	// (lua50.lib's pushstring would allocate with our CRT).
-	static void RegisterGameLuaFunction(lua_State* L, const char* name, lua_CFunction fn)
-	{
-		static const pushstring_t pushstring = uc::make<uc::void_ret<void>,
-			uc::esi_arg<lua_State*>, uc::stack_arg<const char*>>(0x00CDCAF0_g);
-		static const pushcclosure_t pushcclosure = uc::make<uc::void_ret<void>,
-			uc::esi_arg<lua_State*>, uc::stack_arg<lua_CFunction>, uc::stack_arg<int>>(0x00CDCD30_g);
-		static const auto settable = (luaV_settable_t)0x00CD68D0_g;
-
-		pushstring(L, name);
-		pushcclosure(L, fn, 0);
-
-		uint8_t*& top = *(uint8_t**)((uintptr_t)L + 0x08);   // L->top, TObject is 16 bytes
-		void* globals = (void*)((uintptr_t)L + 0x40);         // L->_gt
-		settable(L, globals, top - 0x20, top - 0x10);
-		top -= 0x20;
-	}
-
-	// loads a lua file through the game's file system, same as vint_lib.lua
-	static bool LoadVintLuaLib(lua_State* L, const char* name)
-	{
-		static const load_script_t load_script = uc::make<uc::eax_ret<uint8_t>,
-			uc::ecx_arg<lua_State*>, uc::esi_arg<lua_State*>, uc::edi_arg<uintptr_t>, uc::stack_arg<const char*>>(0x00CDDF30_g);
-
-		const uintptr_t pool = *(uintptr_t*)0x0252A250_g; // temp_mempool
-		if (!L || !pool)
-			return false;
-		return load_script(L, L, pool, name) != 0;
-	}
-
 	static uintptr_t g_registerLuaFuncs = 0; // original register_lua_funcs
 
 	// replaces "call register_lua_funcs" in vint_lua_init
@@ -369,19 +327,19 @@ namespace MouseUI
 		if (!L)
 			return;
 
-		RegisterGameLuaFunction(L, "mouse_ui_poll", &lua_mouse_ui_poll);
-		RegisterGameLuaFunction(L, "mouse_ui_request", &lua_mouse_ui_request);
-		RegisterGameLuaFunction(L, "mouse_ui_inject", &lua_mouse_ui_inject);
-		RegisterGameLuaFunction(L, "mouse_ui_clear", &lua_mouse_ui_clear);
-		RegisterGameLuaFunction(L, "mouse_ui_end", &lua_mouse_ui_end);
-		RegisterGameLuaFunction(L, "mouse_ui_enabled", &lua_mouse_ui_enabled);
-		RegisterGameLuaFunction(L, "mouse_ui_warp", &lua_mouse_ui_warp);
-		RegisterGameLuaFunction(L, "mouse_ui_wheel_enabled", &lua_mouse_ui_wheel_enabled);
-		RegisterGameLuaFunction(L, "mouse_ui_pad", &lua_mouse_ui_pad);
-		RegisterGameLuaFunction(L, "mouse_ui_radial", &lua_mouse_ui_radial);
-		RegisterGameLuaFunction(L, "mouse_ui_cvint_offset", &lua_mouse_ui_cvint_offset);
+		GameLua::RegisterFunction(L, "mouse_ui_poll", &lua_mouse_ui_poll);
+		GameLua::RegisterFunction(L, "mouse_ui_request", &lua_mouse_ui_request);
+		GameLua::RegisterFunction(L, "mouse_ui_inject", &lua_mouse_ui_inject);
+		GameLua::RegisterFunction(L, "mouse_ui_clear", &lua_mouse_ui_clear);
+		GameLua::RegisterFunction(L, "mouse_ui_end", &lua_mouse_ui_end);
+		GameLua::RegisterFunction(L, "mouse_ui_enabled", &lua_mouse_ui_enabled);
+		GameLua::RegisterFunction(L, "mouse_ui_warp", &lua_mouse_ui_warp);
+		GameLua::RegisterFunction(L, "mouse_ui_wheel_enabled", &lua_mouse_ui_wheel_enabled);
+		GameLua::RegisterFunction(L, "mouse_ui_pad", &lua_mouse_ui_pad);
+		GameLua::RegisterFunction(L, "mouse_ui_radial", &lua_mouse_ui_radial);
+		GameLua::RegisterFunction(L, "mouse_ui_cvint_offset", &lua_mouse_ui_cvint_offset);
 
-		g_luaLoaded = LoadVintLuaLib(L, "mouse_ui.lua");
+		g_luaLoaded = GameLua::LoadScript(L, "mouse_ui.lua");
 		Logger::TypedLog(CHN_LUA, "MouseUI: mouse_ui.lua {}\n", g_luaLoaded ? "loaded" : "not found");
 	}
 
