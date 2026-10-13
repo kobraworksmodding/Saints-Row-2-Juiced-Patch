@@ -11,6 +11,7 @@ Fixes marked with ⚙️ can be configured/toggled via the INI file / BlingMenu
 * ⚙️ Use modern math functions which in turn makes cutscenes and any scenes with water faster via FastMath, boosts FPS by at most 2x[^1] in such scenes
 * ⚙️ Correct Gamma to be more inline with the Xbox 360 version.
 * ⚙️ Use XAudio 2.3 which in turn fixes several audio playback issues, aside from 3D panning
+* ⚙️ Implemented missing implementations for muffled/lpf/reverbed audio to match more closely to console versions
 * Fixed several game crashes.
 * Fixed over 35 broken shaders.
 * Automatically LAA patch SR2's exe, (including Steam)
@@ -28,13 +29,13 @@ Fixes marked with ⚙️ can be configured/toggled via the INI file / BlingMenu
 * Patch Gamespy with Openspy.
 * ⚙️ Fix mouse input in tagging minigame.
 * ⚙️ Fix mouse input in wardrobes.
-* Fix Ultrawide FOV
+* Fix Ultrawide FOV and HUD scaling
 * ⚙️ Fix incorrect GUID assignment for audio device.
 * Fixed an issue where the drive by diversion would not restore your unlimited ammo SMG
 
 ## Enhancements
 * Allow loading of loose files (VPP content) with folders to load from taken from loose.txt (default mods folder)
-* Improved license plate font rendering
+* ⚙️ Mouse UI support
 * ⚙️ addon_bitmaps - allows for custom textures support, meaning you can load new texture entries with new names.
 * ⚙️ Ported over 30 animations from the console versions.
 * ⚙️ Implemented SDL3 controller support.
@@ -59,3 +60,4 @@ Fixes marked with ⚙️ can be configured/toggled via the INI file / BlingMenu
 * ⚙️ RemoveVignette (off by default)
 * ⚙️ FasterLoading - Reduces Stuttering and also make loading screens fasters.
 * ⚙️ ForceLanguage - Force Language from ini
+* Improved license plate font rendering
