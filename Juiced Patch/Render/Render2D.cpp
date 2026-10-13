@@ -1166,6 +1166,9 @@ struct Alignment {
 
 	uint32_t black_bars : 1;
 	uint32_t IVRadar : 1;
+	// docs without a safe_frame (mission replay details...) are laid out for 1280x720 from the
+	// top left, SF moves the element with safe_frame so it ends up centred like the rest
+	uint32_t safe_frame : 1;
 };
 
 struct vint_cint_custom
@@ -1255,6 +1258,9 @@ static void ApplyVintCINTFlag(Alignment& align, const std::string& raw_flag)
 	else if (flag == "IV") {
 		align.IVRadar = 1;
 	}
+	else if (flag == "SF") {
+		align.safe_frame = 1;
+	}
 }
 
 static void MergeAlignment(Alignment& dst, const Alignment& src)
@@ -1267,6 +1273,7 @@ static void MergeAlignment(Alignment& dst, const Alignment& src)
 	dst.v_center |= src.v_center;
 	dst.black_bars |= src.black_bars;
 	dst.IVRadar |= src.IVRadar;
+	dst.safe_frame |= src.safe_frame;
 }
 
 static const vint_cint_custom* FindVintCINT(const vint_element_base* element)
@@ -1310,6 +1317,13 @@ float ultrawide_safearea_x = 0.f;
 SAFETYHOOK_NOINLINE bool modify_vint_anchor(const vint_cint_custom* cint, vint_element_base* element)
 {
 	auto align = cint->align;
+
+	if (align.safe_frame)
+	{
+		element->v_anchor.x += get_safe_frame_x();
+		element->v_anchor.y += get_safe_frame_y();
+		return true;
+	}
 
 	if (align.will_it_be_anchored())
 	{
@@ -1373,6 +1387,11 @@ void GetCvintAnchorOffset(const char* document, const char* element, float& out_
 		return;
 
 	auto align = rule->align;
+	if (align.safe_frame) {
+		out_x = get_safe_frame_x();
+		out_y = get_safe_frame_y();
+		return;
+	}
 	if (!align.will_it_be_anchored())
 		return;
 	if (wide) {

@@ -371,6 +371,7 @@ function mouse_ui_menu_start()
 	Mouse_ui.handles = { }
 	Mouse_ui.drag = nil
 	Mouse_ui.sdrag = nil
+	Mouse_ui.grid_select = nil
 	Mouse_ui.menu_closing = false
 	mouse_ui_start("menu")
 end
@@ -378,6 +379,7 @@ end
 function mouse_ui_menu_stop()
 	Mouse_ui.drag = nil
 	Mouse_ui.sdrag = nil
+	Mouse_ui.grid_select = nil
 	mouse_ui_horz_hover(nil)
 	mouse_ui_stop("menu")
 end
@@ -460,11 +462,15 @@ function mouse_ui_menu_handler()
 	local can_act = m.active == true and menu_input_is_blocked() == false and Menu_transition_in_progress ~= true
 	local hover = false
 	local plab, pdata = mouse_ui_plist_get()
+	local covered = mouse_ui_menu_covered()
+	if covered then
+		Mouse_ui.grid_select = nil
+	end
 
 	if mouse_ui_menu_slider_drag(m) or mouse_ui_menu_scroll_drag(m, can_act) then
 		hover = true
 	else
-		if mouse_ui_menu_horz(m, can_act) then
+		if covered == false and mouse_ui_menu_horz(m, can_act) then
 			hover = true
 		end
 		if mouse_ui_menu_tips(m, can_act) then
@@ -473,7 +479,7 @@ function mouse_ui_menu_handler()
 			if mouse_ui_plist(m, can_act, plab, pdata) then
 				hover = true
 			end
-		elseif Menu_active.custom_show ~= true and Menu_option_labels ~= nil and mouse_ui_visible(Menu_option_labels.frame) then
+		elseif covered == false and Menu_active.custom_show ~= true and Menu_option_labels ~= nil and mouse_ui_visible(Menu_option_labels.frame) then
 			if mouse_ui_menu_scroll_bar(m, can_act) then
 				hover = true
 			elseif mouse_ui_menu_rows(m, can_act) then
@@ -489,7 +495,7 @@ function mouse_ui_menu_handler()
 		end
 	end
 
-	if m.active == true then
+	if m.active == true and covered == false then
 		mouse_ui_horz_hover(Mouse_ui.horz_want)
 	else
 		mouse_ui_horz_hover(nil)
@@ -497,6 +503,20 @@ function mouse_ui_menu_handler()
 	mui_request(hover)
 end
 Mouse_ui_handlers["menu"] = mouse_ui_menu_handler
+
+-- a grid screen can hide its swatches and put its own panel on top (mission replay details), the menu
+-- underneath stays active and its swatches keep their positions, so tabs and swatches must not react
+function mouse_ui_menu_covered()
+	local menu = Menu_active
+	if menu == nil or menu == 0 or menu.num_items ~= 1 or menu[0] == nil or menu[0].type ~= MENU_ITEM_TYPE_GRID then
+		return false
+	end
+	local labels = Menu_option_labels
+	if labels == nil or labels == 0 or labels.control_parent == nil then
+		return false
+	end
+	return mouse_ui_visible(labels.control_parent) == false
+end
 
 -- true when the cursor is over a row
 function mouse_ui_menu_rows(m, can_act)
@@ -1159,6 +1179,10 @@ function mouse_ui_grid_scrolls(g, focus_row)
 	return new_first ~= first
 end
 
+-- custom swatches without a "bg" (mission replay clippings) would use the whole group, which takes in
+-- the hidden text panels beside it and overlaps the neighbours, use the picture instead
+Mouse_ui_swatch_parts = { "bg", "clipping" }
+
 function mouse_ui_grid_swatch_hit(sw, idx, m)
 	local s = sw[idx]
 	if s == nil or s.swatch_h == nil then
@@ -1166,7 +1190,18 @@ function mouse_ui_grid_swatch_hit(sw, idx, m)
 	end
 	local h = s.swatch_bg_h
 	if h == nil or h == 0 then
-		h = s.swatch_h
+		if s.mui_hit_for ~= s.swatch_h then
+			s.mui_hit_for = s.swatch_h
+			s.mui_hit_h = s.swatch_h
+			for i = 1, 2 do
+				local part = vint_object_find(Mouse_ui_swatch_parts[i], s.swatch_h)
+				if part ~= nil and part ~= 0 then
+					s.mui_hit_h = part
+					break
+				end
+			end
+		end
+		h = s.mui_hit_h
 	end
 	return mouse_ui_hit(h, m.x, m.y, 0)
 end
@@ -1180,6 +1215,17 @@ function mouse_ui_menu_grid(m, can_act, grid)
 	local cur = grid.cur_idx
 	if cur == nil and grid.cur_row ~= nil and grid.cur_col ~= nil then
 		cur = grid.cur_row * grid.num_cols + grid.cur_col
+	end
+
+	-- a click on another swatch selects it once the move (own thread) has landed
+	local pend = Mouse_ui.grid_select
+	if pend ~= nil then
+		if can_act and cur == pend then
+			Mouse_ui.grid_select = nil
+			mouse_ui_inject("select", 0)
+		elseif m.frame > Mouse_ui.grid_select_frame + 30 then
+			Mouse_ui.grid_select = nil
+		end
 	end
 
 	-- highlighted swatch is scaled up, test it first
@@ -1215,7 +1261,12 @@ function mouse_ui_menu_grid(m, can_act, grid)
 	end
 
 	if m.lpress == true then
-		mouse_ui_inject("select", 0)
+		if hit == cur then
+			mouse_ui_inject("select", 0)
+		else
+			Mouse_ui.grid_select = hit
+			Mouse_ui.grid_select_frame = m.frame
+		end
 		mouse_ui_lock(m, 8)
 	end
 	return true

@@ -3,6 +3,7 @@
 // element_name,flags such as LB,RB,R,L,CB,CT,LT,RT,T,B and maybe more for the alignemnt theyre for 16:9 mode ultrawide / safearea 
 // IV is for IVRadarScaling 16:9 too (as of now unused),
 // flag blackbars is to display black bars assuming this is safe_framed correctly in DLL
+// flag SF moves the element with safe_frame, for documents that don't have one
 // the TOP and BOTTOM (T,B) in those flags are planned hacks for 16:10
 // file is reloadable in blingmenu
 [hud]
@@ -30,3 +31,5 @@ black_2,blackbars
 wall,blackbars
 black_1,blackbars
 black_2,blackbars
+[mission_replay]
+mission_details,SF
