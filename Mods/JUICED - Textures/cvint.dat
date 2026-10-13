@@ -22,3 +22,11 @@ perk_grp,LB,IV
 background,blackbars
 [cte_sniper_rifle]
 rim_sw,blackbars
+[completion]
+wall,blackbars
+black_1,blackbars
+black_2,blackbars
+[mp_completion]
+wall,blackbars
+black_1,blackbars
+black_2,blackbars

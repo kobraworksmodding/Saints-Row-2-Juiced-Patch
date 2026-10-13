@@ -1602,6 +1602,21 @@ void diversion_image_sizeup()
 			Logger::TypedLog(CHN_DEBUG, "Enabling better chat...\n");
 		}
 	vint_element_base_renderD = safetyhook::create_inline(0xB95B10, vint_element_base_render);
+	// tweens on safe_frame's anchor (the completion screen shake) use 1280x720 positions,
+	// they'd pull safe_frame back to the left/top so add our offset to what they write
+	static auto safe_frame_tween = safetyhook::create_mid(0x00B9F277_g, [](SafetyHookContext& ctx) {
+		if (!UltrawideFix && !TallHUDFix)
+			return;
+		static const uint32_t safe_frame_hash = fastcall_call<uint32_t>(0x00BDC9B0_g, "safe_frame");
+		static const uint32_t anchor_hash = fastcall_call<uint32_t>(0x00BDC9B0_g, "anchor");
+		const uintptr_t tween = ctx.ebp;
+		const uintptr_t target = *(uintptr_t*)(ctx.esp + 0x1C);
+		uint32_t* value = (uint32_t*)(ctx.esp + 0x38); // vint_variant, 7 = vector2
+		if (!target || *(uint32_t*)(tween + 0x90) != anchor_hash || *(uint32_t*)(target + 0x2C) != safe_frame_hash || value[0] != 7)
+			return;
+		((float*)value)[1] += get_safe_frame_x();
+		((float*)value)[2] += get_safe_frame_y();
+		});
 	InterceptCall(0x79B064, diversion_image_sizeup_addr, diversion_image_sizeup);
 	InterceptCall(0xB8A751, diversion_image_sizeup_addr, diversion_image_sizeup);
 
