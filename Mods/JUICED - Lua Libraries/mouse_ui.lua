@@ -1123,6 +1123,46 @@ function mouse_ui_menu_horz_jump(index)
 		return
 	end
 
+	-- Native tabs may alternate two menu tables (weapon stores use A/B).
+	-- A direct click can select the current table again. menu_show() would
+	-- rebuild its grid, then release that same grid as the outgoing menu.
+	-- Pass through the nearest distinct menu and let its transition finish
+	-- before opening the requested tab, preserving native release callbacks.
+	if Menu_active.on_horz_show == nil and horz[index].sub_menu == Menu_active then
+		local direction = 1
+		if index < previous then
+			direction = -1
+		end
+		local intermediate = nil
+		for offset = 1, horz.num_items - 1 do
+			local candidate = previous + direction * offset
+			if candidate < 0 then
+				candidate = candidate + horz.num_items
+			elseif candidate >= horz.num_items then
+				candidate = candidate - horz.num_items
+			end
+			local tab = horz[candidate]
+			if tab ~= nil and tab.sub_menu ~= nil and tab.sub_menu ~= Menu_active and tab.sub_menu.on_horz_show == nil then
+				intermediate = candidate
+				break
+			end
+		end
+		if intermediate == nil then
+			return
+		end
+		mouse_ui_menu_horz_jump(intermediate)
+		while Menu_transition_in_progress == true do
+			if Menu_horz_active ~= horz or Mouse_ui.menu_closing == true then
+				return
+			end
+			thread_yield()
+		end
+		if Menu_horz_active ~= horz or horz.current_selection ~= intermediate or Menu_active ~= horz[intermediate].sub_menu or menu_input_is_blocked() then
+			return
+		end
+		previous = intermediate
+	end
+
 	if index > previous then
 		horz.trans_animation = "menu_horz_rt_anim"
 	else
