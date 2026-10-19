@@ -14,6 +14,7 @@
 #include "../BlingMenu_public.h"
 #include "../UtilsGlobal.h"
 #include "..\Game\Game.h"
+#include <cstring>
 #pragma warning( disable : 4834)
 // Use me to store garbagedata when NOP doesn't work.
 static float garbagedata = 0;
@@ -24,6 +25,20 @@ double staticLean = 1.0;
 
 namespace Behavior
 {
+	void FixImmediateAnimationBlends()
+	{
+		constexpr unsigned char expected[] = {
+			0xD9, 0x41, 0x14
+		};
+		if (std::memcmp(reinterpret_cast<const void*>(0x6EEEB4), expected, sizeof(expected)) != 0) {
+			Logger::TypedLog(CHN_MOD, "Immediate animation blend fix skipped: unexpected code bytes.\n");
+			return;
+		}
+		unsigned char replacement[] = {0xD9, 0xE8, 0x90};
+		SafeWriteBuf(0x6EEEB4, replacement, sizeof(replacement));
+		Logger::TypedLog(CHN_MOD, "Fixed zero-duration animation fade-outs (stale tagging pose).\n");
+	}
+
 	typedef int __cdecl character_set_anim_setT(DWORD* hp, uint32_t unk, char* name_of_human);
 	character_set_anim_setT* character_set_anim_set = (character_set_anim_setT*)(0x0096F940);
 	int sticky_cam_timer_add = 0;
@@ -392,6 +407,7 @@ CMultiPatch CMPatches_SR1Reloading = {
 
 	void Init()
 	{
+		FixImmediateAnimationBlends();
 		// A streaming-stalled NPC can reserve a seat forever while the player waits
 		// in ENTER_TELEPORT with controls disabled. The stock branch cancels a
 		// PATHFIND queue head; use that same native cancellation for the stalled NPC.
