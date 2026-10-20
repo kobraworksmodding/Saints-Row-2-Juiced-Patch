@@ -39,6 +39,7 @@ namespace MouseUI
 	// scripts that get mouse_ui_attach() appended
 	static const char* const kAttachScripts[] = {
 		"menu_base", "main_menu", "dialog_box", "gmb_blackjack", "gmb_poker", "cellphone", "hud",
+		"mp_server_browser", "mp_leaderboards", "mp_player_info_popup",
 	};
 
 	constexpr DWORD kRequestTimeoutMs = 120;  // cursor stays this long after the last mouse_ui_request()

@@ -1,6 +1,7 @@
 -- mouse_ui.lua
 -- Mouse support for vint menus, loaded by Juiced (Player/MouseUI.cpp).
--- Juiced appends mouse_ui_attach() to menu_base, main_menu, dialog_box, gmb_*, cellphone and hud.
+-- Juiced appends mouse_ui_attach() to menu_base, main_menu, dialog_box, gmb_*, cellphone, hud, mp_server_browser, mp_leaderboards
+-- and mp_player_info_popup.
 
 Mouse_ui = {
 	gens = { },			-- per screen thread id, thread exits when it changes
@@ -284,7 +285,7 @@ function mouse_ui_thread(kind, gen)
 	end
 end
 
-Mouse_ui_kinds = { "menu", "main_menu", "dialog", "blackjack", "poker", "cellphone", "radial" }
+Mouse_ui_kinds = { "menu", "main_menu", "dialog", "blackjack", "poker", "cellphone", "radial", "sheet", "mp_popup" }
 Mouse_ui.req = { }
 
 -- remembers which screen asked this frame
@@ -303,7 +304,7 @@ function mouse_ui_release(kind)
 	if f == nil then
 		f = 0
 	end
-	for i = 1, 7 do
+	for i = 1, 9 do
 		local k = Mouse_ui_kinds[i]
 		local rf = Mouse_ui.req[k]
 		if k ~= kind and rf ~= nil and rf >= f - 2 then
@@ -437,6 +438,15 @@ function mouse_ui_attach(script)
 		mouse_ui_wrap("hud_inventory_show", nil, mouse_ui_radial_start)
 		mouse_ui_wrap("hud_inventory_hide", mouse_ui_radial_stop, nil)
 		mouse_ui_radial_hook_input()
+	elseif script == "mp_server_browser" then
+		mouse_ui_wrap("mp_server_browser_init", nil, mouse_ui_sb_start)
+		mouse_ui_wrap("mp_server_browser_cleanup", mouse_ui_sheet_stop, nil)
+	elseif script == "mp_leaderboards" then
+		mouse_ui_wrap("mp_leaderboards_init", nil, mouse_ui_lb_start)
+		mouse_ui_wrap("mp_leaderboards_cleanup", mouse_ui_sheet_stop, nil)
+	elseif script == "mp_player_info_popup" then
+		mouse_ui_wrap("mp_player_info_popup_init", nil, mouse_ui_popup_start)
+		mouse_ui_wrap("mp_player_info_popup_cleanup", mouse_ui_popup_stop, nil)
 	end
 end
 
@@ -449,6 +459,14 @@ function mouse_ui_menu_handler()
 		Mouse_ui.drag = nil
 		Mouse_ui.sdrag = nil
 		mouse_ui_horz_hover(nil)
+		return
+	end
+	-- the server browser / leaderboards sit on top of a menu and handle the mouse themselves
+	if mouse_ui_sheet_is_open() or mouse_ui_popup_open() then
+		Mouse_ui.drag = nil
+		Mouse_ui.sdrag = nil
+		mouse_ui_horz_hover(nil)
+		mui_request(false)
 		return
 	end
 	if mouse_ui_dialog_open() then
@@ -1877,6 +1895,363 @@ function mouse_ui_main_menu_handler()
 	mui_request(hover)
 end
 Mouse_ui_handlers["main_menu"] = mouse_ui_main_menu_handler
+
+-- multiplayer spreadsheets: server browser (LAN / online / co-op) and leaderboards
+-- own screens, the menu underneath only lends them the button tips
+
+Mouse_ui_sheets = {
+	mp_server_browser = {
+		data = "Mp_server_browser_data",
+		redraw = "Mp_server_browser_redraw_rows",
+		set_tab = "Mp_server_browser_change_spreadsheet",
+		set_row = "Mp_server_browser_change_row",
+		row_after_tab = true,
+	},
+	mp_leaderboards = {
+		data = "Mp_leaderboards_data",
+		redraw = "mp_leaderboards_redraw_rows",
+		set_tab = "mp_leaderboards_change_spreadsheet",
+		set_row = "mp_leaderboards_change_row",
+		row_after_tab = false,
+	},
+}
+
+function mouse_ui_sheet_start(name)
+	local doc = vint_document_find(name)
+	local h = { }
+	h.arrow_l = vint_object_find("arrow_left", nil, doc)
+	h.arrow_r = vint_object_find("arrow_right", nil, doc)
+	h.trig_l = vint_object_find("left_trigger", nil, doc)
+	h.trig_r = vint_object_find("right_trigger", nil, doc)
+	h.scroll_top = vint_object_find("scroll_top", nil, doc)
+	h.scroll_bottom = vint_object_find("scroll_bottom", nil, doc)
+	Mouse_ui.sheet = h
+	Mouse_ui.sheet_cfg = Mouse_ui_sheets[name]
+	Mouse_ui.sheet_drag = nil
+	Mouse_ui.sheet_tab = nil
+	mouse_ui_start("sheet")
+end
+
+function mouse_ui_sheet_stop()
+	Mouse_ui.sheet_cfg = nil
+	Mouse_ui.sheet_drag = nil
+	Mouse_ui.sheet_tab = nil
+	Mouse_ui.sheet_d = nil
+	mouse_ui_stop("sheet")
+end
+
+function mouse_ui_sb_start()		mouse_ui_sheet_start("mp_server_browser")	end
+function mouse_ui_lb_start()		mouse_ui_sheet_start("mp_leaderboards")	end
+
+function mouse_ui_sheet_data()
+	local cfg = Mouse_ui.sheet_cfg
+	if cfg == nil then
+		return nil
+	end
+	return mui_get(cfg.data)
+end
+
+function mouse_ui_sheet_is_open()
+	return mouse_ui_sheet_data() ~= nil
+end
+
+function mouse_ui_sheet_fn(key)
+	return mui_get(Mouse_ui.sheet_cfg[key])
+end
+
+function mouse_ui_sheet_row_h(i)
+	local r = Mouse_ui.sheet_d.visible_row[i + 1]
+	if r == nil then
+		return nil
+	end
+	if r.mui_back == nil then
+		local h = vint_object_find("highlight_back", r.line_h)
+		if h == nil or h == 0 or mouse_ui_bbox(h) == nil then
+			h = r.line_h
+		end
+		r.mui_back = h
+	end
+	return r.mui_back
+end
+
+-- move the highlight / list without recentering like change_row does
+function mouse_ui_sheet_view(d, top, vis)
+	local nv = d.num_virtual_rows
+	local nvis = d.num_visible_rows
+	if nv == nil or nvis == nil or nvis < 1 or d.visible_row == nil then
+		return
+	end
+	if nv > 10 then
+		if top > nv - 9 then
+			top = nv - 9
+		end
+		if top < 1 then
+			top = 1
+		end
+	else
+		top = 1
+	end
+	if vis > nvis then
+		vis = nvis
+	end
+	if vis < 1 then
+		vis = 1
+	end
+	d.top_virtual_row = top
+	d.current_visible_row = vis
+	d.current_virtual_row = top + vis - 1
+	if nv > 10 then
+		mouse_ui_sheet_fn("redraw")()
+	end
+	for i = 1, nvis do
+		local r = d.visible_row[i]
+		if r ~= nil then
+			vint_set_property(r.highlight_h, "visible", i == vis)
+		end
+	end
+end
+
+function mouse_ui_sheet_tab_hover(d, idx)
+	local old = Mouse_ui.sheet_tab
+	Mouse_ui.sheet_tab = idx
+	if d == nil or d.tabs == nil then
+		return
+	end
+	if old ~= nil and old ~= idx and old ~= d.current_tab and d.tabs[old] ~= nil then
+		vint_set_property(d.tabs[old].heading_h, "tint", 95/255, 95/255, 95/255)
+	end
+	-- change_spreadsheet greys every tab, so keep setting it
+	if idx ~= nil and idx ~= d.current_tab and d.tabs[idx] ~= nil then
+		local t = MOUSE_UI_HORZ_HOVER_TINT
+		vint_set_property(d.tabs[idx].heading_h, "tint", t.r, t.g, t.b)
+	end
+end
+
+-- tab headings, the arrows and LT / RT
+function mouse_ui_sheet_tabs(m, d, can_act)
+	local h = Mouse_ui.sheet
+	local nt = d.num_tabs
+	if nt == nil or nt < 2 or d.tabs == nil then
+		mouse_ui_sheet_tab_hover(d, nil)
+		return false
+	end
+
+	local ev = nil
+	if mouse_ui_hit_visible(h.arrow_l, m, 6) or mouse_ui_hit_visible(h.trig_l, m, 2) then
+		ev = "scroll_left"
+	elseif mouse_ui_hit_visible(h.arrow_r, m, 6) or mouse_ui_hit_visible(h.trig_r, m, 2) then
+		ev = "scroll_right"
+	end
+
+	-- tabs scroll inside a clip, only count the part between the arrows
+	local tab = nil
+	if ev == nil then
+		local lx0, ly0, lx1 = mouse_ui_bbox(h.arrow_l)
+		local rx0 = mouse_ui_bbox(h.arrow_r)
+		for idx = 1, nt do
+			local t = d.tabs[idx]
+			if t ~= nil and mouse_ui_hit(t.heading_h, m.x, m.y, 4) and (lx1 == nil or m.x > lx1) and (rx0 == nil or m.x < rx0) then
+				tab = idx
+				break
+			end
+		end
+	end
+	mouse_ui_sheet_tab_hover(d, tab)
+
+	if ev == nil and tab == nil then
+		return false
+	end
+	if can_act and m.lpress == true and mouse_ui_locked(m) == false then
+		if ev ~= nil then
+			mouse_ui_inject(ev, 0)
+		elseif tab ~= d.current_tab then
+			audio_play(mui_get("Menu_sound_scroll"))
+			mouse_ui_sheet_fn("set_tab")(tab - d.current_tab)
+			if Mouse_ui.sheet_cfg.row_after_tab == true then
+				mouse_ui_sheet_fn("set_row")(0)
+			end
+		end
+		mouse_ui_lock(m, 8)
+	end
+	return true
+end
+
+-- scroll bar, click or drag along it
+function mouse_ui_sheet_bar(m, d, can_act)
+	local nv = d.num_virtual_rows
+	if nv == nil or nv <= 10 or mouse_ui_visible(d.scroll_group_h) == false then
+		Mouse_ui.sheet_drag = nil
+		return false
+	end
+	local x0, y0, x1 = mouse_ui_bbox(Mouse_ui.sheet.scroll_top)
+	local bx0, by0, bx1, y1 = mouse_ui_bbox(Mouse_ui.sheet.scroll_bottom)
+	if x0 == nil or y1 == nil or y1 <= y0 then
+		Mouse_ui.sheet_drag = nil
+		return false
+	end
+	if Mouse_ui.sheet_drag == true then
+		if m.ldown ~= true or can_act == false then
+			Mouse_ui.sheet_drag = nil
+			return false
+		end
+	else
+		if m.x < x0 - 6 or m.x > x1 + 6 or m.y < y0 or m.y > y1 then
+			return false
+		end
+		if can_act and m.lpress == true and mouse_ui_locked(m) == false then
+			Mouse_ui.sheet_drag = true
+		else
+			return true
+		end
+	end
+	local f = (m.y - y0) / (y1 - y0)
+	if f < 0 then
+		f = 0
+	elseif f > 1 then
+		f = 1
+	end
+	local top = floor(1 + f * (nv - 10) + 0.5)
+	if top ~= d.top_virtual_row then
+		mouse_ui_sheet_view(d, top, d.current_visible_row)
+	end
+	return true
+end
+
+function mouse_ui_sheet_handler()
+	local d = mouse_ui_sheet_data()
+	if d == nil or d.visible_row == nil or d.tabs == nil then
+		return
+	end
+	Mouse_ui.sheet_d = d
+
+	local m = mouse_ui_state()
+	-- player info popup (leaderboards) has its own handler
+	if mouse_ui_dialog_open() or mouse_ui_popup_open() then
+		Mouse_ui.sheet_drag = nil
+		mouse_ui_sheet_tab_hover(d, nil)
+		mui_request(false)
+		return
+	end
+
+	-- leaderboards rebuild their rows with can_move off
+	local can_act = m.active == true and d.can_move == true
+	local hover = false
+	local nvis = d.num_visible_rows
+
+	if mouse_ui_sheet_bar(m, d, can_act) then
+		hover = true
+		mouse_ui_sheet_tab_hover(d, nil)
+	else
+		local active = mui_get("Menu_active")
+		if active ~= nil and active ~= 0 and mouse_ui_menu_tips(m, can_act) then
+			hover = true
+			mouse_ui_sheet_tab_hover(d, nil)
+		elseif mouse_ui_sheet_tabs(m, d, can_act) then
+			hover = true
+		elseif d.can_move == true and nvis ~= nil and nvis > 0 then
+			local hit = mouse_ui_pick_list(m, nvis, mouse_ui_sheet_row_h, 24)
+			if hit >= 0 then
+				hover = true
+				local vis = hit + 1
+				if can_act and mouse_ui_locked(m) == false then
+					if vis ~= d.current_visible_row and (m.moved == true or m.lpress == true) then
+						mouse_ui_sheet_view(d, d.top_virtual_row, vis)
+						audio_play(mui_get("Menu_sound_item_nav"))
+					end
+					if m.lpress == true then
+						mouse_ui_inject("select", 0)
+						mouse_ui_lock(m, 10)
+					end
+				end
+			end
+		end
+	end
+
+	if can_act then
+		mouse_ui_back(m)
+		-- wheel scrolls the list, the highlight stays under the cursor
+		if m.wheel ~= 0 and mouse_ui_take("wheel_frame", m) and d.num_virtual_rows ~= nil and d.num_virtual_rows > 10 then
+			mouse_ui_sheet_view(d, d.top_virtual_row - m.wheel, d.current_visible_row)
+		end
+	end
+
+	mui_request(hover)
+end
+Mouse_ui_handlers["sheet"] = mouse_ui_sheet_handler
+
+-- player info popup (select on a leaderboard row)
+
+function mouse_ui_popup_start()		mouse_ui_start("mp_popup")	end
+function mouse_ui_popup_stop()		mouse_ui_stop("mp_popup")	end
+
+function mouse_ui_popup_open()
+	local p = mui_get("Mp_player_info_popup_data")
+	return p ~= nil and p.input_subscriptions ~= nil and vint_document_find("mp_player_info_popup") ~= 0
+end
+
+function mouse_ui_popup_button_h(i)
+	return Mouse_ui.popup_d.handles.buttons[i + 1]
+end
+
+-- mp_player_info_popup_move_cursor but straight to a button
+function mouse_ui_popup_set(p, idx)
+	local cur = p.current_button
+	if cur == idx or p.handles.buttons[idx] == nil then
+		return
+	end
+	if p.handles.button_shine[cur] ~= nil then
+		vint_set_property(p.handles.button_shine[cur], "is_paused", true)
+		lua_play_anim(p.handles.button_fade_out[cur], 0)
+	end
+	p.current_button = idx
+	mp_player_info_popup_move_cursor(0)
+end
+
+function mouse_ui_popup_handler()
+	if mouse_ui_popup_open() == false then
+		return
+	end
+	local p = mui_get("Mp_player_info_popup_data")
+	if p.handles == nil or p.handles.buttons == nil or p.num_buttons == nil then
+		return
+	end
+	Mouse_ui.popup_d = p
+
+	local m = mouse_ui_state()
+	if mouse_ui_dialog_open() then
+		mui_request(false)
+		return
+	end
+
+	local can_act = m.active == true and p.is_first_time ~= true and p.is_leaving ~= true
+	local hover = false
+
+	if p.num_buttons > 0 then
+		local hit = mouse_ui_pick_list(m, p.num_buttons, mouse_ui_popup_button_h, 10)
+		if hit >= 0 then
+			hover = true
+			local idx = hit + 1
+			if can_act and mouse_ui_locked(m) == false then
+				if idx ~= p.current_button and (m.moved == true or m.lpress == true) then
+					mouse_ui_popup_set(p, idx)
+					audio_play(mui_get("Menu_sound_item_nav"))
+				end
+				if m.lpress == true then
+					mouse_ui_inject("select", 0)
+					mouse_ui_lock(m, 10)
+				end
+			end
+		end
+	end
+
+	if can_act then
+		mouse_ui_back(m)
+		mouse_ui_wheel(m, "nav_up", "nav_down")
+	end
+	mui_request(hover)
+end
+Mouse_ui_handlers["mp_popup"] = mouse_ui_popup_handler
+
 
 -- dialog boxes
 
