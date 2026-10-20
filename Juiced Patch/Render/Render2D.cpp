@@ -1594,6 +1594,16 @@ void diversion_image_sizeup()
 		saved_diversion_rows[i] = diversion_rows[i];
 	diversion_rows_saved = true;
 }
+// new diversions start off screen at gr_safe_area_right() + 200 and slide in from + 100,
+// that's 1280 wide so on ultrawide they'd pop in on screen, move it to the real right edge
+uintptr_t diversion_safe_area_right_addr;
+int diversion_safe_area_right()
+{
+	int x = cdecl_call<int>(diversion_safe_area_right_addr);
+	if (r_is_widescreen)
+		x += (int)(ultrawide_get_x_difference() * 2.f + 0.5f);
+	return x;
+}
 	void Init() {
 	if(GameConfig::GetValue("Debug","DisplayLooseFilesLoading",1, "Renders the loose files that load during the initial loading screen (Clippy95)"))
 		patchCall((void*)0x68C607, vint_sr2_render);
@@ -1638,6 +1648,8 @@ void diversion_image_sizeup()
 		});
 	InterceptCall(0x79B064, diversion_image_sizeup_addr, diversion_image_sizeup);
 	InterceptCall(0xB8A751, diversion_image_sizeup_addr, diversion_image_sizeup);
+	InterceptCall(0x7991C3, diversion_safe_area_right_addr, diversion_safe_area_right);
+	InterceptCall(0x79A367, diversion_safe_area_right_addr, diversion_safe_area_right);
 
 	ultrawide_safearea_x = std::clamp((float)GameConfig::GetDoubleValue("Graphics", "SafeArea_X_UW", 1.f, "Safearea in ultrawide for elements defined in cvint.dat (clippy95)"),0.f,1.f);
 	tall_safearea_y = std::clamp((float)GameConfig::GetDoubleValue("Graphics", "SafeArea_Y_Tall", 0.f, "Safearea on 16:10 like screens for elements with T/B in cvint.dat, 0 = keep the HUD in the 16:9 area, 1 = push it to the screen edges (clippy95)"), 0.f, 1.f);
@@ -1649,14 +1661,17 @@ void diversion_image_sizeup()
 	Juiced::onInputPoll() += []() 
 		{
 			
+			// diversions are the "Upper Right" cluster, 1280 wide positions from the left of the screen,
+			// so like an R element: x difference to line up with safe_frame then SafeArea_X_UW of it again
 			if (r_is_widescreen && saved_diversion_horz != 0.f)
 			{
-				*diversion_horz = saved_diversion_horz + (ultrawide_get_x_difference() * ultrawide_safearea_x);
+				const float x = ultrawide_get_x_difference();
+				*diversion_horz = saved_diversion_horz + x + (x * std::clamp(ultrawide_safearea_x, 0.f, 1.f));
 			}
-			// 16:10, diversions sit in the middle of the screen so move them down with safe_frame
+			// 16:10, move them down with safe_frame then up with SafeArea_Y_Tall like a T element
 			if (diversion_rows_saved)
 			{
-				const float y = TallHUDFix ? get_safe_frame_y() : 0.f;
+				const float y = TallHUDFix ? get_safe_frame_y() * (1.f - std::clamp(tall_safearea_y, 0.f, 1.f)) : 0.f;
 				for (int i = 0; i < 6; i++)
 					diversion_rows[i] = saved_diversion_rows[i] + y;
 			}
