@@ -980,5 +980,6 @@ namespace MStrings
 				}
 
 			});
+		Patch<uint8_t>(0x7F4C0E_g, 0xEB); // always skip hardcoded chinese strings, we have our own proper corrections in Juiced_CH
 	}
 }

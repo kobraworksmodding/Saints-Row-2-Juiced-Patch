@@ -152,3 +152,23 @@ UHQ 屏幕效果 (R)
 强制公制 (R)
 
 [MP_SERVER_IP]
+
+[STATS_CORRUPT_BODY]
+你的狀態損壞並且必須重設
+這將不影響你已獲得的成就
+
+[STATS_CORRUPT_TITLE]
+你的統計資料被損壞並且必須重新設定
+這將不會影響你可能獲得的任何成就
+
+[ACT_HELI_PROTECTION_START_MOVING_MESSAGE]
+你的[format][color:green]兄弟們[/format]正要去進行交易，保護他們避免受到攻擊
+
+[ACT_HELI_PROTECTION_START_MESSAGE]
+你的[format][color:green]兄弟們[/format]需要你的保護
+
+[DIVERSION_COOP_DEATH_TAG_START_MESSAGE]
+按住{ATTACK_SECONDARY_IMG}在死亡標記中恢復
+
+[DIVERSION_COOP_CAT_AND_MOUSE_START_MESSAGE]
+按住{ATTACK_PRIMARY_IMG}在貓抓老鼠中恢復
