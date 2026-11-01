@@ -71,6 +71,17 @@ namespace MouseUI
 	// mouse_ui_warp(), applied on the next poll once the cursor is ours
 	static bool  g_warpPending = false;
 
+	// binding popup, the game gets the mouse buttons so they can be bound
+	static bool  g_bindCapture    = false;
+	static POINT g_bindScreen{};
+	static bool  g_haveBindScreen = false;
+
+	static bool BindCaptureActive()
+	{
+		return *(volatile uint8_t*)0x0252A58F_g != 0  // keyboard / mouse
+			|| *(volatile uint8_t*)0x0252A5B0_g != 0; // gamepad
+	}
+
 	// --- cursors ----------------------------------------------------------------------------------
 	// SR2 styled cursors from JUICED - Textures, set as the window's class cursor so it's ours over
 	// the game window and Windows' own everywhere else. Link while hovering something clickable,
@@ -282,7 +293,7 @@ namespace MouseUI
 		lua_pushboolean(L, s.rPressed);
 		lua_pushnumber(L, s.wheel);
 		lua_pushnumber(L, s.frame);
-		lua_pushboolean(L, g_uiActive);
+		lua_pushboolean(L, g_uiActive && !g_bindCapture);
 		lua_pushboolean(L, s.mPressed);
 		return 11;
 	}
@@ -536,6 +547,21 @@ namespace MouseUI
 			return;
 		}
 
+		// binding popup, menu sees nothing, no camera or wheel
+		if (g_bindCapture) {
+			s.moved = false;
+			s.wheel = 0;
+			s.lPressed = s.lReleased = s.lDown = s.rPressed = s.mPressed = false;
+			g_prevValid = false;
+			g_dragPassthrough = false;
+			g_warpPending = false;
+			g_wheelAccum = 0;
+			*(int*)0x0234F45C_g = 0;
+			*(int*)0x0234F458_g = 0;
+			*(int*)0x0234EA34_g = 0;
+			return;
+		}
+
 		float rx = 1.f, ry = 1.f, sx = 1.f, sy = 1.f;
 		const bool mapped = GetVintMapping(hwnd, rx, ry, sx, sy);
 
@@ -599,13 +625,29 @@ namespace MouseUI
 		const bool focused = *(uint8_t*)0x0252A406_g != 0;
 		const DWORD now = GetTickCount();
 		const bool requested = g_requestedOnce && (now - g_lastRequestTick) < kRequestTimeoutMs;
-		const bool ui = g_enabled && g_luaLoaded && hwnd && focused && requested;
+		// hold the cursor through the binding popup
+		const bool holdForBind = g_uiActive && BindCaptureActive();
+		const bool ui = g_enabled && g_luaLoaded && hwnd && focused && (requested || holdForBind);
 
 		if (ui && !g_uiActive)
 			EnterUI(now);
 		else if (!ui && g_uiActive)
 			LeaveUI(hwnd, focused, now);
 		g_uiActive = ui;
+
+		const bool capture = ui && BindCaptureActive();
+		if (capture != g_bindCapture) {
+			g_bindCapture = capture;
+			ClearInjections();
+			if (capture) {
+				g_haveBindScreen = GetCursorPos(&g_bindScreen) != FALSE;
+			}
+			else {
+				if (ui && g_haveBindScreen)
+					SetCursorPos(g_bindScreen.x, g_bindScreen.y); // put it back
+				g_haveBindScreen = false;
+			}
+		}
 
 		uint8_t& centering = *(uint8_t*)0x0252A5D5_g; // mouse_pc_centering
 		const uint8_t savedCentering = centering;
@@ -625,7 +667,7 @@ namespace MouseUI
 
 		if (g_uiActive && focused && hwnd) {
 			*(int*)0x0252A620_g = 0; // request_capture_change (1 = hide + clip, 2 = release)
-			if (!g_padHidden) {
+			if (!g_padHidden && !g_bindCapture) {
 				if (!g_cursorShown) {
 					while (ShowCursor(TRUE) < 0) {}
 					g_cursorShown = true;
@@ -640,7 +682,8 @@ namespace MouseUI
 				while (ShowCursor(FALSE) >= 0) {}
 				g_cursorShown = false;
 			}
-			if (ShouldClipCursor())
+			// keep it in the window while binding
+			if (g_bindCapture || ShouldClipCursor())
 				ClipToClient(hwnd);
 			else
 				ReleaseClip();
@@ -659,6 +702,14 @@ namespace MouseUI
 
 	static void __cdecl MouseMsgHook(int msg, int wparam)
 	{
+		// binding popup, the game gets the buttons
+		if (BindCaptureActive()) {
+			if (msg == WM_LBUTTONUP)
+				g_lDownMsg = false;
+			g_msgHook.unsafe_ccall<void>(msg, wparam);
+			return;
+		}
+
 		bool swallow = false;
 		switch (msg) {
 		case WM_LBUTTONDOWN:
